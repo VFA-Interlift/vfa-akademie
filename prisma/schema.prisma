@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  birthDate    DateTime?
+
+  company        String?
+  gender         String?   // später kann man auch enum machen
+  companyAddress String?
+
+  badges    Badge[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Training {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  tokens    ClaimToken[]
+  badges    Badge[]
+}
+
+model ClaimToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  trainingId String
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  expiresAt  DateTime
+  maxClaims  Int      @default(999999)
+  claims     Int      @default(0)
+
+  createdAt  DateTime @default(now())
+}
+
+model Badge {
+  id         String   @id @default(cuid())
+  userId     String
+  trainingId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  issuedAt   DateTime @default(now())
+
+  @@unique([userId, trainingId])
+}
