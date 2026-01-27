@@ -8,10 +8,14 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum CreditTxType {
+  AWARD       // aus QR-Claim/Training
+  ADJUSTMENT  // Admin-Korrektur (+/-)
+}
 
-enum Role {
-  USER
-  ADMIN
+enum CreditTxReason {
+  TRAINING_CLAIM
+  ADMIN_ADJUST
 }
 
 model User {
@@ -22,22 +26,28 @@ model User {
   birthDate    DateTime?
 
   company        String?
-  gender         String?   // später kann man auch enum machen
+  gender         String?
   companyAddress String?
 
-  badges    Badge[]
+  creditsTotal  Int      @default(0)
+
+  badges        Badge[]
+  creditTxs     CreditTransaction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Training {
-  id        String   @id @default(cuid())
-  title     String
-  date      DateTime
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  title        String
+  date         DateTime
+  createdAt    DateTime @default(now())
+  creditsAward Int      @default(0)
 
   tokens    ClaimToken[]
   badges    Badge[]
+  creditTxs CreditTransaction[]
 }
 
 model ClaimToken {
@@ -49,6 +59,8 @@ model ClaimToken {
   expiresAt  DateTime
   maxClaims  Int      @default(999999)
   claims     Int      @default(0)
+
+  creditTxs  CreditTransaction[]
 
   createdAt  DateTime @default(now())
 }
@@ -62,5 +74,32 @@ model Badge {
 
   issuedAt   DateTime @default(now())
 
+  creditTx   CreditTransaction?
+
   @@unique([userId, trainingId])
+}
+
+model CreditTransaction {
+  id          String         @id @default(cuid())
+  userId      String
+  amount      Int
+  type        CreditTxType
+  reason      CreditTxReason
+
+  trainingId  String?
+  badgeId     String?  @unique
+  claimTokenId String?
+
+  meta        Json?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training    Training? @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  badge       Badge?   @relation(fields: [badgeId], references: [id], onDelete: SetNull)
+  claimToken  ClaimToken? @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([trainingId, createdAt])
+  @@index([claimTokenId, createdAt])
 }
