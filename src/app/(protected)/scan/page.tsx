@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import BackButton from "@/components/BackButton";
 
 export default function ScanPage() {
   const router = useRouter();
@@ -42,8 +43,18 @@ export default function ScanPage() {
   }, [token, router]);
 
   return (
-    <main style={{ maxWidth: 600, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>Scan</h1>
+      <main style={{ maxWidth: 600, margin: "40px auto", padding: 16 }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 16,
+      }}
+    >
+      <BackButton />
+      <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>QR scannen</h1>
+    </div>
 
       {!token ? (
         <div style={{ padding: 12, border: "1px solid #999", borderRadius: 8 }}>

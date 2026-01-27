@@ -2,6 +2,7 @@ import { authOptions } from "@/auth";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import MeineDatenForm from "./MeineDatenForm";
 
 export default async function MeineDatenPage() {
@@ -15,9 +16,20 @@ export default async function MeineDatenPage() {
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>
-        Meine Daten
-      </h1>
+      {/* Kopfbereich mit Zurück */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 16,
+        }}
+      >
+        <BackButton />
+        <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>
+          Meine Daten
+        </h1>
+      </div>
 
       <MeineDatenForm
         initial={{
@@ -26,7 +38,9 @@ export default async function MeineDatenPage() {
           company: (user as any).company ?? "",
           gender: (user as any).gender ?? "",
           companyAddress: (user as any).companyAddress ?? "",
-          birthDate: user.birthDate ? user.birthDate.toLocaleDateString("de-DE") : "",
+          birthDate: user.birthDate
+            ? user.birthDate.toLocaleDateString("de-DE")
+            : "",
         }}
       />
     </main>

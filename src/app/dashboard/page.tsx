@@ -2,17 +2,18 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
+import LogoutButton from "@/components/LogoutButton";
 
 export default async function DashboardPage() {
-const session = await getServerSession(authOptions);
-if (!session) redirect("/login");
-
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
       <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
         Menü
       </h1>
+
       <p style={{ color: "#aaa", marginBottom: 18 }}>
         Was möchtest du machen?
       </p>
@@ -74,6 +75,11 @@ if (!session) redirect("/login");
             Zertifikat per Scan abholen
           </div>
         </Link>
+      </div>
+
+      {/* Logout ganz unten */}
+      <div style={{ marginTop: 32 }}>
+        <LogoutButton />
       </div>
     </main>
   );
