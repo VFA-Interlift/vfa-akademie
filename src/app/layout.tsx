@@ -1,6 +1,22 @@
 import "./globals.css";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "VFA-Akademie",
+  applicationName: "VFA-Akademie",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#0b0b0b",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "VFA-Akademie",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+};
 
 export default async function RootLayout({
   children,
@@ -19,7 +35,6 @@ export default async function RootLayout({
           minHeight: "100vh",
         }}
       >
-        {/* Minimal-Header */}
         <header
           style={{
             padding: "14px 20px",
