@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -14,7 +14,6 @@
     "html5-qrcode": "^2.3.8",
     "next": "16.1.4",
     "next-auth": "^4.24.13",
-    "prisma": "^6.19.2",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -25,8 +24,10 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
+    "prisma": "^6.19.2",
     "typescript": "^5"
   }
 }
