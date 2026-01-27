@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "VFA-Akademie",
   applicationName: "VFA-Akademie",
-  manifest: "/manifest.webmanifest",
   themeColor: "#0b0b0b",
   appleWebApp: {
     capable: true,
