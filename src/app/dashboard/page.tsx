@@ -41,28 +41,48 @@ export default async function DashboardPage() {
     <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
       <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>Menü</h1>
 
-      <p style={{ color: "#aaa", marginBottom: 18 }}>Was möchtest du machen?</p>
+      <p style={{ color: "#aaa", marginBottom: 18 }}>
+        Was möchtest du machen?
+      </p>
 
       <div style={{ display: "grid", gap: 12 }}>
+        {/* Zertifikate */}
         <Link href="/meine-badges" style={cardStyle}>
           Meine Zertifikate →
           <div style={subStyle}>Alle erreichten Zertifikate ansehen</div>
         </Link>
 
+        {/* Profil */}
         <Link href="/meine-daten" style={cardStyle}>
           Meine Daten →
           <div style={subStyle}>Profil & Angaben bearbeiten</div>
         </Link>
 
+        {/* ✅ Website Schulungen (Extern) */}
+        <a
+          href="https://www.vfa-interlift.de/schulungen"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={cardStyle}
+        >
+          Schulungen (Website) →
+          <div style={subStyle}>
+            Kursliste auf vfa-interlift.de öffnen
+          </div>
+        </a>
+
         {/* Admin Bereich nur für ADMIN */}
         {isAdmin && (
           <Link href="/admin" style={cardStyle}>
             Admin →
-            <div style={subStyle}>Trainings verwalten, Vergaben, Credits</div>
+            <div style={subStyle}>
+              Trainings verwalten, Vergaben, Credits
+            </div>
           </Link>
         )}
       </div>
 
+      {/* Logout */}
       <div style={{ marginTop: 32 }}>
         <LogoutButton />
       </div>
