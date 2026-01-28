@@ -34,12 +34,11 @@ model User {
   gender         String?
   companyAddress String?
 
-  role         Role     @default(USER)
+  role        Role @default(USER)
+  creditsTotal Int  @default(0)
 
-  creditsTotal  Int      @default(0)
-
-  badges        Badge[]
-  creditTxs     CreditTransaction[]
+  badges    Badge[]
+  creditTxs CreditTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -50,6 +49,7 @@ model Training {
   title        String
   date         DateTime
   createdAt    DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   creditsAward Int      @default(0)
 
   tokens    ClaimToken[]
@@ -63,48 +63,53 @@ model ClaimToken {
   trainingId String
   training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
-  expiresAt  DateTime
-  maxClaims  Int      @default(999999)
-  claims     Int      @default(0)
+  expiresAt DateTime
+  maxClaims Int @default(999999)
+  claims    Int @default(0)
 
-  creditTxs  CreditTransaction[]
+  creditTxs CreditTransaction[]
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Badge {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   userId     String
   trainingId String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
-  issuedAt   DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
-  creditTx   CreditTransaction?
+  issuedAt DateTime @default(now())
+
+  // ✅ Admin-Metadaten
+  issuedById String?
+  note       String?
+
+  creditTx CreditTransaction?
 
   @@unique([userId, trainingId])
 }
 
 model CreditTransaction {
-  id          String         @id @default(cuid())
-  userId      String
-  amount      Int
-  type        CreditTxType
-  reason      CreditTxReason
+  id     String @id @default(cuid())
+  userId String
+  amount Int
+  type   CreditTxType
+  reason CreditTxReason
 
-  trainingId  String?
-  badgeId     String?  @unique
+  trainingId   String?
+  badgeId      String? @unique
   claimTokenId String?
 
-  meta        Json?
+  meta Json?
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training    Training? @relation(fields: [trainingId], references: [id], onDelete: SetNull)
-  badge       Badge?   @relation(fields: [badgeId], references: [id], onDelete: SetNull)
-  claimToken  ClaimToken? @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training?   @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  badge      Badge?      @relation(fields: [badgeId], references: [id], onDelete: SetNull)
+  claimToken ClaimToken? @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([trainingId, createdAt])

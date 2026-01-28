@@ -9,13 +9,14 @@ export default function BackButton({ label = "Zurück" }: { label?: string }) {
     <button
       onClick={() => router.back()}
       style={{
-        border: "1px solid rgba(255,255,255,0.2)",
-        background: "rgba(255,255,255,0.06)",
-        color: "#fff",
+        border: "1px solid rgba(0,0,0,0.15)",
+        background: "white",
+        color: "#111",
         padding: "10px 12px",
         borderRadius: 10,
         cursor: "pointer",
         fontWeight: 700,
+        boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
       }}
     >
       ← {label}
