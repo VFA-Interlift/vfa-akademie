@@ -80,7 +80,6 @@ export default function HeaderClient() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
           textDecoration: "none",
         }}
       >
@@ -99,7 +98,7 @@ export default function HeaderClient() {
 
       {/* ✅ Right Side */}
       {email ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           {/* Credits */}
           <span
             style={{
@@ -116,10 +115,22 @@ export default function HeaderClient() {
             Credits: {credits ?? 0}
           </span>
 
-          {/* Willkommen Name */}
-          <span style={{ fontWeight: 600, color: "#aaa" }}>
-            Willkommen {name ?? "User"}
-          </span>
+          {/* Willkommen + Name zweizeilig */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              lineHeight: 1.2,
+              textAlign: "right",
+            }}
+          >
+            <span style={{ fontSize: 13, opacity: 0.7 }}>
+              Willkommen
+            </span>
+            <span style={{ fontWeight: 700, color: "#fff" }}>
+              {name ?? "User"}
+            </span>
+          </div>
         </div>
       ) : (
         <span style={{ fontWeight: 400, color: "#aaa" }}>
