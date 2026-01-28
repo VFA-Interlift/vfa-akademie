@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -37,15 +38,14 @@ function idFromUrl(req: Request) {
   return parts[parts.length - 1] || null;
 }
 
-function resolveId(req: Request, params?: { id?: string }) {
-  return params?.id ?? idFromUrl(req);
-}
+type Ctx = { params: Promise<{ id: string }> };
 
-export async function PATCH(req: Request, context: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: Ctx) {
   const gate = await requireAdmin();
   if (!gate.ok) return gate.res;
 
-  const id = resolveId(req, context?.params);
+  const { id: paramId } = await context.params;
+  const id = paramId ?? idFromUrl(req);
   if (!id) return fail("MISSING_ID", 400);
 
   try {
@@ -87,11 +87,12 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
   }
 }
 
-export async function DELETE(req: Request, context: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: Ctx) {
   const gate = await requireAdmin();
   if (!gate.ok) return gate.res;
 
-  const id = resolveId(req, context?.params);
+  const { id: paramId } = await context.params;
+  const id = paramId ?? idFromUrl(req);
   if (!id) return fail("MISSING_ID", 400);
 
   try {
