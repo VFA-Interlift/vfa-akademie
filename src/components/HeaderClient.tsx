@@ -5,7 +5,13 @@ import { useSession } from "next-auth/react";
 
 type MeResponse =
   | { ok: false; loggedIn: false }
-  | { ok: true; loggedIn: true; email: string; creditsTotal: number; role: "USER" | "ADMIN" };
+  | {
+      ok: true;
+      loggedIn: true;
+      email: string;
+      creditsTotal: number;
+      role: "USER" | "ADMIN";
+    };
 
 export default function HeaderClient() {
   const { status } = useSession();
@@ -34,11 +40,12 @@ export default function HeaderClient() {
         setCredits(data.creditsTotal);
         setRole(data.role);
       } catch {
-        // offline etc.
+        // ignore
       }
     }
 
     if (status === "authenticated") load();
+
     if (status === "unauthenticated") {
       setEmail(null);
       setCredits(null);
@@ -58,14 +65,36 @@ export default function HeaderClient() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        fontWeight: 700,
         gap: 16,
       }}
     >
-      <span>VFA-Akademie</span>
+      {/* ✅ Logo statt Text */}
+      <a
+        href="/dashboard"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          textDecoration: "none",
+        }}
+      >
+        <img
+          src="/logo.png"
+          alt="VFA Logo"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            objectFit: "contain",
+            opacity: 0.95,
+          }}
+        />
+      </a>
 
+      {/* ✅ Right Side */}
       {email ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Admin Shortcut */}
           {role === "ADMIN" && (
             <a
               href="/admin"
@@ -84,6 +113,7 @@ export default function HeaderClient() {
             </a>
           )}
 
+          {/* Credits Pill */}
           <span
             style={{
               padding: "6px 10px",
@@ -99,10 +129,13 @@ export default function HeaderClient() {
             Credits: {credits ?? 0}
           </span>
 
+          {/* Email */}
           <span style={{ fontWeight: 400, color: "#aaa" }}>{email}</span>
         </div>
       ) : (
-        <span style={{ fontWeight: 400, color: "#aaa" }}>{status === "loading" ? "…" : ""}</span>
+        <span style={{ fontWeight: 400, color: "#aaa" }}>
+          {status === "loading" ? "…" : ""}
+        </span>
       )}
     </header>
   );
