@@ -15,7 +15,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { creditsTotal: true },
+    select: { creditsTotal: true, role: true },
   });
 
   return NextResponse.json({
@@ -23,5 +23,6 @@ export async function GET() {
     loggedIn: true,
     email,
     creditsTotal: user?.creditsTotal ?? 0,
+    role: user?.role ?? "USER",
   });
 }

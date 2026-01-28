@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const title = String(body.title ?? "").trim();
     const dateStr = String(body.date ?? "").trim();
+    const creditsAward = Number(body.creditsAward ?? 0);
     const maxClaims = Number(body.maxClaims ?? 999999);
 
     if (!title || !dateStr) {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       data: {
         title,
         date,
+        creditsAward,
         tokens: {
           create: {
             token,

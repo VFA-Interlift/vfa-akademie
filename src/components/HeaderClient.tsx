@@ -5,12 +5,13 @@ import { useSession } from "next-auth/react";
 
 type MeResponse =
   | { ok: false; loggedIn: false }
-  | { ok: true; loggedIn: true; email: string; creditsTotal: number };
+  | { ok: true; loggedIn: true; email: string; creditsTotal: number; role: "USER" | "ADMIN" };
 
 export default function HeaderClient() {
-  const { status } = useSession(); // "authenticated" | "unauthenticated" | "loading"
+  const { status } = useSession();
   const [email, setEmail] = useState<string | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
+  const [role, setRole] = useState<"USER" | "ADMIN">("USER");
 
   useEffect(() => {
     let cancelled = false;
@@ -25,21 +26,23 @@ export default function HeaderClient() {
         if (!data.ok) {
           setEmail(null);
           setCredits(null);
+          setRole("USER");
           return;
         }
 
         setEmail(data.email);
         setCredits(data.creditsTotal);
+        setRole(data.role);
       } catch {
-        // bei PWA offline o.ä. lieber nichts kaputt machen
+        // offline etc.
       }
     }
 
-    // Sobald Session “authenticated” ist, holen wir die aktuellen Headerdaten
     if (status === "authenticated") load();
     if (status === "unauthenticated") {
       setEmail(null);
       setCredits(null);
+      setRole("USER");
     }
 
     return () => {
@@ -63,6 +66,24 @@ export default function HeaderClient() {
 
       {email ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {role === "ADMIN" && (
+            <a
+              href="/admin"
+              style={{
+                padding: "6px 10px",
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "rgba(255,255,255,0.04)",
+                color: "#fff",
+                textDecoration: "none",
+                fontWeight: 900,
+                fontSize: 14,
+              }}
+            >
+              Admin
+            </a>
+          )}
+
           <span
             style={{
               padding: "6px 10px",
@@ -81,9 +102,7 @@ export default function HeaderClient() {
           <span style={{ fontWeight: 400, color: "#aaa" }}>{email}</span>
         </div>
       ) : (
-        <span style={{ fontWeight: 400, color: "#aaa" }}>
-          {status === "loading" ? "…" : ""}
-        </span>
+        <span style={{ fontWeight: 400, color: "#aaa" }}>{status === "loading" ? "…" : ""}</span>
       )}
     </header>
   );
