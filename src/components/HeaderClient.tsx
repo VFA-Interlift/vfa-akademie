@@ -82,8 +82,8 @@ export default function HeaderClient() {
           src="/logo.png"
           alt="VFA Logo"
           style={{
-            width: 34,
-            height: 34,
+            width: 48,
+            height: 48,
             borderRadius: 8,
             objectFit: "contain",
             opacity: 0.95,
