@@ -13,6 +13,11 @@ enum CreditTxType {
   ADJUSTMENT  // Admin-Korrektur (+/-)
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum CreditTxReason {
   TRAINING_CLAIM
   ADMIN_ADJUST
@@ -28,6 +33,8 @@ model User {
   company        String?
   gender         String?
   companyAddress String?
+
+  role         Role     @default(USER)
 
   creditsTotal  Int      @default(0)
 
