@@ -82,8 +82,8 @@ export default function HeaderClient() {
           src="/logo.png"
           alt="VFA Logo"
           style={{
-            width: 48,
-            height: 48,
+            width: 60,
+            height: 60,
             borderRadius: 8,
             objectFit: "contain",
             opacity: 0.95,
@@ -94,24 +94,7 @@ export default function HeaderClient() {
       {/* ✅ Right Side */}
       {email ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Admin Shortcut */}
-          {role === "ADMIN" && (
-            <a
-              href="/admin"
-              style={{
-                padding: "6px 10px",
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: "rgba(255,255,255,0.04)",
-                color: "#fff",
-                textDecoration: "none",
-                fontWeight: 900,
-                fontSize: 14,
-              }}
-            >
-              Admin
-            </a>
-          )}
+          
 
           {/* Credits Pill */}
           <span
