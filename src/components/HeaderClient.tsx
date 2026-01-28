@@ -9,13 +9,16 @@ type MeResponse =
       ok: true;
       loggedIn: true;
       email: string;
+      name: string | null;
       creditsTotal: number;
       role: "USER" | "ADMIN";
     };
 
 export default function HeaderClient() {
   const { status } = useSession();
+
   const [email, setEmail] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
 
@@ -31,12 +34,14 @@ export default function HeaderClient() {
 
         if (!data.ok) {
           setEmail(null);
+          setName(null);
           setCredits(null);
           setRole("USER");
           return;
         }
 
         setEmail(data.email);
+        setName(data.name);
         setCredits(data.creditsTotal);
         setRole(data.role);
       } catch {
@@ -48,6 +53,7 @@ export default function HeaderClient() {
 
     if (status === "unauthenticated") {
       setEmail(null);
+      setName(null);
       setCredits(null);
       setRole("USER");
     }
@@ -68,7 +74,7 @@ export default function HeaderClient() {
         gap: 16,
       }}
     >
-      {/* ✅ Logo statt Text */}
+      {/* ✅ Logo links */}
       <a
         href="/dashboard"
         style={{
@@ -84,7 +90,7 @@ export default function HeaderClient() {
           style={{
             width: 60,
             height: 60,
-            borderRadius: 8,
+            borderRadius: 10,
             objectFit: "contain",
             opacity: 0.95,
           }}
@@ -94,9 +100,7 @@ export default function HeaderClient() {
       {/* ✅ Right Side */}
       {email ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          
-
-          {/* Credits Pill */}
+          {/* Credits */}
           <span
             style={{
               padding: "6px 10px",
@@ -112,8 +116,10 @@ export default function HeaderClient() {
             Credits: {credits ?? 0}
           </span>
 
-          {/* Email */}
-          <span style={{ fontWeight: 400, color: "#aaa" }}>{email}</span>
+          {/* Willkommen Name */}
+          <span style={{ fontWeight: 600, color: "#aaa" }}>
+            Willkommen {name ?? "User"}
+          </span>
         </div>
       ) : (
         <span style={{ fontWeight: 400, color: "#aaa" }}>
