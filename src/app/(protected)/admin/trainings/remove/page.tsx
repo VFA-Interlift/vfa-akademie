@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
 
 type Training = {
@@ -10,21 +10,15 @@ type Training = {
   creditsAward: number;
 };
 
-export default function AdminTrainingAddPage() {
+export default function AdminTrainingRemovePage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [selectedTrainingId, setSelectedTrainingId] = useState("");
 
-  const [grantEmail, setGrantEmail] = useState("");
-  const [grantCredits, setGrantCredits] = useState("");
-  const [grantNote, setGrantNote] = useState("");
-
-  const selectedTraining = useMemo(
-    () => trainings.find((t) => t.id === selectedTrainingId) ?? null,
-    [trainings, selectedTrainingId]
-  );
+  const [revokeEmail, setRevokeEmail] = useState("");
+  const [revokeNote, setRevokeNote] = useState("");
 
   async function loadTrainings() {
     const res = await fetch("/api/admin/trainings");
@@ -46,21 +40,18 @@ export default function AdminTrainingAddPage() {
     // eslint-disable-next-line
   }, []);
 
-  async function grant() {
+  async function revoke() {
     setLoading(true);
     setMsg("");
 
-    const payload: any = {
-      email: grantEmail.trim().toLowerCase(),
+    const payload = {
+      email: revokeEmail.trim().toLowerCase(),
       trainingId: selectedTrainingId,
-      note: grantNote.trim() || null,
+      note: revokeNote.trim() || null,
     };
 
-    if (grantCredits.trim() === "") payload.credits = null;
-    else payload.credits = Number(grantCredits);
-
     const res = await fetch("/api/admin/grants", {
-      method: "POST",
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
@@ -70,14 +61,9 @@ export default function AdminTrainingAddPage() {
     if (!data.ok) {
       setMsg(data.error);
     } else {
-      if (payload.credits !== null && Number(payload.credits) < 0) {
-        setMsg("✅ Credits abgezogen");
-      } else {
-        setMsg("✅ Schulung hinzugefügt (Zertifikat & Credits vergeben)");
-      }
-      setGrantEmail("");
-      setGrantCredits("");
-      setGrantNote("");
+      setMsg("✅ Schulung entfernt (Credits zurückgebucht)");
+      setRevokeEmail("");
+      setRevokeNote("");
     }
 
     setLoading(false);
@@ -95,7 +81,7 @@ export default function AdminTrainingAddPage() {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <BackButton label="Zurück" />
-          <h1 style={{ fontSize: 42, margin: 0 }}>Schulung hinzufügen</h1>
+          <h1 style={{ fontSize: 42, margin: 0 }}>Schulung entfernen</h1>
         </div>
 
         {msg && (
@@ -112,10 +98,14 @@ export default function AdminTrainingAddPage() {
           </div>
         )}
 
-        <h2 style={{ marginTop: 40 }}>Teilnehmer zuordnen</h2>
+        <h2 style={{ marginTop: 40 }}>Zuordnung rückgängig machen</h2>
 
         <div style={{ display: "grid", gap: 14 }}>
-          <Input label="User E-Mail" value={grantEmail} onChange={setGrantEmail} />
+          <Input
+            label="User E-Mail"
+            value={revokeEmail}
+            onChange={setRevokeEmail}
+          />
 
           <label>
             Training
@@ -126,31 +116,21 @@ export default function AdminTrainingAddPage() {
             >
               {trainings.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.title} (default {t.creditsAward})
+                  {t.title}
                 </option>
               ))}
             </select>
           </label>
 
           <Input
-            label="Credits (leer = default, negativ = abziehen z.B. -5)"
-            value={grantCredits}
-            onChange={(v) => {
-              if (v === "" || v === "-" || /^-?\d+$/.test(v)) setGrantCredits(v);
-            }}
+            label="Notiz (optional)"
+            value={revokeNote}
+            onChange={setRevokeNote}
           />
 
-          <Input label="Notiz" value={grantNote} onChange={setGrantNote} />
-
-          <Button onClick={grant} disabled={loading || !selectedTrainingId}>
-            Speichern
+          <Button onClick={revoke} disabled={loading || !selectedTrainingId}>
+            Entfernen
           </Button>
-
-          {selectedTraining && (
-            <div style={{ fontSize: 13, opacity: 0.75 }}>
-              Default Credits: {selectedTraining.creditsAward}
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -219,4 +199,5 @@ const selectStyle = {
   border: "1px solid rgba(255,255,255,0.15)",
   background: "rgba(255,255,255,0.06)",
   color: "#fff",
+  fontSize: 15,
 };

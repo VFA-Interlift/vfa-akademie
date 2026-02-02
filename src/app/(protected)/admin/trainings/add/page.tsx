@@ -10,16 +10,16 @@ type Training = {
   creditsAward: number;
 };
 
-export default function AdminTrainingsPage() {
+export default function AdminTrainingAddPage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [trainings, setTrainings] = useState<Training[]>([]);
+  const [selectedTrainingId, setSelectedTrainingId] = useState("");
 
-  // New Training
-  const [newTitle, setNewTitle] = useState("");
-  const [newDate, setNewDate] = useState("");
-  const [newCreditsAward, setNewCreditsAward] = useState("0");
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantCredits, setGrantCredits] = useState("");
+  const [grantNote, setGrantNote] = useState("");
 
   async function loadTrainings() {
     const res = await fetch("/api/admin/trainings");
@@ -31,6 +31,9 @@ export default function AdminTrainingsPage() {
     }
 
     setTrainings(data.trainings);
+    if (!selectedTrainingId && data.trainings.length > 0) {
+      setSelectedTrainingId(data.trainings[0].id);
+    }
   }
 
   useEffect(() => {
@@ -38,18 +41,23 @@ export default function AdminTrainingsPage() {
     // eslint-disable-next-line
   }, []);
 
-  async function createTraining() {
+  async function grant() {
     setLoading(true);
     setMsg("");
 
-    const res = await fetch("/api/admin/trainings", {
+    const payload: any = {
+      email: grantEmail.trim().toLowerCase(),
+      trainingId: selectedTrainingId,
+      note: grantNote.trim() || null,
+    };
+
+    if (grantCredits.trim() === "") payload.credits = null;
+    else payload.credits = Number(grantCredits);
+
+    const res = await fetch("/api/admin/grants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: newTitle.trim(),
-        date: newDate.trim(),
-        creditsAward: Number(newCreditsAward),
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
@@ -57,44 +65,16 @@ export default function AdminTrainingsPage() {
     if (!data.ok) {
       setMsg(data.error);
     } else {
-      setMsg("✅ Training erstellt");
-      setNewTitle("");
-      setNewDate("");
-      setNewCreditsAward("0");
-      await loadTrainings();
+      if (payload.credits !== null && Number(payload.credits) < 0) {
+        setMsg("✅ Credits abgezogen");
+      } else {
+        setMsg("✅ Schulung hinzugefügt (Zertifikat & Credits vergeben)");
+      }
+      setGrantEmail("");
+      setGrantCredits("");
+      setGrantNote("");
     }
 
-    setLoading(false);
-  }
-
-  async function updateCredits(id: string, value: number) {
-    setLoading(true);
-
-    await fetch(`/api/admin/trainings/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ creditsAward: value }),
-    });
-
-    await loadTrainings();
-    setLoading(false);
-  }
-
-  async function removeTraining(id: string) {
-    if (!confirm("Training wirklich löschen?")) return;
-
-    setLoading(true);
-
-    const res = await fetch(`/api/admin/trainings/${id}`, {
-      method: "DELETE",
-    });
-
-    const data = await res.json();
-
-    if (!data.ok) setMsg(data.error);
-    else setMsg("✅ Training gelöscht");
-
-    await loadTrainings();
     setLoading(false);
   }
 
@@ -108,10 +88,9 @@ export default function AdminTrainingsPage() {
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <BackButton label="Zurück" />
-          <h1 style={{ fontSize: 42, margin: 0 }}>Schulung erstellen</h1>
+          <h1 style={{ fontSize: 42, margin: 0 }}>Schulung hinzufügen</h1>
         </div>
 
         {msg && (
@@ -128,61 +107,44 @@ export default function AdminTrainingsPage() {
           </div>
         )}
 
-        {/* Trainings */}
-        <h2 style={{ marginTop: 40 }}>Trainings verwalten</h2>
+        <h2 style={{ marginTop: 40 }}>Teilnehmer zuordnen</h2>
 
-        <div style={{ marginBottom: 30, display: "grid", gap: 14 }}>
-          <Input label="Titel" value={newTitle} onChange={setNewTitle} />
-          <Input label="Datum" value={newDate} onChange={setNewDate} />
-          <Input
-            label="creditsAward"
-            value={newCreditsAward}
-            onChange={setNewCreditsAward}
-          />
-          <Button onClick={createTraining} disabled={loading}>
-            Training erstellen
-          </Button>
-        </div>
-
-        {/* List */}
         <div style={{ display: "grid", gap: 14 }}>
-          {trainings.map((t) => (
-            <div
-              key={t.id}
-              style={{
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 14,
-                padding: 14,
-                background: "rgba(255,255,255,0.04)",
-              }}
+          <Input label="User E-Mail" value={grantEmail} onChange={setGrantEmail} />
+
+          <label>
+            Training
+            <select
+              value={selectedTrainingId}
+              onChange={(e) => setSelectedTrainingId(e.target.value)}
+              style={selectStyle}
             >
-              <div style={{ fontWeight: 700 }}>{t.title}</div>
-              <div style={{ fontSize: 13, opacity: 0.8 }}>
-                Credits: {t.creditsAward}
-              </div>
+              {trainings.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title} (default {t.creditsAward})
+                </option>
+              ))}
+            </select>
+          </label>
 
-              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                <ButtonSmall onClick={() => updateCredits(t.id, t.creditsAward - 1)}>
-                  -1
-                </ButtonSmall>
-                <ButtonSmall onClick={() => updateCredits(t.id, t.creditsAward + 1)}>
-                  +1
-                </ButtonSmall>
+          <Input
+            label="Credits (leer = default, negativ = abziehen z.B. -5)"
+            value={grantCredits}
+            onChange={(v) => {
+              if (v === "" || v === "-" || /^-?\d+$/.test(v)) setGrantCredits(v);
+            }}
+          />
 
-                {/* ✅ Schulung löschen */}
-                <ButtonSmall danger onClick={() => removeTraining(t.id)}>
-                  Löschen
-                </ButtonSmall>
-              </div>
-            </div>
-          ))}
+          <Input label="Notiz" value={grantNote} onChange={setGrantNote} />
+
+          <Button onClick={grant} disabled={loading || !selectedTrainingId}>
+            Speichern
+          </Button>
         </div>
       </div>
     </div>
   );
 }
-
-/* ---------- UI COMPONENTS ---------- */
 
 function Input({
   label,
@@ -227,25 +189,6 @@ function Button({ children, onClick, disabled }: any) {
   );
 }
 
-function ButtonSmall({ children, onClick, danger }: any) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: "8px 12px",
-        borderRadius: 10,
-        border: "1px solid rgba(255,255,255,0.2)",
-        background: danger ? "rgba(255,0,0,0.15)" : "rgba(255,255,255,0.08)",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 700,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
 const inputStyle = {
   width: "100%",
   padding: "12px 14px",
@@ -254,4 +197,13 @@ const inputStyle = {
   background: "rgba(255,255,255,0.06)",
   color: "#fff",
   fontSize: 15,
+};
+
+const selectStyle = {
+  width: "100%",
+  padding: "12px 14px",
+  borderRadius: 14,
+  border: "1px solid rgba(255,255,255,0.15)",
+  background: "rgba(255,255,255,0.06)",
+  color: "#fff",
 };
