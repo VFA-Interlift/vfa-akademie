@@ -1,86 +1,48 @@
-import "./globals.css";
-import type { Metadata } from "next";
-import HeaderClient from "@/components/HeaderClient";
-import Providers from "@/components/Providers";
-import SplashGate from "@/components/SplashGate";
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
 
-export const metadata: Metadata = {
-  title: "VFA-Akademie",
-  applicationName: "VFA-Akademie",
-  themeColor: "#0b0b0b",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "VFA-Akademie",
-  },
-  icons: {
-    apple: "/apple-touch-icon.png",
-  },
-};
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="de">
-      <body
-        style={{
-          margin: 0,
-          background: "#000",
-          color: "#fff",
-          minHeight: "100vh",
-          position: "relative",
-        }}
-      >
-        {/* ✅ Background Image Layer (liegt hinter allem) */}
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 0,
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
 
-            backgroundImage: "url('/background.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
+  /* ✅ verhindert das „Runterziehen“ (Bounce / Scroll-Chaining) */
+  overscroll-behavior-y: none;
 
-            // ✅ macht Text/UI lesbar
-            filter: "brightness(0.35)",
-            transform: "scale(1.02)",
-          }}
-        />
+  /* ✅ damit beim Bounce nicht plötzlich weiß durchscheint */
+  background: #000;
+}
 
-        {/* ✅ Optionaler Dark Overlay für noch bessere Lesbarkeit */}
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 0,
-            background: "rgba(0,0,0,0.45)",
-          }}
-        />
+body {
+  color: var(--foreground);
+  background: transparent; /* ✅ dein Background kommt aus dem fixed Image Layer im layout */
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-        <Providers>
-          {/* ✅ Splash immer beim Start */}
-          <SplashGate durationMs={2000} logoSrc="/logo.png" title="VFA Akademie" />
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
 
-          {/* ✅ Alles UI über dem Hintergrund */}
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <HeaderClient />
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
-            {/* ✅ App-Content: fix, nicht scrollbar */}
-            <main
-              style={{
-                padding: 24,
-                paddingTop: 104,
-
-                height: "calc(100vh - 104px)",
-                overflow: "hidden",
-              }}
-            >
-              {children}
-            </main>
-          </div>
-        </Providers>
-      </body>
-    </html>
-  );
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
 }

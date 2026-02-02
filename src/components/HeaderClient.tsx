@@ -66,21 +66,23 @@ export default function HeaderClient() {
   return (
     <header
       style={{
-        // ✅ sticky
+        /* ✅ Header bleibt immer oben */
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 1000,
+        zIndex: 2000,
 
-        // ✅ wichtig: eigener Hintergrund, sonst wirkt’s “transparent”
-        background: "rgba(10, 10, 12, 0.92)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
+        /* ✅ komplett deckender Hintergrund */
+        background: "rgba(0,0,0,0.92)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
 
-        // ✅ dein bisheriges Layout
-        padding: "14px 20px",
+        /* ✅ klare Abgrenzung */
         borderBottom: "1px solid rgba(255,255,255,0.12)",
+
+        /* ✅ Layout */
+        padding: "14px 20px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -116,11 +118,11 @@ export default function HeaderClient() {
           <span
             style={{
               padding: "6px 10px",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "1px solid rgba(255,255,255,0.18)",
               borderRadius: 999,
               fontWeight: 800,
               fontSize: 14,
-              background: "rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.08)",
               backdropFilter: "blur(8px)",
               WebkitBackdropFilter: "blur(8px)",
             }}
@@ -129,7 +131,7 @@ export default function HeaderClient() {
             Credits: {credits ?? 0}
           </span>
 
-          {/* Willkommen + Name zweizeilig */}
+          {/* Willkommen + Name */}
           <div
             style={{
               display: "flex",
@@ -138,13 +140,16 @@ export default function HeaderClient() {
               textAlign: "right",
             }}
           >
-            <span style={{ fontSize: 13, opacity: 0.7 }}>Willkommen</span>
+            <span style={{ fontSize: 13, opacity: 0.7 }}>
+              Willkommen
+            </span>
+
             <span style={{ fontWeight: 700, color: "#fff" }}>
               {name ?? "User"}
             </span>
 
-            {/* Optional: Rolle anzeigen (nur falls du willst) */}
-            {/* <span style={{ fontSize: 11, opacity: 0.6 }}>{role}</span> */}
+            {/* Optional: Rolle anzeigen */}
+            {/* <span style={{ fontSize: 11, opacity: 0.5 }}>{role}</span> */}
           </div>
         </div>
       ) : (
