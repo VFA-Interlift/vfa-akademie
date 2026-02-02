@@ -1,48 +1,71 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+import "./globals.css";
+import type { Metadata } from "next";
+import HeaderClient from "@/components/HeaderClient";
+import Providers from "@/components/Providers";
+import SplashGate from "@/components/SplashGate";
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+export const metadata: Metadata = {
+  title: "VFA-Akademie",
+  applicationName: "VFA-Akademie",
+  themeColor: "#0b0b0b",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "VFA-Akademie",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+};
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="de">
+      <body
+        style={{
+          margin: 0,
+          background: "#000",
+          color: "#fff",
+          minHeight: "100vh",
+          position: "relative",
+        }}
+      >
+        {/* ✅ Background Image Layer (liegt hinter allem) */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
 
-  /* ✅ verhindert das „Runterziehen“ (Bounce / Scroll-Chaining) */
-  overscroll-behavior-y: none;
+            backgroundImage: "url('/background.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
 
-  /* ✅ damit beim Bounce nicht plötzlich weiß durchscheint */
-  background: #000;
-}
+            filter: "brightness(0.35)",
+            transform: "scale(1.02)",
+          }}
+        />
 
-body {
-  color: var(--foreground);
-  background: transparent; /* ✅ dein Background kommt aus dem fixed Image Layer im layout */
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+        {/* ✅ Optionaler Dark Overlay */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            background: "rgba(0,0,0,0.45)",
+          }}
+        />
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
+        <Providers>
+          <SplashGate durationMs={2000} logoSrc="/logo.png" title="VFA Akademie" />
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <HeaderClient />
+            <main style={{ padding: 24, paddingTop: 104 }}>{children}</main>
+          </div>
+        </Providers>
+      </body>
+    </html>
+  );
 }
