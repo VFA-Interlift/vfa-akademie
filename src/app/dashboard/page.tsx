@@ -48,13 +48,13 @@ export default async function DashboardPage() {
       <div style={{ display: "grid", gap: 12 }}>
         {/* Zertifikate */}
         <Link href="/meine-badges" style={cardStyle}>
-          Meine Zertifikate →
-          <div style={subStyle}>Alle erreichten Zertifikate ansehen</div>
+          Meine Schulungen 
+          <div style={subStyle}>Alle abgeschlossenen Schulungen ansehen</div>
         </Link>
 
         {/* Profil */}
         <Link href="/meine-daten" style={cardStyle}>
-          Meine Daten →
+          Meine Daten 
           <div style={subStyle}>Profil & Angaben bearbeiten</div>
         </Link>
 
@@ -65,16 +65,15 @@ export default async function DashboardPage() {
           rel="noopener noreferrer"
           style={cardStyle}
         >
-          Schulungen (Website) →
+          Schulungen (Website) 
           <div style={subStyle}>
-            Kursliste auf vfa-interlift.de öffnen
           </div>
         </a>
 
         {/* Admin Bereich nur für ADMIN */}
         {isAdmin && (
           <Link href="/admin" style={cardStyle}>
-            Admin →
+            Admin 
             <div style={subStyle}>
               Trainings verwalten, Vergaben, Credits
             </div>

@@ -67,8 +67,10 @@ export default function HeaderClient() {
     <header
       style={{
         // ✅ sticky
-        position: "sticky",
+        position: "fixed",
         top: 0,
+        left: 0,
+        right: 0,
         zIndex: 1000,
 
         // ✅ wichtig: eigener Hintergrund, sonst wirkt’s “transparent”

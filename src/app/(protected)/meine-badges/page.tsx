@@ -37,12 +37,12 @@ export default async function MeineBadgesPage() {
       >
         <BackButton />
         <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>
-          Meine Zertifikate
+          Meine Schulungen
         </h1>
       </div>
 
       {user.badges.length === 0 ? (
-        <p>Noch keine Zertifikate vorhanden.</p>
+        <p>Noch keine Schulungen vorhanden.</p>
       ) : (
         <ul style={{ display: "grid", gap: 12, padding: 0, listStyle: "none" }}>
           {user.badges.map((badge) => (

@@ -22,6 +22,10 @@ export default function AdminPage() {
   const [grantCredits, setGrantCredits] = useState("");
   const [grantNote, setGrantNote] = useState("");
 
+  // Revoke (Badge/Training entfernen)
+  const [revokeEmail, setRevokeEmail] = useState("");
+  const [revokeNote, setRevokeNote] = useState("");
+
   // New Training
   const [newTitle, setNewTitle] = useState("");
   const [newDate, setNewDate] = useState("");
@@ -76,10 +80,43 @@ export default function AdminPage() {
     if (!data.ok) {
       setMsg(data.error);
     } else {
-      setMsg("✅ Zertifikat & Credits vergeben");
+      if (payload.credits !== null && Number(payload.credits) < 0) {
+        setMsg("✅ Credits abgezogen");
+      } else {
+        setMsg("✅ Zertifikat & Credits vergeben");
+      }
       setGrantEmail("");
       setGrantCredits("");
       setGrantNote("");
+    }
+
+    setLoading(false);
+  }
+
+  async function revoke() {
+    setLoading(true);
+    setMsg("");
+
+    const payload = {
+      email: revokeEmail.trim().toLowerCase(),
+      trainingId: selectedTrainingId,
+      note: revokeNote.trim() || null,
+    };
+
+    const res = await fetch("/api/admin/grants", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      setMsg(data.error);
+    } else {
+      setMsg("✅ Schulung/Zertifikat entfernt (Credits zurückgebucht)");
+      setRevokeEmail("");
+      setRevokeNote("");
     }
 
     setLoading(false);
@@ -197,15 +234,46 @@ export default function AdminPage() {
           </label>
 
           <Input
-            label="Credits (leer = default)"
+            label="Credits (leer = default, negativ = abziehen z.B. -5)"
             value={grantCredits}
-            onChange={setGrantCredits}
+            onChange={(v) => {
+              // erlaubt nur: leer, "-" , oder Zahlen mit optionalem "-" vorne
+              if (v === "" || v === "-" || /^-?\d+$/.test(v)) setGrantCredits(v);
+            }}
           />
 
           <Input label="Notiz" value={grantNote} onChange={setGrantNote} />
 
-          <Button onClick={grant} disabled={loading}>
+          <Button onClick={grant} disabled={loading || !selectedTrainingId}>
             Vergeben
+          </Button>
+        </div>
+
+        {/* Revoke */}
+        <h2 style={{ marginTop: 40 }}>Schulung/Zertifikat entfernen</h2>
+
+        <div style={{ display: "grid", gap: 14 }}>
+          <Input label="User E-Mail" value={revokeEmail} onChange={setRevokeEmail} />
+
+          <label>
+            Training
+            <select
+              value={selectedTrainingId}
+              onChange={(e) => setSelectedTrainingId(e.target.value)}
+              style={selectStyle}
+            >
+              {trainings.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <Input label="Notiz (optional)" value={revokeNote} onChange={setRevokeNote} />
+
+          <Button onClick={revoke} disabled={loading || !selectedTrainingId}>
+            Entfernen
           </Button>
         </div>
 
@@ -284,11 +352,7 @@ function Input({
   );
 }
 
-function Button({
-  children,
-  onClick,
-  disabled,
-}: any) {
+function Button({ children, onClick, disabled }: any) {
   return (
     <button
       onClick={onClick}
@@ -302,6 +366,7 @@ function Button({
         color: "#000",
         border: "none",
         cursor: "pointer",
+        opacity: disabled ? 0.6 : 1,
       }}
     >
       {children}
@@ -309,11 +374,7 @@ function Button({
   );
 }
 
-function ButtonSmall({
-  children,
-  onClick,
-  danger,
-}: any) {
+function ButtonSmall({ children, onClick, danger }: any) {
   return (
     <button
       onClick={onClick}
