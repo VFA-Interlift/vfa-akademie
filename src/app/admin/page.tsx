@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
@@ -36,13 +37,22 @@ export default async function AdminMenuPage() {
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>Admin</h1>
-      <p style={{ color: "#aaa", marginBottom: 18 }}>Was möchtest du machen?</p>
+      {/* ✅ Header mit BackButton */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <BackButton label="Zurück" />
+        <h1 style={{ fontSize: 32, fontWeight: 800, margin: 0 }}>Admin</h1>
+      </div>
+
+      <p style={{ color: "#aaa", marginTop: 14, marginBottom: 18 }}>
+        Was möchtest du machen?
+      </p>
 
       <div style={{ display: "grid", gap: 12 }}>
         <Link href="/admin/trainings" style={cardStyle}>
-          Schulung erstellen / Trainings verwalten →
-          <div style={subStyle}>Trainings anlegen, creditsAward setzen, manuell vergeben</div>
+          Schulung erstellen →
+          <div style={subStyle}>
+            Trainings verwalten, creditsAward setzen, Vergaben & Credits
+          </div>
         </Link>
 
         <Link href="/admin/users" style={cardStyle}>
