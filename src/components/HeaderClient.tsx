@@ -66,6 +66,17 @@ export default function HeaderClient() {
   return (
     <header
       style={{
+        // ✅ sticky
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+
+        // ✅ wichtig: eigener Hintergrund, sonst wirkt’s “transparent”
+        background: "rgba(10, 10, 12, 0.92)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+
+        // ✅ dein bisheriges Layout
         padding: "14px 20px",
         borderBottom: "1px solid rgba(255,255,255,0.12)",
         display: "flex",
@@ -109,6 +120,7 @@ export default function HeaderClient() {
               fontSize: 14,
               background: "rgba(255,255,255,0.06)",
               backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
             title="Gesamtcredits"
           >
@@ -124,12 +136,13 @@ export default function HeaderClient() {
               textAlign: "right",
             }}
           >
-            <span style={{ fontSize: 13, opacity: 0.7 }}>
-              Willkommen
-            </span>
+            <span style={{ fontSize: 13, opacity: 0.7 }}>Willkommen</span>
             <span style={{ fontWeight: 700, color: "#fff" }}>
               {name ?? "User"}
             </span>
+
+            {/* Optional: Rolle anzeigen (nur falls du willst) */}
+            {/* <span style={{ fontSize: 11, opacity: 0.6 }}>{role}</span> */}
           </div>
         </div>
       ) : (

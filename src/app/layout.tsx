@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SplashGate durationMs={2000} logoSrc="/logo.png" title="VFA Akademie" />
 
           <HeaderClient />
-          <main style={{ padding: 24 }}>{children}</main>
+          <main style={{ padding: 24, paddingTop: 112 }}>{children}</main>
         </Providers>
       </body>
     </html>
