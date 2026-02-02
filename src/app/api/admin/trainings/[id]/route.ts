@@ -96,10 +96,27 @@ export async function DELETE(req: NextRequest, context: Ctx) {
   if (!id) return fail("MISSING_ID", 400);
 
   try {
+    // 1) Block: wenn Badges existieren (Teilnehmer zugeordnet)
     const badgeCount = await prisma.badge.count({ where: { trainingId: id } });
     if (badgeCount > 0) return fail("TRAINING_HAS_BADGES", 409);
 
-    await prisma.training.delete({ where: { id } });
+    // 2) Block: wenn Ledger-Referenzen existieren
+    // (z.B. Admin hat Credits mit trainingId gebucht)
+    const creditTxCount = await prisma.creditTransaction.count({
+      where: { trainingId: id },
+    });
+    if (creditTxCount > 0) return fail("TRAINING_HAS_CREDIT_TX", 409);
+
+    // 3) Safe delete in Transaction (inkl. Tokens, falls vorhanden)
+    await prisma.$transaction(async (tx) => {
+      // Dein TrainingPage include:{tokens:true} => Tokens hängen sehr wahrscheinlich am Training.
+      // Modellname kann Token oder TrainingToken sein. Wir löschen "best effort".
+      await (tx as any).token?.deleteMany?.({ where: { trainingId: id } }).catch(() => null);
+      await (tx as any).trainingToken?.deleteMany?.({ where: { trainingId: id } }).catch(() => null);
+
+      await tx.training.delete({ where: { id } });
+    });
+
     return ok({});
   } catch (e: any) {
     const code = e?.code ? String(e.code) : null;
