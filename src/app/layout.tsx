@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             // ✅ macht Text/UI lesbar
             filter: "brightness(0.35)",
-            transform: "scale(1.02)", // verhindert dünne Kanten beim Blur/Scroll
+            transform: "scale(1.02)",
           }}
         />
 
@@ -65,7 +65,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* ✅ Alles UI über dem Hintergrund */}
           <div style={{ position: "relative", zIndex: 1 }}>
             <HeaderClient />
-            <main style={{ padding: 24, paddingTop: 104 }}>{children}</main>
+
+            {/* ✅ App-Content: fix, nicht scrollbar */}
+            <main
+              style={{
+                padding: 24,
+                paddingTop: 104,
+
+                height: "calc(100vh - 104px)",
+                overflow: "hidden",
+              }}
+            >
+              {children}
+            </main>
           </div>
         </Providers>
       </body>
