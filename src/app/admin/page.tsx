@@ -26,7 +26,7 @@ export default async function AdminMenuPage() {
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <BackButton label="Zurück" />
         <h1 style={{ fontSize: 32, fontWeight: 800, margin: 0 }}>
-          Schulungen
+          Admin-Bereich
         </h1>
       </div>
 
@@ -38,27 +38,36 @@ export default async function AdminMenuPage() {
         <Link href="/admin/trainings" style={cardStyle}>
           Schulung erstellen →
           <div style={subStyle}>
-            Trainings verwalten, creditsAward setzen, löschen
+            Trainings verwalten, Credits festlegen und löschen
           </div>
         </Link>
 
         <Link href="/admin/trainings/add" style={cardStyle}>
           Schulung hinzufügen →
           <div style={subStyle}>
-            Teilnehmer zuordnen: Badge + Credits vergeben
+            Teilnehmer zuordnen: Zertifikat + Credits vergeben
           </div>
         </Link>
 
         <Link href="/admin/trainings/remove" style={cardStyle}>
           Schulung entfernen →
           <div style={subStyle}>
-            Zuordnung rückgängig machen: Badge entfernen + Credits zurückbuchen
+            Zuordnung rückgängig machen: Zertifikat entfernen + Credits zurückbuchen
+          </div>
+        </Link>
+
+        <Link href="/admin/credits" style={cardStyle}>
+          Credits vergeben →
+          <div style={subStyle}>
+            Credits manuell vergeben oder abziehen (ohne Schulung)
           </div>
         </Link>
 
         <Link href="/admin/users" style={cardStyle}>
           Admin ernennen →
-          <div style={subStyle}>User per E-Mail zum Admin machen</div>
+          <div style={subStyle}>
+            User per E-Mail zum Admin machen
+          </div>
         </Link>
       </div>
     </main>
