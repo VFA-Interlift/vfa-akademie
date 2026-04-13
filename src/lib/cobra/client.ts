@@ -8,10 +8,14 @@ function getEnv(name: string): string {
   return v;
 }
 
-const COBRA_BASE_URL = getEnv("COBRA_BASE_URL").replace(/\/+$/, "");
-const COBRA_API_KEY = getEnv("COBRA_API_KEY");
-const COBRA_USERNAME = getEnv("COBRA_USERNAME");
-const COBRA_PASSWORD = getEnv("COBRA_PASSWORD");
+function getCobraConfig() {
+  return {
+    baseUrl: getEnv("COBRA_BASE_URL").replace(/\/+$/, ""),
+    apiKey: getEnv("COBRA_API_KEY"),
+    username: getEnv("COBRA_USERNAME"),
+    password: getEnv("COBRA_PASSWORD"),
+  };
+}
 
 let cachedToken: { token: string; expEpochSeconds: number } | null = null;
 
@@ -34,18 +38,19 @@ function readJwtExp(token: string): number {
 }
 
 async function fetchToken(): Promise<{ token: string; expEpochSeconds: number }> {
-  const url = `${COBRA_BASE_URL}/api/token`;
+  const { baseUrl, apiKey, username, password } = getCobraConfig();
+  const url = `${baseUrl}/api/token`;
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      ApiKey: COBRA_API_KEY,
+      ApiKey: apiKey,
       Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      userName: COBRA_USERNAME,
-      password: COBRA_PASSWORD,
+      userName: username,
+      password,
     }),
     cache: "no-store",
   });
@@ -77,15 +82,18 @@ async function fetchToken(): Promise<{ token: string; expEpochSeconds: number }>
 
 async function getValidToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  if (cachedToken && cachedToken.expEpochSeconds - 60 > now) return cachedToken.token;
+  if (cachedToken && cachedToken.expEpochSeconds - 60 > now) {
+    return cachedToken.token;
+  }
 
   cachedToken = await fetchToken();
   return cachedToken.token;
 }
 
 function buildUrl(path: string, params?: CobraQueryParams): string {
+  const { baseUrl } = getCobraConfig();
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${COBRA_BASE_URL}${cleanPath}`);
+  const url = new URL(`${baseUrl}${cleanPath}`);
 
   if (params) {
     for (const [k, v] of Object.entries(params)) {
@@ -93,6 +101,7 @@ function buildUrl(path: string, params?: CobraQueryParams): string {
       url.searchParams.set(k, String(v));
     }
   }
+
   return url.toString();
 }
 
@@ -100,6 +109,7 @@ export async function cobraRequest<T>(
   path: string,
   opts?: { method?: "GET"; params?: CobraQueryParams }
 ): Promise<T> {
+  const { apiKey } = getCobraConfig();
   const method = opts?.method ?? "GET";
   const token = await getValidToken();
   const url = buildUrl(path, opts?.params);
@@ -107,7 +117,7 @@ export async function cobraRequest<T>(
   const res = await fetch(url, {
     method,
     headers: {
-      ApiKey: COBRA_API_KEY,
+      ApiKey: apiKey,
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
