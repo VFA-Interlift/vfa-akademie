@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
 type MeResponse =
@@ -22,34 +22,35 @@ export default function HeaderClient() {
   const [credits, setCredits] = useState<number | null>(null);
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadMe = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me", {
+        cache: "no-store",
+      });
 
-    async function load() {
-      try {
-        const res = await fetch("/api/me", { cache: "no-store" });
-        const data = (await res.json()) as MeResponse;
+      const data = (await res.json()) as MeResponse;
 
-        if (cancelled) return;
-
-        if (!data.ok) {
-          setEmail(null);
-          setName(null);
-          setCredits(null);
-          setRole("USER");
-          return;
-        }
-
-        setEmail(data.email);
-        setName(data.name);
-        setCredits(data.creditsTotal);
-        setRole(data.role);
-      } catch {
-        // ignore
+      if (!data.ok) {
+        setEmail(null);
+        setName(null);
+        setCredits(null);
+        setRole("USER");
+        return;
       }
-    }
 
-    if (status === "authenticated") load();
+      setEmail(data.email);
+      setName(data.name);
+      setCredits(data.creditsTotal);
+      setRole(data.role);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadMe();
+    }
 
     if (status === "unauthenticated") {
       setEmail(null);
@@ -57,31 +58,39 @@ export default function HeaderClient() {
       setCredits(null);
       setRole("USER");
     }
+  }, [status, loadMe]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    const onFocus = () => {
+      loadMe();
+    };
+
+    window.addEventListener("focus", onFocus);
+
+    const interval = window.setInterval(() => {
+      loadMe();
+    }, 15000);
 
     return () => {
-      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
     };
-  }, [status]);
+  }, [status, loadMe]);
 
   return (
     <header
       style={{
-        /* ✅ Header bleibt immer oben */
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         zIndex: 2000,
-
-        /* ✅ komplett deckender Hintergrund */
         background: "rgba(0,0,0,0.92)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-
-        /* ✅ klare Abgrenzung */
         borderBottom: "1px solid rgba(255,255,255,0.12)",
-
-        /* ✅ Layout */
         padding: "14px 20px",
         display: "flex",
         alignItems: "center",
@@ -89,7 +98,6 @@ export default function HeaderClient() {
         gap: 16,
       }}
     >
-      {/* ✅ Logo links */}
       <a
         href="/dashboard"
         style={{
@@ -111,10 +119,8 @@ export default function HeaderClient() {
         />
       </a>
 
-      {/* ✅ Right Side */}
       {email ? (
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {/* Credits */}
           <span
             style={{
               padding: "6px 10px",
@@ -131,7 +137,6 @@ export default function HeaderClient() {
             Credits: {credits ?? 0}
           </span>
 
-          {/* Willkommen + Name */}
           <div
             style={{
               display: "flex",
@@ -140,15 +145,12 @@ export default function HeaderClient() {
               textAlign: "right",
             }}
           >
-            <span style={{ fontSize: 13, opacity: 0.7 }}>
-              Willkommen
-            </span>
+            <span style={{ fontSize: 13, opacity: 0.7 }}>Willkommen</span>
 
             <span style={{ fontWeight: 700, color: "#fff" }}>
               {name ?? "User"}
             </span>
 
-            {/* Optional: Rolle anzeigen */}
             {/* <span style={{ fontSize: 11, opacity: 0.5 }}>{role}</span> */}
           </div>
         </div>
