@@ -8,20 +8,34 @@ export type MyTrainingItem = {
 };
 
 export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
-  // Übergangslösung:
-  // Aktuell noch lokal aus Prisma.
-  // Später hier Cobra-API nach E-Mail abfragen.
-  void email;
+  const user = await prisma.user.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { id: true },
+  });
 
-  return prisma.training.findMany({
+  if (!user) return [];
+
+  const badges = await prisma.badge.findMany({
+    where: { userId: user.id },
     orderBy: {
-      date: "asc",
+      issuedAt: "desc",
     },
     select: {
-      id: true,
-      title: true,
-      date: true,
-      creditsAward: true,
+      training: {
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          creditsAward: true,
+        },
+      },
     },
   });
+
+  return badges.map((b) => ({
+    id: b.training.id,
+    title: b.training.title,
+    date: b.training.date,
+    creditsAward: b.training.creditsAward,
+  }));
 }

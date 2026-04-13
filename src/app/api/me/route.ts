@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: email.trim().toLowerCase() },
     select: {
       email: true,
       name: true,
@@ -26,7 +26,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     loggedIn: true,
-    email: user?.email,
+    email: user?.email ?? email,
     name: user?.name ?? null,
     creditsTotal: user?.creditsTotal ?? 0,
     role: user?.role ?? "USER",
