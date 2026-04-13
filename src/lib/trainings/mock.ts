@@ -1,0 +1,55 @@
+// src/lib/trainings/mock.ts
+import { PublicTraining } from "./types";
+
+export const MOCK_PUBLIC_TRAININGS: PublicTraining[] = [
+  {
+    id: "t1",
+    title: "EFK2 – Verantwortliche Elektrofachkraft (Intensiv)",
+    startDate: "2026-03-10",
+    endDate: "2026-03-12",
+    code: "EFK2-2603",
+    category: "Elektrotechnik",
+    websiteUrl: "https://example-wix-site.de/efk2-2603",
+    isPublic: true,
+  },
+  {
+    id: "t2",
+    title: "Sondertraining – Arbeitssicherheit kompakt",
+    startDate: "2026-03-18",
+    endDate: "2026-03-18",
+    code: "SON-2603",
+    category: "Praxis",
+    websiteUrl: "https://example-wix-site.de/son-2603",
+    isPublic: true,
+  },
+  {
+    id: "t3",
+    title: "VDI – Grundlagen technische Dokumentation",
+    startDate: "2026-04-02",
+    endDate: "2026-04-03",
+    code: "VDI-2604",
+    category: "VDI",
+    websiteUrl: "https://example-wix-site.de/vdi-2604",
+    isPublic: true,
+  },
+  {
+    id: "t4",
+    title: "A1 – Schwerpunkt Praxis: Fehlersuche im Feld",
+    startDate: "2026-04-15",
+    endDate: "2026-04-16",
+    code: "A1-2604",
+    category: "Schwerpunkte",
+    websiteUrl: "https://example-wix-site.de/a1-2604",
+    isPublic: true,
+  },
+  {
+    id: "t5",
+    title: "Interne Schulung – Nur für Mitarbeiter (soll nicht im Kalender erscheinen)",
+    startDate: "2026-03-05",
+    endDate: "2026-03-05",
+    code: "INT-2603",
+    category: "Praxis",
+    websiteUrl: "https://example-wix-site.de/int-2603",
+    isPublic: false,
+  },
+];

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import { prisma } from "@/lib/prisma";
@@ -46,42 +46,54 @@ export default async function DashboardPage() {
       </p>
 
       <div style={{ display: "grid", gap: 12 }}>
-        {/* Zertifikate */}
-        <Link href="/meine-badges" style={cardStyle}>
-          Meine Schulungen 
-          <div style={subStyle}>Alle abgeschlossenen Schulungen ansehen</div>
+        <Link href="/meine-schulungen" style={cardStyle}>
+          Meine Schulungen
+          <div style={subStyle}>
+            Alle Schulungen ansehen, die dir zugeordnet sind
+          </div>
         </Link>
 
-        {/* Profil */}
+        <Link href="/meine-zertifikate" style={cardStyle}>
+          Meine Zertifikate
+          <div style={subStyle}>
+            Übersicht über deine ausgestellten Zertifikate und Nachweise
+          </div>
+        </Link>
+
+        <Link href="/kurskalender" style={cardStyle}>
+          Kurskalender
+          <div style={subStyle}>
+            Alle verfügbaren Schulungen und Termine ansehen
+          </div>
+        </Link>
+
         <Link href="/meine-daten" style={cardStyle}>
-          Meine Daten 
-          <div style={subStyle}>Profil & Angaben bearbeiten</div>
+          Meine Daten
+          <div style={subStyle}>Profil und Angaben bearbeiten</div>
         </Link>
 
-        {/* ✅ Website Schulungen (Extern) */}
         <a
           href="https://www.vfa-interlift.de/schulungen"
           target="_blank"
           rel="noopener noreferrer"
           style={cardStyle}
         >
-          Schulungen (Website) 
+          Schulungen (Website)
           <div style={subStyle}>
+            Öffnet die Website in einem neuen Tab
           </div>
         </a>
 
-        {/* Admin Bereich nur für ADMIN */}
         {isAdmin && (
           <Link href="/admin" style={cardStyle}>
-            Admin 
+            Admin
             <div style={subStyle}>
-              Trainings verwalten, Vergaben, Credits
+              Trainings verwalten, Vergaben und Credits steuern
             </div>
           </Link>
         )}
       </div>
 
-      {/* Logout */}
       <div style={{ marginTop: 32 }}>
         <LogoutButton />
       </div>

@@ -1,23 +1,9 @@
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
-import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) redirect("/login");
-
-  const me = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { role: true },
-  });
-
-  if (me?.role !== "ADMIN") redirect("/dashboard");
-
   const cardStyle: React.CSSProperties = {
     display: "block",
     padding: 16,
@@ -37,7 +23,6 @@ export default async function AdminMenuPage() {
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <BackButton label="Zurück" />
         <h1 style={{ fontSize: 32, fontWeight: 800, margin: 0 }}>
@@ -60,7 +45,7 @@ export default async function AdminMenuPage() {
         <Link href="/admin/trainings/add" style={cardStyle}>
           Schulung hinzufügen →
           <div style={subStyle}>
-            Teilnehmer zuordnen: Badge + Credits vergeben (oder abziehen)
+            Teilnehmer zuordnen: Badge + Credits vergeben
           </div>
         </Link>
 

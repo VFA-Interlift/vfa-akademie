@@ -23,6 +23,14 @@ enum CreditTxReason {
   ADMIN_ADJUST
 }
 
+enum EnrollmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -37,8 +45,9 @@ model User {
   role        Role @default(USER)
   creditsTotal Int  @default(0)
 
-  badges    Badge[]
-  creditTxs CreditTransaction[]
+  badges       Badge[]
+  creditTxs    CreditTransaction[]
+  enrollments  Enrollment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,12 +58,33 @@ model Training {
   title        String
   date         DateTime
   createdAt    DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt    DateTime @updatedAt
   creditsAward Int      @default(0)
 
-  tokens    ClaimToken[]
-  badges    Badge[]
-  creditTxs CreditTransaction[]
+  tokens       ClaimToken[]
+  badges       Badge[]
+  creditTxs    CreditTransaction[]
+  enrollments  Enrollment[]
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  userId     String
+  trainingId String
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  status       EnrollmentStatus @default(PENDING)
+  attended     Boolean          @default(false)
+  passed       Boolean          @default(false)
+
+  registeredAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, trainingId])
+  @@index([trainingId, status])
+  @@index([userId, status])
 }
 
 model ClaimToken {
@@ -64,8 +94,8 @@ model ClaimToken {
   training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
-  maxClaims Int @default(999999)
-  claims    Int @default(0)
+  maxClaims Int      @default(999999)
+  claims    Int      @default(0)
 
   creditTxs CreditTransaction[]
 
@@ -77,12 +107,12 @@ model Badge {
   userId     String
   trainingId String
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
   issuedAt DateTime @default(now())
 
-  // ✅ Admin-Metadaten
+  // Admin-Metadaten
   issuedById String?
   note       String?
 
@@ -104,7 +134,7 @@ model CreditTransaction {
 
   meta Json?
 
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   training   Training?   @relation(fields: [trainingId], references: [id], onDelete: SetNull)
   badge      Badge?      @relation(fields: [badgeId], references: [id], onDelete: SetNull)
   claimToken ClaimToken? @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
