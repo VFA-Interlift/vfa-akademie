@@ -22,60 +22,91 @@ export default function AdminTrainingAddPage() {
   const [grantNote, setGrantNote] = useState("");
 
   async function loadTrainings() {
-    const res = await fetch("/api/admin/trainings");
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/admin/trainings", { cache: "no-store" });
+      const data = await res.json();
 
-    if (!data.ok) {
-      setMsg(data.error ?? "LOAD_FAILED");
-      return;
-    }
+      if (!data.ok) {
+        setMsg(data.error ?? "LOAD_FAILED");
+        return;
+      }
 
-    setTrainings(data.trainings);
-    if (!selectedTrainingId && data.trainings.length > 0) {
-      setSelectedTrainingId(data.trainings[0].id);
+      setTrainings(data.trainings);
+
+      if (!selectedTrainingId && data.trainings.length > 0) {
+        setSelectedTrainingId(data.trainings[0].id);
+      }
+    } catch {
+      setMsg("LOAD_FAILED");
     }
   }
 
   useEffect(() => {
     loadTrainings();
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function grant() {
     setLoading(true);
     setMsg("");
 
-    const payload: any = {
-      email: grantEmail.trim().toLowerCase(),
-      trainingId: selectedTrainingId,
-      note: grantNote.trim() || null,
-    };
+    try {
+      const payload: any = {
+        email: grantEmail.trim().toLowerCase(),
+        trainingId: selectedTrainingId,
+        note: grantNote.trim() || null,
+      };
 
-    if (grantCredits.trim() === "") payload.credits = null;
-    else payload.credits = Number(grantCredits);
-
-    const res = await fetch("/api/admin/grants", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!data.ok) {
-      setMsg(data.error);
-    } else {
-      if (payload.credits !== null && Number(payload.credits) < 0) {
-        setMsg("✅ Credits abgezogen");
+      if (grantCredits.trim() === "") {
+        payload.credits = null;
       } else {
-        setMsg("✅ Schulung hinzugefügt (Zertifikat & Credits vergeben)");
+        payload.credits = Number(grantCredits);
       }
-      setGrantEmail("");
-      setGrantCredits("");
-      setGrantNote("");
-    }
 
-    setLoading(false);
+      const res = await fetch("/api/admin/grants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        if (data.error === "BADGE_ALREADY_EXISTS") {
+          setMsg(
+            "⚠️ Diese Schulung wurde dem Nutzer bereits zugeordnet. Es wurden keine zusätzlichen Credits vergeben."
+          );
+        } else if (data.error === "INVALID_CREDITS") {
+          setMsg(
+            "⚠️ Ungültiger Credit-Wert. Bitte leer lassen oder eine ganze Zahl eintragen."
+          );
+        } else if (data.error === "USER_NOT_FOUND") {
+          setMsg("⚠️ Der Nutzer wurde nicht gefunden.");
+        } else if (data.error === "TRAINING_NOT_FOUND") {
+          setMsg("⚠️ Die Schulung wurde nicht gefunden.");
+        } else if (data.error === "UNAUTHENTICATED") {
+          setMsg("⚠️ Du bist nicht eingeloggt.");
+        } else if (data.error === "FORBIDDEN") {
+          setMsg("⚠️ Du hast keine Berechtigung für diese Aktion.");
+        } else {
+          setMsg(`⚠️ ${data.error}`);
+        }
+      } else {
+        if (payload.credits !== null && Number(payload.credits) < 0) {
+          setMsg("✅ Credits wurden erfolgreich abgezogen.");
+        } else {
+          setMsg("✅ Schulung wurde zugeordnet und Credits wurden vergeben.");
+        }
+
+        setGrantEmail("");
+        setGrantCredits("");
+        setGrantNote("");
+      }
+    } catch {
+      setMsg("⚠️ Serverfehler beim Speichern.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -110,9 +141,13 @@ export default function AdminTrainingAddPage() {
         <h2 style={{ marginTop: 40 }}>Teilnehmer zuordnen</h2>
 
         <div style={{ display: "grid", gap: 14 }}>
-          <Input label="User E-Mail" value={grantEmail} onChange={setGrantEmail} />
+          <Input
+            label="User E-Mail"
+            value={grantEmail}
+            onChange={setGrantEmail}
+          />
 
-          <label>
+          <label style={{ display: "grid", gap: 6 }}>
             Training
             <select
               value={selectedTrainingId}
@@ -131,14 +166,23 @@ export default function AdminTrainingAddPage() {
             label="Credits (leer = default, negativ = abziehen z.B. -5)"
             value={grantCredits}
             onChange={(v) => {
-              if (v === "" || v === "-" || /^-?\d+$/.test(v)) setGrantCredits(v);
+              if (v === "" || v === "-" || /^-?\d+$/.test(v)) {
+                setGrantCredits(v);
+              }
             }}
           />
 
-          <Input label="Notiz" value={grantNote} onChange={setGrantNote} />
+          <Input
+            label="Notiz"
+            value={grantNote}
+            onChange={setGrantNote}
+          />
 
-          <Button onClick={grant} disabled={loading || !selectedTrainingId}>
-            Speichern
+          <Button
+            onClick={grant}
+            disabled={loading || !selectedTrainingId || !grantEmail.trim()}
+          >
+            {loading ? "Speichern..." : "Speichern"}
           </Button>
         </div>
       </div>
@@ -167,7 +211,15 @@ function Input({
   );
 }
 
-function Button({ children, onClick, disabled }: any) {
+function Button({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -180,7 +232,7 @@ function Button({ children, onClick, disabled }: any) {
         background: "#fff",
         color: "#000",
         border: "none",
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
       }}
     >
@@ -189,7 +241,7 @@ function Button({ children, onClick, disabled }: any) {
   );
 }
 
-const inputStyle = {
+const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px 14px",
   borderRadius: 14,
@@ -199,11 +251,12 @@ const inputStyle = {
   fontSize: 15,
 };
 
-const selectStyle = {
+const selectStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px 14px",
   borderRadius: 14,
   border: "1px solid rgba(255,255,255,0.15)",
   background: "rgba(255,255,255,0.06)",
   color: "#fff",
+  fontSize: 15,
 };
