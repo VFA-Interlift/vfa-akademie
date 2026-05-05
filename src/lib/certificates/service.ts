@@ -1,0 +1,71 @@
+import { prisma } from "@/lib/prisma";
+
+export type MyCertificateItem = {
+  id: string;
+  title: string;
+  issuedAt: Date;
+  credits: number;
+  status: string;
+  trainingTitle: string;
+  trainingDate: Date;
+  trainingEndDate: Date | null;
+  location: string | null;
+  instructor: string | null;
+  pdfUrl: string | null;
+};
+
+export async function getMyCertificates(
+  email: string
+): Promise<MyCertificateItem[]> {
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email.trim().toLowerCase(),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!user) return [];
+
+  const certificates = await prisma.certificate.findMany({
+    where: {
+      userId: user.id,
+      status: "ISSUED",
+    },
+    orderBy: {
+      issuedAt: "desc",
+    },
+    select: {
+      id: true,
+      title: true,
+      issuedAt: true,
+      credits: true,
+      status: true,
+      pdfUrl: true,
+      training: {
+        select: {
+          title: true,
+          date: true,
+          endDate: true,
+          location: true,
+          instructor: true,
+        },
+      },
+    },
+  });
+
+  return certificates.map((cert) => ({
+    id: cert.id,
+    title: cert.title,
+    issuedAt: cert.issuedAt,
+    credits: cert.credits,
+    status: cert.status,
+    pdfUrl: cert.pdfUrl,
+    trainingTitle: cert.training.title,
+    trainingDate: cert.training.date,
+    trainingEndDate: cert.training.endDate,
+    location: cert.training.location,
+    instructor: cert.training.instructor,
+  }));
+}

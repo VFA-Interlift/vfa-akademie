@@ -2,6 +2,7 @@ import BackButton from "@/components/BackButton";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getMyCertificates } from "@/lib/certificates/service";
 
 export const dynamic = "force-dynamic";
 
@@ -9,14 +10,7 @@ export default async function MeineZertifikatePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) redirect("/login");
 
-  // Platzhalter:
-  // Später hier echte Zertifikate aus der App-DB laden
-  const certificates: Array<{
-    id: string;
-    title: string;
-    issueDate: string;
-    status: string;
-  }> = [];
+  const certificates = await getMyCertificates(session.user.email);
 
   return (
     <main style={{ maxWidth: 900, margin: "40px auto", padding: 16, color: "#fff" }}>
@@ -28,7 +22,7 @@ export default async function MeineZertifikatePage() {
       </div>
 
       <p style={{ color: "#aaa", marginBottom: 24 }}>
-        Hier findest du deine automatisch erstellten Zertifikate aus abgeschlossenen Schulungen.
+        Hier findest du deine Zertifikate aus abgeschlossenen Schulungen.
       </p>
 
       <div style={{ display: "grid", gap: 12 }}>
@@ -54,13 +48,60 @@ export default async function MeineZertifikatePage() {
                 background: "rgba(255,255,255,0.04)",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 700 }}>{cert.title}</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>
+                {cert.title}
+              </div>
+
               <div style={{ marginTop: 8, color: "#aaa" }}>
-                Ausgestellt am: {cert.issueDate}
+                Schulung: {cert.trainingTitle}
               </div>
+
               <div style={{ marginTop: 6, color: "#aaa" }}>
-                Status: {cert.status}
+                Schulungsdatum: {cert.trainingDate.toLocaleDateString("de-DE")}
+                {cert.trainingEndDate
+                  ? ` bis ${cert.trainingEndDate.toLocaleDateString("de-DE")}`
+                  : ""}
               </div>
+
+              {cert.location && (
+                <div style={{ marginTop: 6, color: "#aaa" }}>
+                  Ort: {cert.location}
+                </div>
+              )}
+
+              {cert.instructor && (
+                <div style={{ marginTop: 6, color: "#aaa" }}>
+                  Dozent: {cert.instructor}
+                </div>
+              )}
+
+              <div style={{ marginTop: 6, color: "#aaa" }}>
+                Ausgestellt am: {cert.issuedAt.toLocaleDateString("de-DE")}
+              </div>
+
+              <div style={{ marginTop: 6, color: "#aaa" }}>
+                Credits: {cert.credits}
+              </div>
+
+              <div style={{ marginTop: 6, color: "#aaa" }}>
+                Status: Verfügbar
+              </div>
+
+              {cert.pdfUrl && (
+                <a
+                  href={cert.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-block",
+                    marginTop: 12,
+                    color: "#fff",
+                    fontWeight: 800,
+                  }}
+                >
+                  Zertifikat herunterladen →
+                </a>
+              )}
             </div>
           ))
         )}
