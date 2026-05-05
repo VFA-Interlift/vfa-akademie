@@ -104,6 +104,13 @@ export default function AdminMenuPage() {
           )}
         </div>
 
+        <Link href="/admin/certificates" style={cardStyle}>
+          Zertifikate verwalten →
+          <div style={subStyle}>
+            Zertifikate für abgeschlossene Schulungen erstellen und Credits vergeben
+          </div>
+        </Link>
+
         <Link href="/admin/credits" style={cardStyle}>
           Credits verwalten →
           <div style={subStyle}>
