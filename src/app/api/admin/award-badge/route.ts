@@ -1,107 +1,151 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
+function deny(status: number, error: string) {
+  return NextResponse.json({ ok: false, error }, { status });
+}
+
+async function requireAdmin() {
+  const session = await getServerSession(authOptions);
+  const adminEmail = session?.user?.email;
+
+  if (!adminEmail) {
+    return { ok: false as const, res: deny(401, "UNAUTHENTICATED") };
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { email: adminEmail.trim().toLowerCase() },
+    select: { id: true, role: true },
+  });
+
+  if (!admin || admin.role !== "ADMIN") {
+    return { ok: false as const, res: deny(403, "FORBIDDEN") };
+  }
+
+  return { ok: true as const, admin };
+}
+
+/**
+ * Legacy-Route:
+ * Früher hat diese Route Badge + Credits vergeben.
+ *
+ * Neuer Ablauf:
+ * - erstellt nur noch eine Enrollment / Schulungszuordnung
+ * - vergibt keine Credits
+ * - erstellt kein Badge
+ * - erstellt kein Zertifikat
+ *
+ * Credits werden später erst bei Zertifikatserstellung vergeben.
+ */
 export async function POST(req: Request) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.res;
+
+  const body = await req.json().catch(() => null);
+
+  const email =
+    typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+
+  const trainingId =
+    typeof body?.trainingId === "string" ? body.trainingId.trim() : "";
+
+  if (!email) return deny(400, "INVALID_EMAIL");
+  if (!trainingId) return deny(400, "INVALID_TRAINING_ID");
+
   try {
-    const session = await getServerSession(authOptions);
-    const adminEmail = session?.user?.email;
-    if (!adminEmail) return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 });
-
-    // Optional: Admin-Check (wenn du Role noch nicht im User hast, erstmal weglassen)
-    // const me = await prisma.user.findUnique({ where: { email: adminEmail }, select: { role: true } });
-    // if (me?.role !== "ADMIN") return NextResponse.json({ error: "Keine Berechtigung." }, { status: 403 });
-
-    const body = await req.json().catch(() => ({}));
-    const email = String(body.email ?? "").trim().toLowerCase();
-    const trainingId = String(body.trainingId ?? "").trim();
-
-    if (!email || !trainingId) {
-      return NextResponse.json({ error: "E-Mail und Training fehlen." }, { status: 400 });
-    }
-
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: { email },
-        select: { id: true, creditsTotal: true },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
       });
-      if (!user) return { ok: false as const, status: 404, error: "User nicht gefunden." };
+
+      if (!user) {
+        throw new Error("USER_NOT_FOUND");
+      }
 
       const training = await tx.training.findUnique({
         where: { id: trainingId },
-        select: { id: true, title: true, creditsAward: true },
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          endDate: true,
+          creditsAward: true,
+        },
       });
-      if (!training) return { ok: false as const, status: 404, error: "Training nicht gefunden." };
 
-      // schon vorhanden?
-      const existing = await tx.badge.findFirst({
-        where: { userId: user.id, trainingId: training.id },
-        select: { id: true },
+      if (!training) {
+        throw new Error("TRAINING_NOT_FOUND");
+      }
+
+      const existingEnrollment = await tx.enrollment.findUnique({
+        where: {
+          userId_trainingId: {
+            userId: user.id,
+            trainingId: training.id,
+          },
+        },
+        select: {
+          id: true,
+          status: true,
+        },
       });
-      if (existing) {
+
+      if (existingEnrollment) {
         return {
-          ok: true as const,
           already: true,
-          badgeId: existing.id,
+          enrollmentId: existingEnrollment.id,
+          status: existingEnrollment.status,
+          userEmail: user.email,
+          userName: user.name,
           trainingTitle: training.title,
-          creditsAwarded: 0,
-          creditsTotal: user.creditsTotal,
+          trainingDate: training.date,
+          creditsAward: training.creditsAward,
         };
       }
 
-      // Badge erstellen
-      const badge = await tx.badge.create({
-        data: { userId: user.id, trainingId: training.id },
-        select: { id: true },
-      });
-
-      const award = training.creditsAward ?? 0;
-
-      if (award !== 0) {
-        await tx.creditTransaction.create({
-          data: {
-            userId: user.id,
-            amount: award,
-            type: "AWARD",
-            reason: "TRAINING_CLAIM", // oder ADMIN_ADJUST wenn du sauber trennen willst
-            trainingId: training.id,
-            badgeId: badge.id,
-            meta: { by: adminEmail, mode: "manual" },
-          },
-        });
-
-        await tx.user.update({
-          where: { id: user.id },
-          data: { creditsTotal: { increment: award } },
-        });
-      }
-
-      const updatedUser = await tx.user.findUnique({
-        where: { id: user.id },
-        select: { creditsTotal: true },
+      const enrollment = await tx.enrollment.create({
+        data: {
+          userId: user.id,
+          trainingId: training.id,
+          status: "CONFIRMED",
+        },
+        select: {
+          id: true,
+          status: true,
+        },
       });
 
       return {
-        ok: true as const,
         already: false,
-        badgeId: badge.id,
+        enrollmentId: enrollment.id,
+        status: enrollment.status,
+        userEmail: user.email,
+        userName: user.name,
         trainingTitle: training.title,
-        creditsAwarded: award,
-        creditsTotal: updatedUser?.creditsTotal ?? 0,
+        trainingDate: training.date,
+        creditsAward: training.creditsAward,
       };
     });
 
-    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
-
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ok: true,
+      ...result,
+    });
   } catch (e: any) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      // Unique (userId, trainingId) – doppelklick
-      return NextResponse.json({ ok: true, already: true }, { status: 200 });
-    }
-    console.error(e);
-    return NextResponse.json({ error: "Serverfehler." }, { status: 500 });
+    const msg = String(e?.message ?? "UNKNOWN");
+
+    if (msg === "USER_NOT_FOUND") return deny(404, "USER_NOT_FOUND");
+    if (msg === "TRAINING_NOT_FOUND") return deny(404, "TRAINING_NOT_FOUND");
+
+    return deny(500, msg);
   }
 }

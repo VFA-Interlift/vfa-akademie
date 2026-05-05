@@ -9,188 +9,153 @@ function deny(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
-/**
- * POST:
- * - credits > 0 => Badge erstellen + Ledger + creditsTotal
- * - credits < 0 => nur Ledger + creditsTotal (kein Badge)
- */
-export async function POST(req: Request) {
-  // ✅ Session prüfen
+async function requireAdmin() {
   const session = await getServerSession(authOptions);
   const adminEmail = session?.user?.email;
 
   if (!adminEmail) {
-    return deny(401, "UNAUTHENTICATED");
+    return { ok: false as const, res: deny(401, "UNAUTHENTICATED") };
   }
 
-  // ✅ Admin in DB laden (für role + id)
   const admin = await prisma.user.findUnique({
-    where: { email: adminEmail },
+    where: { email: adminEmail.trim().toLowerCase() },
     select: { id: true, role: true },
   });
 
   if (!admin || admin.role !== "ADMIN") {
-    return deny(403, "FORBIDDEN");
+    return { ok: false as const, res: deny(403, "FORBIDDEN") };
   }
 
-  // ✅ Body lesen
+  return { ok: true as const, admin };
+}
+
+/**
+ * POST:
+ * Teilnehmer einer Schulung zuordnen.
+ *
+ * Wichtig:
+ * - erstellt nur Enrollment
+ * - vergibt keine Credits
+ * - erstellt kein Badge
+ * - erstellt kein Zertifikat
+ */
+export async function POST(req: Request) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.res;
+
   const body = await req.json().catch(() => null);
 
   const email =
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 
   const trainingId =
-    typeof body?.trainingId === "string" ? body.trainingId : "";
-
-  const note =
-    typeof body?.note === "string" ? body.note.trim() : null;
+    typeof body?.trainingId === "string" ? body.trainingId.trim() : "";
 
   if (!email) return deny(400, "INVALID_EMAIL");
   if (!trainingId) return deny(400, "INVALID_TRAINING_ID");
 
-  // ✅ credits optional: leer => Training.creditsAward
-  // ✅ ABER: negatives Abziehen nur, wenn explizit gesetzt (nicht via default)
-  let credits: number;
-
-  const creditsProvided =
-    !(body?.credits === undefined || body?.credits === null || body?.credits === "");
-
-  if (!creditsProvided) {
-    const training = await prisma.training.findUnique({
-      where: { id: trainingId },
-      select: { creditsAward: true },
-    });
-    if (!training) return deny(404, "TRAINING_NOT_FOUND");
-    credits = training.creditsAward; // default ist i.d.R. positiv
-  } else {
-    credits = Number(body.credits);
-  }
-
-  // ✅ Validierung: integer, nicht 0
-  if (!Number.isInteger(credits) || credits === 0) {
-    return deny(400, "INVALID_CREDITS");
-  }
-
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // User finden
       const user = await tx.user.findUnique({
         where: { email },
-        select: { id: true },
+        select: { id: true, email: true, name: true },
       });
-      if (!user) throw new Error("USER_NOT_FOUND");
 
-      // =========================
-      // CASE 1: Credits abziehen (negativ)
-      // -> KEIN Badge, nur Ledger + creditsTotal
-      // =========================
-      if (credits < 0) {
-        const creditTx = await tx.creditTransaction.create({
-          data: {
-            userId: user.id,
-            amount: credits, // negativ
-            type: "ADJUSTMENT",
-            reason: "ADMIN_ADJUST",
-            trainingId, // optionaler Kontext
-            meta: {
-              kind: "ADMIN_MANUAL_CREDIT_DEBIT",
-              adminId: admin.id,
-              note: note ?? undefined,
-            },
-          },
-          select: { id: true },
-        });
-
-        await tx.user.update({
-          where: { id: user.id },
-          data: { creditsTotal: { increment: credits } }, // increment mit negativ = abziehen
-        });
-
-        return { badgeId: null, creditTxId: creditTx.id };
+      if (!user) {
+        throw new Error("USER_NOT_FOUND");
       }
 
-      // =========================
-      // CASE 2: Credits vergeben (positiv)
-      // -> Badge + Ledger + creditsTotal
-      // =========================
+      const training = await tx.training.findUnique({
+        where: { id: trainingId },
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          endDate: true,
+          creditsAward: true,
+        },
+      });
 
-      // Doppelt verhindern
-      const existingBadge = await tx.badge.findUnique({
+      if (!training) {
+        throw new Error("TRAINING_NOT_FOUND");
+      }
+
+      const existingEnrollment = await tx.enrollment.findUnique({
         where: {
-          userId_trainingId: { userId: user.id, trainingId },
-        },
-        select: { id: true },
-      });
-      if (existingBadge) throw new Error("BADGE_ALREADY_EXISTS");
-
-      // Badge erstellen
-      const badge = await tx.badge.create({
-        data: {
-          userId: user.id,
-          trainingId,
-          issuedById: admin.id,
-          note: note ?? undefined,
-        },
-        select: { id: true },
-      });
-
-      // Ledger (CreditTransaction)
-      const creditTx = await tx.creditTransaction.create({
-        data: {
-          userId: user.id,
-          amount: credits, // positiv
-          type: "ADJUSTMENT",
-          reason: "ADMIN_ADJUST",
-          trainingId,
-          badgeId: badge.id,
-          meta: {
-            kind: "ADMIN_MANUAL_CERT_AWARD",
-            adminId: admin.id,
-            note: note ?? undefined,
+          userId_trainingId: {
+            userId: user.id,
+            trainingId: training.id,
           },
         },
-        select: { id: true },
+        select: {
+          id: true,
+          status: true,
+        },
       });
 
-      // creditsTotal hochzählen
-      await tx.user.update({
-        where: { id: user.id },
-        data: { creditsTotal: { increment: credits } },
+      if (existingEnrollment) {
+        return {
+          already: true,
+          enrollmentId: existingEnrollment.id,
+          status: existingEnrollment.status,
+          userEmail: user.email,
+          userName: user.name,
+          trainingTitle: training.title,
+          trainingDate: training.date,
+          creditsAward: training.creditsAward,
+        };
+      }
+
+      const enrollment = await tx.enrollment.create({
+        data: {
+          userId: user.id,
+          trainingId: training.id,
+          status: "CONFIRMED",
+        },
+        select: {
+          id: true,
+          status: true,
+        },
       });
 
-      return { badgeId: badge.id, creditTxId: creditTx.id };
+      return {
+        already: false,
+        enrollmentId: enrollment.id,
+        status: enrollment.status,
+        userEmail: user.email,
+        userName: user.name,
+        trainingTitle: training.title,
+        trainingDate: training.date,
+        creditsAward: training.creditsAward,
+      };
     });
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({
+      ok: true,
+      ...result,
+    });
   } catch (e: any) {
     const msg = String(e?.message ?? "UNKNOWN");
-    if (msg === "USER_NOT_FOUND") return deny(404, msg);
-    if (msg === "BADGE_ALREADY_EXISTS") return deny(409, msg);
-    return deny(400, msg);
+
+    if (msg === "USER_NOT_FOUND") return deny(404, "USER_NOT_FOUND");
+    if (msg === "TRAINING_NOT_FOUND") return deny(404, "TRAINING_NOT_FOUND");
+
+    return deny(500, msg);
   }
 }
 
 /**
  * DELETE:
- * - entfernt ein vorhandenes Badge (userId + trainingId)
- * - bucht die ursprünglich vergebenen Credits wieder zurück (negativer Ledger Eintrag)
- * - reduziert creditsTotal entsprechend
+ * Schulungszuordnung entfernen.
+ *
+ * Wichtig:
+ * - löscht Enrollment
+ * - löscht nur dann, wenn noch kein Zertifikat existiert
+ * - bucht keine Credits zurück, weil bei Enrollment keine Credits vergeben wurden
  */
 export async function DELETE(req: Request) {
-  // ✅ Session prüfen
-  const session = await getServerSession(authOptions);
-  const adminEmail = session?.user?.email;
-
-  if (!adminEmail) return deny(401, "UNAUTHENTICATED");
-
-  const admin = await prisma.user.findUnique({
-    where: { email: adminEmail },
-    select: { id: true, role: true },
-  });
-
-  if (!admin || admin.role !== "ADMIN") {
-    return deny(403, "FORBIDDEN");
-  }
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.res;
 
   const body = await req.json().catch(() => null);
 
@@ -198,10 +163,7 @@ export async function DELETE(req: Request) {
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 
   const trainingId =
-    typeof body?.trainingId === "string" ? body.trainingId : "";
-
-  const note =
-    typeof body?.note === "string" ? body.note.trim() : null;
+    typeof body?.trainingId === "string" ? body.trainingId.trim() : "";
 
   if (!email) return deny(400, "INVALID_EMAIL");
   if (!trainingId) return deny(400, "INVALID_TRAINING_ID");
@@ -210,72 +172,64 @@ export async function DELETE(req: Request) {
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: { email },
-        select: { id: true },
+        select: { id: true, email: true },
       });
-      if (!user) throw new Error("USER_NOT_FOUND");
 
-      // Badge finden
-      const badge = await tx.badge.findUnique({
-        where: { userId_trainingId: { userId: user.id, trainingId } },
-        select: { id: true },
-      });
-      if (!badge) throw new Error("BADGE_NOT_FOUND");
-
-      // Award-CreditTx finden: die, die beim Vergeben auf badgeId gesetzt wurde
-      const awardTx = await tx.creditTransaction.findFirst({
-        where: { badgeId: badge.id },
-        orderBy: { createdAt: "desc" },
-        select: { id: true, amount: true },
-      });
-      if (!awardTx) throw new Error("AWARD_TX_NOT_FOUND");
-
-      const creditsToRevert = awardTx.amount;
-
-      // Sicherheitscheck
-      if (!Number.isInteger(creditsToRevert) || creditsToRevert <= 0) {
-        throw new Error("INVALID_AWARD_AMOUNT");
+      if (!user) {
+        throw new Error("USER_NOT_FOUND");
       }
 
-      // 1) Badge löschen
-      await tx.badge.delete({
-        where: { id: badge.id },
-      });
-
-      // 2) Reversal-Ledger schreiben (negativ)
-      const reversalTx = await tx.creditTransaction.create({
-        data: {
-          userId: user.id,
-          amount: -creditsToRevert,
-          type: "ADJUSTMENT",
-          reason: "ADMIN_ADJUST",
-          trainingId,
-          badgeId: null,
-          meta: {
-            kind: "ADMIN_REVOKE_CERT",
-            adminId: admin.id,
-            revokedBadgeId: badge.id,
-            originalCreditTxId: awardTx.id,
-            note: note ?? undefined,
+      const enrollment = await tx.enrollment.findUnique({
+        where: {
+          userId_trainingId: {
+            userId: user.id,
+            trainingId,
           },
         },
-        select: { id: true },
+        select: {
+          id: true,
+          certificate: {
+            select: {
+              id: true,
+            },
+          },
+        },
       });
 
-      // 3) creditsTotal runter
-      await tx.user.update({
-        where: { id: user.id },
-        data: { creditsTotal: { increment: -creditsToRevert } },
+      if (!enrollment) {
+        throw new Error("ENROLLMENT_NOT_FOUND");
+      }
+
+      if (enrollment.certificate) {
+        throw new Error("CERTIFICATE_ALREADY_ISSUED");
+      }
+
+      await tx.enrollment.delete({
+        where: {
+          id: enrollment.id,
+        },
       });
 
-      return { revokedBadgeId: badge.id, reversalTxId: reversalTx.id };
+      return {
+        enrollmentId: enrollment.id,
+        userEmail: user.email,
+      };
     });
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({
+      ok: true,
+      ...result,
+    });
   } catch (e: any) {
     const msg = String(e?.message ?? "UNKNOWN");
-    if (msg === "USER_NOT_FOUND") return deny(404, msg);
-    if (msg === "BADGE_NOT_FOUND") return deny(404, msg);
-    if (msg === "AWARD_TX_NOT_FOUND") return deny(409, msg);
-    return deny(400, msg);
+
+    if (msg === "USER_NOT_FOUND") return deny(404, "USER_NOT_FOUND");
+    if (msg === "ENROLLMENT_NOT_FOUND") return deny(404, "ENROLLMENT_NOT_FOUND");
+
+    if (msg === "CERTIFICATE_ALREADY_ISSUED") {
+      return deny(409, "CERTIFICATE_ALREADY_ISSUED");
+    }
+
+    return deny(500, msg);
   }
 }
