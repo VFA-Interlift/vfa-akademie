@@ -7,6 +7,10 @@ type Training = {
   id: string;
   title: string;
   date: string;
+  endDate: string | null;
+  location: string | null;
+  instructor: string | null;
+  description: string | null;
   creditsAward: number;
 };
 
@@ -16,86 +20,141 @@ export default function AdminTrainingsPage() {
 
   const [trainings, setTrainings] = useState<Training[]>([]);
 
-  // New Training
   const [newTitle, setNewTitle] = useState("");
-  const [newDate, setNewDate] = useState("");
+  const [newStartDate, setNewStartDate] = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
+  const [newLocation, setNewLocation] = useState("");
+  const [newInstructor, setNewInstructor] = useState("");
+  const [newDescription, setNewDescription] = useState("");
   const [newCreditsAward, setNewCreditsAward] = useState("0");
 
   async function loadTrainings() {
-    const res = await fetch("/api/admin/trainings");
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/admin/trainings", { cache: "no-store" });
+      const data = await res.json();
 
-    if (!data.ok) {
-      setMsg(data.error ?? "LOAD_FAILED");
-      return;
+      if (!data.ok) {
+        setMsg(data.error ?? "LOAD_FAILED");
+        return;
+      }
+
+      setTrainings(data.trainings);
+    } catch {
+      setMsg("LOAD_FAILED");
     }
-
-    setTrainings(data.trainings);
   }
 
   useEffect(() => {
     loadTrainings();
-    // eslint-disable-next-line
   }, []);
 
   async function createTraining() {
     setLoading(true);
     setMsg("");
 
-    const res = await fetch("/api/admin/trainings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: newTitle.trim(),
-        date: newDate.trim(),
-        creditsAward: Number(newCreditsAward),
-      }),
-    });
+    try {
+      const res = await fetch("/api/admin/trainings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTitle.trim(),
+          date: newStartDate.trim(),
+          endDate: newEndDate.trim(),
+          location: newLocation.trim() || null,
+          instructor: newInstructor.trim() || null,
+          description: newDescription.trim() || null,
+          creditsAward: Number(newCreditsAward),
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!data.ok) {
-      setMsg(data.error);
-    } else {
-      setMsg("✅ Training erstellt");
+      if (!data.ok) {
+        setMsg(data.error ?? "CREATE_FAILED");
+        return;
+      }
+
+      setMsg("✅ Schulung erstellt");
       setNewTitle("");
-      setNewDate("");
+      setNewStartDate("");
+      setNewEndDate("");
+      setNewLocation("");
+      setNewInstructor("");
+      setNewDescription("");
       setNewCreditsAward("0");
-      await loadTrainings();
-    }
 
-    setLoading(false);
+      await loadTrainings();
+    } catch {
+      setMsg("CREATE_FAILED");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function updateCredits(id: string, value: number) {
     setLoading(true);
+    setMsg("");
 
-    await fetch(`/api/admin/trainings/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ creditsAward: value }),
-    });
+    try {
+      const res = await fetch(`/api/admin/trainings/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creditsAward: value }),
+      });
 
-    await loadTrainings();
-    setLoading(false);
+      const data = await res.json();
+
+      if (!data.ok) {
+        setMsg(data.error ?? "UPDATE_FAILED");
+        return;
+      }
+
+      await loadTrainings();
+    } catch {
+      setMsg("UPDATE_FAILED");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function removeTraining(id: string) {
-    if (!confirm("Training wirklich löschen?")) return;
+    if (
+      !confirm(
+        "Schulung wirklich löschen? Das sollte nur gemacht werden, wenn noch keine Zertifikate dafür erstellt wurden."
+      )
+    ) {
+      return;
+    }
 
     setLoading(true);
+    setMsg("");
 
-    const res = await fetch(`/api/admin/trainings/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/admin/trainings/${id}`, {
+        method: "DELETE",
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!data.ok) setMsg(data.error);
-    else setMsg("✅ Training gelöscht");
+      if (!data.ok) {
+        if (data.error === "CERTIFICATES_EXIST") {
+          setMsg("⚠️ Diese Schulung kann nicht gelöscht werden, weil bereits Zertifikate existieren.");
+        } else if (data.error === "TRAINING_NOT_FOUND") {
+          setMsg("⚠️ Schulung wurde nicht gefunden.");
+        } else {
+          setMsg(data.error ?? "DELETE_FAILED");
+        }
 
-    await loadTrainings();
-    setLoading(false);
+        return;
+      }
+
+      setMsg("✅ Schulung gelöscht");
+      await loadTrainings();
+    } catch {
+      setMsg("DELETE_FAILED");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -108,10 +167,9 @@ export default function AdminTrainingsPage() {
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <BackButton label="Zurück" />
-          <h1 style={{ fontSize: 42, margin: 0 }}>Schulung erstellen</h1>
+          <h1 style={{ fontSize: 42, margin: 0 }}>Schulungen verwalten</h1>
         </div>
 
         {msg && (
@@ -128,27 +186,65 @@ export default function AdminTrainingsPage() {
           </div>
         )}
 
-        {/* Trainings */}
-        <h2 style={{ marginTop: 40 }}>Trainings verwalten</h2>
+        <h2 style={{ marginTop: 40 }}>Neue Schulung erstellen</h2>
 
         <div style={{ marginBottom: 30, display: "grid", gap: 14 }}>
           <Input label="Titel" value={newTitle} onChange={setNewTitle} />
-          <Input label="Datum" value={newDate} onChange={setNewDate} />
+
           <Input
-            label="creditsAward"
-            value={newCreditsAward}
-            onChange={setNewCreditsAward}
+            label="Startdatum (TT.MM.JJJJ)"
+            value={newStartDate}
+            onChange={setNewStartDate}
           />
-          <Button onClick={createTraining} disabled={loading}>
-            Training erstellen
+
+          <Input
+            label="Enddatum (TT.MM.JJJJ)"
+            value={newEndDate}
+            onChange={setNewEndDate}
+          />
+
+          <Input label="Ort" value={newLocation} onChange={setNewLocation} />
+
+          <Input
+            label="Dozent"
+            value={newInstructor}
+            onChange={setNewInstructor}
+          />
+
+          <TextArea
+            label="Beschreibung / Inhalte"
+            value={newDescription}
+            onChange={setNewDescription}
+          />
+
+          <Input
+            label="Credits nach Abschluss"
+            value={newCreditsAward}
+            onChange={(value) => {
+              if (value === "" || /^\d+$/.test(value)) {
+                setNewCreditsAward(value);
+              }
+            }}
+          />
+
+          <Button
+            onClick={createTraining}
+            disabled={
+              loading ||
+              !newTitle.trim() ||
+              !newStartDate.trim() ||
+              !newEndDate.trim()
+            }
+          >
+            {loading ? "Speichern..." : "Schulung erstellen"}
           </Button>
         </div>
 
-        {/* List */}
+        <h2 style={{ marginTop: 40 }}>Vorhandene Schulungen</h2>
+
         <div style={{ display: "grid", gap: 14 }}>
-          {trainings.map((t) => (
+          {trainings.length === 0 ? (
             <div
-              key={t.id}
               style={{
                 border: "1px solid rgba(255,255,255,0.12)",
                 borderRadius: 14,
@@ -156,33 +252,84 @@ export default function AdminTrainingsPage() {
                 background: "rgba(255,255,255,0.04)",
               }}
             >
-              <div style={{ fontWeight: 700 }}>{t.title}</div>
-              <div style={{ fontSize: 13, opacity: 0.8 }}>
-                Credits: {t.creditsAward}
-              </div>
-
-              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                <ButtonSmall onClick={() => updateCredits(t.id, t.creditsAward - 1)}>
-                  -1
-                </ButtonSmall>
-                <ButtonSmall onClick={() => updateCredits(t.id, t.creditsAward + 1)}>
-                  +1
-                </ButtonSmall>
-
-                {/* ✅ Schulung löschen */}
-                <ButtonSmall danger onClick={() => removeTraining(t.id)}>
-                  Löschen
-                </ButtonSmall>
-              </div>
+              Noch keine Schulungen vorhanden.
             </div>
-          ))}
+          ) : (
+            trainings.map((t) => (
+              <div
+                key={t.id}
+                style={{
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 14,
+                  padding: 14,
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                <div style={{ fontWeight: 800, fontSize: 18 }}>{t.title}</div>
+
+                <div style={{ marginTop: 8, fontSize: 13, opacity: 0.8 }}>
+                  Zeitraum: {formatDate(t.date)}
+                  {t.endDate ? ` bis ${formatDate(t.endDate)}` : ""}
+                </div>
+
+                {t.location && (
+                  <div style={{ marginTop: 4, fontSize: 13, opacity: 0.8 }}>
+                    Ort: {t.location}
+                  </div>
+                )}
+
+                {t.instructor && (
+                  <div style={{ marginTop: 4, fontSize: 13, opacity: 0.8 }}>
+                    Dozent: {t.instructor}
+                  </div>
+                )}
+
+                {t.description && (
+                  <div style={{ marginTop: 8, fontSize: 13, opacity: 0.8 }}>
+                    Inhalte: {t.description}
+                  </div>
+                )}
+
+                <div style={{ marginTop: 8, fontSize: 13, opacity: 0.8 }}>
+                  Credits nach Abschluss: {t.creditsAward}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 12,
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <ButtonSmall
+                    onClick={() => updateCredits(t.id, Math.max(0, t.creditsAward - 1))}
+                  >
+                    -1 Credit
+                  </ButtonSmall>
+
+                  <ButtonSmall onClick={() => updateCredits(t.id, t.creditsAward + 1)}>
+                    +1 Credit
+                  </ButtonSmall>
+
+                  <ButtonSmall danger onClick={() => removeTraining(t.id)}>
+                    Schulung löschen
+                  </ButtonSmall>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------- UI COMPONENTS ---------- */
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("de-DE");
+}
 
 function Input({
   label,
@@ -191,21 +338,55 @@ function Input({
 }: {
   label: string;
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
 }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
       {label}
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         style={inputStyle}
       />
     </label>
   );
 }
 
-function Button({ children, onClick, disabled }: any) {
+function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label style={{ display: "grid", gap: 6 }}>
+      {label}
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={4}
+        style={{
+          ...inputStyle,
+          resize: "vertical",
+          fontFamily: "inherit",
+        }}
+      />
+    </label>
+  );
+}
+
+function Button({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -218,7 +399,7 @@ function Button({ children, onClick, disabled }: any) {
         background: "#fff",
         color: "#000",
         border: "none",
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
       }}
     >
@@ -227,7 +408,15 @@ function Button({ children, onClick, disabled }: any) {
   );
 }
 
-function ButtonSmall({ children, onClick, danger }: any) {
+function ButtonSmall({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -246,7 +435,7 @@ function ButtonSmall({ children, onClick, danger }: any) {
   );
 }
 
-const inputStyle = {
+const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px 14px",
   borderRadius: 14,
