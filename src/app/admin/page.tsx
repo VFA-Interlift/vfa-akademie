@@ -1,9 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 
-export const dynamic = "force-dynamic";
+export default function AdminMenuPage() {
+  const [trainingOpen, setTrainingOpen] = useState(false);
 
-export default async function AdminMenuPage() {
   const cardStyle: React.CSSProperties = {
     display: "block",
     padding: 16,
@@ -15,10 +18,45 @@ export default async function AdminMenuPage() {
     fontWeight: 800,
   };
 
+  const buttonStyle: React.CSSProperties = {
+    ...cardStyle,
+    width: "100%",
+    textAlign: "left",
+    cursor: "pointer",
+  };
+
   const subStyle: React.CSSProperties = {
     fontWeight: 400,
     color: "#aaa",
     marginTop: 6,
+  };
+
+  const dropdownStyle: React.CSSProperties = {
+    display: "grid",
+    gap: 10,
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.025)",
+  };
+
+  const itemStyle: React.CSSProperties = {
+    display: "block",
+    padding: 14,
+    borderRadius: 10,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#fff",
+    textDecoration: "none",
+    fontWeight: 700,
+  };
+
+  const itemSubStyle: React.CSSProperties = {
+    fontWeight: 400,
+    color: "#aaa",
+    marginTop: 4,
+    fontSize: 14,
   };
 
   return (
@@ -31,40 +69,50 @@ export default async function AdminMenuPage() {
       </div>
 
       <p style={{ color: "#aaa", marginTop: 14, marginBottom: 18 }}>
-        Was möchtest du machen?
+        Was möchtest du verwalten?
       </p>
 
       <div style={{ display: "grid", gap: 12 }}>
-        <Link href="/admin/trainings" style={cardStyle}>
-          Schulung erstellen →
-          <div style={subStyle}>
-            Trainings verwalten, Credits festlegen und löschen
-          </div>
-        </Link>
+        <div>
+          <button
+            type="button"
+            onClick={() => setTrainingOpen((value) => !value)}
+            style={buttonStyle}
+          >
+            Schulung verwalten {trainingOpen ? "▲" : "▼"}
+            <div style={subStyle}>
+              Schulungen erstellen, bearbeiten und Teilnehmer verwalten
+            </div>
+          </button>
 
-        <Link href="/admin/trainings/add" style={cardStyle}>
-          Schulung hinzufügen →
-          <div style={subStyle}>
-            Teilnehmer zuordnen: Zertifikat + Credits vergeben
-          </div>
-        </Link>
+          {trainingOpen && (
+            <div style={dropdownStyle}>
+              <Link href="/admin/trainings" style={itemStyle}>
+                Schulung erstellen / verwalten
+                <div style={itemSubStyle}>
+                  Schulungen anlegen, Zeitraum, Ort, Dozent und Credits festlegen
+                </div>
+              </Link>
 
-        <Link href="/admin/trainings/remove" style={cardStyle}>
-          Schulung entfernen →
-          <div style={subStyle}>
-            Zuordnung rückgängig machen: Zertifikat entfernen + Credits zurückbuchen
-          </div>
-        </Link>
+              <Link href="/admin/trainings/add" style={itemStyle}>
+                Teilnehmer verwalten
+                <div style={itemSubStyle}>
+                  Teilnehmer einer Schulung zuordnen oder Zuordnung entfernen
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
 
         <Link href="/admin/credits" style={cardStyle}>
-          Credits vergeben →
+          Credits verwalten →
           <div style={subStyle}>
-            Credits manuell vergeben oder abziehen (ohne Schulung)
+            Credits manuell vergeben oder abziehen
           </div>
         </Link>
 
         <Link href="/admin/users" style={cardStyle}>
-          Admin ernennen →
+          Admin verwalten →
           <div style={subStyle}>
             User per E-Mail zum Admin machen
           </div>
