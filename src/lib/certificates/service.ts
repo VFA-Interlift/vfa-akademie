@@ -11,6 +11,7 @@ export type MyCertificateItem = {
   trainingEndDate: Date | null;
   location: string | null;
   instructor: string | null;
+  description: string | null;
   pdfUrl: string | null;
 };
 
@@ -50,6 +51,7 @@ export async function getMyCertificates(
           endDate: true,
           location: true,
           instructor: true,
+          description: true,
         },
       },
     },
@@ -67,5 +69,6 @@ export async function getMyCertificates(
     trainingEndDate: cert.training.endDate,
     location: cert.training.location,
     instructor: cert.training.instructor,
+    description: cert.training.description,
   }));
 }

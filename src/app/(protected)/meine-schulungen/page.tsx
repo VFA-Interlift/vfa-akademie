@@ -23,7 +23,8 @@ export default async function MeineSchulungenPage() {
       </div>
 
       <p style={{ color: "#aaa", marginBottom: 24 }}>
-        Hier siehst du die Schulungen, die dir zugeordnet sind.
+        Hier siehst du die Schulungen, die dir aktuell zugeordnet sind.
+        Nach Abschluss wird automatisch ein Zertifikat erstellt.
       </p>
 
       <div style={{ display: "grid", gap: 12 }}>
@@ -36,7 +37,7 @@ export default async function MeineSchulungenPage() {
               background: "rgba(255,255,255,0.04)",
             }}
           >
-            Aktuell sind dir noch keine Schulungen zugeordnet.
+            Aktuell sind dir keine aktiven Schulungen zugeordnet.
           </div>
         ) : (
           trainings.map((training) => (
@@ -53,14 +54,41 @@ export default async function MeineSchulungenPage() {
                 textDecoration: "none",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 700 }}>{training.title}</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>
+                {training.title}
+              </div>
 
               <div style={{ marginTop: 8, color: "#aaa" }}>
-                Datum: {training.date.toLocaleDateString("de-DE")}
+                Zeitraum: {training.date.toLocaleDateString("de-DE")}
+                {training.endDate
+                  ? ` bis ${training.endDate.toLocaleDateString("de-DE")}`
+                  : ""}
+              </div>
+
+              {training.location && (
+                <div style={{ marginTop: 6, color: "#aaa" }}>
+                  Ort: {training.location}
+                </div>
+              )}
+
+              {training.instructor && (
+                <div style={{ marginTop: 6, color: "#aaa" }}>
+                  Dozent: {training.instructor}
+                </div>
+              )}
+
+              {training.description && (
+                <div style={{ marginTop: 6, color: "#aaa" }}>
+                  Inhalte: {training.description}
+                </div>
+              )}
+
+              <div style={{ marginTop: 6, color: "#aaa" }}>
+                Credits nach Abschluss: {training.creditsAward}
               </div>
 
               <div style={{ marginTop: 6, color: "#aaa" }}>
-                Credits: {training.creditsAward}
+                Status: {formatStatus(training.status)}
               </div>
 
               <div style={{ marginTop: 10, fontWeight: 700 }}>
@@ -72,4 +100,16 @@ export default async function MeineSchulungenPage() {
       </div>
     </main>
   );
+}
+
+function formatStatus(status: string) {
+  if (status === "PENDING") return "Ausstehend";
+  if (status === "CONFIRMED") return "Angemeldet";
+  if (status === "ATTENDED") return "Teilgenommen";
+  if (status === "COMPLETED") return "Abgeschlossen";
+  if (status === "CERTIFICATE_ISSUED") return "Zertifikat erstellt";
+  if (status === "CANCELLED") return "Storniert";
+  if (status === "NO_SHOW") return "Nicht teilgenommen";
+
+  return status;
 }

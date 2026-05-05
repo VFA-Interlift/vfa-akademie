@@ -75,6 +75,12 @@ export default async function MeineZertifikatePage() {
                 </div>
               )}
 
+              {cert.description && (
+              <div style={{ marginTop: 6, color: "#aaa" }}>
+                  Inhalte: {cert.description}
+                </div>
+              )}  
+
               <div style={{ marginTop: 6, color: "#aaa" }}>
                 Ausgestellt am: {cert.issuedAt.toLocaleDateString("de-DE")}
               </div>
