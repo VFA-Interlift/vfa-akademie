@@ -9,7 +9,7 @@ datasource db {
 }
 
 enum CreditTxType {
-  AWARD       // aus QR-Claim/Training
+  AWARD       // Vergabe von Credits
   ADJUSTMENT  // Admin-Korrektur (+/-)
 }
 
@@ -21,6 +21,7 @@ enum Role {
 enum CreditTxReason {
   TRAINING_CLAIM
   ADMIN_ADJUST
+  CERTIFICATE_ISSUED
 }
 
 enum EnrollmentStatus {
@@ -29,11 +30,18 @@ enum EnrollmentStatus {
   CANCELLED
   ATTENDED
   NO_SHOW
+  COMPLETED
+  CERTIFICATE_ISSUED
+}
+
+enum CertificateStatus {
+  ISSUED
+  REVOKED
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   name         String?
   birthDate    DateTime?
@@ -42,49 +50,96 @@ model User {
   gender         String?
   companyAddress String?
 
-  role        Role @default(USER)
+  role         Role @default(USER)
   creditsTotal Int  @default(0)
 
-  badges       Badge[]
-  creditTxs    CreditTransaction[]
-  enrollments  Enrollment[]
+  badges        Badge[]
+  creditTxs     CreditTransaction[]
+  enrollments   Enrollment[]
+  certificates  Certificate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Training {
-  id           String   @id @default(cuid())
-  title        String
-  date         DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  creditsAward Int      @default(0)
+  id    String @id @default(cuid())
+  title String
+
+  // Bisheriges Datumsfeld
+  date DateTime
+
+  // Neue optionale Detailfelder für spätere Cobra-Daten
+  endDate     DateTime?
+  location    String?
+  instructor  String?
+  description String?
+
+  // Optionaler späterer Cobra-Bezug
+  cobraId String? @unique
+
+  creditsAward Int @default(0)
 
   tokens       ClaimToken[]
   badges       Badge[]
   creditTxs    CreditTransaction[]
   enrollments  Enrollment[]
+  certificates Certificate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Enrollment {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   userId     String
   trainingId String
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
-  status       EnrollmentStatus @default(PENDING)
-  attended     Boolean          @default(false)
-  passed       Boolean          @default(false)
+  status   EnrollmentStatus @default(CONFIRMED)
+  attended Boolean          @default(false)
+  passed   Boolean          @default(false)
+
+  certificate Certificate?
 
   registeredAt DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  completedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, trainingId])
   @@index([trainingId, status])
   @@index([userId, status])
+}
+
+model Certificate {
+  id           String @id @default(cuid())
+  userId       String
+  trainingId   String
+  enrollmentId String @unique
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training   @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  title      String
+  issuedAt   DateTime          @default(now())
+  status     CertificateStatus @default(ISSUED)
+  credits    Int               @default(0)
+
+  pdfUrl String?
+  note   String?
+
+  creditTx CreditTransaction?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, issuedAt])
+  @@index([trainingId, issuedAt])
 }
 
 model ClaimToken {
@@ -94,8 +149,8 @@ model ClaimToken {
   training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
-  maxClaims Int      @default(999999)
-  claims    Int      @default(0)
+  maxClaims Int @default(999999)
+  claims    Int @default(0)
 
   creditTxs CreditTransaction[]
 
@@ -107,12 +162,12 @@ model Badge {
   userId     String
   trainingId String
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
   issuedAt DateTime @default(now())
 
-  // Admin-Metadaten
+  // Legacy / Übergang: bisherige Zertifikats- oder Badge-Logik
   issuedById String?
   note       String?
 
@@ -128,20 +183,23 @@ model CreditTransaction {
   type   CreditTxType
   reason CreditTxReason
 
-  trainingId   String?
-  badgeId      String? @unique
-  claimTokenId String?
+  trainingId    String?
+  badgeId       String? @unique
+  certificateId String? @unique
+  claimTokenId  String?
 
   meta Json?
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training   Training?   @relation(fields: [trainingId], references: [id], onDelete: SetNull)
-  badge      Badge?      @relation(fields: [badgeId], references: [id], onDelete: SetNull)
-  claimToken ClaimToken? @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training    Training?    @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  badge       Badge?       @relation(fields: [badgeId], references: [id], onDelete: SetNull)
+  certificate Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+  claimToken  ClaimToken?  @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([trainingId, createdAt])
   @@index([claimTokenId, createdAt])
+  @@index([certificateId, createdAt])
 }

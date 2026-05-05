@@ -95,7 +95,7 @@ export default function AdminTrainingAddPage() {
         if (payload.credits !== null && Number(payload.credits) < 0) {
           setMsg("✅ Credits wurden erfolgreich abgezogen.");
         } else {
-          setMsg("✅ Schulung wurde zugeordnet und Credits wurden vergeben.");
+          setMsg("✅ Schulung wurde dem Teilnehmer zugeordnet.");
         }
 
         setGrantEmail("");
