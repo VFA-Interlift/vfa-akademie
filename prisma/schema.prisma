@@ -40,23 +40,33 @@ enum CertificateStatus {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String @id @default(cuid())
+  email        String @unique
   passwordHash String
-  name         String?
-  birthDate    DateTime?
 
+  // Persönliche Daten
+  name      String?
+  firstName String?
+  lastName  String?
+  birthDate DateTime?
+  gender    String?
+  phone     String?
+
+  // Firmendaten
   company        String?
-  gender         String?
   companyAddress String?
+  companyStreet  String?
+  companyZip     String?
+  companyCity    String?
+  companyCountry String?
+  position       String?
 
   role         Role @default(USER)
   creditsTotal Int  @default(0)
 
-  badges        Badge[]
-  creditTxs     CreditTransaction[]
-  enrollments   Enrollment[]
-  certificates  Certificate[]
+  creditTxs    CreditTransaction[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -66,10 +76,10 @@ model Training {
   id    String @id @default(cuid())
   title String
 
-  // Bisheriges Datumsfeld
+  // Startdatum der Schulung
   date DateTime
 
-  // Neue optionale Detailfelder für spätere Cobra-Daten
+  // Detailfelder für Schulungen / spätere Cobra-Daten
   endDate     DateTime?
   location    String?
   instructor  String?
@@ -78,10 +88,10 @@ model Training {
   // Optionaler späterer Cobra-Bezug
   cobraId String? @unique
 
+  // Credits werden erst bei Zertifikatserstellung vergeben
   creditsAward Int @default(0)
 
   tokens       ClaimToken[]
-  badges       Badge[]
   creditTxs    CreditTransaction[]
   enrollments  Enrollment[]
   certificates Certificate[]
@@ -125,10 +135,10 @@ model Certificate {
   training   Training   @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 
-  title      String
-  issuedAt   DateTime          @default(now())
-  status     CertificateStatus @default(ISSUED)
-  credits    Int               @default(0)
+  title    String
+  issuedAt DateTime          @default(now())
+  status   CertificateStatus @default(ISSUED)
+  credits  Int               @default(0)
 
   pdfUrl String?
   note   String?
@@ -157,25 +167,6 @@ model ClaimToken {
   createdAt DateTime @default(now())
 }
 
-model Badge {
-  id         String @id @default(cuid())
-  userId     String
-  trainingId String
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
-
-  issuedAt DateTime @default(now())
-
-  // Legacy / Übergang: bisherige Zertifikats- oder Badge-Logik
-  issuedById String?
-  note       String?
-
-  creditTx CreditTransaction?
-
-  @@unique([userId, trainingId])
-}
-
 model CreditTransaction {
   id     String @id @default(cuid())
   userId String
@@ -184,7 +175,6 @@ model CreditTransaction {
   reason CreditTxReason
 
   trainingId    String?
-  badgeId       String? @unique
   certificateId String? @unique
   claimTokenId  String?
 
@@ -192,7 +182,6 @@ model CreditTransaction {
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   training    Training?    @relation(fields: [trainingId], references: [id], onDelete: SetNull)
-  badge       Badge?       @relation(fields: [badgeId], references: [id], onDelete: SetNull)
   certificate Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
   claimToken  ClaimToken?  @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
 
