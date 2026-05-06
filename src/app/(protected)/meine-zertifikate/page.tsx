@@ -37,8 +37,8 @@ export default async function MeineZertifikatePage() {
               </div>
 
               <p style={{ marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
-                Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird automatisch
-                eine Teilnahmebestätigung oder ein Zertifikat erstellt.
+                Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird
+                automatisch eine Teilnahmebestätigung oder ein Zertifikat erstellt.
               </p>
             </AppCard>
           ) : (
@@ -156,13 +156,20 @@ export default async function MeineZertifikatePage() {
                   </div>
                 )}
 
-                {cert.pdfUrl && (
-                  <div style={{ marginTop: 18 }}>
-                    <AppButton href={cert.pdfUrl} variant="primary">
-                      Zertifikat herunterladen →
+                <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <AppButton
+                    href={`/api/certificates/${cert.id}/download`}
+                    variant="primary"
+                  >
+                    Dokument herunterladen
+                  </AppButton>
+
+                  {cert.pdfUrl && (
+                    <AppButton href={cert.pdfUrl} variant="secondary">
+                      PDF öffnen
                     </AppButton>
-                  </div>
-                )}
+                  )}
+                </div>
               </AppCard>
             ))
           )}
