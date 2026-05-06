@@ -1,4 +1,7 @@
-import BackButton from "@/components/BackButton";
+import AppButton from "@/components/ui/AppButton";
+import AppCard from "@/components/ui/AppCard";
+import PageHeader from "@/components/ui/PageHeader";
+import StatusBadge from "@/components/ui/StatusBadge";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -13,146 +16,179 @@ export default async function MeineZertifikatePage() {
   const certificates = await getMyCertificates(session.user.email);
 
   return (
-    <main style={{ maxWidth: 900, margin: "40px auto", padding: 16, color: "#fff" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-        <BackButton label="Zurück" />
-        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800 }}>
-          Meine Zertifikate
-        </h1>
-      </div>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#F7F7F4",
+        padding: "40px 24px",
+      }}
+    >
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <PageHeader
+          title="Meine Zertifikate"
+          description="Hier findest du deine Teilnahmebestätigungen und Zertifikate aus abgeschlossenen Schulungen."
+        />
 
-      <p style={{ color: "#aaa", marginBottom: 24 }}>
-        Hier findest du deine Teilnahmebestätigungen und Zertifikate aus abgeschlossenen Schulungen.
-      </p>
-
-      <div style={{ display: "grid", gap: 12 }}>
-        {certificates.length === 0 ? (
-          <div
-            style={{
-              padding: 16,
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(255,255,255,0.04)",
-            }}
-          >
-            Aktuell sind noch keine Zertifikate vorhanden.
-          </div>
-        ) : (
-          certificates.map((cert) => (
-            <div
-              key={cert.id}
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.15)",
-                background: "rgba(255,255,255,0.04)",
-              }}
-            >
-              <div style={{ fontSize: 18, fontWeight: 800 }}>
-                {cert.title}
+        <div style={{ display: "grid", gap: 16 }}>
+          {certificates.length === 0 ? (
+            <AppCard>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#007873" }}>
+                Aktuell sind noch keine Zertifikate vorhanden.
               </div>
 
-              <div
-                style={{
-                  marginTop: 10,
-                  display: "flex",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <span
+              <p style={{ marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
+                Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird automatisch
+                eine Teilnahmebestätigung oder ein Zertifikat erstellt.
+              </p>
+            </AppCard>
+          ) : (
+            certificates.map((cert) => (
+              <AppCard key={cert.id}>
+                <div
                   style={{
-                    display: "inline-block",
-                    padding: "4px 8px",
-                    borderRadius: 999,
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    background: "rgba(255,255,255,0.06)",
-                    color: "#fff",
-                    fontSize: 13,
-                    fontWeight: 700,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    alignItems: "flex-start",
+                    flexWrap: "wrap",
                   }}
                 >
-                  {cert.certificateKindLabel}
-                </span>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 500,
+                        color: "#007873",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {cert.title}
+                    </div>
 
-                {cert.code && (
-                  <span
+                    <div
+                      style={{
+                        marginTop: 10,
+                        display: "flex",
+                        gap: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <StatusBadge variant="success">
+                        {cert.certificateKindLabel}
+                      </StatusBadge>
+
+                      {cert.code && (
+                        <StatusBadge variant="yellow">
+                          Kürzel: {cert.code}
+                        </StatusBadge>
+                      )}
+
+                      <StatusBadge>Verfügbar</StatusBadge>
+                    </div>
+                  </div>
+
+                  <div
                     style={{
-                      display: "inline-block",
-                      padding: "4px 8px",
-                      borderRadius: 999,
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      background: "rgba(255,255,255,0.06)",
-                      color: "#fff",
-                      fontSize: 13,
-                      fontWeight: 700,
+                      fontSize: 14,
+                      color: "#333333",
+                      textAlign: "right",
+                      minWidth: 180,
                     }}
                   >
-                    Kürzel: {cert.code}
-                  </span>
-                )}
-              </div>
-
-              <div style={{ marginTop: 12, color: "#aaa" }}>
-                Schulung: {cert.trainingTitle}
-              </div>
-
-              <div style={{ marginTop: 6, color: "#aaa" }}>
-                Schulungsdatum: {cert.trainingDate.toLocaleDateString("de-DE")}
-                {cert.trainingEndDate
-                  ? ` bis ${cert.trainingEndDate.toLocaleDateString("de-DE")}`
-                  : ""}
-              </div>
-
-              {cert.location && (
-                <div style={{ marginTop: 6, color: "#aaa" }}>
-                  Ort: {cert.location}
+                    <strong>Ausgestellt am</strong>
+                    <br />
+                    {cert.issuedAt.toLocaleDateString("de-DE")}
+                  </div>
                 </div>
-              )}
 
-              {cert.instructor && (
-                <div style={{ marginTop: 6, color: "#aaa" }}>
-                  Dozent: {cert.instructor}
-                </div>
-              )}
-
-              {cert.description && (
-                <div style={{ marginTop: 6, color: "#aaa" }}>
-                  Inhalte: {cert.description}
-                </div>
-              )}
-
-              <div style={{ marginTop: 6, color: "#aaa" }}>
-                Ausgestellt am: {cert.issuedAt.toLocaleDateString("de-DE")}
-              </div>
-
-              <div style={{ marginTop: 6, color: "#aaa" }}>
-                Credits: {cert.credits}
-              </div>
-
-              <div style={{ marginTop: 6, color: "#aaa" }}>
-                Status: Verfügbar
-              </div>
-
-              {cert.pdfUrl && (
-                <a
-                  href={cert.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <div
                   style={{
-                    display: "inline-block",
-                    marginTop: 12,
-                    color: "#fff",
-                    fontWeight: 800,
+                    marginTop: 18,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: 14,
                   }}
                 >
-                  Zertifikat herunterladen →
-                </a>
-              )}
-            </div>
-          ))
-        )}
+                  <Info label="Schulung" value={cert.trainingTitle} />
+
+                  <Info
+                    label="Schulungsdatum"
+                    value={`${cert.trainingDate.toLocaleDateString("de-DE")}${
+                      cert.trainingEndDate
+                        ? ` bis ${cert.trainingEndDate.toLocaleDateString("de-DE")}`
+                        : ""
+                    }`}
+                  />
+
+                  {cert.location && <Info label="Ort" value={cert.location} />}
+
+                  {cert.instructor && (
+                    <Info label="Dozent" value={cert.instructor} />
+                  )}
+
+                  <Info label="Credits" value={String(cert.credits)} />
+                </div>
+
+                {cert.description && (
+                  <div
+                    style={{
+                      marginTop: 16,
+                      paddingTop: 16,
+                      borderTop: "1px solid #E6E6E6",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: "#007873",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Inhalte
+                    </div>
+
+                    <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                      {cert.description}
+                    </div>
+                  </div>
+                )}
+
+                {cert.pdfUrl && (
+                  <div style={{ marginTop: 18 }}>
+                    <AppButton href={cert.pdfUrl} variant="primary">
+                      Zertifikat herunterladen →
+                    </AppButton>
+                  </div>
+                )}
+              </AppCard>
+            ))
+          )}
+        </div>
       </div>
     </main>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 800,
+          color: "#007873",
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+
+      <div style={{ color: "#1F1F1F", lineHeight: 1.5 }}>{value}</div>
+    </div>
   );
 }
