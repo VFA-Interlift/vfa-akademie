@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import HeaderClient from "@/components/HeaderClient";
 import Providers from "@/components/Providers";
 import SplashGate from "@/components/SplashGate";
@@ -7,7 +7,6 @@ import SplashGate from "@/components/SplashGate";
 export const metadata: Metadata = {
   title: "VFA-Akademie",
   applicationName: "VFA-Akademie",
-  themeColor: "#007873",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -16,6 +15,10 @@ export const metadata: Metadata = {
   icons: {
     apple: "/apple-touch-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#007873",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,8 +45,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             <main
               style={{
-                minHeight: "calc(100vh - 104px)",
-                paddingTop: 104,
+                minHeight: "calc(100vh - 78px)",
+                paddingTop: 78,
               }}
             >
               {children}

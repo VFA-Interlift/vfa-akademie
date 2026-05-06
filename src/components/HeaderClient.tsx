@@ -26,6 +26,7 @@ export default function HeaderClient() {
   const [name, setName] = useState<string | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const loadMe = useCallback(async () => {
     try {
@@ -48,7 +49,7 @@ export default function HeaderClient() {
       setCredits(data.creditsTotal);
       setRole(data.role);
     } catch {
-      // bewusst still: Header darf die App nicht blockieren
+      // Header darf die App nicht blockieren
     }
   }, []);
 
@@ -62,6 +63,7 @@ export default function HeaderClient() {
       setName(null);
       setCredits(null);
       setRole("USER");
+      setMenuOpen(false);
     }
   }, [status, loadMe]);
 
@@ -107,13 +109,12 @@ export default function HeaderClient() {
 
       <div
         style={{
-          minHeight: 82,
-          padding: "10px 24px",
+          minHeight: 72,
+          padding: "8px 18px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 18,
-          flexWrap: "wrap",
+          gap: 12,
         }}
       >
         <Link
@@ -121,29 +122,32 @@ export default function HeaderClient() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 14,
+            gap: 10,
             textDecoration: "none",
             color: VFA_GREEN,
-            minWidth: 210,
+            minWidth: 0,
           }}
+          onClick={() => setMenuOpen(false)}
         >
           <img
             src="/logo.png"
             alt="VFA Logo"
             style={{
-              width: 58,
-              height: 58,
+              width: 46,
+              height: 46,
               objectFit: "contain",
+              flex: "0 0 auto",
             }}
           />
 
-          <div style={{ lineHeight: 1.15 }}>
+          <div style={{ lineHeight: 1.1, minWidth: 0 }}>
             <div
               style={{
                 fontSize: 18,
                 fontWeight: 800,
                 color: VFA_GREEN,
-                letterSpacing: "0.02em",
+                letterSpacing: "0.01em",
+                whiteSpace: "nowrap",
               }}
             >
               VFA-Akademie
@@ -152,128 +156,72 @@ export default function HeaderClient() {
             <div
               style={{
                 marginTop: 3,
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize: 10,
+                fontWeight: 800,
                 color: "#555555",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
+                whiteSpace: "nowrap",
               }}
             >
-              Schulungen · Zertifikate · Credits
+              Schulungen · Zertifikate
             </div>
           </div>
         </Link>
-
-        {email && (
-          <nav
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              flexWrap: "wrap",
-            }}
-          >
-            <NavLink href="/dashboard">Dashboard</NavLink>
-            <NavLink href="/meine-schulungen">Schulungen</NavLink>
-            <NavLink href="/meine-zertifikate">Zertifikate</NavLink>
-            <NavLink href="/meine-daten">Meine Daten</NavLink>
-
-            {role === "ADMIN" && (
-              <NavLink href="/admin" strong>
-                Admin
-              </NavLink>
-            )}
-          </nav>
-        )}
 
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 10,
-            flexWrap: "wrap",
-            minWidth: 220,
+            gap: 8,
+            flex: "0 0 auto",
           }}
         >
+          {email && (
+            <span
+              title="Gesamtcredits"
+              style={{
+                padding: "8px 11px",
+                borderRadius: 999,
+                background: VFA_GREEN,
+                color: "#FFFFFF",
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {credits ?? 0} Credits
+            </span>
+          )}
+
           {email ? (
-            <>
-              <span
-                title="Gesamtcredits"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 999,
-                  background: VFA_GREEN,
-                  color: "#FFFFFF",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Credits: {credits ?? 0}
-              </span>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  lineHeight: 1.2,
-                  textAlign: "right",
-                  maxWidth: 190,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "#666666",
-                    fontWeight: 700,
-                  }}
-                >
-                  Willkommen
-                </span>
-
-                <span
-                  title={email}
-                  style={{
-                    fontWeight: 800,
-                    color: "#1F1F1F",
-                    fontSize: 14,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {name ?? email}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 999,
-                  border: `1px solid ${VFA_GREY}`,
-                  background: "#EFEFEF",
-                  color: "#1F1F1F",
-                  fontWeight: 800,
-                  fontSize: 12,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  cursor: "pointer",
-                }}
-              >
-                Logout
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((current) => !current)}
+              aria-expanded={menuOpen}
+              aria-label="Menü öffnen"
+              style={{
+                minWidth: 42,
+                height: 42,
+                borderRadius: 999,
+                border: `1px solid ${VFA_GREY}`,
+                background: menuOpen ? VFA_YELLOW : "#F4F4F4",
+                color: "#1F1F1F",
+                fontWeight: 900,
+                fontSize: 20,
+                cursor: "pointer",
+                lineHeight: 1,
+              }}
+            >
+              ☰
+            </button>
           ) : (
             <Link
               href="/login"
               style={{
-                padding: "10px 18px",
+                padding: "10px 16px",
                 borderRadius: 999,
                 background: VFA_GREEN,
                 color: "#FFFFFF",
@@ -289,33 +237,149 @@ export default function HeaderClient() {
           )}
         </div>
       </div>
+
+      {email && menuOpen && (
+        <div
+          style={{
+            borderTop: "1px solid #E6E6E6",
+            background: "#FFFFFF",
+            padding: "14px 18px 18px",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gap: 10,
+              maxWidth: 520,
+              marginLeft: "auto",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 12px",
+                borderRadius: 0,
+                border: "1px solid #E6E6E6",
+                background: "#F7F7F4",
+                color: "#1F1F1F",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#666666",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Angemeldet als
+              </div>
+
+              <div
+                style={{
+                  marginTop: 4,
+                  fontWeight: 800,
+                  color: VFA_GREEN,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={email}
+              >
+                {name ?? email}
+              </div>
+            </div>
+
+            <nav
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                gap: 10,
+              }}
+            >
+              <MenuLink href="/dashboard" onClick={() => setMenuOpen(false)}>
+                Dashboard
+              </MenuLink>
+
+              <MenuLink href="/meine-schulungen" onClick={() => setMenuOpen(false)}>
+                Meine Schulungen
+              </MenuLink>
+
+              <MenuLink href="/meine-zertifikate" onClick={() => setMenuOpen(false)}>
+                Meine Zertifikate
+              </MenuLink>
+
+              <MenuLink href="/meine-daten" onClick={() => setMenuOpen(false)}>
+                Meine Daten
+              </MenuLink>
+
+              <MenuLink href="/kurskalender" onClick={() => setMenuOpen(false)}>
+                Kurskalender
+              </MenuLink>
+
+              {role === "ADMIN" && (
+                <MenuLink
+                  href="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  variant="yellow"
+                >
+                  Admin
+                </MenuLink>
+              )}
+            </nav>
+
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 999,
+                border: `1px solid ${VFA_GREY}`,
+                background: "#EFEFEF",
+                color: "#1F1F1F",
+                fontWeight: 800,
+                fontSize: 13,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                cursor: "pointer",
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
 
-function NavLink({
+function MenuLink({
   href,
   children,
-  strong = false,
+  onClick,
+  variant = "default",
 }: {
   href: string;
   children: React.ReactNode;
-  strong?: boolean;
+  onClick: () => void;
+  variant?: "default" | "yellow";
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       style={{
-        display: "inline-flex",
+        display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: 36,
-        padding: "8px 13px",
+        minHeight: 42,
+        padding: "10px 14px",
         borderRadius: 999,
-        border: strong ? "none" : `1px solid ${VFA_GREY}`,
-        background: strong ? VFA_YELLOW : "#F4F4F4",
-        color: strong ? "#1F1F1F" : VFA_GREEN,
-        fontSize: 12,
+        border: variant === "yellow" ? "none" : `1px solid ${VFA_GREY}`,
+        background: variant === "yellow" ? VFA_YELLOW : "#F4F4F4",
+        color: variant === "yellow" ? "#1F1F1F" : VFA_GREEN,
+        fontSize: 13,
         fontWeight: 800,
         textTransform: "uppercase",
         letterSpacing: "0.06em",
