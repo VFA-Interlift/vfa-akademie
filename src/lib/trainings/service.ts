@@ -1,8 +1,13 @@
+import type { CertificateKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { formatCertificateKind } from "@/lib/certificates/templates";
 
 export type MyTrainingItem = {
   id: string;
   title: string;
+  code: string | null;
+  certificateKind: CertificateKind | null;
+  certificateKindLabel: string;
   date: Date;
   endDate: Date | null;
   location: string | null;
@@ -28,7 +33,7 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
     where: {
       userId: user.id,
       status: {
-        in: ["PENDING", "CONFIRMED", "ATTENDED"],
+        in: ["PENDING", "CONFIRMED", "ATTENDED", "COMPLETED"],
       },
     },
     orderBy: {
@@ -42,6 +47,8 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
         select: {
           id: true,
           title: true,
+          code: true,
+          certificateKind: true,
           date: true,
           endDate: true,
           location: true,
@@ -56,6 +63,9 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
   return enrollments.map((enrollment) => ({
     id: enrollment.training.id,
     title: enrollment.training.title,
+    code: enrollment.training.code,
+    certificateKind: enrollment.training.certificateKind,
+    certificateKindLabel: formatCertificateKind(enrollment.training.certificateKind),
     date: enrollment.training.date,
     endDate: enrollment.training.endDate,
     location: enrollment.training.location,

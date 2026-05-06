@@ -1,5 +1,6 @@
 import BackButton from "@/components/BackButton";
 import { prisma } from "@/lib/prisma";
+import { formatCertificateKind } from "@/lib/certificates/templates";
 import QRCode from "qrcode";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,16 @@ export default async function TrainingPage({
           marginBottom: 24,
         }}
       >
+        <InfoCard label="Dokument nach Abschluss">
+          {formatCertificateKind(training.certificateKind)}
+        </InfoCard>
+
+        {training.code && (
+          <InfoCard label="Kürzel">
+            {training.code}
+          </InfoCard>
+        )}
+
         <InfoCard label="Zeitraum">
           {training.date.toLocaleDateString("de-DE")}
           {training.endDate
@@ -109,8 +120,8 @@ export default async function TrainingPage({
         </h2>
 
         <p style={{ color: "#aaa", lineHeight: 1.6 }}>
-          Dieser QR-Code kann für die Teilnahmebestätigung genutzt werden.
-          Später wird die Teilnahme automatisch über Cobra und den Schulungsabschluss verarbeitet.
+          Dieser QR-Code kann für Übergangs- oder Testprozesse genutzt werden.
+          Die finale Teilnahme- und Zertifikatslogik läuft später automatisch über die Schulungsdaten.
         </p>
 
         {!qrImage ? (
