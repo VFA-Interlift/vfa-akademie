@@ -1,0 +1,229 @@
+import { CertificateKind } from "@prisma/client";
+
+export type CertificateTemplateConfig = {
+  code: string;
+  label: string;
+  kind: CertificateKind;
+  templateFileName: string;
+  isVdiCertificate: boolean;
+};
+
+export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = {
+  A1: {
+    code: "A1",
+    label: "VDI 2168 Grundkurs A1",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "VDI2168_A1_Teilnahmebestätigung.docx",
+    isVdiCertificate: false,
+  },
+
+  A2: {
+    code: "A2",
+    label: "VDI 2168 Kategorie A2",
+    kind: "VDI_CERTIFICATE",
+    templateFileName: "VDI2168_A2_TN-Zert_VDI.docx",
+    isVdiCertificate: true,
+  },
+
+  B: {
+    code: "B",
+    label: "VDI 2168 Kategorie B",
+    kind: "VDI_CERTIFICATE",
+    templateFileName: "VDI2168_B_TN-Zert_VDI.docx",
+    isVdiCertificate: true,
+  },
+
+  C: {
+    code: "C",
+    label: "VDI 2168 Kategorie C",
+    kind: "VDI_CERTIFICATE",
+    templateFileName: "VDI2168_C_TN-Zert_VDI.docx",
+    isVdiCertificate: true,
+  },
+
+  ARB: {
+    code: "ARB",
+    label: "Grundlegende Sicherheitsanforderungen für Arbeiten an Aufzugsanlagen",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "ARB_TN-Zert.docx",
+    isVdiCertificate: false,
+  },
+
+  AZUBI: {
+    code: "AZUBI",
+    label: "VFA-Einführungsseminar / Welcome Azubis",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "AZUBI_TN-Best.docx",
+    isVdiCertificate: false,
+  },
+
+  BETR: {
+    code: "BETR",
+    label: "Betreiber-Schulung",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "BETR_TN-Best.dotx",
+    isVdiCertificate: false,
+  },
+
+  BRG: {
+    code: "BRG",
+    label: "Berechnungen im Aufzugbau",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "BRG_TN-Best-neu.docx",
+    isVdiCertificate: false,
+  },
+
+  DGUV: {
+    code: "DGUV",
+    label: "Fachkunde im eingeschränkten Aufgabengebiet nach DGUV 309-011",
+    kind: "CERTIFICATE",
+    templateFileName: "DGUV-TN-Zert..docx",
+    isVdiCertificate: false,
+  },
+
+  DOK: {
+    code: "DOK",
+    label: "Dokumentation im Aufzugbau",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "DOK_TN-Zert.docx",
+    isVdiCertificate: false,
+  },
+
+  EFK2: {
+    code: "EFK2",
+    label: "Elektrofachkraft für festgelegte Tätigkeiten im Aufzugbau",
+    kind: "CERTIFICATE",
+    templateFileName: "EFK2-Zertifikat_neu.docx",
+    isVdiCertificate: false,
+  },
+
+  EINST: {
+    code: "EINST",
+    label: "Aufzüge für Einsteiger",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "EINST-Online_Teilnahmebestätigung.docx",
+    isVdiCertificate: false,
+  },
+
+  FFPW: {
+    code: "FFPW",
+    label: "Fachkundige Person für die Befreiung von Personen aus Aufzugsanlagen",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "FFPW-Teilnahmebest..docx",
+    isVdiCertificate: false,
+  },
+
+  GEF: {
+    code: "GEF",
+    label: "Fachkundige Person für die Erstellung von Gefährdungsbeurteilungen",
+    kind: "CERTIFICATE",
+    templateFileName: "GEF-TN-Zert._neu.docx",
+    isVdiCertificate: false,
+  },
+
+  MOD: {
+    code: "MOD",
+    label: "Grundlagen der Modernisierung im Aufzugbau",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "MOD_Teilnahmebestätigung-aktuell.docx",
+    isVdiCertificate: false,
+  },
+
+  NUR1: {
+    code: "NUR1",
+    label: "Normen und Richtlinien - Grundlagen zum aktuellen Regelwerk",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "NuR-1_Teilnahmebestätigung.docx",
+    isVdiCertificate: false,
+  },
+
+  NUR2: {
+    code: "NUR2",
+    label: "Normen und Richtlinien - Neuerungen aus der EN ISO 8100-1/2",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "NuR-2_Teilnahmebestätigung.docx",
+    isVdiCertificate: false,
+  },
+
+  PLG: {
+    code: "PLG",
+    label: "Aufzugsplanung als Teil der Gebäudeplanung",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "PLG neue TN-Best.docx",
+    isVdiCertificate: false,
+  },
+
+  SCHALL: {
+    code: "SCHALL",
+    label: "Schallschutz an Aufzugsanlagen",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "SCHALL_TN-Best.docx",
+    isVdiCertificate: false,
+  },
+
+  "SER-SWB": {
+    code: "SER-SWB",
+    label: "Inbetriebnahme einer Aufzugsanlage",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "SER-SWB_TN-Bestätigung.docx",
+    isVdiCertificate: false,
+  },
+
+  SICH: {
+    code: "SICH",
+    label: "Fachkundige Person für DGUV V3-Messungen an Aufzugsanlagen",
+    kind: "CERTIFICATE",
+    templateFileName: "SICH_TN-Zert.docx",
+    isVdiCertificate: false,
+  },
+
+  SON: {
+    code: "SON",
+    label: "Sonderanlagen: Feuerwehr-, Lasten- und Glasaufzüge",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "SON-TN-Bestätigung.docx",
+    isVdiCertificate: false,
+  },
+};
+
+export const CERTIFICATE_TEMPLATE_CODES = Object.keys(CERTIFICATE_TEMPLATES);
+
+export function normalizeCertificateCode(code: string | null | undefined) {
+  return String(code ?? "").trim().toUpperCase();
+}
+
+export function getCertificateTemplateByCode(
+  code: string | null | undefined
+): CertificateTemplateConfig | null {
+  const normalizedCode = normalizeCertificateCode(code);
+
+  if (!normalizedCode) return null;
+
+  return CERTIFICATE_TEMPLATES[normalizedCode] ?? null;
+}
+
+export function getCertificateKindByCode(
+  code: string | null | undefined
+): CertificateKind | null {
+  return getCertificateTemplateByCode(code)?.kind ?? null;
+}
+
+export function getCertificateLabelByCode(
+  code: string | null | undefined
+): string | null {
+  return getCertificateTemplateByCode(code)?.label ?? null;
+}
+
+export function getCertificateTemplateFileNameByCode(
+  code: string | null | undefined
+): string | null {
+  return getCertificateTemplateByCode(code)?.templateFileName ?? null;
+}
+
+export function formatCertificateKind(kind: CertificateKind | string | null | undefined) {
+  if (kind === "ATTENDANCE_CONFIRMATION") return "Teilnahmebestätigung";
+  if (kind === "CERTIFICATE") return "Zertifikat";
+  if (kind === "VDI_CERTIFICATE") return "VDI-Zertifikat";
+
+  return "Zertifikat";
+}

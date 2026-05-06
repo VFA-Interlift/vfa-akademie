@@ -39,6 +39,12 @@ enum CertificateStatus {
   REVOKED
 }
 
+enum CertificateKind {
+  ATTENDANCE_CONFIRMATION
+  CERTIFICATE
+  VDI_CERTIFICATE
+}
+
 model User {
   id           String @id @default(cuid())
   email        String @unique
@@ -76,6 +82,10 @@ model Training {
   id    String @id @default(cuid())
   title String
 
+  // Kürzel aus Cobra oder manuell für Übergangszeit
+  // Beispiele: A1, A2, B, C, DOK, BETR, SICH, SER-SWB
+  code String?
+
   // Startdatum der Schulung
   date DateTime
 
@@ -84,6 +94,9 @@ model Training {
   location    String?
   instructor  String?
   description String?
+
+  // Dokumentart für spätere Zertifikats-/Teilnahmebestätigungslogik
+  certificateKind CertificateKind?
 
   // Optionaler späterer Cobra-Bezug
   cobraId String? @unique
@@ -98,6 +111,9 @@ model Training {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([certificateKind])
 }
 
 model Enrollment {
@@ -140,6 +156,10 @@ model Certificate {
   status   CertificateStatus @default(ISSUED)
   credits  Int               @default(0)
 
+  // Wird bei Erstellung aus Training übernommen, damit das Zertifikat historisch stabil bleibt
+  code            String?
+  certificateKind CertificateKind?
+
   pdfUrl String?
   note   String?
 
@@ -150,6 +170,8 @@ model Certificate {
 
   @@index([userId, issuedAt])
   @@index([trainingId, issuedAt])
+  @@index([code])
+  @@index([certificateKind])
 }
 
 model ClaimToken {

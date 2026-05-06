@@ -3,6 +3,10 @@ import type { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  getCertificateKindByCode,
+  normalizeCertificateCode,
+} from "@/lib/certificates/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +88,20 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       data.title = title;
     }
 
+    if (body?.code !== undefined) {
+      if (typeof body.code !== "string") return fail("INVALID_CODE", 400);
+
+      const code = normalizeCertificateCode(body.code) || null;
+      const certificateKind = code ? getCertificateKindByCode(code) : null;
+
+      if (code && !certificateKind) {
+        return fail("UNKNOWN_CERTIFICATE_CODE", 400);
+      }
+
+      data.code = code;
+      data.certificateKind = certificateKind;
+    }
+
     if (body?.date !== undefined) {
       if (typeof body.date !== "string") return fail("INVALID_START_DATE", 400);
 
@@ -159,6 +177,8 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       select: {
         id: true,
         title: true,
+        code: true,
+        certificateKind: true,
         date: true,
         endDate: true,
         location: true,

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  getCertificateKindByCode,
+  normalizeCertificateCode,
+} from "@/lib/certificates/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +65,8 @@ export async function GET() {
     select: {
       id: true,
       title: true,
+      code: true,
+      certificateKind: true,
       date: true,
       endDate: true,
       location: true,
@@ -86,7 +92,12 @@ export async function POST(req: Request) {
 
   const title = typeof body?.title === "string" ? body.title.trim() : "";
   const startDateStr = typeof body?.date === "string" ? body.date.trim() : "";
-  const endDateStr = typeof body?.endDate === "string" ? body.endDate.trim() : "";
+  const endDateStr =
+    typeof body?.endDate === "string" ? body.endDate.trim() : "";
+
+  const rawCode = typeof body?.code === "string" ? body.code : "";
+  const code = normalizeCertificateCode(rawCode) || null;
+  const certificateKind = code ? getCertificateKindByCode(code) : null;
 
   const location =
     typeof body?.location === "string" && body.location.trim()
@@ -109,6 +120,10 @@ export async function POST(req: Request) {
   if (!startDateStr) return deny(400, "INVALID_START_DATE");
   if (!endDateStr) return deny(400, "INVALID_END_DATE");
 
+  if (code && !certificateKind) {
+    return deny(400, "UNKNOWN_CERTIFICATE_CODE");
+  }
+
   const startDate = parseGermanDate(startDateStr);
   if (!startDate) return deny(400, "INVALID_START_DATE");
 
@@ -126,6 +141,8 @@ export async function POST(req: Request) {
   const training = await prisma.training.create({
     data: {
       title,
+      code,
+      certificateKind,
       date: startDate,
       endDate,
       location,
@@ -136,6 +153,8 @@ export async function POST(req: Request) {
     select: {
       id: true,
       title: true,
+      code: true,
+      certificateKind: true,
       date: true,
       endDate: true,
       location: true,

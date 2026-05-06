@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
+import {
+  CERTIFICATE_TEMPLATE_CODES,
+  formatCertificateKind,
+} from "@/lib/certificates/templates";
+import type { CertificateKind } from "@prisma/client";
 
 type Training = {
   id: string;
   title: string;
+  code: string | null;
+  certificateKind: CertificateKind | null;
   date: string;
   endDate: string | null;
   location: string | null;
@@ -21,6 +28,7 @@ export default function AdminTrainingsPage() {
   const [trainings, setTrainings] = useState<Training[]>([]);
 
   const [newTitle, setNewTitle] = useState("");
+  const [newCode, setNewCode] = useState("");
   const [newStartDate, setNewStartDate] = useState("");
   const [newEndDate, setNewEndDate] = useState("");
   const [newLocation, setNewLocation] = useState("");
@@ -58,6 +66,7 @@ export default function AdminTrainingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: newTitle.trim(),
+          code: newCode.trim() || null,
           date: newStartDate.trim(),
           endDate: newEndDate.trim(),
           location: newLocation.trim() || null,
@@ -70,12 +79,17 @@ export default function AdminTrainingsPage() {
       const data = await res.json();
 
       if (!data.ok) {
-        setMsg(data.error ?? "CREATE_FAILED");
+        if (data.error === "UNKNOWN_CERTIFICATE_CODE") {
+          setMsg("⚠️ Unbekanntes Kürzel. Bitte ein gültiges Kürzel auswählen oder leer lassen.");
+        } else {
+          setMsg(data.error ?? "CREATE_FAILED");
+        }
         return;
       }
 
       setMsg("✅ Schulung erstellt");
       setNewTitle("");
+      setNewCode("");
       setNewStartDate("");
       setNewEndDate("");
       setNewLocation("");
@@ -109,6 +123,37 @@ export default function AdminTrainingsPage() {
         return;
       }
 
+      await loadTrainings();
+    } catch {
+      setMsg("UPDATE_FAILED");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateCode(id: string, value: string) {
+    setLoading(true);
+    setMsg("");
+
+    try {
+      const res = await fetch(`/api/admin/trainings/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: value.trim() || "" }),
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        if (data.error === "UNKNOWN_CERTIFICATE_CODE") {
+          setMsg("⚠️ Unbekanntes Kürzel. Bitte ein gültiges Kürzel auswählen oder leer lassen.");
+        } else {
+          setMsg(data.error ?? "UPDATE_FAILED");
+        }
+        return;
+      }
+
+      setMsg("✅ Kürzel aktualisiert");
       await loadTrainings();
     } catch {
       setMsg("UPDATE_FAILED");
@@ -191,6 +236,12 @@ export default function AdminTrainingsPage() {
         <div style={{ marginBottom: 30, display: "grid", gap: 14 }}>
           <Input label="Titel" value={newTitle} onChange={setNewTitle} />
 
+          <Select
+            label="Kürzel optional, später automatisch aus Cobra"
+            value={newCode}
+            onChange={setNewCode}
+          />
+
           <Input
             label="Startdatum (TT.MM.JJJJ)"
             value={newStartDate}
@@ -272,6 +323,14 @@ export default function AdminTrainingsPage() {
                   {t.endDate ? ` bis ${formatDate(t.endDate)}` : ""}
                 </div>
 
+                <div style={{ marginTop: 8, fontSize: 13, opacity: 0.8 }}>
+                  Kürzel: {t.code || "nicht gesetzt"}
+                </div>
+
+                <div style={{ marginTop: 4, fontSize: 13, opacity: 0.8 }}>
+                  Dokumentart: {formatCertificateKind(t.certificateKind)}
+                </div>
+
                 {t.location && (
                   <div style={{ marginTop: 4, fontSize: 13, opacity: 0.8 }}>
                     Ort: {t.location}
@@ -300,10 +359,27 @@ export default function AdminTrainingsPage() {
                     display: "flex",
                     gap: 8,
                     flexWrap: "wrap",
+                    alignItems: "center",
                   }}
                 >
+                  <select
+                    value={t.code ?? ""}
+                    onChange={(event) => updateCode(t.id, event.target.value)}
+                    disabled={loading}
+                    style={smallSelectStyle}
+                  >
+                    <option value="">Kürzel setzen</option>
+                    {CERTIFICATE_TEMPLATE_CODES.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+
                   <ButtonSmall
-                    onClick={() => updateCredits(t.id, Math.max(0, t.creditsAward - 1))}
+                    onClick={() =>
+                      updateCredits(t.id, Math.max(0, t.creditsAward - 1))
+                    }
                   >
                     -1 Credit
                   </ButtonSmall>
@@ -348,6 +424,34 @@ function Input({
         onChange={(event) => onChange(event.target.value)}
         style={inputStyle}
       />
+    </label>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label style={{ display: "grid", gap: 6 }}>
+      {label}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        style={inputStyle}
+      >
+        <option value="">Kein Kürzel auswählen</option>
+        {CERTIFICATE_TEMPLATE_CODES.map((code) => (
+          <option key={code} value={code}>
+            {code}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -443,4 +547,14 @@ const inputStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.06)",
   color: "#fff",
   fontSize: 15,
+};
+
+const smallSelectStyle: React.CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: 10,
+  border: "1px solid rgba(255,255,255,0.2)",
+  background: "rgba(255,255,255,0.08)",
+  color: "#fff",
+  cursor: "pointer",
+  fontWeight: 700,
 };
