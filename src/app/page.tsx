@@ -5,30 +5,52 @@ export default function HomePage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(circle at top, #1a1a1a, #0b0b0b)",
+        background: "#F7F7F4",
         display: "grid",
         placeItems: "center",
-        padding: 24,
-        color: "#fff",
+        padding: "40px 24px",
+        color: "#1F1F1F",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: 720,
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: 20,
+          maxWidth: 860,
+          background: "#FFFFFF",
+          border: "1px solid #FFC100",
           padding: 32,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+          boxShadow: "0 12px 32px rgba(0,0,0,0.06)",
         }}
       >
+        <div
+          style={{
+            width: 64,
+            height: 6,
+            background: "#FFC100",
+            marginBottom: 18,
+          }}
+        />
+
+        <img
+          src="/logo.png"
+          alt="VFA Logo"
+          style={{
+            width: 86,
+            height: 86,
+            objectFit: "contain",
+            marginBottom: 18,
+          }}
+        />
+
         <h1
           style={{
             fontSize: 44,
-            fontWeight: 800,
-            marginBottom: 12,
-            letterSpacing: -0.5,
+            fontWeight: 400,
+            margin: 0,
+            color: "#007873",
+            textTransform: "uppercase",
+            letterSpacing: "0.03em",
+            lineHeight: 1.1,
           }}
         >
           VFA-Akademie
@@ -37,24 +59,33 @@ export default function HomePage() {
         <p
           style={{
             fontSize: 18,
-            opacity: 0.85,
+            color: "#333333",
             lineHeight: 1.6,
+            marginTop: 18,
             marginBottom: 28,
+            maxWidth: 700,
           }}
         >
-          Digitale Schulungsnachweise per QR-Code.  
-          Teilnahme erfassen. Badges automatisch vergeben.
+          Digitale Verwaltung für Schulungen, Teilnahmebestätigungen,
+          Zertifikate und Credits der VFA-Akademie.
         </p>
 
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           <Link
             href="/login"
             style={{
-              padding: "14px 20px",
-              borderRadius: 12,
-              background: "#ffffff",
-              color: "#000",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 44,
+              padding: "11px 22px",
+              borderRadius: 999,
+              background: "#007873",
+              color: "#FFFFFF",
               fontWeight: 800,
+              fontSize: 14,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
               textDecoration: "none",
             }}
           >
@@ -64,11 +95,18 @@ export default function HomePage() {
           <Link
             href="/register"
             style={{
-              padding: "14px 20px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.25)",
-              color: "#fff",
-              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 44,
+              padding: "11px 22px",
+              borderRadius: 999,
+              background: "#FFC100",
+              color: "#1F1F1F",
+              fontWeight: 800,
+              fontSize: 14,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
               textDecoration: "none",
             }}
           >
@@ -78,17 +116,19 @@ export default function HomePage() {
 
         <div
           style={{
-            marginTop: 28,
-            paddingTop: 16,
-            borderTop: "1px solid rgba(255,255,255,0.08)",
-            fontSize: 14,
-            opacity: 0.7,
+            marginTop: 30,
+            paddingTop: 20,
+            borderTop: "1px solid #E6E6E6",
+            display: "grid",
+            gap: 8,
+            color: "#333333",
             lineHeight: 1.6,
           }}
         >
-          <div>✔ QR-Code scannen → Badge wird automatisch erstellt</div>
-          <div>✔ Zeitlich begrenzte Tokens pro Schulung</div>
-          <div>✔ Jeder Kurs mehrfach pro Jahr möglich (A1-2601, A1-2602, …)</div>
+          <div>✓ Schulungen und Teilnehmer zentral verwalten</div>
+          <div>✓ Zertifikate und Teilnahmebestätigungen automatisch erstellen</div>
+          <div>✓ Credits erst nach Schulungsabschluss vergeben</div>
+          <div>✓ Vorbereitung für spätere Cobra-Anbindung</div>
         </div>
       </div>
     </main>
