@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
+import { useCallback, useEffect, useState } from "react";
 
 type MeResponse =
   | { ok: false; loggedIn: false }
@@ -13,6 +14,10 @@ type MeResponse =
       creditsTotal: number;
       role: "USER" | "ADMIN";
     };
+
+const VFA_GREEN = "#007873";
+const VFA_YELLOW = "#FFC100";
+const VFA_GREY = "#C7C7C7";
 
 export default function HeaderClient() {
   const { status } = useSession();
@@ -43,7 +48,7 @@ export default function HeaderClient() {
       setCredits(data.creditsTotal);
       setRole(data.role);
     } catch {
-      // ignore
+      // bewusst still: Header darf die App nicht blockieren
     }
   }, []);
 
@@ -87,78 +92,238 @@ export default function HeaderClient() {
         left: 0,
         right: 0,
         zIndex: 2000,
-        background: "rgba(0,0,0,0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(255,255,255,0.12)",
-        padding: "14px 20px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 16,
+        background: "#FFFFFF",
+        borderBottom: `1px solid ${VFA_GREY}`,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
       }}
     >
-      <a
-        href="/dashboard"
+      <div
         style={{
+          height: 5,
+          width: "100%",
+          background: VFA_YELLOW,
+        }}
+      />
+
+      <div
+        style={{
+          minHeight: 82,
+          padding: "10px 24px",
           display: "flex",
           alignItems: "center",
-          textDecoration: "none",
+          justifyContent: "space-between",
+          gap: 18,
+          flexWrap: "wrap",
         }}
       >
-        <img
-          src="/logo.png"
-          alt="VFA Logo"
+        <Link
+          href={email ? "/dashboard" : "/login"}
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 10,
-            objectFit: "contain",
-            opacity: 0.95,
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            textDecoration: "none",
+            color: VFA_GREEN,
+            minWidth: 210,
           }}
-        />
-      </a>
-
-      {email ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span
+        >
+          <img
+            src="/logo.png"
+            alt="VFA Logo"
             style={{
-              padding: "6px 10px",
-              border: "1px solid rgba(255,255,255,0.18)",
-              borderRadius: 999,
-              fontWeight: 800,
-              fontSize: 14,
-              background: "rgba(255,255,255,0.08)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
+              width: 58,
+              height: 58,
+              objectFit: "contain",
             }}
-            title="Gesamtcredits"
-          >
-            Credits: {credits ?? 0}
-          </span>
+          />
 
-          <div
+          <div style={{ lineHeight: 1.15 }}>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: VFA_GREEN,
+                letterSpacing: "0.02em",
+              }}
+            >
+              VFA-Akademie
+            </div>
+
+            <div
+              style={{
+                marginTop: 3,
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#555555",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              Schulungen · Zertifikate · Credits
+            </div>
+          </div>
+        </Link>
+
+        {email && (
+          <nav
             style={{
               display: "flex",
-              flexDirection: "column",
-              lineHeight: 1.2,
-              textAlign: "right",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              flexWrap: "wrap",
             }}
           >
-            <span style={{ fontSize: 13, opacity: 0.7 }}>Willkommen</span>
+            <NavLink href="/dashboard">Dashboard</NavLink>
+            <NavLink href="/meine-schulungen">Schulungen</NavLink>
+            <NavLink href="/meine-zertifikate">Zertifikate</NavLink>
+            <NavLink href="/meine-daten">Meine Daten</NavLink>
 
-            <span style={{ fontWeight: 700, color: "#fff" }}>
-              {name ?? "User"}
-            </span>
+            {role === "ADMIN" && (
+              <NavLink href="/admin" strong>
+                Admin
+              </NavLink>
+            )}
+          </nav>
+        )}
 
-            {/* <span style={{ fontSize: 11, opacity: 0.5 }}>{role}</span> */}
-          </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 10,
+            flexWrap: "wrap",
+            minWidth: 220,
+          }}
+        >
+          {email ? (
+            <>
+              <span
+                title="Gesamtcredits"
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  background: VFA_GREEN,
+                  color: "#FFFFFF",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Credits: {credits ?? 0}
+              </span>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  lineHeight: 1.2,
+                  textAlign: "right",
+                  maxWidth: 190,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#666666",
+                    fontWeight: 700,
+                  }}
+                >
+                  Willkommen
+                </span>
+
+                <span
+                  title={email}
+                  style={{
+                    fontWeight: 800,
+                    color: "#1F1F1F",
+                    fontSize: 14,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {name ?? email}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  border: `1px solid ${VFA_GREY}`,
+                  background: "#EFEFEF",
+                  color: "#1F1F1F",
+                  fontWeight: 800,
+                  fontSize: 12,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  cursor: "pointer",
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              style={{
+                padding: "10px 18px",
+                borderRadius: 999,
+                background: VFA_GREEN,
+                color: "#FFFFFF",
+                fontWeight: 800,
+                fontSize: 13,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                textDecoration: "none",
+              }}
+            >
+              Login
+            </Link>
+          )}
         </div>
-      ) : (
-        <span style={{ fontWeight: 400, color: "#aaa" }}>
-          {status === "loading" ? "…" : ""}
-        </span>
-      )}
+      </div>
     </header>
+  );
+}
+
+function NavLink({
+  href,
+  children,
+  strong = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  strong?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: 36,
+        padding: "8px 13px",
+        borderRadius: 999,
+        border: strong ? "none" : `1px solid ${VFA_GREY}`,
+        background: strong ? VFA_YELLOW : "#F4F4F4",
+        color: strong ? "#1F1F1F" : VFA_GREEN,
+        fontSize: 12,
+        fontWeight: 800,
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </Link>
   );
 }
