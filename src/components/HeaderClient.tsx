@@ -177,25 +177,6 @@ export default function HeaderClient() {
             flex: "0 0 auto",
           }}
         >
-          {email && (
-            <span
-              title="Gesamtcredits"
-              style={{
-                padding: "8px 11px",
-                borderRadius: 999,
-                background: VFA_GREEN,
-                color: "#FFFFFF",
-                fontWeight: 800,
-                fontSize: 12,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {credits ?? 0} Credits
-            </span>
-          )}
-
           {email ? (
             <button
               type="button"
@@ -287,6 +268,23 @@ export default function HeaderClient() {
                 title={email}
               >
                 {name ?? email}
+              </div>
+
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "inline-flex",
+                  padding: "7px 10px",
+                  borderRadius: 999,
+                  background: VFA_GREEN,
+                  color: "#FFFFFF",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Credits: {credits ?? 0}
               </div>
             </div>
 
