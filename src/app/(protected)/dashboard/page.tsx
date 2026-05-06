@@ -1,11 +1,8 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
-import AppButton from "@/components/ui/AppButton";
-import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 export const dynamic = "force-dynamic";
@@ -118,10 +115,43 @@ export default async function DashboardPage() {
       }}
     >
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        <PageHeader
-          title="Dashboard"
-          description={`Willkommen, ${displayName}. Hier findest du deine Schulungen, Zertifikate und deinen aktuellen Credit-Status.`}
-        />
+        <section style={{ marginBottom: 28 }}>
+          <div
+            style={{
+              width: 58,
+              height: 5,
+              background: "#FFC100",
+              marginBottom: 12,
+            }}
+          />
+
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 36,
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              color: "#007873",
+              textTransform: "uppercase",
+            }}
+          >
+            Dashboard
+          </h1>
+
+          <p
+            style={{
+              color: "#333333",
+              marginTop: 14,
+              marginBottom: 0,
+              lineHeight: 1.65,
+              maxWidth: 760,
+              fontSize: 16,
+            }}
+          >
+            Willkommen, {displayName}. Hier siehst du deinen aktuellen
+            Credit-Status und eine kurze Übersicht über deine Akademie-Daten.
+          </p>
+        </section>
 
         <div
           style={{
@@ -223,53 +253,31 @@ export default async function DashboardPage() {
           </AppCard>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 16,
-          }}
-        >
-          <DashboardCard
-            title="Meine Schulungen"
-            description="Alle aktiven Schulungen ansehen, die dir zugeordnet sind."
-            href="/meine-schulungen"
-          />
+        <AppCard accent="yellow">
+          <h2
+            style={{
+              margin: 0,
+              color: "#007873",
+              fontSize: 22,
+              fontWeight: 500,
+            }}
+          >
+            Navigation
+          </h2>
 
-          <DashboardCard
-            title="Meine Zertifikate"
-            description="Teilnahmebestätigungen, Zertifikate und Nachweise ansehen."
-            href="/meine-zertifikate"
-          />
-
-          <DashboardCard
-            title="Kurskalender"
-            description="Alle verfügbaren Schulungen und Termine ansehen."
-            href="/kurskalender"
-          />
-
-          <DashboardCard
-            title="Meine Daten"
-            description="Profil, persönliche Daten und Firmendaten bearbeiten."
-            href="/meine-daten"
-          />
-
-          <DashboardCard
-            title="Schulungen Website"
-            description="Öffnet die öffentliche VFA-Schulungsseite in einem neuen Tab."
-            href="https://www.vfa-interlift.de/schulungen"
-            external
-          />
-
-          {isAdmin && (
-            <DashboardCard
-              title="Admin"
-              description="Schulungen, Teilnehmer, Zertifikate und Credits verwalten."
-              href="/admin"
-              highlight
-            />
-          )}
-        </div>
+          <p
+            style={{
+              marginTop: 10,
+              marginBottom: 0,
+              color: "#333333",
+              lineHeight: 1.6,
+            }}
+          >
+            Alle Bereiche findest du oben rechts im Menü. Dort kannst du deine
+            Schulungen, Zertifikate, Profildaten und — falls freigeschaltet —
+            den Adminbereich öffnen.
+          </p>
+        </AppCard>
       </div>
     </main>
   );
@@ -339,100 +347,5 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
       <strong style={{ color: "#007873" }}>{value}</strong>
     </div>
-  );
-}
-
-function DashboardCard({
-  title,
-  description,
-  href,
-  external = false,
-  highlight = false,
-}: {
-  title: string;
-  description: string;
-  href: string;
-  external?: boolean;
-  highlight?: boolean;
-}) {
-  const content = (
-    <AppCard accent={highlight ? "green" : "yellow"} style={{ height: "100%" }}>
-      <div
-        style={{
-          minHeight: 150,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          gap: 18,
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              margin: 0,
-              color: "#007873",
-              fontSize: 22,
-              fontWeight: 500,
-              lineHeight: 1.25,
-              textTransform: "uppercase",
-              letterSpacing: "0.02em",
-            }}
-          >
-            {title}
-          </h2>
-
-          <p
-            style={{
-              marginTop: 10,
-              marginBottom: 0,
-              color: "#333333",
-              lineHeight: 1.6,
-            }}
-          >
-            {description}
-          </p>
-        </div>
-
-        <div>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: 38,
-              padding: "9px 18px",
-              borderRadius: 999,
-              background: highlight ? "#FFC100" : "#007873",
-              color: highlight ? "#1F1F1F" : "#FFFFFF",
-              fontWeight: 800,
-              fontSize: 13,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Öffnen →
-          </span>
-        </div>
-      </div>
-    </AppCard>
-  );
-
-  if (external) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ textDecoration: "none" }}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} style={{ textDecoration: "none" }}>
-      {content}
-    </Link>
   );
 }
