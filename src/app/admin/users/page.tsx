@@ -1,16 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import BackButton from "@/components/BackButton";
+import AppButton from "@/components/ui/AppButton";
+import AppCard from "@/components/ui/AppCard";
+import AppInput from "@/components/ui/AppInput";
+import PageHeader from "@/components/ui/PageHeader";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function AdminUsersPage() {
   const [email, setEmail] = useState("");
-  const [msg, setMsg] = useState<string>("");
+  const [msg, setMsg] = useState("");
+  const [msgOk, setMsgOk] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  function showMessage(message: string, ok = false) {
+    setMsg(message);
+    setMsgOk(ok);
+  }
 
   async function promote() {
     setLoading(true);
     setMsg("");
+    setMsgOk(false);
 
     try {
       const res = await fetch("/api/admin/users/promote", {
@@ -20,96 +31,164 @@ export default function AdminUsersPage() {
       });
 
       const text = await res.text();
+
       let data: any = null;
+
       try {
         data = JSON.parse(text);
       } catch {
-        setMsg("SERVER_RESPONSE_INVALID");
+        showMessage("Serverantwort konnte nicht gelesen werden.");
         return;
       }
 
       if (!res.ok || !data?.ok) {
-        setMsg(data?.error ?? "PROMOTE_FAILED");
+        if (data?.error === "INVALID_EMAIL") {
+          showMessage("Bitte eine gültige E-Mail eingeben.");
+        } else if (data?.error === "USER_NOT_FOUND") {
+          showMessage("User wurde nicht gefunden. Der User muss zuerst registriert sein.");
+        } else if (data?.error === "UNAUTHENTICATED") {
+          showMessage("Du bist nicht eingeloggt.");
+        } else if (data?.error === "FORBIDDEN") {
+          showMessage("Du hast keine Berechtigung.");
+        } else {
+          showMessage(data?.error ?? "Admin-Vergabe fehlgeschlagen.");
+        }
+
         return;
       }
 
-      setMsg(`✅ ${data.email} ist jetzt ADMIN`);
+      showMessage(`${data.email} ist jetzt Admin.`, true);
       setEmail("");
+    } catch {
+      showMessage("Serverfehler beim Ernennen des Admins.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div
+    <main
       style={{
         minHeight: "100vh",
+        background: "#F7F7F4",
         padding: "40px 24px",
-        background: "radial-gradient(circle at top, #111 0%, #000 80%)",
-        color: "#fff",
       }}
     >
-      <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <BackButton label="Zurück" />
-          <h1 style={{ fontSize: 42, margin: 0 }}>Admin ernennen</h1>
-        </div>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <PageHeader
+          title="Admin verwalten"
+          description="Hier kannst du registrierte Nutzer per E-Mail zum Admin machen. Danach sehen sie den Admin-Menüpunkt und können Verwaltungsfunktionen nutzen."
+        />
 
         {msg && (
           <div
             style={{
-              marginTop: 20,
-              padding: 14,
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "rgba(255,255,255,0.06)",
+              marginBottom: 18,
+              padding: "12px 14px",
+              border: msgOk
+                ? "1px solid #007873"
+                : "1px solid rgba(176,0,32,0.28)",
+              background: msgOk
+                ? "rgba(0,120,115,0.08)"
+                : "rgba(176,0,32,0.08)",
+              color: msgOk ? "#007873" : "#B00020",
+              fontWeight: 800,
+              lineHeight: 1.5,
             }}
           >
             {msg}
           </div>
         )}
 
-        <div style={{ marginTop: 28, display: "grid", gap: 12, maxWidth: 520 }}>
-          <label style={{ display: "grid", gap: 6 }}>
-            User E-Mail
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
+        <div style={{ display: "grid", gap: 16 }}>
+          <AppCard accent="green">
+            <div
               style={{
-                width: "100%",
-                padding: "12px 14px",
-                borderRadius: 14,
-                border: "1px solid rgba(255,255,255,0.15)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                fontSize: 15,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 16,
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+                marginBottom: 18,
               }}
-            />
-          </label>
+            >
+              <div>
+                <h2
+                  style={{
+                    margin: 0,
+                    color: "#007873",
+                    fontSize: 24,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  User zum Admin machen
+                </h2>
 
-          <button
-            onClick={promote}
-            disabled={loading || !email.trim()}
-            style={{
-              marginTop: 6,
-              padding: "12px 16px",
-              borderRadius: 14,
-              fontWeight: 900,
-              background: "#fff",
-              color: "#000",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            {loading ? "…" : "Zum Admin machen"}
-          </button>
+                <p
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 0,
+                    color: "#333333",
+                    lineHeight: 1.6,
+                    maxWidth: 720,
+                  }}
+                >
+                  Gib die E-Mail-Adresse eines bereits registrierten Users ein.
+                  Nach erfolgreicher Änderung hat der User Zugriff auf den Adminbereich.
+                </p>
+              </div>
 
-          <p style={{ opacity: 0.7, marginTop: 6, fontSize: 14, lineHeight: 1.5 }}>
-            Hinweis: Der User muss bereits registriert sein. Danach sieht er den Admin-Menüpunkt.
-          </p>
+              <StatusBadge variant="yellow">Adminrechte</StatusBadge>
+            </div>
+
+            <div style={{ display: "grid", gap: 14, maxWidth: 620 }}>
+              <AppInput
+                label="User E-Mail"
+                value={email}
+                placeholder="user@example.com"
+                type="email"
+                onChange={setEmail}
+              />
+
+              <AppButton
+                onClick={promote}
+                disabled={loading || !email.trim()}
+                variant="primary"
+              >
+                {loading ? "Wird verarbeitet..." : "Zum Admin machen"}
+              </AppButton>
+            </div>
+          </AppCard>
+
+          <AppCard>
+            <h2
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: 24,
+                fontWeight: 500,
+                lineHeight: 1.3,
+              }}
+            >
+              Hinweis
+            </h2>
+
+            <p
+              style={{
+                marginTop: 10,
+                marginBottom: 0,
+                color: "#333333",
+                lineHeight: 1.6,
+              }}
+            >
+              Adminrechte sollten nur an Personen vergeben werden, die wirklich
+              Schulungen, Teilnehmer, Zertifikate und Credits verwalten dürfen.
+              Der User muss vor der Admin-Vergabe bereits registriert sein.
+            </p>
+          </AppCard>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
