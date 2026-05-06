@@ -22,7 +22,7 @@ export default async function MeineZertifikatePage() {
       </div>
 
       <p style={{ color: "#aaa", marginBottom: 24 }}>
-        Hier findest du deine Zertifikate aus abgeschlossenen Schulungen.
+        Hier findest du deine Teilnahmebestätigungen und Zertifikate aus abgeschlossenen Schulungen.
       </p>
 
       <div style={{ display: "grid", gap: 12 }}>
@@ -52,7 +52,48 @@ export default async function MeineZertifikatePage() {
                 {cert.title}
               </div>
 
-              <div style={{ marginTop: 8, color: "#aaa" }}>
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "4px 8px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  {cert.certificateKindLabel}
+                </span>
+
+                {cert.code && (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      padding: "4px 8px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,0.18)",
+                      background: "rgba(255,255,255,0.06)",
+                      color: "#fff",
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Kürzel: {cert.code}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ marginTop: 12, color: "#aaa" }}>
                 Schulung: {cert.trainingTitle}
               </div>
 
@@ -76,10 +117,10 @@ export default async function MeineZertifikatePage() {
               )}
 
               {cert.description && (
-              <div style={{ marginTop: 6, color: "#aaa" }}>
+                <div style={{ marginTop: 6, color: "#aaa" }}>
                   Inhalte: {cert.description}
                 </div>
-              )}  
+              )}
 
               <div style={{ marginTop: 6, color: "#aaa" }}>
                 Ausgestellt am: {cert.issuedAt.toLocaleDateString("de-DE")}

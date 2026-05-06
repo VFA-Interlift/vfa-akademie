@@ -1,4 +1,6 @@
+import type { CertificateKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { formatCertificateKind } from "@/lib/certificates/templates";
 
 export type MyCertificateItem = {
   id: string;
@@ -6,6 +8,11 @@ export type MyCertificateItem = {
   issuedAt: Date;
   credits: number;
   status: string;
+
+  code: string | null;
+  certificateKind: CertificateKind | null;
+  certificateKindLabel: string;
+
   trainingTitle: string;
   trainingDate: Date;
   trainingEndDate: Date | null;
@@ -43,6 +50,8 @@ export async function getMyCertificates(
       issuedAt: true,
       credits: true,
       status: true,
+      code: true,
+      certificateKind: true,
       pdfUrl: true,
       training: {
         select: {
@@ -63,6 +72,11 @@ export async function getMyCertificates(
     issuedAt: cert.issuedAt,
     credits: cert.credits,
     status: cert.status,
+
+    code: cert.code,
+    certificateKind: cert.certificateKind,
+    certificateKindLabel: formatCertificateKind(cert.certificateKind),
+
     pdfUrl: cert.pdfUrl,
     trainingTitle: cert.training.title,
     trainingDate: cert.training.date,

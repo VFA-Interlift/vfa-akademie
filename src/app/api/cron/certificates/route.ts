@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   }
 
   const todayUtc = startOfTodayUtc();
+  const completedAt = new Date();
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -61,6 +62,8 @@ export async function GET(req: Request) {
             select: {
               id: true,
               title: true,
+              code: true,
+              certificateKind: true,
               date: true,
               endDate: true,
               location: true,
@@ -85,6 +88,8 @@ export async function GET(req: Request) {
             enrollmentId: enrollment.id,
             title: enrollment.training.title,
             credits,
+            code: enrollment.training.code,
+            certificateKind: enrollment.training.certificateKind,
             note: "Automatisch nach Schulungsabschluss erstellt.",
           },
           select: {
@@ -104,6 +109,8 @@ export async function GET(req: Request) {
               meta: {
                 kind: "AUTO_CERTIFICATE_CREDITS",
                 enrollmentId: enrollment.id,
+                trainingCode: enrollment.training.code,
+                certificateKind: enrollment.training.certificateKind,
               },
             },
           });
@@ -130,7 +137,7 @@ export async function GET(req: Request) {
             status: "CERTIFICATE_ISSUED",
             attended: true,
             passed: true,
-            completedAt: new Date(),
+            completedAt,
           },
         });
 

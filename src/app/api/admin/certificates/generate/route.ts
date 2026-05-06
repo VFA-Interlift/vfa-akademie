@@ -67,6 +67,8 @@ export async function POST() {
             select: {
               id: true,
               title: true,
+              code: true,
+              certificateKind: true,
               date: true,
               endDate: true,
               creditsAward: true,
@@ -88,6 +90,8 @@ export async function POST() {
             enrollmentId: enrollment.id,
             title: enrollment.training.title,
             credits,
+            code: enrollment.training.code,
+            certificateKind: enrollment.training.certificateKind,
             note: "Automatisch nach Schulungsabschluss erstellt.",
           },
           select: {
@@ -108,6 +112,8 @@ export async function POST() {
                 kind: "CERTIFICATE_AUTO_CREDITS",
                 enrollmentId: enrollment.id,
                 generatedByAdminId: gate.admin.id,
+                trainingCode: enrollment.training.code,
+                certificateKind: enrollment.training.certificateKind,
               },
             },
           });
