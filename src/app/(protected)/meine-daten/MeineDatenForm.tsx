@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import AppButton from "@/components/ui/AppButton";
+import AppInput from "@/components/ui/AppInput";
+import AppSelect from "@/components/ui/AppSelect";
+import AppTextarea from "@/components/ui/AppTextarea";
+import AppCard from "@/components/ui/AppCard";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 type FormState = {
   email: string;
   name: string;
   firstName: string;
   lastName: string;
-  birthDate: string; // TT.MM.JJJJ
+  birthDate: string;
   gender: string;
   phone: string;
 
@@ -25,10 +31,12 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
   const [f, setF] = useState<FormState>(initial);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   async function save() {
     setLoading(true);
     setMsg(null);
+    setSuccess(false);
 
     try {
       const res = await fetch("/api/profile", {
@@ -41,18 +49,22 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
 
       if (!res.ok) {
         setMsg(data?.error ?? "Fehler beim Speichern.");
+        setSuccess(false);
         return;
       }
 
       if (data?.emailChanged) {
         setMsg("Gespeichert. Da du die E-Mail geändert hast, wirst du neu eingeloggt.");
+        setSuccess(true);
         setTimeout(() => signOut({ callbackUrl: "/login" }), 800);
         return;
       }
 
-      setMsg("Gespeichert ✅");
+      setMsg("Gespeichert.");
+      setSuccess(true);
     } catch {
       setMsg("Fehler beim Speichern.");
+      setSuccess(false);
     } finally {
       setLoading(false);
     }
@@ -65,30 +77,46 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
     }));
   }
 
-  function input(
-    label: string,
-    key: keyof FormState,
-    placeholder?: string,
-    type: "text" | "email" | "tel" = "text"
-  ) {
-    return (
-      <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ color: "#aaa" }}>{label}</span>
-        <input
-          type={type}
-          value={f[key]}
-          placeholder={placeholder}
-          onChange={(event) => setField(key, event.target.value)}
-          style={inputStyle}
-        />
-      </label>
-    );
-  }
-
   return (
-    <div style={{ display: "grid", gap: 22 }}>
-      <section style={sectionStyle}>
-        <h2 style={sectionTitleStyle}>Persönliche Daten</h2>
+    <div style={{ display: "grid", gap: 18 }}>
+      <AppCard accent="none" style={{ boxShadow: "none" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 16,
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            marginBottom: 18,
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: 24,
+                fontWeight: 500,
+                lineHeight: 1.3,
+              }}
+            >
+              Persönliche Daten
+            </h2>
+
+            <p
+              style={{
+                marginTop: 8,
+                marginBottom: 0,
+                color: "#333333",
+                lineHeight: 1.6,
+              }}
+            >
+              Diese Daten werden für dein Profil und später für Zertifikate verwendet.
+            </p>
+          </div>
+
+          <StatusBadge variant="yellow">Profil</StatusBadge>
+        </div>
 
         <div style={{ display: "grid", gap: 14 }}>
           <div
@@ -98,42 +126,127 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
               gap: 14,
             }}
           >
-            {input("Vorname", "firstName", "Max")}
-            {input("Nachname", "lastName", "Mustermann")}
+            <AppInput
+              label="Vorname"
+              value={f.firstName}
+              placeholder="Max"
+              onChange={(value) => setField("firstName", value)}
+            />
+
+            <AppInput
+              label="Nachname"
+              value={f.lastName}
+              placeholder="Mustermann"
+              onChange={(value) => setField("lastName", value)}
+            />
           </div>
 
-          {input("E-Mail", "email", "max@firma.de", "email")}
+          <AppInput
+            label="E-Mail"
+            value={f.email}
+            placeholder="max@firma.de"
+            type="email"
+            onChange={(value) => setField("email", value)}
+          />
 
-          {input("Geburtsdatum (TT.MM.JJJJ)", "birthDate", "31.01.1990")}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 14,
+            }}
+          >
+            <AppInput
+              label="Geburtsdatum (TT.MM.JJJJ)"
+              value={f.birthDate}
+              placeholder="31.01.1990"
+              onChange={(value) => setField("birthDate", value)}
+            />
 
-          {input("Telefon", "phone", "+49 170 1234567", "tel")}
+            <AppInput
+              label="Telefon"
+              value={f.phone}
+              placeholder="+49 170 1234567"
+              type="tel"
+              onChange={(value) => setField("phone", value)}
+            />
+          </div>
 
-          <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ color: "#aaa" }}>Geschlecht / Anrede</span>
-            <select
-              value={f.gender}
-              onChange={(event) => setField("gender", event.target.value)}
-              style={inputStyle}
-            >
-              <option value="">– bitte wählen –</option>
-              <option value="weiblich">weiblich</option>
-              <option value="männlich">männlich</option>
-              <option value="divers">divers</option>
-              <option value="keine Angabe">keine Angabe</option>
-            </select>
-          </label>
+          <AppSelect
+            label="Geschlecht / Anrede"
+            value={f.gender}
+            onChange={(value) => setField("gender", value)}
+            placeholder="Bitte auswählen"
+            options={[
+              { value: "weiblich", label: "weiblich" },
+              { value: "männlich", label: "männlich" },
+              { value: "divers", label: "divers" },
+              { value: "keine Angabe", label: "keine Angabe" },
+            ]}
+          />
         </div>
-      </section>
+      </AppCard>
 
-      <section style={sectionStyle}>
-        <h2 style={sectionTitleStyle}>Firmendaten</h2>
+      <AppCard accent="none" style={{ boxShadow: "none" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 16,
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            marginBottom: 18,
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: 24,
+                fontWeight: 500,
+                lineHeight: 1.3,
+              }}
+            >
+              Firmendaten
+            </h2>
+
+            <p
+              style={{
+                marginTop: 8,
+                marginBottom: 0,
+                color: "#333333",
+                lineHeight: 1.6,
+              }}
+            >
+              Diese Angaben helfen bei Schulungsverwaltung, Kommunikation und späterer Cobra-Zuordnung.
+            </p>
+          </div>
+
+          <StatusBadge>Firma</StatusBadge>
+        </div>
 
         <div style={{ display: "grid", gap: 14 }}>
-          {input("Firmenname", "company", "Firma GmbH")}
+          <AppInput
+            label="Firmenname"
+            value={f.company}
+            placeholder="Firma GmbH"
+            onChange={(value) => setField("company", value)}
+          />
 
-          {input("Funktion / Position", "position", "Technischer Leiter")}
+          <AppInput
+            label="Funktion / Position"
+            value={f.position}
+            placeholder="Technischer Leiter"
+            onChange={(value) => setField("position", value)}
+          />
 
-          {input("Straße und Hausnummer", "companyStreet", "Musterstraße 12")}
+          <AppInput
+            label="Straße und Hausnummer"
+            value={f.companyStreet}
+            placeholder="Musterstraße 12"
+            onChange={(value) => setField("companyStreet", value)}
+          />
 
           <div
             style={{
@@ -142,85 +255,64 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
               gap: 14,
             }}
           >
-            {input("PLZ", "companyZip", "20537")}
-            {input("Ort", "companyCity", "Hamburg")}
+            <AppInput
+              label="PLZ"
+              value={f.companyZip}
+              placeholder="20537"
+              onChange={(value) => setField("companyZip", value)}
+            />
+
+            <AppInput
+              label="Ort"
+              value={f.companyCity}
+              placeholder="Hamburg"
+              onChange={(value) => setField("companyCity", value)}
+            />
           </div>
 
-          {input("Land", "companyCountry", "Deutschland")}
+          <AppInput
+            label="Land"
+            value={f.companyCountry}
+            placeholder="Deutschland"
+            onChange={(value) => setField("companyCountry", value)}
+          />
 
-          <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ color: "#aaa" }}>Firmenadresse Zusatz / Bemerkung</span>
-            <textarea
-              value={f.companyAddress}
-              onChange={(event) => setField("companyAddress", event.target.value)}
-              rows={3}
-              placeholder="Optional, z. B. Postfach, Standort, Abteilung"
-              style={{
-                ...inputStyle,
-                resize: "vertical",
-                fontFamily: "inherit",
-              }}
-            />
-          </label>
+          <AppTextarea
+            label="Firmenadresse Zusatz / Bemerkung"
+            value={f.companyAddress}
+            placeholder="Optional, z. B. Postfach, Standort, Abteilung"
+            rows={3}
+            onChange={(value) => setField("companyAddress", value)}
+          />
         </div>
-      </section>
+      </AppCard>
 
-      <button
-        onClick={save}
-        disabled={loading}
+      <div
         style={{
-          marginTop: 6,
-          padding: "12px 16px",
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.15)",
-          background: "#fff",
-          color: "#000",
-          fontWeight: 800,
-          cursor: loading ? "not-allowed" : "pointer",
-          width: "fit-content",
-          opacity: loading ? 0.6 : 1,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
         }}
       >
-        {loading ? "Speichern…" : "Speichern"}
-      </button>
+        <AppButton onClick={save} disabled={loading} variant="primary">
+          {loading ? "Speichern..." : "Speichern"}
+        </AppButton>
 
-      {msg && (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.15)",
-            background: "rgba(255,255,255,0.03)",
-            color: "#fff",
-          }}
-        >
-          {msg}
-        </div>
-      )}
+        {msg && (
+          <div
+            style={{
+              padding: "10px 14px",
+              border: success ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)",
+              background: success ? "rgba(0,120,115,0.08)" : "rgba(176,0,32,0.08)",
+              color: success ? "#007873" : "#B00020",
+              fontWeight: 800,
+            }}
+          >
+            {msg}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const sectionStyle: React.CSSProperties = {
-  padding: 16,
-  borderRadius: 14,
-  border: "1px solid rgba(255,255,255,0.15)",
-  background: "rgba(255,255,255,0.04)",
-};
-
-const sectionTitleStyle: React.CSSProperties = {
-  marginTop: 0,
-  marginBottom: 16,
-  fontSize: 20,
-  fontWeight: 800,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: 12,
-  borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.15)",
-  background: "rgba(255,255,255,0.04)",
-  color: "#fff",
-  fontSize: 15,
-};
