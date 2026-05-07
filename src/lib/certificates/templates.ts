@@ -13,7 +13,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     code: "A1",
     label: "VDI 2168 Grundkurs A1",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "VDI2168_A1_Teilnahmebestätigung.docx",
+    templateFileName: "VDI2168_A1_Teilnahmebestaetigung.docx",
     isVdiCertificate: false,
   },
 
@@ -43,7 +43,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   ARB: {
     code: "ARB",
-    label: "Grundlegende Sicherheitsanforderungen für Arbeiten an Aufzugsanlagen",
+    label: "Grundlegende Sicherheitsanforderungen fuer Arbeiten an Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "ARB_TN-Zert.docx",
     isVdiCertificate: false,
@@ -51,7 +51,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   AZUBI: {
     code: "AZUBI",
-    label: "VFA-Einführungsseminar / Welcome Azubis",
+    label: "VFA-Einfuehrungsseminar / Welcome Azubis",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "AZUBI_TN-Best.docx",
     isVdiCertificate: false,
@@ -75,9 +75,9 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   DGUV: {
     code: "DGUV",
-    label: "Fachkunde im eingeschränkten Aufgabengebiet nach DGUV 309-011",
+    label: "Fachkunde im eingeschraenkten Aufgabengebiet nach DGUV 309-011",
     kind: "CERTIFICATE",
-    templateFileName: "DGUV-TN-Zert..docx",
+    templateFileName: "DGUV-TN-Zert.docx",
     isVdiCertificate: false,
   },
 
@@ -91,7 +91,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   EFK2: {
     code: "EFK2",
-    label: "Elektrofachkraft für festgelegte Tätigkeiten im Aufzugbau",
+    label: "Elektrofachkraft fuer festgelegte Taetigkeiten im Aufzugbau",
     kind: "CERTIFICATE",
     templateFileName: "EFK2-Zertifikat_neu.docx",
     isVdiCertificate: false,
@@ -99,25 +99,25 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   EINST: {
     code: "EINST",
-    label: "Aufzüge für Einsteiger",
+    label: "Aufzuege fuer Einsteiger",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "EINST-Online_Teilnahmebestätigung.docx",
+    templateFileName: "EINST-Online_Teilnahmebestaetigung.docx",
     isVdiCertificate: false,
   },
 
   FFPW: {
     code: "FFPW",
-    label: "Fachkundige Person für die Befreiung von Personen aus Aufzugsanlagen",
+    label: "Fachkundige Person fuer die Befreiung von Personen aus Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "FFPW-Teilnahmebest..docx",
+    templateFileName: "FFPW-Teilnahmebest.docx",
     isVdiCertificate: false,
   },
 
   GEF: {
     code: "GEF",
-    label: "Fachkundige Person für die Erstellung von Gefährdungsbeurteilungen",
+    label: "Fachkundige Person fuer die Erstellung von Gefaehrdungsbeurteilungen",
     kind: "CERTIFICATE",
-    templateFileName: "GEF-TN-Zert._neu.docx",
+    templateFileName: "GEF-TN-Zert_neu.docx",
     isVdiCertificate: false,
   },
 
@@ -125,7 +125,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     code: "MOD",
     label: "Grundlagen der Modernisierung im Aufzugbau",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "MOD_Teilnahmebestätigung-aktuell.docx",
+    templateFileName: "MOD_Teilnahmebestaetigung-aktuell.docx",
     isVdiCertificate: false,
   },
 
@@ -133,7 +133,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     code: "NUR1",
     label: "Normen und Richtlinien - Grundlagen zum aktuellen Regelwerk",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "NuR-1_Teilnahmebestätigung.docx",
+    templateFileName: "NuR-1_Teilnahmebestaetigung.docx",
     isVdiCertificate: false,
   },
 
@@ -141,15 +141,15 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     code: "NUR2",
     label: "Normen und Richtlinien - Neuerungen aus der EN ISO 8100-1/2",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "NuR-2_Teilnahmebestätigung.docx",
+    templateFileName: "NuR-2_Teilnahmebestaetigung.docx",
     isVdiCertificate: false,
   },
 
   PLG: {
     code: "PLG",
-    label: "Aufzugsplanung als Teil der Gebäudeplanung",
+    label: "Aufzugsplanung als Teil der Gebaeudeplanung",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "PLG neue TN-Best.docx",
+    templateFileName: "PLG_neue_TN-Best.docx",
     isVdiCertificate: false,
   },
 
@@ -165,13 +165,13 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     code: "SER-SWB",
     label: "Inbetriebnahme einer Aufzugsanlage",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "SER-SWB_TN-Bestätigung.docx",
+    templateFileName: "SER-SWB_TN-Bestaetigung.docx",
     isVdiCertificate: false,
   },
 
   SICH: {
     code: "SICH",
-    label: "Fachkundige Person für DGUV V3-Messungen an Aufzugsanlagen",
+    label: "Fachkundige Person fuer DGUV V3-Messungen an Aufzugsanlagen",
     kind: "CERTIFICATE",
     templateFileName: "SICH_TN-Zert.docx",
     isVdiCertificate: false,
@@ -179,9 +179,9 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   SON: {
     code: "SON",
-    label: "Sonderanlagen: Feuerwehr-, Lasten- und Glasaufzüge",
+    label: "Sonderanlagen: Feuerwehr-, Lasten- und Glasaufzuege",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "SON-TN-Bestätigung.docx",
+    templateFileName: "SON-TN-Bestaetigung.docx",
     isVdiCertificate: false,
   },
 };
@@ -220,7 +220,9 @@ export function getCertificateTemplateFileNameByCode(
   return getCertificateTemplateByCode(code)?.templateFileName ?? null;
 }
 
-export function formatCertificateKind(kind: CertificateKind | string | null | undefined) {
+export function formatCertificateKind(
+  kind: CertificateKind | string | null | undefined
+) {
   if (kind === "ATTENDANCE_CONFIRMATION") return "Teilnahmebestätigung";
   if (kind === "CERTIFICATE") return "Zertifikat";
   if (kind === "VDI_CERTIFICATE") return "VDI-Zertifikat";
