@@ -1,13 +1,143 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
+import AppInput from "@/components/ui/AppInput";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 
-export default function AdminMenuPage() {
-  const [trainingOpen, setTrainingOpen] = useState(true);
+type AdminUser = {
+  id: string;
+  email: string;
+  name: string;
+  company: string;
+  role: "USER" | "ADMIN";
+  creditsTotal: number;
+  enrollmentsCount: number;
+  certificatesCount: number;
+  createdAt: string;
+};
+
+type UsersResponse =
+  | {
+      ok: true;
+      users: AdminUser[];
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [search, setSearch] = useState("");
+
+  const [email, setEmail] = useState("");
+  const [msg, setMsg] = useState("");
+  const [msgOk, setMsgOk] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  function showMessage(message: string, ok = false) {
+    setMsg(message);
+    setMsgOk(ok);
+  }
+
+  async function loadUsers() {
+    setLoadingUsers(true);
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        cache: "no-store",
+      });
+
+      const data = (await res.json()) as UsersResponse;
+
+      if (!data.ok) {
+        showMessage(data.error ?? "USERS_LOAD_FAILED");
+        return;
+      }
+
+      setUsers(data.users);
+    } catch {
+      showMessage("Nutzer konnten nicht geladen werden.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  }
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    if (!q) return users;
+
+    return users.filter((user) => {
+      return (
+        user.email.toLowerCase().includes(q) ||
+        user.name.toLowerCase().includes(q) ||
+        user.company.toLowerCase().includes(q) ||
+        user.role.toLowerCase().includes(q)
+      );
+    });
+  }, [users, search]);
+
+  async function promote() {
+    setLoading(true);
+    setMsg("");
+    setMsgOk(false);
+
+    try {
+      const res = await fetch("/api/admin/users/promote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+        }),
+      });
+
+      const text = await res.text();
+
+      let data: any = null;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        showMessage("Serverantwort konnte nicht gelesen werden.");
+        return;
+      }
+
+      if (!res.ok || !data?.ok) {
+        if (data?.error === "INVALID_EMAIL") {
+          showMessage("Bitte eine gültige E-Mail eingeben.");
+        } else if (data?.error === "USER_NOT_FOUND") {
+          showMessage("User wurde nicht gefunden. Der User muss zuerst registriert sein.");
+        } else if (data?.error === "UNAUTHENTICATED") {
+          showMessage("Du bist nicht eingeloggt.");
+        } else if (data?.error === "FORBIDDEN") {
+          showMessage("Du hast keine Berechtigung.");
+        } else {
+          showMessage(data?.error ?? "Admin-Vergabe fehlgeschlagen.");
+        }
+
+        return;
+      }
+
+      showMessage(`${data.email} ist jetzt Admin.`, true);
+      setEmail("");
+      await loadUsers();
+    } catch {
+      showMessage("Serverfehler beim Ernennen des Admins.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main
@@ -17,218 +147,274 @@ export default function AdminMenuPage() {
         padding: "40px 24px",
       }}
     >
-      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <PageHeader
-          title="Admin-Bereich"
-          description="Hier verwaltest du Schulungen, Teilnehmer, Zertifikate, Credits und Adminrechte."
+          title="Nutzer verwalten"
+          description="Hier siehst du alle registrierten Nutzer, ihre Rollen, Credits, Schulungszuordnungen und Zertifikate."
         />
+
+        {msg && (
+          <div
+            style={{
+              marginBottom: 18,
+              padding: "12px 14px",
+              border: msgOk
+                ? "1px solid #007873"
+                : "1px solid rgba(176,0,32,0.28)",
+              background: msgOk
+                ? "rgba(0,120,115,0.08)"
+                : "rgba(176,0,32,0.08)",
+              color: msgOk ? "#007873" : "#B00020",
+              fontWeight: 800,
+              lineHeight: 1.5,
+            }}
+          >
+            {msg}
+          </div>
+        )}
 
         <div style={{ display: "grid", gap: 16 }}>
           <AppCard accent="green">
-            <button
-              type="button"
-              onClick={() => setTrainingOpen((value) => !value)}
+            <div
               style={{
-                width: "100%",
-                padding: 0,
-                border: "none",
-                background: "transparent",
-                textAlign: "left",
-                cursor: "pointer",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 16,
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+                marginBottom: 18,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <h2
-                    style={{
-                      margin: 0,
-                      color: "#007873",
-                      fontSize: 24,
-                      fontWeight: 500,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    Schulungen verwalten
-                  </h2>
+              <div>
+                <h2
+                  style={{
+                    margin: 0,
+                    color: "#007873",
+                    fontSize: 24,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  Registrierte Nutzer
+                </h2>
 
-                  <p
-                    style={{
-                      marginTop: 8,
-                      marginBottom: 0,
-                      color: "#333333",
-                      lineHeight: 1.6,
-                      fontSize: 16,
-                    }}
-                  >
-                    Schulungen erstellen, bearbeiten, Teilnehmer zuordnen und
-                    Schulungsdaten pflegen.
-                  </p>
-                </div>
-
-                <StatusBadge variant="yellow">
-                  {trainingOpen ? "Offen ▲" : "Öffnen ▼"}
-                </StatusBadge>
+                <p
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 0,
+                    color: "#333333",
+                    lineHeight: 1.6,
+                    maxWidth: 720,
+                  }}
+                >
+                  Übersicht über alle Konten in der VFA-Akademie-App.
+                </p>
               </div>
-            </button>
 
-            {trainingOpen && (
-              <div
-                style={{
-                  marginTop: 18,
-                  paddingTop: 18,
-                  borderTop: "1px solid #E6E6E6",
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: 14,
-                }}
-              >
-                <AdminLink
-                  href="/admin/trainings"
-                  title="Schulung erstellen / verwalten"
-                  description="Schulungen anlegen, Zeitraum, Ort, Dozent, Kürzel und Credits festlegen."
-                />
+              <StatusBadge variant="yellow">
+                {users.length} Nutzer
+              </StatusBadge>
+            </div>
 
-                <AdminLink
-                  href="/admin/trainings/add"
-                  title="Teilnehmer verwalten"
-                  description="Teilnehmer einer Schulung zuordnen oder bestehende Zuordnungen entfernen."
-                />
+            <div style={{ marginBottom: 18 }}>
+              <AppInput
+                label="Suche"
+                value={search}
+                placeholder="Name, E-Mail, Firma oder Rolle suchen"
+                onChange={setSearch}
+              />
+            </div>
+
+            {loadingUsers ? (
+              <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                Nutzer werden geladen...
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                Keine Nutzer gefunden.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: 10 }}>
+                {filteredUsers.map((user) => (
+                  <UserRow key={user.id} user={user} />
+                ))}
               </div>
             )}
           </AppCard>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 16,
-            }}
-          >
-            <AdminLink
-              href="/admin/certificates"
-              title="Zertifikate verwalten"
-              description="Zertifikate für abgeschlossene Schulungen erstellen und Credits vergeben."
-              badge="Zertifikate"
-            />
+          <AppCard>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 16,
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+                marginBottom: 18,
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    margin: 0,
+                    color: "#007873",
+                    fontSize: 24,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  User zum Admin machen
+                </h2>
 
-            <AdminLink
-              href="/admin/credits"
-              title="Credits verwalten"
-              description="Credits manuell vergeben oder abziehen."
-              badge="Credits"
-            />
+                <p
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 0,
+                    color: "#333333",
+                    lineHeight: 1.6,
+                    maxWidth: 720,
+                  }}
+                >
+                  Gib die E-Mail-Adresse eines bereits registrierten Users ein.
+                  Nach erfolgreicher Änderung hat der User Zugriff auf den Adminbereich.
+                </p>
+              </div>
 
-            <AdminLink
-              href="/admin/users"
-              title="Admin verwalten"
-              description="User per E-Mail zum Admin machen."
-              badge="User"
-            />
-          </div>
+              <StatusBadge>Adminrechte</StatusBadge>
+            </div>
+
+            <div style={{ display: "grid", gap: 14, maxWidth: 620 }}>
+              <AppInput
+                label="User E-Mail"
+                value={email}
+                placeholder="user@example.com"
+                type="email"
+                onChange={setEmail}
+              />
+
+              <AppButton
+                onClick={promote}
+                disabled={loading || !email.trim()}
+                variant="primary"
+              >
+                {loading ? "Wird verarbeitet..." : "Zum Admin machen"}
+              </AppButton>
+            </div>
+          </AppCard>
         </div>
       </div>
     </main>
   );
 }
 
-function AdminLink({
-  href,
-  title,
-  description,
-  badge,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  badge?: string;
-}) {
+function UserRow({ user }: { user: AdminUser }) {
   return (
-    <Link
-      href={href}
+    <div
       style={{
-        display: "block",
-        color: "inherit",
-        textDecoration: "none",
+        border: "1px solid #E6E6E6",
+        background: "#FFFFFF",
+        padding: 14,
+        display: "grid",
+        gap: 12,
       }}
     >
-      <AppCard accent="yellow" style={{ height: "100%" }}>
-        <div
-          style={{
-            minHeight: 150,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            gap: 18,
-          }}
-        >
-          <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 14,
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              color: "#007873",
+              fontSize: 18,
+              fontWeight: 800,
+              lineHeight: 1.3,
+            }}
+          >
+            {user.name || "Ohne Namen"}
+          </div>
+
+          <div
+            style={{
+              marginTop: 4,
+              color: "#333333",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={user.email}
+          >
+            {user.email}
+          </div>
+
+          {user.company && (
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                alignItems: "flex-start",
-                marginBottom: 10,
+                marginTop: 4,
+                color: "#666666",
+                fontSize: 14,
               }}
             >
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#007873",
-                  fontSize: 22,
-                  fontWeight: 500,
-                  lineHeight: 1.25,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {title}
-              </h2>
-
-              {badge && <StatusBadge>{badge}</StatusBadge>}
+              {user.company}
             </div>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#333333",
-                lineHeight: 1.6,
-              }}
-            >
-              {description}
-            </p>
-          </div>
-
-          <div>
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 38,
-                padding: "9px 18px",
-                borderRadius: 999,
-                background: "#007873",
-                color: "#FFFFFF",
-                fontWeight: 800,
-                fontSize: 13,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              Öffnen →
-            </span>
-          </div>
+          )}
         </div>
-      </AppCard>
-    </Link>
+
+        <StatusBadge variant={user.role === "ADMIN" ? "yellow" : "default"}>
+          {user.role}
+        </StatusBadge>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: 10,
+          paddingTop: 10,
+          borderTop: "1px solid #E6E6E6",
+        }}
+      >
+        <MiniInfo label="Credits" value={String(user.creditsTotal)} />
+        <MiniInfo label="Schulungen" value={String(user.enrollmentsCount)} />
+        <MiniInfo label="Zertifikate" value={String(user.certificatesCount)} />
+        <MiniInfo label="Registriert" value={formatDate(user.createdAt)} />
+      </div>
+    </div>
   );
+}
+
+function MiniInfo({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div
+        style={{
+          color: "#007873",
+          fontSize: 12,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          marginBottom: 3,
+        }}
+      >
+        {label}
+      </div>
+
+      <div style={{ color: "#1F1F1F", fontWeight: 700 }}>{value}</div>
+    </div>
+  );
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("de-DE");
 }
