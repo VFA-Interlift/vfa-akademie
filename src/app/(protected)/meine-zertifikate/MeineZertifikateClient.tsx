@@ -4,15 +4,25 @@ import { useMemo, useState } from "react";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import type { MyCertificateItem } from "@/lib/certificates/service";
 
-type SerializableCertificate = Omit<
-  MyCertificateItem,
-  "issuedAt" | "trainingDate" | "trainingEndDate"
-> & {
+type SerializableCertificate = {
+  id: string;
+  title: string;
   issuedAt: string;
+  credits: number;
+  status: string;
+
+  code: string | null;
+  certificateKind: string | null;
+  certificateKindLabel: string;
+
+  trainingTitle: string;
   trainingDate: string;
   trainingEndDate: string | null;
+  location: string | null;
+  instructor: string | null;
+  description: string | null;
+  pdfUrl: string | null;
 };
 
 export default function MeineZertifikateClient({
@@ -20,27 +30,22 @@ export default function MeineZertifikateClient({
 }: {
   certificates: SerializableCertificate[];
 }) {
-  const years = useMemo(() => {
-    const uniqueYears = Array.from(
-      new Set(
-        certificates.map((cert) =>
-          new Date(cert.trainingDate).getFullYear().toString()
-        )
-      )
-    );
-
-    return uniqueYears.sort((a, b) => Number(b) - Number(a));
-  }, [certificates]);
-
-  const [selectedYear, setSelectedYear] = useState<string>(years[0] ?? "alle");
+  const [selectedYear, setSelectedYear] = useState("alle");
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const years = useMemo(() => {
+    const values = certificates
+      .map((cert) => getYear(cert.trainingDate))
+      .filter((year): year is string => Boolean(year));
+
+    return Array.from(new Set(values)).sort((a, b) => Number(b) - Number(a));
+  }, [certificates]);
 
   const filteredCertificates = useMemo(() => {
     if (selectedYear === "alle") return certificates;
 
     return certificates.filter((cert) => {
-      const year = new Date(cert.trainingDate).getFullYear().toString();
-      return year === selectedYear;
+      return getYear(cert.trainingDate) === selectedYear;
     });
   }, [certificates, selectedYear]);
 
@@ -51,9 +56,9 @@ export default function MeineZertifikateClient({
           Aktuell sind noch keine Zertifikate vorhanden.
         </div>
 
-        <p style={{ marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
-          Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird
-          automatisch eine Teilnahmebestätigung oder ein Zertifikat erstellt.
+        <p style={{ marginTop: 10, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
+          Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird automatisch
+          eine Teilnahmebestätigung oder ein Zertifikat erstellt.
         </p>
       </AppCard>
     );
@@ -91,7 +96,7 @@ export default function MeineZertifikateClient({
                 lineHeight: 1.6,
               }}
             >
-              Wähle ein Jahr aus und öffne die Details nur bei Bedarf.
+              Wähle ein Jahr aus und öffne Details nur bei Bedarf.
             </p>
           </div>
 
@@ -195,7 +200,7 @@ export default function MeineZertifikateClient({
                           lineHeight: 1.25,
                         }}
                       >
-                        {cert.trainingTitle}
+                        {cert.trainingTitle || cert.title}
                       </div>
 
                       <div
@@ -206,8 +211,7 @@ export default function MeineZertifikateClient({
                           lineHeight: 1.4,
                         }}
                       >
-                        {cert.certificateKindLabel} ·{" "}
-                        {formatDate(cert.trainingDate)}
+                        {cert.certificateKindLabel} · {formatDate(cert.trainingDate)}
                         {cert.trainingEndDate
                           ? ` bis ${formatDate(cert.trainingEndDate)}`
                           : ""}
@@ -262,12 +266,11 @@ export default function MeineZertifikateClient({
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(220px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                         gap: 14,
                       }}
                     >
-                      <Info label="Schulung" value={cert.trainingTitle} />
+                      <Info label="Schulung" value={cert.trainingTitle || cert.title} />
 
                       <Info
                         label="Zeitraum"
@@ -278,9 +281,7 @@ export default function MeineZertifikateClient({
                         }`}
                       />
 
-                      {cert.location && (
-                        <Info label="Ort" value={cert.location} />
-                      )}
+                      {cert.location && <Info label="Ort" value={cert.location} />}
 
                       {cert.instructor && (
                         <Info label="Dozent" value={cert.instructor} />
@@ -331,7 +332,18 @@ export default function MeineZertifikateClient({
   );
 }
 
-function formatDate(value: string) {
+function getYear(value: string | null | undefined) {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return String(date.getFullYear());
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return "";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
