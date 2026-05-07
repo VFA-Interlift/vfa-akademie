@@ -91,7 +91,7 @@ export async function GET(_req: Request, context: Ctx) {
   }
 
   try {
-    const buffer = renderCertificateDocx({
+    const buffer = await renderCertificateDocx({
       templateFileName: documentData.templateFileName,
       data: documentData.data,
     });
