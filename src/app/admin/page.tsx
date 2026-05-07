@@ -32,6 +32,7 @@ type UsersResponse =
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
+  const [usersOpen, setUsersOpen] = useState(false);
 
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
@@ -150,7 +151,7 @@ export default function AdminUsersPage() {
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <PageHeader
           title="Nutzer verwalten"
-          description="Hier siehst du alle registrierten Nutzer, ihre Rollen, Credits, Schulungszuordnungen und Zertifikate."
+          description="Hier kannst du registrierte Nutzer prüfen und ausgewählte Nutzer zum Admin machen."
         />
 
         {msg && (
@@ -195,74 +196,6 @@ export default function AdminUsersPage() {
                     lineHeight: 1.3,
                   }}
                 >
-                  Registrierte Nutzer
-                </h2>
-
-                <p
-                  style={{
-                    marginTop: 10,
-                    marginBottom: 0,
-                    color: "#333333",
-                    lineHeight: 1.6,
-                    maxWidth: 720,
-                  }}
-                >
-                  Übersicht über alle Konten in der VFA-Akademie-App.
-                </p>
-              </div>
-
-              <StatusBadge variant="yellow">
-                {users.length} Nutzer
-              </StatusBadge>
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <AppInput
-                label="Suche"
-                value={search}
-                placeholder="Name, E-Mail, Firma oder Rolle suchen"
-                onChange={setSearch}
-              />
-            </div>
-
-            {loadingUsers ? (
-              <div style={{ color: "#333333", lineHeight: 1.6 }}>
-                Nutzer werden geladen...
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div style={{ color: "#333333", lineHeight: 1.6 }}>
-                Keine Nutzer gefunden.
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: 10 }}>
-                {filteredUsers.map((user) => (
-                  <UserRow key={user.id} user={user} />
-                ))}
-              </div>
-            )}
-          </AppCard>
-
-          <AppCard>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 16,
-                alignItems: "flex-start",
-                flexWrap: "wrap",
-                marginBottom: 18,
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    margin: 0,
-                    color: "#007873",
-                    fontSize: 24,
-                    fontWeight: 500,
-                    lineHeight: 1.3,
-                  }}
-                >
                   User zum Admin machen
                 </h2>
 
@@ -276,11 +209,11 @@ export default function AdminUsersPage() {
                   }}
                 >
                   Gib die E-Mail-Adresse eines bereits registrierten Users ein.
-                  Nach erfolgreicher Änderung hat der User Zugriff auf den Adminbereich.
+                  Danach hat der User Zugriff auf den Adminbereich.
                 </p>
               </div>
 
-              <StatusBadge>Adminrechte</StatusBadge>
+              <StatusBadge variant="yellow">Adminrechte</StatusBadge>
             </div>
 
             <div style={{ display: "grid", gap: 14, maxWidth: 620 }}>
@@ -300,6 +233,107 @@ export default function AdminUsersPage() {
                 {loading ? "Wird verarbeitet..." : "Zum Admin machen"}
               </AppButton>
             </div>
+          </AppCard>
+
+          <AppCard accent="yellow">
+            <button
+              type="button"
+              onClick={() => setUsersOpen((value) => !value)}
+              style={{
+                width: "100%",
+                padding: 0,
+                border: "none",
+                background: "transparent",
+                textAlign: "left",
+                cursor: "pointer",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <h2
+                    style={{
+                      margin: 0,
+                      color: "#007873",
+                      fontSize: 24,
+                      fontWeight: 500,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    Registrierte Nutzer
+                  </h2>
+
+                  <p
+                    style={{
+                      marginTop: 10,
+                      marginBottom: 0,
+                      color: "#333333",
+                      lineHeight: 1.6,
+                      maxWidth: 720,
+                    }}
+                  >
+                    Aufklappen, um alle registrierten Nutzer, Rollen, Credits,
+                    Schulungen und Zertifikate zu sehen.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                  }}
+                >
+                  <StatusBadge>{users.length} Nutzer</StatusBadge>
+                  <StatusBadge variant="yellow">
+                    {usersOpen ? "Schließen ▲" : "Öffnen ▼"}
+                  </StatusBadge>
+                </div>
+              </div>
+            </button>
+
+            {usersOpen && (
+              <div
+                style={{
+                  marginTop: 18,
+                  paddingTop: 18,
+                  borderTop: "1px solid #E6E6E6",
+                  display: "grid",
+                  gap: 18,
+                }}
+              >
+                <AppInput
+                  label="Suche"
+                  value={search}
+                  placeholder="Name, E-Mail, Firma oder Rolle suchen"
+                  onChange={setSearch}
+                />
+
+                {loadingUsers ? (
+                  <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                    Nutzer werden geladen...
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                    Keine Nutzer gefunden.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {filteredUsers.map((user) => (
+                      <UserRow key={user.id} user={user} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </AppCard>
         </div>
       </div>
