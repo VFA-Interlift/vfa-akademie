@@ -58,7 +58,7 @@ export default function RegisterPage() {
       style={{
         minHeight: "100vh",
         background: "#F7F7F4",
-        padding: "48px 24px",
+        padding: "32px 18px",
         display: "grid",
         placeItems: "center",
       }}
@@ -66,20 +66,24 @@ export default function RegisterPage() {
       <div
         style={{
           width: "100%",
-          maxWidth: 980,
+          maxWidth: 620,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: 28,
-          alignItems: "center",
+          gap: 22,
         }}
       >
-        <section>
+        <section
+          style={{
+            textAlign: "center",
+            display: "grid",
+            justifyItems: "center",
+          }}
+        >
           <div
             style={{
               width: 70,
               height: 6,
               background: "#FFC100",
-              marginBottom: 22,
+              marginBottom: 18,
             }}
           />
 
@@ -90,7 +94,7 @@ export default function RegisterPage() {
               width: 92,
               height: 92,
               objectFit: "contain",
-              marginBottom: 22,
+              marginBottom: 18,
             }}
           />
 
@@ -98,7 +102,7 @@ export default function RegisterPage() {
             style={{
               margin: 0,
               color: "#007873",
-              fontSize: 46,
+              fontSize: "clamp(36px, 10vw, 54px)",
               fontWeight: 400,
               lineHeight: 1.05,
               textTransform: "uppercase",
@@ -110,12 +114,12 @@ export default function RegisterPage() {
 
           <p
             style={{
-              marginTop: 18,
+              marginTop: 16,
               marginBottom: 0,
               color: "#333333",
-              fontSize: 18,
-              lineHeight: 1.65,
-              maxWidth: 620,
+              fontSize: 17,
+              lineHeight: 1.6,
+              maxWidth: 560,
             }}
           >
             Erstelle dein VFA-Akademie-Konto. Danach kannst du deine Schulungen,
@@ -195,12 +199,7 @@ export default function RegisterPage() {
 
             <AppButton
               type="submit"
-              disabled={
-                loading ||
-                !email.trim() ||
-                !password.trim() ||
-                !name.trim()
-              }
+              disabled={loading || !email.trim() || !password.trim() || !name.trim()}
               variant="primary"
               fullWidth
             >
