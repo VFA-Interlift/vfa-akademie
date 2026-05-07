@@ -4,49 +4,45 @@ type PageHeaderProps = {
   title: string;
   description?: string;
   backLabel?: string;
+  showBackButton?: boolean;
 };
 
 export default function PageHeader({
   title,
   description,
   backLabel = "Zurück",
+  showBackButton = true,
 }: PageHeaderProps) {
   return (
     <div style={{ marginBottom: 28 }}>
+      {showBackButton && (
+        <div style={{ marginBottom: 18 }}>
+          <BackButton label={backLabel} />
+        </div>
+      )}
+
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          flexWrap: "wrap",
+          width: 58,
+          height: 5,
+          background: "#FFC100",
+          marginBottom: 10,
+        }}
+      />
+
+      <h1
+        style={{
+          margin: 0,
+          fontSize: 34,
+          fontWeight: 400,
+          letterSpacing: "0.02em",
+          color: "#007873",
+          textTransform: "uppercase",
+          lineHeight: 1.15,
         }}
       >
-        <BackButton label={backLabel} />
-
-        <div>
-          <div
-            style={{
-              width: 58,
-              height: 5,
-              background: "#FFC100",
-              marginBottom: 10,
-            }}
-          />
-
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 34,
-              fontWeight: 400,
-              letterSpacing: "0.02em",
-              color: "#007873",
-              textTransform: "uppercase",
-            }}
-          >
-            {title}
-          </h1>
-        </div>
-      </div>
+        {title}
+      </h1>
 
       {description && (
         <p

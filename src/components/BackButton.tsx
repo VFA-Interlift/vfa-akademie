@@ -7,19 +7,29 @@ export default function BackButton({ label = "Zurück" }: { label?: string }) {
 
   return (
     <button
+      type="button"
       onClick={() => router.back()}
       style={{
-        border: "1px solid rgba(0,0,0,0.15)",
-        background: "white",
-        color: "#111",
-        padding: "10px 12px",
-        borderRadius: 10,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        minHeight: 40,
+        padding: "9px 16px",
+        borderRadius: 999,
+        border: "1px solid #C7C7C7",
+        background: "#FFFFFF",
+        color: "#007873",
+        fontWeight: 800,
+        fontSize: 13,
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
         cursor: "pointer",
-        fontWeight: 700,
-        boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
       }}
     >
-      ← {label}
+      <span aria-hidden="true">←</span>
+      <span>{label}</span>
     </button>
   );
 }
