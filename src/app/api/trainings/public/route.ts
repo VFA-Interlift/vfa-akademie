@@ -1,75 +1,77 @@
-// src/app/api/trainings/public/route.ts
 import { NextResponse } from "next/server";
-import { MOCK_PUBLIC_TRAININGS } from "@/lib/trainings/mock";
-import {
-  PublicTraining,
-  PublicTrainingsGroupedResponse,
-  TrainingCategory,
-} from "@/lib/trainings/types";
+import { prisma } from "@/lib/prisma";
+import { formatCertificateKind } from "@/lib/certificates/templates";
 
 export const dynamic = "force-dynamic";
 
-type ExtendedResponse = PublicTrainingsGroupedResponse & {
-  availablePrefixes: string[];
-  hideEmpty: boolean;
-};
+function guessCategory(code: string | null, title: string) {
+  const normalizedCode = String(code ?? "").toUpperCase();
+  const normalizedTitle = title.toLowerCase();
 
-function groupByCategory(trainings: PublicTraining[]) {
-  const order: TrainingCategory[] = ["VDI", "Elektrotechnik", "Schwerpunkte", "Praxis"];
-
-  const map = new Map<TrainingCategory, PublicTraining[]>();
-  for (const c of order) map.set(c, []);
-
-  for (const t of trainings) {
-    map.get(t.category)!.push(t);
+  if (["A1", "A2", "B", "C"].includes(normalizedCode)) return "VDI";
+  if (normalizedCode.includes("EFK") || normalizedTitle.includes("elektro")) {
+    return "Elektrotechnik";
+  }
+  if (
+    normalizedCode.includes("SICH") ||
+    normalizedCode.includes("DGUV") ||
+    normalizedCode.includes("FFPW")
+  ) {
+    return "Praxis";
   }
 
-  return order.map((name) => ({
-    name,
-    trainings: (map.get(name) ?? []).sort((a, b) => a.startDate.localeCompare(b.startDate)),
-  }));
+  return "Schwerpunkte";
 }
 
-function collectPrefixes(trainings: PublicTraining[]): string[] {
-  // heuristisch: alles vor der ersten "-" als Prefix nehmen und wieder "-" anhängen
-  const set = new Set<string>();
-  for (const t of trainings) {
-    const idx = t.code.indexOf("-");
-    if (idx > 0) set.add(t.code.slice(0, idx + 1).toUpperCase());
+export async function GET() {
+  try {
+    const trainings = await prisma.training.findMany({
+      orderBy: {
+        date: "asc",
+      },
+      select: {
+        id: true,
+        title: true,
+        code: true,
+        certificateKind: true,
+        date: true,
+        endDate: true,
+        location: true,
+        instructor: true,
+        description: true,
+        creditsAward: true,
+      },
+    });
+
+    const mappedTrainings = trainings.map((training) => ({
+      id: training.id,
+      title: training.title,
+      code: training.code,
+      category: guessCategory(training.code, training.title),
+      certificateKind: training.certificateKind,
+      certificateKindLabel: formatCertificateKind(training.certificateKind),
+      date: training.date.toISOString(),
+      endDate: training.endDate ? training.endDate.toISOString() : null,
+      location: training.location,
+      instructor: training.instructor,
+      description: training.description,
+      creditsAward: training.creditsAward,
+      isPublic: true,
+    }));
+
+    return NextResponse.json({
+      ok: true,
+      updatedAt: new Date().toISOString(),
+      trainings: mappedTrainings,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "PUBLIC_TRAININGS_LOAD_FAILED",
+        details: String(error?.message ?? error),
+      },
+      { status: 500 }
+    );
   }
-  return Array.from(set).sort();
-}
-
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-
-  const prefixRaw = searchParams.get("prefix")?.trim() ?? "";
-  const prefix = prefixRaw.length > 0 ? prefixRaw : undefined;
-
-  const hideEmpty = (searchParams.get("hideEmpty") ?? "true").toLowerCase() !== "false";
-
-  // nur öffentliche Trainings
-  const allPublic = MOCK_PUBLIC_TRAININGS.filter((t) => t.isPublic);
-
-  // optional Prefix-Filter
-  let trainings = allPublic;
-  if (prefix) {
-    trainings = trainings.filter((t) => t.code.toUpperCase().startsWith(prefix.toUpperCase()));
-  }
-
-  let categories = groupByCategory(trainings);
-  if (hideEmpty) {
-    categories = categories.filter((c) => c.trainings.length > 0);
-  }
-
-  const response: ExtendedResponse = {
-    ok: true,
-    updatedAt: new Date().toISOString(),
-    prefix,
-    hideEmpty,
-    availablePrefixes: collectPrefixes(allPublic),
-    categories,
-  };
-
-  return NextResponse.json(response);
 }
