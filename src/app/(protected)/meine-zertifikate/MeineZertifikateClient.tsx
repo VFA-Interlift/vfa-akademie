@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
+import CertificateDownloadButton from "@/components/CertificateDownloadButton";
 
 type SerializableCertificate = {
   id: string;
@@ -56,7 +57,14 @@ export default function MeineZertifikateClient({
           Aktuell sind noch keine Zertifikate vorhanden.
         </div>
 
-        <p style={{ marginTop: 10, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
+        <p
+          style={{
+            marginTop: 10,
+            marginBottom: 0,
+            color: "#333333",
+            lineHeight: 1.6,
+          }}
+        >
           Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird automatisch
           eine Teilnahmebestätigung oder ein Zertifikat erstellt.
         </p>
@@ -211,7 +219,8 @@ export default function MeineZertifikateClient({
                           lineHeight: 1.4,
                         }}
                       >
-                        {cert.certificateKindLabel} · {formatDate(cert.trainingDate)}
+                        {cert.certificateKindLabel} ·{" "}
+                        {formatDate(cert.trainingDate)}
                         {cert.trainingEndDate
                           ? ` bis ${formatDate(cert.trainingEndDate)}`
                           : ""}
@@ -266,11 +275,15 @@ export default function MeineZertifikateClient({
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(220px, 1fr))",
                         gap: 14,
                       }}
                     >
-                      <Info label="Schulung" value={cert.trainingTitle || cert.title} />
+                      <Info
+                        label="Schulung"
+                        value={cert.trainingTitle || cert.title}
+                      />
 
                       <Info
                         label="Zeitraum"
@@ -281,7 +294,9 @@ export default function MeineZertifikateClient({
                         }`}
                       />
 
-                      {cert.location && <Info label="Ort" value={cert.location} />}
+                      {cert.location && (
+                        <Info label="Ort" value={cert.location} />
+                      )}
 
                       {cert.instructor && (
                         <Info label="Dozent" value={cert.instructor} />
@@ -306,14 +321,10 @@ export default function MeineZertifikateClient({
                         display: "flex",
                         gap: 10,
                         flexWrap: "wrap",
+                        alignItems: "flex-start",
                       }}
                     >
-                      <AppButton
-                        href={`/api/certificates/${cert.id}/download`}
-                        variant="primary"
-                      >
-                        Dokument herunterladen
-                      </AppButton>
+                      <CertificateDownloadButton certificateId={cert.id} />
 
                       {cert.pdfUrl && (
                         <AppButton href={cert.pdfUrl} variant="secondary">
