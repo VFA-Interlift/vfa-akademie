@@ -229,9 +229,11 @@ export default function KurskalenderPage() {
                               minHeight: 86,
                               padding: 7,
                               border: "1px solid #E6E6E6",
-                              background: day.isCurrentMonth
-                                ? "#FFFFFF"
-                                : "#F1F1EE",
+                              background: !day.isCurrentMonth
+                                ? "#F1F1EE"
+                                : isWeekend(day.date)
+                                  ? "#ECECE8"
+                                  : "#FFFFFF",
                               opacity: day.isCurrentMonth ? 1 : 0.55,
                             }}
                           >
@@ -277,14 +279,14 @@ export default function KurskalenderPage() {
                                 border: "none",
                                 background: "#FFC100",
                                 color: "#1F1F1F",
-                                minHeight: 30,
-                                padding: "6px 10px",
+                                minHeight: 22,
+                                padding: "3px 9px",
                                 borderRadius: 999,
                                 cursor: "pointer",
                                 textAlign: "left",
                                 fontWeight: 900,
-                                fontSize: 12,
-                                lineHeight: 1.2,
+                                fontSize: 11,
+                                lineHeight: 1.15,
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -504,15 +506,15 @@ function buildWeekTrainingBars(
 }
 
 function formatTrainingBarLabel(training: CalendarTraining) {
-  const code = training.code || "Kurs";
-
-  return `${code} · ${training.title}`;
+  return training.code || "Kurs";
 }
 
 function diffDays(start: Date, end: Date) {
   const msPerDay = 24 * 60 * 60 * 1000;
 
-  return Math.round((startOfDay(end).getTime() - startOfDay(start).getTime()) / msPerDay);
+  return Math.round(
+    (startOfDay(end).getTime() - startOfDay(start).getTime()) / msPerDay
+  );
 }
 
 function toLocalDate(value: string) {
@@ -533,6 +535,12 @@ function isToday(date: Date) {
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate()
   );
+}
+
+function isWeekend(date: Date) {
+  const day = date.getDay();
+
+  return day === 0 || day === 6;
 }
 
 function formatDate(value: string | null | undefined) {
