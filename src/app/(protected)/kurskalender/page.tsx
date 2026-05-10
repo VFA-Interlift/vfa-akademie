@@ -29,6 +29,22 @@ type TrainingsResponse =
       error: string;
     };
 
+type CalendarDay = {
+  date: Date;
+  key: string;
+  isCurrentMonth: boolean;
+};
+
+type CalendarWeek = {
+  key: string;
+  days: CalendarDay[];
+};
+
+type WeekTrainingBar = {
+  training: CalendarTraining;
+  gridColumn: string;
+};
+
 export default function KurskalenderPage() {
   const today = new Date();
 
@@ -69,22 +85,7 @@ export default function KurskalenderPage() {
     loadTrainings();
   }, []);
 
-  const calendarDays = useMemo(() => buildCalendarDays(monthDate), [monthDate]);
-
-  const monthTrainings = useMemo(() => {
-    const month = monthDate.getMonth();
-    const year = monthDate.getFullYear();
-
-    return trainings.filter((training) => {
-      const start = toLocalDate(training.date);
-      const end = training.endDate ? toLocalDate(training.endDate) : start;
-
-      const firstOfMonth = new Date(year, month, 1);
-      const lastOfMonth = new Date(year, month + 1, 0);
-
-      return start <= lastOfMonth && end >= firstOfMonth;
-    });
-  }, [trainings, monthDate]);
+  const weeks = useMemo(() => buildCalendarWeeks(monthDate), [monthDate]);
 
   function previousMonth() {
     setSelectedTraining(null);
@@ -109,10 +110,7 @@ export default function KurskalenderPage() {
       }}
     >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <PageHeader
-          title="Kurskalender"
-          description="Hier findest du eine Jahres- und Monatsübersicht der geplanten Schulungen. Die Daten kommen aktuell aus der App und können später automatisiert aus Cobra synchronisiert werden."
-        />
+        <PageHeader title="Kurskalender" />
 
         {msg && (
           <div
@@ -134,43 +132,45 @@ export default function KurskalenderPage() {
           <AppCard accent="green">
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 14,
+                display: "grid",
+                gridTemplateColumns: "44px 1fr 44px",
+                gap: 12,
                 alignItems: "center",
-                flexWrap: "wrap",
               }}
             >
-              <button type="button" onClick={previousMonth} style={navButtonStyle}>
-                ← Monat zurück
+              <button
+                type="button"
+                onClick={previousMonth}
+                aria-label="Vorheriger Monat"
+                style={arrowButtonStyle}
+              >
+                ←
               </button>
 
-              <div style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    color: "#007873",
-                    fontSize: 28,
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {monthDate.toLocaleDateString("de-DE", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </div>
-
-                <div style={{ marginTop: 6 }}>
-                  <StatusBadge variant="yellow">
-                    {monthTrainings.length} Schulung
-                    {monthTrainings.length === 1 ? "" : "en"}
-                  </StatusBadge>
-                </div>
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "#007873",
+                  fontSize: 30,
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.02em",
+                  lineHeight: 1.15,
+                }}
+              >
+                {monthDate.toLocaleDateString("de-DE", {
+                  month: "long",
+                  year: "numeric",
+                })}
               </div>
 
-              <button type="button" onClick={nextMonth} style={navButtonStyle}>
-                Monat weiter →
+              <button
+                type="button"
+                onClick={nextMonth}
+                aria-label="Nächster Monat"
+                style={arrowButtonStyle}
+              >
+                →
               </button>
             </div>
           </AppCard>
@@ -186,7 +186,7 @@ export default function KurskalenderPage() {
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                    gap: 8,
+                    gap: 6,
                     marginBottom: 8,
                   }}
                 >
@@ -207,87 +207,115 @@ export default function KurskalenderPage() {
                   ))}
                 </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                    gap: 8,
-                  }}
-                >
-                  {calendarDays.map((day) => {
-                    const dayTrainings = trainingsForDay(trainings, day.date);
-                    const isCurrentMonth =
-                      day.date.getMonth() === monthDate.getMonth();
+                <div style={{ display: "grid", gap: 6 }}>
+                  {weeks.map((week) => {
+                    const bars = buildWeekTrainingBars(trainings, week.days);
 
                     return (
                       <div
-                        key={day.key}
+                        key={week.key}
                         style={{
-                          minHeight: 112,
-                          padding: 8,
-                          border: "1px solid #E6E6E6",
-                          background: isCurrentMonth ? "#FFFFFF" : "#F1F1EE",
-                          opacity: isCurrentMonth ? 1 : 0.55,
+                          position: "relative",
+                          minHeight: 86,
                           display: "grid",
-                          alignContent: "start",
+                          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
                           gap: 6,
                         }}
                       >
+                        {week.days.map((day) => (
+                          <div
+                            key={day.key}
+                            style={{
+                              minHeight: 86,
+                              padding: 7,
+                              border: "1px solid #E6E6E6",
+                              background: day.isCurrentMonth
+                                ? "#FFFFFF"
+                                : "#F1F1EE",
+                              opacity: day.isCurrentMonth ? 1 : 0.55,
+                            }}
+                          >
+                            <div
+                              style={{
+                                color: isToday(day.date) ? "#FFFFFF" : "#333333",
+                                background: isToday(day.date)
+                                  ? "#007873"
+                                  : "transparent",
+                                width: 26,
+                                height: 26,
+                                borderRadius: 999,
+                                display: "grid",
+                                placeItems: "center",
+                                fontWeight: 900,
+                                fontSize: 13,
+                              }}
+                            >
+                              {day.date.getDate()}
+                            </div>
+                          </div>
+                        ))}
+
                         <div
                           style={{
-                            color: isToday(day.date) ? "#FFFFFF" : "#333333",
-                            background: isToday(day.date)
-                              ? "#007873"
-                              : "transparent",
-                            width: 28,
-                            height: 28,
-                            borderRadius: 999,
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            bottom: 8,
                             display: "grid",
-                            placeItems: "center",
-                            fontWeight: 900,
-                            fontSize: 13,
+                            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                            gap: 6,
+                            pointerEvents: "none",
                           }}
                         >
-                          {day.date.getDate()}
-                        </div>
-
-                        <div style={{ display: "grid", gap: 5 }}>
-                          {dayTrainings.slice(0, 3).map((training) => (
+                          {bars.slice(0, 2).map((bar) => (
                             <button
-                              key={`${day.key}-${training.id}`}
+                              key={`${week.key}-${bar.training.id}-${bar.gridColumn}`}
                               type="button"
-                              onClick={() => setSelectedTraining(training)}
+                              onClick={() => setSelectedTraining(bar.training)}
                               style={{
-                                width: "100%",
+                                gridColumn: bar.gridColumn,
                                 border: "none",
                                 background: "#FFC100",
                                 color: "#1F1F1F",
-                                padding: "6px 7px",
-                                borderRadius: 8,
+                                minHeight: 30,
+                                padding: "6px 10px",
+                                borderRadius: 999,
                                 cursor: "pointer",
                                 textAlign: "left",
                                 fontWeight: 900,
                                 fontSize: 12,
-                                lineHeight: 1.25,
+                                lineHeight: 1.2,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                pointerEvents: "auto",
+                                boxShadow: "0 5px 14px rgba(0,0,0,0.10)",
                               }}
-                              title={training.title}
+                              title={bar.training.title}
                             >
-                              {training.code || "Kurs"} · {training.title}
+                              {formatTrainingBarLabel(bar.training)}
                             </button>
                           ))}
-
-                          {dayTrainings.length > 3 && (
-                            <div
-                              style={{
-                                color: "#007873",
-                                fontSize: 12,
-                                fontWeight: 800,
-                              }}
-                            >
-                              +{dayTrainings.length - 3} weitere
-                            </div>
-                          )}
                         </div>
+
+                        {bars.length > 2 && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              right: 8,
+                              top: 8,
+                              color: "#007873",
+                              fontSize: 12,
+                              fontWeight: 900,
+                              background: "#FFFFFF",
+                              border: "1px solid #E6E6E6",
+                              borderRadius: 999,
+                              padding: "4px 8px",
+                            }}
+                          >
+                            +{bars.length - 2}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -408,37 +436,83 @@ export default function KurskalenderPage() {
   );
 }
 
-function buildCalendarDays(monthDate: Date) {
+function buildCalendarWeeks(monthDate: Date): CalendarWeek[] {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
   const firstDay = new Date(year, month, 1);
   const mondayOffset = (firstDay.getDay() + 6) % 7;
-
   const start = new Date(year, month, 1 - mondayOffset);
 
-  return Array.from({ length: 42 }, (_, index) => {
+  const days = Array.from({ length: 42 }, (_, index) => {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
 
     return {
       date,
       key: `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
+      isCurrentMonth: date.getMonth() === month,
+    };
+  });
+
+  return Array.from({ length: 6 }, (_, weekIndex) => {
+    const weekDays = days.slice(weekIndex * 7, weekIndex * 7 + 7);
+
+    return {
+      key: `week-${weekDays[0].key}`,
+      days: weekDays,
     };
   });
 }
 
-function trainingsForDay(trainings: CalendarTraining[], day: Date) {
-  const normalizedDay = startOfDay(day);
+function buildWeekTrainingBars(
+  trainings: CalendarTraining[],
+  days: CalendarDay[]
+): WeekTrainingBar[] {
+  const weekStart = startOfDay(days[0].date);
+  const weekEnd = startOfDay(days[6].date);
 
-  return trainings.filter((training) => {
-    const start = startOfDay(toLocalDate(training.date));
-    const end = training.endDate
-      ? startOfDay(toLocalDate(training.endDate))
-      : start;
+  return trainings
+    .map((training) => {
+      const trainingStart = startOfDay(toLocalDate(training.date));
+      const trainingEnd = training.endDate
+        ? startOfDay(toLocalDate(training.endDate))
+        : trainingStart;
 
-    return normalizedDay >= start && normalizedDay <= end;
-  });
+      if (trainingEnd < weekStart || trainingStart > weekEnd) {
+        return null;
+      }
+
+      const visibleStart = trainingStart < weekStart ? weekStart : trainingStart;
+      const visibleEnd = trainingEnd > weekEnd ? weekEnd : trainingEnd;
+
+      const startIndex = diffDays(weekStart, visibleStart);
+      const endIndex = diffDays(weekStart, visibleEnd);
+
+      return {
+        training,
+        gridColumn: `${startIndex + 1} / ${endIndex + 2}`,
+      };
+    })
+    .filter((bar): bar is WeekTrainingBar => Boolean(bar))
+    .sort((a, b) => {
+      const aStart = toLocalDate(a.training.date).getTime();
+      const bStart = toLocalDate(b.training.date).getTime();
+
+      return aStart - bStart;
+    });
+}
+
+function formatTrainingBarLabel(training: CalendarTraining) {
+  const code = training.code || "Kurs";
+
+  return `${code} · ${training.title}`;
+}
+
+function diffDays(start: Date, end: Date) {
+  const msPerDay = 24 * 60 * 60 * 1000;
+
+  return Math.round((startOfDay(end).getTime() - startOfDay(start).getTime()) / msPerDay);
 }
 
 function toLocalDate(value: string) {
@@ -491,18 +565,17 @@ function Info({ label, value }: { label: string; value: string }) {
   );
 }
 
-const navButtonStyle: React.CSSProperties = {
-  minHeight: 40,
-  padding: "9px 16px",
+const arrowButtonStyle: React.CSSProperties = {
+  width: 44,
+  height: 44,
   borderRadius: 999,
   border: "1px solid #C7C7C7",
   background: "#FFFFFF",
   color: "#007873",
-  fontWeight: 800,
-  fontSize: 13,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
+  fontWeight: 900,
+  fontSize: 22,
   cursor: "pointer",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
 };
 
 const smallButtonStyle: React.CSSProperties = {
