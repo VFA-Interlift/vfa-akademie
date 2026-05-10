@@ -7,7 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function AdminMenuPage() {
-  const [trainingOpen, setTrainingOpen] = useState(true);
+  const [trainingOpen, setTrainingOpen] = useState(false);
 
   return (
     <main
@@ -20,7 +20,7 @@ export default function AdminMenuPage() {
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader
           title="Admin-Bereich"
-          description="Hier verwaltest du Schulungen, Teilnehmer, Zertifikate, Credits und Nutzer."
+          description="Hier verwaltest du Schulungen, Teilnehmer, Zertifikate und Nutzer. Credits und Rollen werden zentral in der Nutzerverwaltung gepflegt."
         />
 
         <div style={{ display: "grid", gap: 16 }}>
@@ -74,7 +74,7 @@ export default function AdminMenuPage() {
                 </div>
 
                 <StatusBadge variant="yellow">
-                  {trainingOpen ? "Offen ▲" : "Öffnen ▼"}
+                  {trainingOpen ? "Schließen ▲" : "Öffnen ▼"}
                 </StatusBadge>
               </div>
             </button>
@@ -120,16 +120,9 @@ export default function AdminMenuPage() {
             />
 
             <AdminLink
-              href="/admin/credits"
-              title="Credits verwalten"
-              description="Credits manuell vergeben oder abziehen."
-              badge="Credits"
-            />
-
-            <AdminLink
               href="/admin/users"
               title="Nutzer verwalten"
-              description="Registrierte Nutzer anzeigen und User zum Admin machen."
+              description="Registrierte Nutzer anzeigen, Credits bearbeiten, Rollen verwalten und Adminrechte vergeben."
               badge="Nutzer"
             />
           </div>

@@ -32,13 +32,16 @@ type UsersResponse =
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
-  const [usersOpen, setUsersOpen] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
 
-  const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [msgOk, setMsgOk] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  const [creditAmountByUser, setCreditAmountByUser] = useState<Record<string, string>>({});
+  const [creditNoteByUser, setCreditNoteByUser] = useState<Record<string, string>>({});
 
   function showMessage(message: string, ok = false) {
     setMsg(message);
@@ -87,8 +90,13 @@ export default function AdminUsersPage() {
     });
   }, [users, search]);
 
-  async function promote() {
-    setLoading(true);
+  async function promote(user: AdminUser) {
+    if (user.role === "ADMIN") {
+      showMessage("Dieser Nutzer ist bereits Admin.", true);
+      return;
+    }
+
+    setActionLoadingId(user.id);
     setMsg("");
     setMsgOk(false);
 
@@ -99,26 +107,17 @@ export default function AdminUsersPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+          email: user.email.trim().toLowerCase(),
         }),
       });
 
-      const text = await res.text();
-
-      let data: any = null;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        showMessage("Serverantwort konnte nicht gelesen werden.");
-        return;
-      }
+      const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
         if (data?.error === "INVALID_EMAIL") {
           showMessage("Bitte eine gültige E-Mail eingeben.");
         } else if (data?.error === "USER_NOT_FOUND") {
-          showMessage("User wurde nicht gefunden. Der User muss zuerst registriert sein.");
+          showMessage("User wurde nicht gefunden.");
         } else if (data?.error === "UNAUTHENTICATED") {
           showMessage("Du bist nicht eingeloggt.");
         } else if (data?.error === "FORBIDDEN") {
@@ -130,13 +129,86 @@ export default function AdminUsersPage() {
         return;
       }
 
-      showMessage(`${data.email} ist jetzt Admin.`, true);
-      setEmail("");
+      showMessage(`${user.email} ist jetzt Admin.`, true);
       await loadUsers();
     } catch {
       showMessage("Serverfehler beim Ernennen des Admins.");
     } finally {
-      setLoading(false);
+      setActionLoadingId(null);
+    }
+  }
+
+  async function changeCredits(user: AdminUser, direction: "add" | "remove") {
+    const rawAmount = creditAmountByUser[user.id]?.trim() ?? "";
+    const note = creditNoteByUser[user.id]?.trim() ?? "";
+
+    const amount = Number(rawAmount);
+
+    if (!Number.isInteger(amount) || amount <= 0) {
+      showMessage("Bitte eine positive ganze Credit-Zahl eingeben.");
+      return;
+    }
+
+    const signedAmount = direction === "add" ? amount : -amount;
+
+    setActionLoadingId(user.id);
+    setMsg("");
+    setMsgOk(false);
+
+    try {
+      const res = await fetch("/api/admin/credits", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: user.email.trim().toLowerCase(),
+          credits: signedAmount,
+          note: note || null,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.ok) {
+        if (data?.error === "INVALID_EMAIL") {
+          showMessage("Bitte eine gültige E-Mail eingeben.");
+        } else if (data?.error === "INVALID_CREDITS") {
+          showMessage("Bitte eine ganze Zahl größer als 0 eingeben.");
+        } else if (data?.error === "USER_NOT_FOUND") {
+          showMessage("Nutzer wurde nicht gefunden.");
+        } else if (data?.error === "UNAUTHENTICATED") {
+          showMessage("Du bist nicht eingeloggt.");
+        } else if (data?.error === "FORBIDDEN") {
+          showMessage("Du hast keine Berechtigung.");
+        } else {
+          showMessage(data?.error ?? "Credits konnten nicht gespeichert werden.");
+        }
+
+        return;
+      }
+
+      if (direction === "add") {
+        showMessage(`${amount} Credits wurden an ${user.email} vergeben.`, true);
+      } else {
+        showMessage(`${amount} Credits wurden bei ${user.email} abgezogen.`, true);
+      }
+
+      setCreditAmountByUser((current) => ({
+        ...current,
+        [user.id]: "",
+      }));
+
+      setCreditNoteByUser((current) => ({
+        ...current,
+        [user.id]: "",
+      }));
+
+      await loadUsers();
+    } catch {
+      showMessage("Serverfehler beim Bearbeiten der Credits.");
+    } finally {
+      setActionLoadingId(null);
     }
   }
 
@@ -151,7 +223,7 @@ export default function AdminUsersPage() {
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <PageHeader
           title="Nutzer verwalten"
-          description="Hier kannst du registrierte Nutzer prüfen und ausgewählte Nutzer zum Admin machen."
+          description="Hier verwaltest du registrierte Nutzer, Credits, Schulungsübersichten und Adminrechte zentral an einer Stelle."
         />
 
         {msg && (
@@ -174,251 +246,353 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        <div style={{ display: "grid", gap: 16 }}>
-          <AppCard accent="green">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 16,
-                alignItems: "flex-start",
-                flexWrap: "wrap",
-                marginBottom: 18,
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    margin: 0,
-                    color: "#007873",
-                    fontSize: 24,
-                    fontWeight: 500,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  User zum Admin machen
-                </h2>
-
-                <p
-                  style={{
-                    marginTop: 10,
-                    marginBottom: 0,
-                    color: "#333333",
-                    lineHeight: 1.6,
-                    maxWidth: 720,
-                  }}
-                >
-                  Gib die E-Mail-Adresse eines bereits registrierten Users ein.
-                  Danach hat der User Zugriff auf den Adminbereich.
-                </p>
-              </div>
-
-              <StatusBadge variant="yellow">Adminrechte</StatusBadge>
-            </div>
-
-            <div style={{ display: "grid", gap: 14, maxWidth: 620 }}>
-              <AppInput
-                label="User E-Mail"
-                value={email}
-                placeholder="user@example.com"
-                type="email"
-                onChange={setEmail}
-              />
-
-              <AppButton
-                onClick={promote}
-                disabled={loading || !email.trim()}
-                variant="primary"
-              >
-                {loading ? "Wird verarbeitet..." : "Zum Admin machen"}
-              </AppButton>
-            </div>
-          </AppCard>
-
-          <AppCard accent="yellow">
-            <button
-              type="button"
-              onClick={() => setUsersOpen((value) => !value)}
-              style={{
-                width: "100%",
-                padding: 0,
-                border: "none",
-                background: "transparent",
-                textAlign: "left",
-                cursor: "pointer",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <h2
-                    style={{
-                      margin: 0,
-                      color: "#007873",
-                      fontSize: 24,
-                      fontWeight: 500,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    Registrierte Nutzer
-                  </h2>
-
-                  <p
-                    style={{
-                      marginTop: 10,
-                      marginBottom: 0,
-                      color: "#333333",
-                      lineHeight: 1.6,
-                      maxWidth: 720,
-                    }}
-                  >
-                    Aufklappen, um alle registrierten Nutzer, Rollen, Credits,
-                    Schulungen und Zertifikate zu sehen.
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  }}
-                >
-                  <StatusBadge>{users.length} Nutzer</StatusBadge>
-                  <StatusBadge variant="yellow">
-                    {usersOpen ? "Schließen ▲" : "Öffnen ▼"}
-                  </StatusBadge>
-                </div>
-              </div>
-            </button>
-
-            {usersOpen && (
-              <div
-                style={{
-                  marginTop: 18,
-                  paddingTop: 18,
-                  borderTop: "1px solid #E6E6E6",
-                  display: "grid",
-                  gap: 18,
-                }}
-              >
-                <AppInput
-                  label="Suche"
-                  value={search}
-                  placeholder="Name, E-Mail, Firma oder Rolle suchen"
-                  onChange={setSearch}
-                />
-
-                {loadingUsers ? (
-                  <div style={{ color: "#333333", lineHeight: 1.6 }}>
-                    Nutzer werden geladen...
-                  </div>
-                ) : filteredUsers.length === 0 ? (
-                  <div style={{ color: "#333333", lineHeight: 1.6 }}>
-                    Keine Nutzer gefunden.
-                  </div>
-                ) : (
-                  <div style={{ display: "grid", gap: 10 }}>
-                    {filteredUsers.map((user) => (
-                      <UserRow key={user.id} user={user} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </AppCard>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-function UserRow({ user }: { user: AdminUser }) {
-  return (
-    <div
-      style={{
-        border: "1px solid #E6E6E6",
-        background: "#FFFFFF",
-        padding: 14,
-        display: "grid",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 14,
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
+        <AppCard accent="green">
           <div
             style={{
-              color: "#007873",
-              fontSize: 18,
-              fontWeight: 800,
-              lineHeight: 1.3,
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 16,
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              marginBottom: 18,
             }}
           >
-            {user.name || "Ohne Namen"}
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#007873",
+                  fontSize: 24,
+                  fontWeight: 500,
+                  lineHeight: 1.3,
+                }}
+              >
+                Registrierte Nutzer
+              </h2>
+
+              <p
+                style={{
+                  marginTop: 10,
+                  marginBottom: 0,
+                  color: "#333333",
+                  lineHeight: 1.6,
+                  maxWidth: 760,
+                }}
+              >
+                In der Liste werden zunächst nur Name und E-Mail angezeigt.
+                Über das Plus öffnest du Credits, Rollen, Schulungen und
+                Zertifikate.
+              </p>
+            </div>
+
+            <StatusBadge variant="yellow">{users.length} Nutzer</StatusBadge>
           </div>
 
-          <div
-            style={{
-              marginTop: 4,
-              color: "#333333",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-            title={user.email}
-          >
-            {user.email}
+          <div style={{ marginBottom: 18 }}>
+            <AppInput
+              label="Suche"
+              value={search}
+              placeholder="Name, E-Mail, Firma oder Rolle suchen"
+              onChange={setSearch}
+            />
           </div>
 
-          {user.company && (
-            <div
-              style={{
-                marginTop: 4,
-                color: "#666666",
-                fontSize: 14,
-              }}
-            >
-              {user.company}
+          {loadingUsers ? (
+            <div style={{ color: "#333333", lineHeight: 1.6 }}>
+              Nutzer werden geladen...
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div style={{ color: "#333333", lineHeight: 1.6 }}>
+              Keine Nutzer gefunden.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {filteredUsers.map((user) => {
+                const isOpen = openId === user.id;
+                const isLoading = actionLoadingId === user.id;
+
+                return (
+                  <div
+                    key={user.id}
+                    style={{
+                      border: "1px solid #E6E6E6",
+                      background: "#FFFFFF",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(isOpen ? null : user.id)}
+                      style={{
+                        width: "100%",
+                        padding: 14,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: 14,
+                          alignItems: "center",
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              color: "#007873",
+                              fontSize: 18,
+                              fontWeight: 800,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {user.name || "Ohne Namen"}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 4,
+                              color: "#333333",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={user.email}
+                          >
+                            {user.email}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            color: "#007873",
+                            fontWeight: 900,
+                            fontSize: 24,
+                          }}
+                        >
+                          {isOpen ? "−" : "+"}
+                        </div>
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div
+                        style={{
+                          padding: "0 14px 14px",
+                          borderTop: "1px solid #E6E6E6",
+                        }}
+                      >
+                        <div
+                          style={{
+                            paddingTop: 14,
+                            display: "flex",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            marginBottom: 14,
+                          }}
+                        >
+                          <StatusBadge
+                            variant={user.role === "ADMIN" ? "yellow" : "default"}
+                          >
+                            Rolle: {user.role}
+                          </StatusBadge>
+
+                          <StatusBadge>{user.creditsTotal} Credits</StatusBadge>
+
+                          {user.company && (
+                            <StatusBadge>Firma: {user.company}</StatusBadge>
+                          )}
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fit, minmax(150px, 1fr))",
+                            gap: 10,
+                            marginBottom: 18,
+                          }}
+                        >
+                          <MiniInfo
+                            label="Credits"
+                            value={String(user.creditsTotal)}
+                          />
+                          <MiniInfo
+                            label="Schulungen"
+                            value={String(user.enrollmentsCount)}
+                          />
+                          <MiniInfo
+                            label="Zertifikate"
+                            value={String(user.certificatesCount)}
+                          />
+                          <MiniInfo
+                            label="Registriert"
+                            value={formatDate(user.createdAt)}
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 14,
+                            paddingTop: 16,
+                            borderTop: "1px solid #E6E6E6",
+                          }}
+                        >
+                          <h3
+                            style={{
+                              margin: 0,
+                              color: "#007873",
+                              fontSize: 20,
+                              fontWeight: 500,
+                            }}
+                          >
+                            Credits bearbeiten
+                          </h3>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(auto-fit, minmax(220px, 1fr))",
+                              gap: 12,
+                            }}
+                          >
+                            <AppInput
+                              label="Credit-Betrag"
+                              value={creditAmountByUser[user.id] ?? ""}
+                              placeholder="z. B. 100"
+                              onChange={(value) => {
+                                if (value === "" || /^\d+$/.test(value)) {
+                                  setCreditAmountByUser((current) => ({
+                                    ...current,
+                                    [user.id]: value,
+                                  }));
+                                }
+                              }}
+                            />
+
+                            <AppInput
+                              label="Notiz optional"
+                              value={creditNoteByUser[user.id] ?? ""}
+                              placeholder="z. B. Korrektur / Sondervergabe"
+                              onChange={(value) =>
+                                setCreditNoteByUser((current) => ({
+                                  ...current,
+                                  [user.id]: value,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 10,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <AppButton
+                              onClick={() => changeCredits(user, "add")}
+                              disabled={isLoading}
+                              variant="primary"
+                            >
+                              {isLoading ? "Speichern..." : "Credits vergeben"}
+                            </AppButton>
+
+                            <AppButton
+                              onClick={() => changeCredits(user, "remove")}
+                              disabled={isLoading}
+                              variant="danger"
+                            >
+                              {isLoading ? "Speichern..." : "Credits abziehen"}
+                            </AppButton>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            marginTop: 18,
+                            paddingTop: 16,
+                            borderTop: "1px solid #E6E6E6",
+                            display: "grid",
+                            gap: 12,
+                          }}
+                        >
+                          <h3
+                            style={{
+                              margin: 0,
+                              color: "#007873",
+                              fontSize: 20,
+                              fontWeight: 500,
+                            }}
+                          >
+                            Rollen verwalten
+                          </h3>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 10,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <AppButton
+                              onClick={() => promote(user)}
+                              disabled={isLoading || user.role === "ADMIN"}
+                              variant="primary"
+                            >
+                              {user.role === "ADMIN"
+                                ? "Ist bereits Admin"
+                                : "Zum Admin machen"}
+                            </AppButton>
+
+                            <button
+                              type="button"
+                              disabled
+                              title="Wird später mit isInstructor-Feld ergänzt"
+                              style={{
+                                minHeight: 42,
+                                padding: "10px 18px",
+                                borderRadius: 999,
+                                border: "1px solid #C7C7C7",
+                                background: "#F3F3F3",
+                                color: "#777777",
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.06em",
+                                cursor: "not-allowed",
+                              }}
+                            >
+                              Dozentenstatus folgt
+                            </button>
+                          </div>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              color: "#666666",
+                              lineHeight: 1.6,
+                              fontSize: 14,
+                            }}
+                          >
+                            Der Dozentenstatus wird als eigener Status ergänzt,
+                            damit jemand gleichzeitig User, Admin und Dozent sein
+                            kann.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
-        </div>
-
-        <StatusBadge variant={user.role === "ADMIN" ? "yellow" : "default"}>
-          {user.role}
-        </StatusBadge>
+        </AppCard>
       </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-          gap: 10,
-          paddingTop: 10,
-          borderTop: "1px solid #E6E6E6",
-        }}
-      >
-        <MiniInfo label="Credits" value={String(user.creditsTotal)} />
-        <MiniInfo label="Schulungen" value={String(user.enrollmentsCount)} />
-        <MiniInfo label="Zertifikate" value={String(user.certificatesCount)} />
-        <MiniInfo label="Registriert" value={formatDate(user.createdAt)} />
-      </div>
-    </div>
+    </main>
   );
 }
 
