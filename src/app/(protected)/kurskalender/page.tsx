@@ -325,115 +325,143 @@ export default function KurskalenderPage() {
               </>
             )}
           </AppCard>
-
-          {selectedTraining && (
-            <AppCard accent="yellow">
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      flexWrap: "wrap",
-                      marginBottom: 10,
-                    }}
-                  >
-                    {selectedTraining.code && (
-                      <StatusBadge variant="yellow">
-                        {selectedTraining.code}
-                      </StatusBadge>
-                    )}
-
-                    <StatusBadge>
-                      {selectedTraining.certificateKindLabel}
-                    </StatusBadge>
-
-                    <StatusBadge>
-                      {selectedTraining.creditsAward} Credits
-                    </StatusBadge>
-                  </div>
-
-                  <h2
-                    style={{
-                      margin: 0,
-                      color: "#007873",
-                      fontSize: 26,
-                      fontWeight: 500,
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {selectedTraining.title}
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedTraining(null)}
-                  style={smallButtonStyle}
-                >
-                  Schließen
-                </button>
-              </div>
-
-              <div
-                style={{
-                  marginTop: 18,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: 14,
-                }}
-              >
-                <Info
-                  label="Zeitraum"
-                  value={`${formatDate(selectedTraining.date)}${
-                    selectedTraining.endDate
-                      ? ` bis ${formatDate(selectedTraining.endDate)}`
-                      : ""
-                  }`}
-                />
-
-                {selectedTraining.location && (
-                  <Info label="Ort" value={selectedTraining.location} />
-                )}
-
-                {selectedTraining.instructor && (
-                  <Info label="Dozent" value={selectedTraining.instructor} />
-                )}
-
-                <Info
-                  label="Abschluss"
-                  value={selectedTraining.certificateKindLabel}
-                />
-
-                <Info
-                  label="Credits"
-                  value={String(selectedTraining.creditsAward)}
-                />
-              </div>
-
-              {selectedTraining.description && (
-                <div
-                  style={{
-                    marginTop: 16,
-                    paddingTop: 16,
-                    borderTop: "1px solid #E6E6E6",
-                  }}
-                >
-                  <Info label="Inhalte" value={selectedTraining.description} />
-                </div>
-              )}
-            </AppCard>
-          )}
         </div>
       </div>
+
+      {selectedTraining && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Schulungsdetails"
+          onClick={() => setSelectedTraining(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 5000,
+            background: "rgba(0,0,0,0.42)",
+            display: "grid",
+            placeItems: "center",
+            padding: 18,
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 720,
+              maxHeight: "calc(100vh - 36px)",
+              overflow: "auto",
+              background: "#FFFFFF",
+              border: "1px solid #FFC100",
+              boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
+              padding: 22,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 16,
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    marginBottom: 10,
+                  }}
+                >
+                  {selectedTraining.code && (
+                    <StatusBadge variant="yellow">
+                      {selectedTraining.code}
+                    </StatusBadge>
+                  )}
+
+                  <StatusBadge>
+                    {selectedTraining.certificateKindLabel}
+                  </StatusBadge>
+
+                  <StatusBadge>
+                    {selectedTraining.creditsAward} Credits
+                  </StatusBadge>
+                </div>
+
+                <h2
+                  style={{
+                    margin: 0,
+                    color: "#007873",
+                    fontSize: 28,
+                    fontWeight: 500,
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {selectedTraining.title}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedTraining(null)}
+                style={smallButtonStyle}
+              >
+                Schließen
+              </button>
+            </div>
+
+            <div
+              style={{
+                marginTop: 18,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 14,
+              }}
+            >
+              <Info
+                label="Zeitraum"
+                value={`${formatDate(selectedTraining.date)}${
+                  selectedTraining.endDate
+                    ? ` bis ${formatDate(selectedTraining.endDate)}`
+                    : ""
+                }`}
+              />
+
+              {selectedTraining.location && (
+                <Info label="Ort" value={selectedTraining.location} />
+              )}
+
+              {selectedTraining.instructor && (
+                <Info label="Dozent" value={selectedTraining.instructor} />
+              )}
+
+              <Info
+                label="Abschluss"
+                value={selectedTraining.certificateKindLabel}
+              />
+
+              <Info
+                label="Credits"
+                value={String(selectedTraining.creditsAward)}
+              />
+            </div>
+
+            {selectedTraining.description && (
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTop: "1px solid #E6E6E6",
+                }}
+              >
+                <Info label="Inhalte" value={selectedTraining.description} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -506,7 +534,7 @@ function buildWeekTrainingBars(
 }
 
 function formatTrainingBarLabel(training: CalendarTraining) {
-  return training.code || "Kurs";
+  return training.title || training.code || "Kurs";
 }
 
 function diffDays(start: Date, end: Date) {
