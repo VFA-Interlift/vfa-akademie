@@ -19,7 +19,7 @@ type CreditLevel = {
 function getCreditLevel(credits: number): CreditLevel {
   if (credits >= 10000) {
     return {
-      currentLevel: "Platin",
+      currentLevel: "VFA-Experte",
       nextLevel: null,
       currentMin: 10000,
       nextTarget: null,
@@ -31,7 +31,7 @@ function getCreditLevel(credits: number): CreditLevel {
   if (credits >= 5000) {
     return {
       currentLevel: "Gold",
-      nextLevel: "Platin",
+      nextLevel: "VFA-Experte",
       currentMin: 5000,
       nextTarget: 10000,
       progressPercent: Math.round(((credits - 5000) / 5000) * 100),
@@ -158,10 +158,22 @@ export default async function DashboardPage() {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: 16,
-            marginBottom: 18,
           }}
         >
           <AppCard accent="green">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                alignItems: "flex-start",
+                marginBottom: 8,
+              }}
+            >
+              <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
+              <CreditInfo />
+            </div>
+
             <div
               style={{
                 display: "grid",
@@ -173,11 +185,9 @@ export default async function DashboardPage() {
               <CreditCircle percent={level.progressPercent} />
 
               <div>
-                <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
-
                 <h2
                   style={{
-                    marginTop: 12,
+                    marginTop: 0,
                     marginBottom: 8,
                     color: "#007873",
                     fontSize: 32,
@@ -212,7 +222,8 @@ export default async function DashboardPage() {
                       fontSize: 15,
                     }}
                   >
-                    Höchste Stufe erreicht. Stark.
+                    Höchste Stufe erreicht. Ab diesem Bereich kann eine
+                    fachliche Eignung als VFA-Dozent geprüft werden.
                   </p>
                 )}
               </div>
@@ -252,34 +263,100 @@ export default async function DashboardPage() {
             </div>
           </AppCard>
         </div>
-
-        <AppCard accent="yellow">
-          <h2
-            style={{
-              margin: 0,
-              color: "#007873",
-              fontSize: 22,
-              fontWeight: 500,
-            }}
-          >
-            Navigation
-          </h2>
-
-          <p
-            style={{
-              marginTop: 10,
-              marginBottom: 0,
-              color: "#333333",
-              lineHeight: 1.6,
-            }}
-          >
-            Alle Bereiche findest du oben rechts im Menü. Dort kannst du deine
-            Schulungen, Zertifikate, Profildaten und — falls freigeschaltet —
-            den Adminbereich öffnen.
-          </p>
-        </AppCard>
       </div>
     </main>
+  );
+}
+
+function CreditInfo() {
+  return (
+    <details style={{ position: "relative" }}>
+      <summary
+        style={{
+          listStyle: "none",
+          width: 34,
+          height: 34,
+          borderRadius: "50%",
+          border: "1px solid #C7C7C7",
+          background: "#FFFFFF",
+          color: "#007873",
+          display: "grid",
+          placeItems: "center",
+          fontWeight: 900,
+          cursor: "pointer",
+          boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
+        }}
+        title="Credit-Ränge anzeigen"
+      >
+        i
+      </summary>
+
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 42,
+          zIndex: 20,
+          width: "min(320px, calc(100vw - 48px))",
+          padding: 16,
+          background: "#FFFFFF",
+          border: "1px solid #FFC100",
+          boxShadow: "0 14px 34px rgba(0,0,0,0.12)",
+          color: "#1F1F1F",
+        }}
+      >
+        <div
+          style={{
+            color: "#007873",
+            fontWeight: 900,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            fontSize: 13,
+            marginBottom: 10,
+          }}
+        >
+          Credit-Ränge
+        </div>
+
+        <div style={{ display: "grid", gap: 10 }}>
+          <Rank label="Bronze" range="0 bis 999 Credits" />
+          <Rank label="Silber" range="1.000 bis 4.999 Credits" />
+          <Rank label="Gold" range="5.000 bis 9.999 Credits" />
+          <Rank label="VFA-Experte" range="ab 10.000 Credits" />
+        </div>
+
+        <p
+          style={{
+            marginTop: 14,
+            marginBottom: 0,
+            color: "#333333",
+            lineHeight: 1.55,
+            fontSize: 14,
+          }}
+        >
+          Ab 10.000 Credits kann eine fachliche Eignung als VFA-Dozent geprüft
+          werden. Die finale Entscheidung erfolgt nicht automatisch, sondern nach
+          fachlicher Bewertung.
+        </p>
+      </div>
+    </details>
+  );
+}
+
+function Rank({ label, range }: { label: string; range: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 12,
+        paddingBottom: 8,
+        borderBottom: "1px solid #E6E6E6",
+      }}
+    >
+      <strong style={{ color: "#007873" }}>{label}</strong>
+      <span style={{ color: "#333333", textAlign: "right" }}>{range}</span>
+    </div>
   );
 }
 
