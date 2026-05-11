@@ -250,7 +250,7 @@ export default async function DashboardPage() {
               }}
             >
               <MiniStat
-                label="Aktive Schulungen"
+                label="Bevorstehende Schulungen"
                 value={String(me.enrollments.length)}
               />
 
