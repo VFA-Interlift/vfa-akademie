@@ -28,7 +28,9 @@ async function requireAdmin() {
       email: email.trim().toLowerCase(),
     },
     select: {
+      id: true,
       role: true,
+      email: true,
     },
   });
 
@@ -36,7 +38,7 @@ async function requireAdmin() {
     return { ok: false as const, res: fail("FORBIDDEN", 403) };
   }
 
-  return { ok: true as const };
+  return { ok: true as const, adminUser: me };
 }
 
 export async function GET() {
@@ -85,5 +87,64 @@ export async function GET() {
       certificatesCount: user._count.certificates,
       createdAt: user.createdAt,
     })),
+  });
+}
+
+export async function DELETE(req: Request) {
+  const gate = await requireAdmin();
+
+  if (!gate.ok) {
+    return gate.res;
+  }
+
+  let body: unknown;
+
+  try {
+    body = await req.json();
+  } catch {
+    return fail("INVALID_JSON", 400);
+  }
+
+  const userId =
+    typeof body === "object" &&
+    body !== null &&
+    "userId" in body &&
+    typeof body.userId === "string"
+      ? body.userId.trim()
+      : "";
+
+  if (!userId) {
+    return fail("INVALID_USER_ID", 400);
+  }
+
+  if (userId === gate.adminUser.id) {
+    return fail("CANNOT_DELETE_SELF", 400);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+    },
+  });
+
+  if (!user) {
+    return fail("USER_NOT_FOUND", 404);
+  }
+
+  await prisma.user.delete({
+    where: {
+      id: user.id,
+    },
+  });
+
+  return NextResponse.json({
+    ok: true,
+    deletedUserId: user.id,
+    deletedEmail: user.email,
   });
 }

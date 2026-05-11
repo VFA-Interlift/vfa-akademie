@@ -29,9 +29,19 @@ type UsersResponse =
       error: string;
     };
 
+type SortMode =
+  | "created_desc"
+  | "created_asc"
+  | "name_asc"
+  | "name_desc"
+  | "credits_desc"
+  | "credits_asc"
+  | "role_asc";
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("created_desc");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const [msg, setMsg] = useState("");
@@ -40,8 +50,12 @@ export default function AdminUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  const [creditAmountByUser, setCreditAmountByUser] = useState<Record<string, string>>({});
-  const [creditNoteByUser, setCreditNoteByUser] = useState<Record<string, string>>({});
+  const [creditAmountByUser, setCreditAmountByUser] = useState<
+    Record<string, string>
+  >({});
+  const [creditNoteByUser, setCreditNoteByUser] = useState<
+    Record<string, string>
+  >({});
 
   function showMessage(message: string, ok = false) {
     setMsg(message);
@@ -75,20 +89,56 @@ export default function AdminUsersPage() {
     loadUsers();
   }, []);
 
-  const filteredUsers = useMemo(() => {
+  const filteredAndSortedUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    if (!q) return users;
+    const filtered = !q
+      ? users
+      : users.filter((user) => {
+          return (
+            user.email.toLowerCase().includes(q) ||
+            user.name.toLowerCase().includes(q) ||
+            user.company.toLowerCase().includes(q) ||
+            user.role.toLowerCase().includes(q)
+          );
+        });
 
-    return users.filter((user) => {
-      return (
-        user.email.toLowerCase().includes(q) ||
-        user.name.toLowerCase().includes(q) ||
-        user.company.toLowerCase().includes(q) ||
-        user.role.toLowerCase().includes(q)
-      );
+    return [...filtered].sort((a, b) => {
+      if (sortMode === "created_desc") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      if (sortMode === "created_asc") {
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      }
+
+      if (sortMode === "name_asc") {
+        return getUserDisplayName(a).localeCompare(getUserDisplayName(b), "de");
+      }
+
+      if (sortMode === "name_desc") {
+        return getUserDisplayName(b).localeCompare(getUserDisplayName(a), "de");
+      }
+
+      if (sortMode === "credits_desc") {
+        return b.creditsTotal - a.creditsTotal;
+      }
+
+      if (sortMode === "credits_asc") {
+        return a.creditsTotal - b.creditsTotal;
+      }
+
+      if (sortMode === "role_asc") {
+        return a.role.localeCompare(b.role, "de");
+      }
+
+      return 0;
     });
-  }, [users, search]);
+  }, [users, search, sortMode]);
 
   async function promote(user: AdminUser) {
     if (user.role === "ADMIN") {
@@ -212,6 +262,58 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function deleteUser(user: AdminUser) {
+    const confirmed = window.confirm(
+      `Nutzer wirklich löschen?\n\n${getUserDisplayName(user)}\n${user.email}\n\nDer Nutzer, seine Schulungszuordnungen, Zertifikate und Credit-Historie werden aus der Datenbank entfernt. Danach kann sich die Person mit dieser E-Mail erneut registrieren.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionLoadingId(user.id);
+    setMsg("");
+    setMsgOk(false);
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.ok) {
+        if (data?.error === "CANNOT_DELETE_SELF") {
+          showMessage("Du kannst deinen eigenen Admin-Nutzer nicht löschen.");
+        } else if (data?.error === "USER_NOT_FOUND") {
+          showMessage("Nutzer wurde nicht gefunden.");
+        } else if (data?.error === "UNAUTHENTICATED") {
+          showMessage("Du bist nicht eingeloggt.");
+        } else if (data?.error === "FORBIDDEN") {
+          showMessage("Du hast keine Berechtigung.");
+        } else {
+          showMessage(data?.error ?? "Nutzer konnte nicht gelöscht werden.");
+        }
+
+        return;
+      }
+
+      showMessage(`${user.email} wurde gelöscht.`, true);
+      setOpenId(null);
+      await loadUsers();
+    } catch {
+      showMessage("Serverfehler beim Löschen des Nutzers.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
   return (
     <main
       style={{
@@ -279,35 +381,81 @@ export default function AdminUsersPage() {
                   maxWidth: 760,
                 }}
               >
-                In der Liste werden zunächst nur Name und E-Mail angezeigt.
-                Über das Plus öffnest du Credits, Rollen, Schulungen und
-                Zertifikate.
+                In der Liste werden zunächst nur Name und E-Mail angezeigt. Über
+                das Plus öffnest du Credits, Rollen, Schulungen, Zertifikate und
+                weitere Aktionen.
               </p>
             </div>
 
             <StatusBadge variant="yellow">{users.length} Nutzer</StatusBadge>
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 12,
+              marginBottom: 18,
+              alignItems: "end",
+            }}
+          >
             <AppInput
               label="Suche"
               value={search}
               placeholder="Name, E-Mail, Firma oder Rolle suchen"
               onChange={setSearch}
             />
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  color: "#007873",
+                  fontWeight: 800,
+                  marginBottom: 8,
+                  fontSize: 14,
+                }}
+              >
+                Sortieren nach
+              </label>
+
+              <select
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value as SortMode)}
+                style={{
+                  width: "100%",
+                  minHeight: 44,
+                  border: "1px solid #C7C7C7",
+                  background: "#FFFFFF",
+                  color: "#1F1F1F",
+                  padding: "10px 12px",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  outline: "none",
+                }}
+              >
+                <option value="created_desc">Registrierung: neueste zuerst</option>
+                <option value="created_asc">Registrierung: älteste zuerst</option>
+                <option value="name_asc">Name: A-Z</option>
+                <option value="name_desc">Name: Z-A</option>
+                <option value="credits_desc">Credits: höchste zuerst</option>
+                <option value="credits_asc">Credits: niedrigste zuerst</option>
+                <option value="role_asc">Rolle</option>
+              </select>
+            </div>
           </div>
 
           {loadingUsers ? (
             <div style={{ color: "#333333", lineHeight: 1.6 }}>
               Nutzer werden geladen...
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : filteredAndSortedUsers.length === 0 ? (
             <div style={{ color: "#333333", lineHeight: 1.6 }}>
               Keine Nutzer gefunden.
             </div>
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
-              {filteredUsers.map((user) => {
+              {filteredAndSortedUsers.map((user) => {
                 const isOpen = openId === user.id;
                 const isLoading = actionLoadingId === user.id;
 
@@ -583,6 +731,52 @@ export default function AdminUsersPage() {
                             kann.
                           </p>
                         </div>
+
+                        <div
+                          style={{
+                            marginTop: 18,
+                            paddingTop: 16,
+                            borderTop: "1px solid #E6E6E6",
+                            display: "grid",
+                            gap: 12,
+                          }}
+                        >
+                          <h3
+                            style={{
+                              margin: 0,
+                              color: "#B00020",
+                              fontSize: 20,
+                              fontWeight: 500,
+                            }}
+                          >
+                            Nutzer löschen
+                          </h3>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              color: "#333333",
+                              lineHeight: 1.6,
+                              fontSize: 14,
+                              maxWidth: 760,
+                            }}
+                          >
+                            Löscht den Nutzer inklusive Schulungszuordnungen,
+                            Zertifikaten und Credit-Historie aus der Datenbank.
+                            Danach kann sich die Person mit dieser E-Mail erneut
+                            registrieren.
+                          </p>
+
+                          <div>
+                            <AppButton
+                              onClick={() => deleteUser(user)}
+                              disabled={isLoading}
+                              variant="danger"
+                            >
+                              {isLoading ? "Löschen..." : "Nutzer löschen"}
+                            </AppButton>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -594,6 +788,10 @@ export default function AdminUsersPage() {
       </div>
     </main>
   );
+}
+
+function getUserDisplayName(user: AdminUser) {
+  return user.name || user.email || "Ohne Namen";
 }
 
 function MiniInfo({ label, value }: { label: string; value: string }) {
