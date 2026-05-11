@@ -147,27 +147,23 @@ export default function AdminUsersPage() {
     }
 
     setActionLoadingId(user.id);
-    setMsg("");
-    setMsgOk(false);
+    showMessage("Admin-Vergabe wird gestartet...", true);
 
     try {
-      const res = await fetch("/api/admin/users/promote", {
+      const res = await fetch(`/api/admin/users/${user.id}/make-admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: user.email.trim().toLowerCase(),
-        }),
       });
 
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        if (data?.error === "INVALID_EMAIL") {
-          showMessage("Bitte eine gültige E-Mail eingeben.");
+        if (data?.error === "INVALID_USER_ID") {
+          showMessage("Ungültige Nutzer-ID.");
         } else if (data?.error === "USER_NOT_FOUND") {
-          showMessage("User wurde nicht gefunden.");
+          showMessage("Nutzer wurde nicht gefunden.");
         } else if (data?.error === "UNAUTHENTICATED") {
           showMessage("Du bist nicht eingeloggt.");
         } else if (data?.error === "FORBIDDEN") {
