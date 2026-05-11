@@ -45,6 +45,40 @@ type WeekTrainingBar = {
   gridColumn: string;
 };
 
+const VDI_BOOKING_URL = "https://www.vfa-interlift.de/vdi-schulungen";
+const EFK_BOOKING_URL = "https://www.vfa-interlift.de/efk-schulungen";
+const FOCUS_BOOKING_URL =
+  "https://www.vfa-interlift.de/schwerpunktschulungen#anchors-mfca58r8";
+
+const VDI_CODES = ["A1", "A2", "B", "C"];
+const EFK_CODES = ["EFK1", "EFK2"];
+
+const FOCUS_CODES = [
+  "IN/SER/TR",
+  "SCHALL",
+  "AZUBI",
+  "EINST",
+  "DGUV",
+  "FPFW",
+  "BETR",
+  "ARB",
+  "BRG",
+  "DOK",
+  "FRQ",
+  "GEF",
+  "MOD",
+  "MVO",
+  "NUR",
+  "PLG",
+  "SER",
+  "SICH",
+  "SON",
+  "YLD",
+  "IN",
+];
+
+const ALL_COURSE_CODES = [...VDI_CODES, ...EFK_CODES, ...FOCUS_CODES];
+
 export default function KurskalenderPage() {
   const today = new Date();
 
@@ -459,11 +493,101 @@ export default function KurskalenderPage() {
                 <Info label="Inhalte" value={selectedTraining.description} />
               </div>
             )}
+
+            <div
+              style={{
+                marginTop: 20,
+                paddingTop: 18,
+                borderTop: "1px solid #E6E6E6",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  color: "#333333",
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                }}
+              >
+                Weitere Informationen und Buchung auf der VFA-Website.
+              </div>
+
+              <a
+                href={getBookingUrl(selectedTraining)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={bookingButtonStyle}
+              >
+                Zur Buchung
+              </a>
+            </div>
           </div>
         </div>
       )}
     </main>
   );
+}
+
+function getBookingUrl(training: CalendarTraining) {
+  const courseKey = getCourseKey(training);
+
+  if (VDI_CODES.includes(courseKey)) {
+    return VDI_BOOKING_URL;
+  }
+
+  if (EFK_CODES.includes(courseKey)) {
+    return EFK_BOOKING_URL;
+  }
+
+  return FOCUS_BOOKING_URL;
+}
+
+function getCourseKey(training: CalendarTraining) {
+  const rawCode = normalizeCourseText(training.code ?? "");
+  const rawTitle = normalizeCourseText(training.title ?? "");
+
+  const codeMatch = findCourseCode(rawCode);
+  if (codeMatch) return codeMatch;
+
+  const titleMatch = findCourseCode(rawTitle);
+  if (titleMatch) return titleMatch;
+
+  return "";
+}
+
+function normalizeCourseText(value: string) {
+  return value
+    .trim()
+    .toUpperCase()
+    .replace(/Ä/g, "AE")
+    .replace(/Ö/g, "OE")
+    .replace(/Ü/g, "UE")
+    .replace(/ß/g, "SS");
+}
+
+function findCourseCode(value: string) {
+  if (!value) return "";
+
+  const compactValue = value.replace(/\s+/g, "");
+
+  const matchedCode = ALL_COURSE_CODES.find((code) => {
+    const compactCode = code.replace(/\s+/g, "").toUpperCase();
+
+    return (
+      compactValue === compactCode ||
+      compactValue.startsWith(`${compactCode}-`) ||
+      compactValue.startsWith(`${compactCode}_`) ||
+      compactValue.startsWith(`${compactCode}:`) ||
+      compactValue.startsWith(`${compactCode}.`) ||
+      compactValue.startsWith(`${compactCode}/`)
+    );
+  });
+
+  return matchedCode ?? "";
 }
 
 function buildCalendarWeeks(monthDate: Date): CalendarWeek[] {
@@ -626,4 +750,22 @@ const smallButtonStyle: React.CSSProperties = {
   textTransform: "uppercase",
   letterSpacing: "0.08em",
   cursor: "pointer",
+};
+
+const bookingButtonStyle: React.CSSProperties = {
+  minHeight: 42,
+  padding: "10px 18px",
+  borderRadius: 999,
+  border: "1px solid #007873",
+  background: "#007873",
+  color: "#FFFFFF",
+  fontWeight: 900,
+  fontSize: 13,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxShadow: "0 8px 20px rgba(0,120,115,0.20)",
 };
