@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(req: NextRequest) {
-  console.log("MIDDLEWARE RUNNING", req.nextUrl.pathname);
+function hasSessionCookie(req: NextRequest) {
+  return Boolean(
+    req.cookies.get("next-auth.session-token")?.value ||
+      req.cookies.get("__Secure-next-auth.session-token")?.value
+  );
+}
 
+export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   if (
@@ -15,9 +20,28 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const isLoggedIn = hasSessionCookie(req);
+
+  if (
+    isLoggedIn &&
+    (pathname === "/" || pathname === "/login" || pathname === "/register")
+  ) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.search = "";
+
+    return NextResponse.redirect(url);
+  }
+
+  if (isLoggedIn) {
+    return NextResponse.next();
+  }
+
   const seen = req.cookies.get("seenSplash")?.value;
 
-  if (seen) return NextResponse.next();
+  if (seen) {
+    return NextResponse.next();
+  }
 
   const url = req.nextUrl.clone();
   url.pathname = "/splash";
