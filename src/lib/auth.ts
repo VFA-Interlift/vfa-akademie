@@ -1,7 +1,14 @@
-import type { NextAuthOptions, User } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: "USER" | "ADMIN";
+};
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -42,7 +49,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const passwordIsValid = await bcrypt.compare(user.passwordHash, password);
+        const passwordIsValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!passwordIsValid) {
           return null;
@@ -53,7 +60,7 @@ export const authOptions: NextAuthOptions = {
           user.name ||
           user.email;
 
-        const authUser: User = {
+        const authUser: AuthUser = {
           id: user.id,
           email: user.email.trim().toLowerCase(),
           role: user.role,
@@ -68,10 +75,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.role = user.role;
-        token.name = user.name;
+        const authUser = user as AuthUser;
+
+        token.id = authUser.id;
+        token.email = authUser.email;
+        token.role = authUser.role;
+        token.name = authUser.name;
       }
 
       return token;
@@ -79,10 +88,11 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
+        session.user.id = typeof token.id === "string" ? token.id : "";
         session.user.email =
           typeof token.email === "string" ? token.email : session.user.email;
-        session.user.role = token.role;
+        session.user.role =
+          token.role === "ADMIN" || token.role === "USER" ? token.role : "USER";
         session.user.name =
           typeof token.name === "string" ? token.name : session.user.name;
       }
