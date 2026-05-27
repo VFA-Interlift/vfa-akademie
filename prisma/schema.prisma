@@ -70,6 +70,10 @@ model User {
   role         Role @default(USER)
   creditsTotal Int  @default(0)
 
+  // Freiwillige Teilnahme am VFA-Credit-Ranking
+  leaderboardOptIn Boolean @default(false)
+  leaderboardName  String?
+
   creditTxs    CreditTransaction[]
   enrollments  Enrollment[]
   certificates Certificate[]
