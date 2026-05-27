@@ -1,7 +1,14 @@
-import type { NextAuthOptions, User } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: "USER" | "ADMIN";
+};
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -46,7 +53,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const authUser: User = {
+        const authUser: AuthUser = {
           id: user.id,
           email: user.email,
           name: user.name ?? user.email,
@@ -61,10 +68,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.role = user.role;
+        const authUser = user as AuthUser;
+
+        token.id = authUser.id;
+        token.email = authUser.email;
+        token.name = authUser.name;
+        token.role = authUser.role;
       }
 
       return token;
@@ -72,12 +81,13 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
+        session.user.id = typeof token.id === "string" ? token.id : "";
         session.user.email =
           typeof token.email === "string" ? token.email : session.user.email;
         session.user.name =
           typeof token.name === "string" ? token.name : session.user.name;
-        session.user.role = token.role;
+        session.user.role =
+          token.role === "ADMIN" || token.role === "USER" ? token.role : "USER";
       }
 
       return session;

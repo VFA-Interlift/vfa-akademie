@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
+import DashboardLeaderboardTop from "@/components/leaderboard/DashboardLeaderboardTop";
+import LeaderboardSettingsCard from "@/components/leaderboard/LeaderboardSettingsCard";
 
 export const dynamic = "force-dynamic";
 
@@ -282,6 +284,14 @@ export default async function DashboardPage() {
 
               <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
             </div>
+          </AppCard>
+
+          <AppCard accent="green">
+            <DashboardLeaderboardTop />
+          </AppCard>
+
+          <AppCard>
+            <LeaderboardSettingsCard />
           </AppCard>
         </div>
       </div>
