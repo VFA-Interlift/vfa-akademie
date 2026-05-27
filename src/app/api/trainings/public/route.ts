@@ -8,10 +8,14 @@ function guessCategory(code: string | null, title: string) {
   const normalizedCode = String(code ?? "").toUpperCase();
   const normalizedTitle = title.toLowerCase();
 
-  if (["A1", "A2", "B", "C"].includes(normalizedCode)) return "VDI";
+  if (["A1", "A2", "B", "C"].includes(normalizedCode)) {
+    return "VDI";
+  }
+
   if (normalizedCode.includes("EFK") || normalizedTitle.includes("elektro")) {
     return "Elektrotechnik";
   }
+
   if (
     normalizedCode.includes("SICH") ||
     normalizedCode.includes("DGUV") ||
@@ -21,6 +25,14 @@ function guessCategory(code: string | null, title: string) {
   }
 
   return "Schwerpunkte";
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 }
 
 export async function GET() {
@@ -64,12 +76,12 @@ export async function GET() {
       updatedAt: new Date().toISOString(),
       trainings: mappedTrainings,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         ok: false,
         error: "PUBLIC_TRAININGS_LOAD_FAILED",
-        details: String(error?.message ?? error),
+        details: getErrorMessage(error),
       },
       { status: 500 }
     );

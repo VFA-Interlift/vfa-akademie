@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -10,12 +11,49 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function ok(data: any, status = 200) {
+type ApiResponseData = Record<string, unknown>;
+
+type RequestBody = {
+  title?: unknown;
+  code?: unknown;
+  date?: unknown;
+  endDate?: unknown;
+  location?: unknown;
+  instructor?: unknown;
+  description?: unknown;
+  creditsAward?: unknown;
+};
+
+type Ctx = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+function ok(data: ApiResponseData = {}, status = 200) {
   return NextResponse.json({ ok: true, ...data }, { status });
 }
 
 function fail(error: string, status = 400, details?: unknown) {
   return NextResponse.json({ ok: false, error, details }, { status });
+}
+
+function getErrorCode(error: unknown) {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+
+    return typeof code === "string" ? code : null;
+  }
+
+  return null;
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 }
 
 function parseGermanDate(value: string): Date | null {
@@ -50,8 +88,12 @@ async function requireAdmin() {
   }
 
   const me = await prisma.user.findUnique({
-    where: { email: email.trim().toLowerCase() },
-    select: { role: true },
+    where: {
+      email: email.trim().toLowerCase(),
+    },
+    select: {
+      role: true,
+    },
   });
 
   if (!me || me.role !== "ADMIN") {
@@ -64,32 +106,42 @@ async function requireAdmin() {
 function idFromUrl(req: Request) {
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean);
+
   return parts[parts.length - 1] || null;
 }
 
-type Ctx = { params: Promise<{ id: string }> };
-
 export async function PATCH(req: NextRequest, context: Ctx) {
   const gate = await requireAdmin();
-  if (!gate.ok) return gate.res;
+
+  if (!gate.ok) {
+    return gate.res;
+  }
 
   const { id: paramId } = await context.params;
   const id = paramId ?? idFromUrl(req);
 
-  if (!id) return fail("MISSING_ID", 400);
+  if (!id) {
+    return fail("MISSING_ID", 400);
+  }
 
   try {
-    const body = await req.json().catch(() => null);
-    const data: any = {};
+    const body = (await req.json().catch(() => null)) as RequestBody | null;
+    const data: Prisma.TrainingUpdateInput = {};
 
     if (typeof body?.title === "string") {
       const title = body.title.trim();
-      if (!title) return fail("INVALID_TITLE", 400);
+
+      if (!title) {
+        return fail("INVALID_TITLE", 400);
+      }
+
       data.title = title;
     }
 
     if (body?.code !== undefined) {
-      if (typeof body.code !== "string") return fail("INVALID_CODE", 400);
+      if (typeof body.code !== "string") {
+        return fail("INVALID_CODE", 400);
+      }
 
       const code = normalizeCertificateCode(body.code) || null;
       const certificateKind = code ? getCertificateKindByCode(code) : null;
@@ -103,19 +155,29 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     }
 
     if (body?.date !== undefined) {
-      if (typeof body.date !== "string") return fail("INVALID_START_DATE", 400);
+      if (typeof body.date !== "string") {
+        return fail("INVALID_START_DATE", 400);
+      }
 
       const startDate = parseGermanDate(body.date);
-      if (!startDate) return fail("INVALID_START_DATE", 400);
+
+      if (!startDate) {
+        return fail("INVALID_START_DATE", 400);
+      }
 
       data.date = startDate;
     }
 
     if (body?.endDate !== undefined) {
-      if (typeof body.endDate !== "string") return fail("INVALID_END_DATE", 400);
+      if (typeof body.endDate !== "string") {
+        return fail("INVALID_END_DATE", 400);
+      }
 
       const endDate = parseGermanDate(body.endDate);
-      if (!endDate) return fail("INVALID_END_DATE", 400);
+
+      if (!endDate) {
+        return fail("INVALID_END_DATE", 400);
+      }
 
       data.endDate = endDate;
     }
@@ -143,6 +205,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
 
     if (body?.creditsAward !== undefined) {
       const creditsAward = Number(body.creditsAward);
+
       if (!Number.isInteger(creditsAward) || creditsAward < 0) {
         return fail("INVALID_CREDITS", 400);
       }
@@ -155,24 +218,32 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     }
 
     const existing = await prisma.training.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
       select: {
         date: true,
         endDate: true,
       },
     });
 
-    if (!existing) return fail("TRAINING_NOT_FOUND", 404);
+    if (!existing) {
+      return fail("TRAINING_NOT_FOUND", 404);
+    }
 
-    const finalStartDate = data.date ?? existing.date;
-    const finalEndDate = data.endDate ?? existing.endDate;
+    const finalStartDate =
+      data.date instanceof Date ? data.date : existing.date;
+    const finalEndDate =
+      data.endDate instanceof Date ? data.endDate : existing.endDate;
 
     if (finalEndDate && finalEndDate.getTime() < finalStartDate.getTime()) {
       return fail("END_DATE_BEFORE_START_DATE", 400);
     }
 
     const training = await prisma.training.update({
-      where: { id },
+      where: {
+        id,
+      },
       data,
       select: {
         id: true,
@@ -190,9 +261,11 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       },
     });
 
-    return ok({ training });
-  } catch (e: any) {
-    const code = e?.code ? String(e.code) : null;
+    return ok({
+      training,
+    });
+  } catch (error: unknown) {
+    const code = getErrorCode(error);
 
     if (code === "P2025") {
       return fail("TRAINING_NOT_FOUND", 404);
@@ -200,19 +273,24 @@ export async function PATCH(req: NextRequest, context: Ctx) {
 
     return fail("INTERNAL_ERROR", 500, {
       code,
-      message: String(e?.message ?? e),
+      message: getErrorMessage(error),
     });
   }
 }
 
 export async function DELETE(req: NextRequest, context: Ctx) {
   const gate = await requireAdmin();
-  if (!gate.ok) return gate.res;
+
+  if (!gate.ok) {
+    return gate.res;
+  }
 
   const { id: paramId } = await context.params;
   const id = paramId ?? idFromUrl(req);
 
-  if (!id) return fail("MISSING_ID", 400);
+  if (!id) {
+    return fail("MISSING_ID", 400);
+  }
 
   try {
     const certificateCount = await prisma.certificate.count({
@@ -232,8 +310,8 @@ export async function DELETE(req: NextRequest, context: Ctx) {
     });
 
     return ok({});
-  } catch (e: any) {
-    const code = e?.code ? String(e.code) : null;
+  } catch (error: unknown) {
+    const code = getErrorCode(error);
 
     if (code === "P2025") {
       return fail("TRAINING_NOT_FOUND", 404);
@@ -241,7 +319,7 @@ export async function DELETE(req: NextRequest, context: Ctx) {
 
     return fail("INTERNAL_ERROR", 500, {
       code,
-      message: String(e?.message ?? e),
+      message: getErrorMessage(error),
     });
   }
 }

@@ -4,8 +4,18 @@ import { CobraError } from "@/lib/cobra/types";
 
 export const dynamic = "force-dynamic";
 
+type CobraHealthSample = unknown;
+
 function getEnv(name: string) {
   return process.env[name] ?? null;
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 }
 
 export async function GET() {
@@ -22,7 +32,9 @@ export async function GET() {
   }
 
   try {
-    const data = await cobraEndpointGet<any>(endpointName, { Top: 1 });
+    const data = await cobraEndpointGet<CobraHealthSample>(endpointName, {
+      Top: 1,
+    });
 
     return NextResponse.json({
       ok: true,
@@ -46,7 +58,7 @@ export async function GET() {
       {
         ok: false,
         message: "Unknown error",
-        details: err instanceof Error ? err.message : String(err),
+        details: getErrorMessage(err),
       },
       { status: 500 }
     );

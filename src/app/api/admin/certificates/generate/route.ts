@@ -9,6 +9,14 @@ function deny(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
   const adminEmail = session?.user?.email;
@@ -18,8 +26,13 @@ async function requireAdmin() {
   }
 
   const admin = await prisma.user.findUnique({
-    where: { email: adminEmail.trim().toLowerCase() },
-    select: { id: true, role: true },
+    where: {
+      email: adminEmail.trim().toLowerCase(),
+    },
+    select: {
+      id: true,
+      role: true,
+    },
   });
 
   if (!admin || admin.role !== "ADMIN") {
@@ -31,7 +44,10 @@ async function requireAdmin() {
 
 export async function POST() {
   const gate = await requireAdmin();
-  if (!gate.ok) return gate.res;
+
+  if (!gate.ok) {
+    return gate.res;
+  }
 
   const now = new Date();
 
@@ -158,12 +174,12 @@ export async function POST() {
       ok: true,
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         ok: false,
         error: "CERTIFICATE_GENERATION_FAILED",
-        details: String(error?.message ?? error),
+        details: getErrorMessage(error),
       },
       { status: 500 }
     );

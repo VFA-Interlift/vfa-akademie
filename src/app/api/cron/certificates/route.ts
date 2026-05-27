@@ -7,6 +7,14 @@ function fail(error: string, status = 400, details?: unknown) {
   return NextResponse.json({ ok: false, error, details }, { status });
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 function startOfTodayUtc() {
   const now = new Date();
 
@@ -155,12 +163,12 @@ export async function GET(req: Request) {
       ok: true,
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         ok: false,
         error: "CERTIFICATE_CRON_FAILED",
-        details: String(error?.message ?? error),
+        details: getErrorMessage(error),
       },
       { status: 500 }
     );

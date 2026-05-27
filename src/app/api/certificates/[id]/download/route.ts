@@ -28,6 +28,14 @@ function encodeFileName(fileName: string) {
   return encodeURIComponent(fileName).replace(/['()]/g, escape);
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 export async function GET(_req: Request, context: Ctx) {
   const session = await getServerSession(authOptions);
 
@@ -110,8 +118,8 @@ export async function GET(_req: Request, context: Ctx) {
         "Cache-Control": "no-store",
       },
     });
-  } catch (error: any) {
-    const message = String(error?.message ?? error);
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
 
     if (message.startsWith("TEMPLATE_NOT_FOUND")) {
       return fail("TEMPLATE_NOT_FOUND", 404, message);

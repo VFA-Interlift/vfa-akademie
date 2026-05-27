@@ -1,4 +1,4 @@
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const passwordIsValid = await bcrypt.compare(password, user.passwordHash);
+        const passwordIsValid = await bcrypt.compare(user.passwordHash, password);
 
         if (!passwordIsValid) {
           return null;
@@ -53,12 +53,14 @@ export const authOptions: NextAuthOptions = {
           user.name ||
           user.email;
 
-        return {
+        const authUser: User = {
           id: user.id,
           email: user.email.trim().toLowerCase(),
           role: user.role,
           name: displayName,
-        } as any;
+        };
+
+        return authUser;
       },
     }),
   ],
@@ -66,10 +68,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = (user as any).id;
-        token.email = (user as any).email;
-        token.role = (user as any).role;
-        token.name = (user as any).name;
+        token.id = user.id;
+        token.email = user.email;
+        token.role = user.role;
+        token.name = user.name;
       }
 
       return token;
@@ -77,10 +79,10 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
+        session.user.id = token.id;
         session.user.email =
           typeof token.email === "string" ? token.email : session.user.email;
-        (session.user as any).role = token.role;
+        session.user.role = token.role;
         session.user.name =
           typeof token.name === "string" ? token.name : session.user.name;
       }

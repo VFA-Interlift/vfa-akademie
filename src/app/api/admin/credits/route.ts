@@ -9,17 +9,30 @@ function deny(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  const adminEmail = session?.user?.email;
+  const adminEmail = session?.user?.email?.trim().toLowerCase();
 
   if (!adminEmail) {
     return deny(401, "UNAUTHENTICATED");
   }
 
   const admin = await prisma.user.findUnique({
-    where: { email: adminEmail },
-    select: { id: true, role: true },
+    where: {
+      email: adminEmail,
+    },
+    select: {
+      id: true,
+      role: true,
+    },
   });
 
   if (!admin || admin.role !== "ADMIN") {
@@ -31,12 +44,14 @@ export async function POST(req: Request) {
   const email =
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 
-  const note =
-    typeof body?.note === "string" ? body.note.trim() : null;
+  const note = typeof body?.note === "string" ? body.note.trim() : null;
 
   const credits = Number(body?.credits);
 
-  if (!email) return deny(400, "INVALID_EMAIL");
+  if (!email) {
+    return deny(400, "INVALID_EMAIL");
+  }
+
   if (!Number.isInteger(credits) || credits === 0) {
     return deny(400, "INVALID_CREDITS");
   }
@@ -44,8 +59,13 @@ export async function POST(req: Request) {
   try {
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
-        where: { email },
-        select: { id: true, creditsTotal: true },
+        where: {
+          email,
+        },
+        select: {
+          id: true,
+          creditsTotal: true,
+        },
       });
 
       if (!user) {
@@ -64,11 +84,15 @@ export async function POST(req: Request) {
             note: note ?? undefined,
           },
         },
-        select: { id: true },
+        select: {
+          id: true,
+        },
       });
 
       const updatedUser = await tx.user.update({
-        where: { id: user.id },
+        where: {
+          id: user.id,
+        },
         data: {
           creditsTotal: {
             increment: credits,
@@ -89,13 +113,13 @@ export async function POST(req: Request) {
       ok: true,
       ...result,
     });
-  } catch (e: any) {
-    const msg = String(e?.message ?? "UNKNOWN");
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
 
-    if (msg === "USER_NOT_FOUND") {
+    if (message === "USER_NOT_FOUND") {
       return deny(404, "USER_NOT_FOUND");
     }
 
-    return deny(500, msg);
+    return deny(500, message);
   }
 }

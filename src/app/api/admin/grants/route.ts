@@ -9,6 +9,14 @@ function deny(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
   const adminEmail = session?.user?.email;
@@ -18,8 +26,13 @@ async function requireAdmin() {
   }
 
   const admin = await prisma.user.findUnique({
-    where: { email: adminEmail.trim().toLowerCase() },
-    select: { id: true, role: true },
+    where: {
+      email: adminEmail.trim().toLowerCase(),
+    },
+    select: {
+      id: true,
+      role: true,
+    },
   });
 
   if (!admin || admin.role !== "ADMIN") {
@@ -41,7 +54,10 @@ async function requireAdmin() {
  */
 export async function POST(req: Request) {
   const gate = await requireAdmin();
-  if (!gate.ok) return gate.res;
+
+  if (!gate.ok) {
+    return gate.res;
+  }
 
   const body = await req.json().catch(() => null);
 
@@ -51,14 +67,25 @@ export async function POST(req: Request) {
   const trainingId =
     typeof body?.trainingId === "string" ? body.trainingId.trim() : "";
 
-  if (!email) return deny(400, "INVALID_EMAIL");
-  if (!trainingId) return deny(400, "INVALID_TRAINING_ID");
+  if (!email) {
+    return deny(400, "INVALID_EMAIL");
+  }
+
+  if (!trainingId) {
+    return deny(400, "INVALID_TRAINING_ID");
+  }
 
   try {
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
-        where: { email },
-        select: { id: true, email: true, name: true },
+        where: {
+          email,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
       });
 
       if (!user) {
@@ -66,7 +93,9 @@ export async function POST(req: Request) {
       }
 
       const training = await tx.training.findUnique({
-        where: { id: trainingId },
+        where: {
+          id: trainingId,
+        },
         select: {
           id: true,
           title: true,
@@ -134,13 +163,18 @@ export async function POST(req: Request) {
       ok: true,
       ...result,
     });
-  } catch (e: any) {
-    const msg = String(e?.message ?? "UNKNOWN");
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
 
-    if (msg === "USER_NOT_FOUND") return deny(404, "USER_NOT_FOUND");
-    if (msg === "TRAINING_NOT_FOUND") return deny(404, "TRAINING_NOT_FOUND");
+    if (message === "USER_NOT_FOUND") {
+      return deny(404, "USER_NOT_FOUND");
+    }
 
-    return deny(500, msg);
+    if (message === "TRAINING_NOT_FOUND") {
+      return deny(404, "TRAINING_NOT_FOUND");
+    }
+
+    return deny(500, message);
   }
 }
 
@@ -155,7 +189,10 @@ export async function POST(req: Request) {
  */
 export async function DELETE(req: Request) {
   const gate = await requireAdmin();
-  if (!gate.ok) return gate.res;
+
+  if (!gate.ok) {
+    return gate.res;
+  }
 
   const body = await req.json().catch(() => null);
 
@@ -165,14 +202,24 @@ export async function DELETE(req: Request) {
   const trainingId =
     typeof body?.trainingId === "string" ? body.trainingId.trim() : "";
 
-  if (!email) return deny(400, "INVALID_EMAIL");
-  if (!trainingId) return deny(400, "INVALID_TRAINING_ID");
+  if (!email) {
+    return deny(400, "INVALID_EMAIL");
+  }
+
+  if (!trainingId) {
+    return deny(400, "INVALID_TRAINING_ID");
+  }
 
   try {
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
-        where: { email },
-        select: { id: true, email: true },
+        where: {
+          email,
+        },
+        select: {
+          id: true,
+          email: true,
+        },
       });
 
       if (!user) {
@@ -220,16 +267,21 @@ export async function DELETE(req: Request) {
       ok: true,
       ...result,
     });
-  } catch (e: any) {
-    const msg = String(e?.message ?? "UNKNOWN");
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
 
-    if (msg === "USER_NOT_FOUND") return deny(404, "USER_NOT_FOUND");
-    if (msg === "ENROLLMENT_NOT_FOUND") return deny(404, "ENROLLMENT_NOT_FOUND");
+    if (message === "USER_NOT_FOUND") {
+      return deny(404, "USER_NOT_FOUND");
+    }
 
-    if (msg === "CERTIFICATE_ALREADY_ISSUED") {
+    if (message === "ENROLLMENT_NOT_FOUND") {
+      return deny(404, "ENROLLMENT_NOT_FOUND");
+    }
+
+    if (message === "CERTIFICATE_ALREADY_ISSUED") {
       return deny(409, "CERTIFICATE_ALREADY_ISSUED");
     }
 
-    return deny(500, msg);
+    return deny(500, message);
   }
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type MeResponse =
   | { ok: false; loggedIn: false }
@@ -28,63 +28,116 @@ export default function HeaderClient() {
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const loadMe = useCallback(async () => {
-    try {
-      const res = await fetch("/api/me", {
-        cache: "no-store",
+  useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch("/api/me", {
+      cache: "no-store",
+    })
+      .then((res) => res.json() as Promise<MeResponse>)
+      .then((data) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (!data.ok) {
+          setEmail(null);
+          setName(null);
+          setCredits(null);
+          setRole("USER");
+          return;
+        }
+
+        setEmail(data.email);
+        setName(data.name);
+        setCredits(data.creditsTotal);
+        setRole(data.role);
+      })
+      .catch(() => {
+        // Header darf die App nicht blockieren.
       });
 
-      const data = (await res.json()) as MeResponse;
-
-      if (!data.ok) {
-        setEmail(null);
-        setName(null);
-        setCredits(null);
-        setRole("USER");
-        return;
-      }
-
-      setEmail(data.email);
-      setName(data.name);
-      setCredits(data.creditsTotal);
-      setRole(data.role);
-    } catch {
-      // Header darf die App nicht blockieren
-    }
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      loadMe();
+    if (status !== "unauthenticated") {
+      return;
     }
 
-    if (status === "unauthenticated") {
+    const timeout = window.setTimeout(() => {
       setEmail(null);
       setName(null);
       setCredits(null);
       setRole("USER");
       setMenuOpen(false);
-    }
-  }, [status, loadMe]);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [status]);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated") {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function refreshMe() {
+      try {
+        const res = await fetch("/api/me", {
+          cache: "no-store",
+        });
+
+        const data = (await res.json()) as MeResponse;
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!data.ok) {
+          setEmail(null);
+          setName(null);
+          setCredits(null);
+          setRole("USER");
+          return;
+        }
+
+        setEmail(data.email);
+        setName(data.name);
+        setCredits(data.creditsTotal);
+        setRole(data.role);
+      } catch {
+        // Header darf die App nicht blockieren.
+      }
+    }
 
     const onFocus = () => {
-      loadMe();
+      void refreshMe();
     };
 
     window.addEventListener("focus", onFocus);
 
     const interval = window.setInterval(() => {
-      loadMe();
+      void refreshMe();
     }, 15000);
 
     return () => {
+      cancelled = true;
       window.removeEventListener("focus", onFocus);
       window.clearInterval(interval);
     };
-  }, [status, loadMe]);
+  }, [status]);
+
+  const isLoggedIn = status === "authenticated" && Boolean(email);
 
   return (
     <header
@@ -118,7 +171,7 @@ export default function HeaderClient() {
         }}
       >
         <Link
-          href={email ? "/dashboard" : "/login"}
+          href={isLoggedIn ? "/dashboard" : "/login"}
           style={{
             display: "flex",
             alignItems: "center",
@@ -177,7 +230,7 @@ export default function HeaderClient() {
             flex: "0 0 auto",
           }}
         >
-          {email ? (
+          {isLoggedIn ? (
             <button
               type="button"
               onClick={() => setMenuOpen((current) => !current)}
@@ -219,7 +272,7 @@ export default function HeaderClient() {
         </div>
       </div>
 
-      {email && menuOpen && (
+      {isLoggedIn && menuOpen && (
         <div
           style={{
             borderTop: "1px solid #E6E6E6",
@@ -265,7 +318,7 @@ export default function HeaderClient() {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                 }}
-                title={email}
+                title={email ?? ""}
               >
                 {name ?? email}
               </div>
@@ -299,11 +352,17 @@ export default function HeaderClient() {
                 Dashboard
               </MenuLink>
 
-              <MenuLink href="/meine-schulungen" onClick={() => setMenuOpen(false)}>
+              <MenuLink
+                href="/meine-schulungen"
+                onClick={() => setMenuOpen(false)}
+              >
                 Meine Schulungen
               </MenuLink>
 
-              <MenuLink href="/meine-zertifikate" onClick={() => setMenuOpen(false)}>
+              <MenuLink
+                href="/meine-zertifikate"
+                onClick={() => setMenuOpen(false)}
+              >
                 Meine Zertifikate
               </MenuLink>
 
