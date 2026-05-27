@@ -14,39 +14,46 @@ type CreditLevel = {
   nextTarget: number | null;
   progressPercent: number;
   remaining: number;
+  description: string;
 };
 
 function getCreditLevel(credits: number): CreditLevel {
-  if (credits >= 10000) {
+  if (credits >= 3500) {
     return {
       currentLevel: "VFA-Experte",
       nextLevel: null,
-      currentMin: 10000,
+      currentMin: 3500,
       nextTarget: null,
       progressPercent: 100,
       remaining: 0,
+      description:
+        "Du hast ein sehr hohes Weiterbildungsniveau innerhalb der VFA-Akademie erreicht.",
     };
   }
 
-  if (credits >= 5000) {
+  if (credits >= 1500) {
     return {
       currentLevel: "Gold",
       nextLevel: "VFA-Experte",
-      currentMin: 5000,
-      nextTarget: 10000,
-      progressPercent: Math.round(((credits - 5000) / 5000) * 100),
-      remaining: 10000 - credits,
+      currentMin: 1500,
+      nextTarget: 3500,
+      progressPercent: Math.round(((credits - 1500) / 2000) * 100),
+      remaining: 3500 - credits,
+      description:
+        "Du verfügst über umfangreiche Weiterbildungserfahrung und kannst deinen Qualifikationsstand nachvollziehbar dokumentieren.",
     };
   }
 
-  if (credits >= 1000) {
+  if (credits >= 500) {
     return {
       currentLevel: "Silber",
       nextLevel: "Gold",
-      currentMin: 1000,
-      nextTarget: 5000,
-      progressPercent: Math.round(((credits - 1000) / 4000) * 100),
-      remaining: 5000 - credits,
+      currentMin: 500,
+      nextTarget: 1500,
+      progressPercent: Math.round(((credits - 500) / 1000) * 100),
+      remaining: 1500 - credits,
+      description:
+        "Du bildest dich regelmäßig weiter und baust dein Fachwissen in mehreren Themenbereichen aus.",
     };
   }
 
@@ -54,9 +61,11 @@ function getCreditLevel(credits: number): CreditLevel {
     currentLevel: "Bronze",
     nextLevel: "Silber",
     currentMin: 0,
-    nextTarget: 1000,
-    progressPercent: Math.round((credits / 1000) * 100),
-    remaining: 1000 - credits,
+    nextTarget: 500,
+    progressPercent: Math.round((credits / 500) * 100),
+    remaining: 500 - credits,
+    description:
+      "Du hast erste Schulungen absolviert und sammelst Grundlagenwissen in der Aufzugsbranche.",
   };
 }
 
@@ -149,7 +158,8 @@ export default async function DashboardPage() {
             }}
           >
             Willkommen, {displayName}. Hier siehst du deinen aktuellen
-            Credit-Status und eine kurze Übersicht über deine Akademie-Daten.
+            Credit-Status, deinen Fortschritt und eine kurze Übersicht über
+            deine Akademie-Daten.
           </p>
         </section>
 
@@ -198,6 +208,18 @@ export default async function DashboardPage() {
                   {credits.toLocaleString("de-DE")} Credits
                 </h2>
 
+                <p
+                  style={{
+                    marginTop: 0,
+                    marginBottom: 10,
+                    color: "#333333",
+                    lineHeight: 1.6,
+                    fontSize: 15,
+                  }}
+                >
+                  {level.description}
+                </p>
+
                 {level.nextLevel && level.nextTarget ? (
                   <p
                     style={{
@@ -207,11 +229,9 @@ export default async function DashboardPage() {
                       fontSize: 15,
                     }}
                   >
-                    {credits.toLocaleString("de-DE")} von{" "}
-                    {level.nextTarget.toLocaleString("de-DE")} Credits bis{" "}
-                    <strong>{level.nextLevel}</strong>. Es fehlen noch{" "}
+                    Noch{" "}
                     <strong>{level.remaining.toLocaleString("de-DE")}</strong>{" "}
-                    Credits.
+                    Credits bis <strong>{level.nextLevel}</strong>.
                   </p>
                 ) : (
                   <p
@@ -222,8 +242,9 @@ export default async function DashboardPage() {
                       fontSize: 15,
                     }}
                   >
-                    Höchste Stufe erreicht. Ab diesem Bereich kann eine
-                    fachliche Eignung als VFA-Dozent geprüft werden.
+                    Höchste Credit-Stufe erreicht. Eine weiterführende fachliche
+                    Anerkennung kann auf dieser Grundlage gesondert geprüft
+                    werden.
                   </p>
                 )}
               </div>
@@ -297,7 +318,7 @@ function CreditInfo() {
           right: 0,
           top: 42,
           zIndex: 20,
-          width: "min(320px, calc(100vw - 48px))",
+          width: "min(340px, calc(100vw - 48px))",
           padding: 16,
           background: "#FFFFFF",
           border: "1px solid #FFC100",
@@ -319,10 +340,10 @@ function CreditInfo() {
         </div>
 
         <div style={{ display: "grid", gap: 10 }}>
-          <Rank label="Bronze" range="0 bis 999 Credits" />
-          <Rank label="Silber" range="1.000 bis 4.999 Credits" />
-          <Rank label="Gold" range="5.000 bis 9.999 Credits" />
-          <Rank label="VFA-Experte" range="ab 10.000 Credits" />
+          <Rank label="Bronze" range="0 bis 499 Credits" />
+          <Rank label="Silber" range="500 bis 1.499 Credits" />
+          <Rank label="Gold" range="1.500 bis 3.499 Credits" />
+          <Rank label="VFA-Experte" range="ab 3.500 Credits" />
         </div>
 
         <p
@@ -334,9 +355,10 @@ function CreditInfo() {
             fontSize: 14,
           }}
         >
-          Ab 10.000 Credits kann eine fachliche Eignung als VFA-Dozent geprüft
-          werden. Die finale Entscheidung erfolgt nicht automatisch, sondern nach
-          fachlicher Bewertung.
+          Die Credit-Stufen zeigen deinen dokumentierten Weiterbildungsstand
+          innerhalb der VFA-Akademie. Sie ersetzen keine formale
+          Berufsqualifikation, machen aber sichtbar, wie regelmäßig und
+          umfangreich du dich weitergebildet hast.
         </p>
       </div>
     </details>
