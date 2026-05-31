@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type LeaderboardEntry = {
@@ -87,7 +86,7 @@ export default function DashboardLeaderboardTop() {
           Top 3 Credit-Ranking
         </h2>
 
-        <Link
+        <a
           href="/leaderboard"
           style={{
             display: "inline-flex",
@@ -107,7 +106,7 @@ export default function DashboardLeaderboardTop() {
           }}
         >
           Gesamtes Ranking
-        </Link>
+        </a>
       </div>
 
       {loading ? (
