@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import LeaderboardPageClient from "@/components/leaderboard/LeaderboardPageClient";
+import LeaderboardSettingsCard from "@/components/leaderboard/LeaderboardSettingsCard";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +26,23 @@ export default async function LeaderboardPage() {
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
         <PageHeader
           title="VFA-Credit-Ranking"
-          description="Das freiwillige Ranking zeigt die Nutzer mit den meisten freigegebenen VFA-Credits."
+          description="Hier siehst du das freiwillige VFA-Credit-Ranking und kannst entscheiden, ob du selbst darin erscheinen möchtest."
         />
 
-        <AppCard accent="green">
-          <LeaderboardPageClient />
-        </AppCard>
+        <div
+          style={{
+            display: "grid",
+            gap: 16,
+          }}
+        >
+          <AppCard accent="green">
+            <LeaderboardSettingsCard />
+          </AppCard>
+
+          <AppCard>
+            <LeaderboardPageClient />
+          </AppCard>
+        </div>
       </div>
     </main>
   );

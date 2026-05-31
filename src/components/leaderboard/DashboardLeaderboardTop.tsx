@@ -72,7 +72,15 @@ export default function DashboardLeaderboardTop() {
         gap: 14,
       }}
     >
-      <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 14,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
         <h2
           style={{
             margin: 0,
@@ -84,17 +92,27 @@ export default function DashboardLeaderboardTop() {
           Top 3 Credit-Ranking
         </h2>
 
-        <p
+        <Link
+          href="/leaderboard"
           style={{
-            marginTop: 10,
-            marginBottom: 0,
-            color: "#333333",
-            lineHeight: 1.6,
-            fontSize: 15,
+            display: "inline-flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: 38,
+            padding: "9px 16px",
+            borderRadius: 999,
+            background: "#007873",
+            color: "#FFFFFF",
+            fontWeight: 900,
+            fontSize: 12,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
           }}
         >
-          Die sichtbarsten Plätze im freiwilligen VFA-Credit-Ranking.
-        </p>
+          Gesamtes Ranking
+        </Link>
       </div>
 
       {loading ? (
@@ -162,28 +180,6 @@ export default function DashboardLeaderboardTop() {
           ))}
         </div>
       )}
-
-      <Link
-        href="/leaderboard"
-        style={{
-          display: "inline-flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 42,
-          padding: "10px 18px",
-          borderRadius: 999,
-          background: "#007873",
-          color: "#FFFFFF",
-          fontWeight: 900,
-          fontSize: 13,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          textDecoration: "none",
-          width: "fit-content",
-        }}
-      >
-        Gesamtes Ranking ansehen
-      </Link>
     </div>
   );
 }
