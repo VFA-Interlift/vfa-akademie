@@ -17,18 +17,20 @@ type LeaderboardSettingsResponse =
       error: string;
     };
 
-type SaveResponse =
-  | {
-      ok: true;
-      settings: {
-        leaderboardOptIn: boolean;
-        leaderboardName: string;
-      };
-    }
-  | {
-      ok: false;
-      error: string;
-    };
+type SaveSuccessResponse = {
+  ok: true;
+  settings: {
+    leaderboardOptIn: boolean;
+    leaderboardName: string;
+  };
+};
+
+type SaveErrorResponse = {
+  ok: false;
+  error: string;
+};
+
+type SaveResponse = SaveSuccessResponse | SaveErrorResponse;
 
 export default function LeaderboardSettingsCard() {
   const [leaderboardOptIn, setLeaderboardOptIn] = useState(false);
@@ -90,7 +92,9 @@ export default function LeaderboardSettingsCard() {
     const cleanedName = leaderboardName.trim();
 
     if (leaderboardOptIn && !cleanedName) {
-      setMsg("Bitte einen Anzeigenamen eintragen, wenn du im Ranking erscheinen möchtest.");
+      setMsg(
+        "Bitte einen Anzeigenamen eintragen, wenn du im Ranking erscheinen möchtest."
+      );
       setMsgOk(false);
       return;
     }
@@ -113,8 +117,14 @@ export default function LeaderboardSettingsCard() {
 
       const data = (await res.json().catch(() => null)) as SaveResponse | null;
 
-      if (!res.ok || !data?.ok) {
-        if (data?.error === "LEADERBOARD_NAME_REQUIRED") {
+      if (!res.ok || !data) {
+        setMsg("Ranking-Einstellungen konnten nicht gespeichert werden.");
+        setMsgOk(false);
+        return;
+      }
+
+      if (!data.ok) {
+        if (data.error === "LEADERBOARD_NAME_REQUIRED") {
           setMsg(
             "Bitte einen Anzeigenamen eintragen, wenn du im Ranking erscheinen möchtest."
           );
