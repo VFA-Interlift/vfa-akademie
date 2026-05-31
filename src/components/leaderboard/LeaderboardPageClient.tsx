@@ -19,6 +19,38 @@ type LeaderboardResponse =
       error: string;
     };
 
+function getRankStyle(rank: number) {
+  if (rank === 1) {
+    return {
+      background: "#D4AF37",
+      color: "#1F1F1F",
+      border: "1px solid #B8921F",
+    };
+  }
+
+  if (rank === 2) {
+    return {
+      background: "#C0C0C0",
+      color: "#1F1F1F",
+      border: "1px solid #A7A7A7",
+    };
+  }
+
+  if (rank === 3) {
+    return {
+      background: "#CD7F32",
+      color: "#FFFFFF",
+      border: "1px solid #A96427",
+    };
+  }
+
+  return {
+    background: "#F4F4F4",
+    color: "#1F1F1F",
+    border: "1px solid #C7C7C7",
+  };
+}
+
 export default function LeaderboardPageClient() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,60 +135,64 @@ export default function LeaderboardPageClient() {
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
-      {entries.map((entry) => (
-        <div
-          key={entry.id}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "56px 1fr auto",
-            gap: 14,
-            alignItems: "center",
-            padding: "14px 0",
-            borderBottom: "1px solid #E6E6E6",
-          }}
-        >
+      {entries.map((entry) => {
+        const rankStyle = getRankStyle(entry.rank);
+
+        return (
           <div
+            key={entry.id}
             style={{
-              width: 42,
-              height: 42,
-              borderRadius: 999,
-              background: entry.rank <= 3 ? "#FFC100" : "#F4F4F4",
-              color: "#1F1F1F",
               display: "grid",
-              placeItems: "center",
-              fontWeight: 900,
-              border: "1px solid #C7C7C7",
+              gridTemplateColumns: "56px 1fr auto",
+              gap: 14,
+              alignItems: "center",
+              padding: "14px 0",
+              borderBottom: "1px solid #E6E6E6",
             }}
           >
-            {entry.rank}
-          </div>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 999,
+                background: rankStyle.background,
+                color: rankStyle.color,
+                border: rankStyle.border,
+                display: "grid",
+                placeItems: "center",
+                fontWeight: 900,
+              }}
+            >
+              {entry.rank}
+            </div>
 
-          <div
-            style={{
-              minWidth: 0,
-              color: "#007873",
-              fontSize: 18,
-              fontWeight: 900,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-            title={entry.displayName}
-          >
-            {entry.displayName}
-          </div>
+            <div
+              style={{
+                minWidth: 0,
+                color: "#007873",
+                fontSize: 18,
+                fontWeight: 900,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+              title={entry.displayName}
+            >
+              {entry.displayName}
+            </div>
 
-          <div
-            style={{
-              color: "#1F1F1F",
-              fontWeight: 900,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {entry.creditsTotal.toLocaleString("de-DE")} Credits
+            <div
+              style={{
+                color: "#1F1F1F",
+                fontWeight: 900,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {entry.creditsTotal.toLocaleString("de-DE")} Credits
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

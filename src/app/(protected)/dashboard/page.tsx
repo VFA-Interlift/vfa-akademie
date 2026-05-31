@@ -427,8 +427,6 @@ function SocialFooter() {
         fontSize: 13,
       }}
     >
-      <span style={{ fontWeight: 800, color: "#007873" }}>VFA online</span>
-
       <a
         href="https://www.linkedin.com/company/vfa-interlift-e-v/?originalSubdomain=de"
         target="_blank"

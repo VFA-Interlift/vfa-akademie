@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type LeaderboardEntry = {
@@ -18,6 +19,38 @@ type LeaderboardResponse =
       ok: false;
       error: string;
     };
+
+function getRankStyle(rank: number) {
+  if (rank === 1) {
+    return {
+      background: "#D4AF37",
+      color: "#1F1F1F",
+      border: "1px solid #B8921F",
+    };
+  }
+
+  if (rank === 2) {
+    return {
+      background: "#C0C0C0",
+      color: "#1F1F1F",
+      border: "1px solid #A7A7A7",
+    };
+  }
+
+  if (rank === 3) {
+    return {
+      background: "#CD7F32",
+      color: "#FFFFFF",
+      border: "1px solid #A96427",
+    };
+  }
+
+  return {
+    background: "#F4F4F4",
+    color: "#1F1F1F",
+    border: "1px solid #C7C7C7",
+  };
+}
 
 export default function DashboardLeaderboardTop() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -86,7 +119,7 @@ export default function DashboardLeaderboardTop() {
           Top 3 Credit-Ranking
         </h2>
 
-        <a
+        <Link
           href="/leaderboard"
           style={{
             display: "inline-flex",
@@ -106,7 +139,7 @@ export default function DashboardLeaderboardTop() {
           }}
         >
           Gesamtes Ranking
-        </a>
+        </Link>
       </div>
 
       {loading ? (
@@ -125,63 +158,67 @@ export default function DashboardLeaderboardTop() {
             gap: 10,
           }}
         >
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "42px 1fr",
-                gap: 10,
-                alignItems: "center",
-                padding: 12,
-                border: "1px solid #E6E6E6",
-                background: "#FFFFFF",
-              }}
-            >
+          {entries.map((entry) => {
+            const rankStyle = getRankStyle(entry.rank);
+
+            return (
               <div
+                key={entry.id}
                 style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 999,
-                  background: entry.rank === 1 ? "#FFC100" : "#F4F4F4",
-                  color: "#1F1F1F",
                   display: "grid",
-                  placeItems: "center",
-                  fontWeight: 900,
-                  border: "1px solid #C7C7C7",
+                  gridTemplateColumns: "42px 1fr",
+                  gap: 10,
+                  alignItems: "center",
+                  padding: 12,
+                  border: "1px solid #E6E6E6",
+                  background: "#FFFFFF",
                 }}
               >
-                {entry.rank}
-              </div>
-
-              <div style={{ minWidth: 0 }}>
                 <div
                   style={{
-                    color: "#007873",
+                    width: 34,
+                    height: 34,
+                    borderRadius: 999,
+                    background: rankStyle.background,
+                    color: rankStyle.color,
+                    border: rankStyle.border,
+                    display: "grid",
+                    placeItems: "center",
                     fontWeight: 900,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
                   }}
-                  title={entry.displayName}
                 >
-                  {entry.displayName}
+                  {entry.rank}
                 </div>
 
-                <div
-                  style={{
-                    marginTop: 3,
-                    color: "#1F1F1F",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {entry.creditsTotal.toLocaleString("de-DE")} Credits
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      color: "#007873",
+                      fontWeight: 900,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={entry.displayName}
+                  >
+                    {entry.displayName}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 3,
+                      color: "#1F1F1F",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {entry.creditsTotal.toLocaleString("de-DE")} Credits
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -17,16 +17,10 @@ function fail(error: string, status = 400) {
 
 function cleanLeaderboardName(value: unknown) {
   if (typeof value !== "string") {
-    return null;
+    return "";
   }
 
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  return trimmed.slice(0, 60);
+  return value.trim().slice(0, 60);
 }
 
 async function getCurrentUserEmail() {
@@ -95,8 +89,12 @@ export async function PUT(req: Request) {
   );
 
   const leaderboardName = cleanLeaderboardName(
-    "leaderboardName" in body ? body.leaderboardName : null
+    "leaderboardName" in body ? body.leaderboardName : ""
   );
+
+  if (leaderboardOptIn && !leaderboardName) {
+    return fail("LEADERBOARD_NAME_REQUIRED", 400);
+  }
 
   const updatedUser = await prisma.user.update({
     where: {
@@ -104,7 +102,7 @@ export async function PUT(req: Request) {
     },
     data: {
       leaderboardOptIn,
-      leaderboardName,
+      leaderboardName: leaderboardOptIn ? leaderboardName : null,
     },
     select: {
       leaderboardOptIn: true,

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import AppButton from "@/components/ui/AppButton";
-import AppInput from "@/components/ui/AppInput";
 
 type LeaderboardSettingsResponse =
   | {
@@ -88,6 +87,14 @@ export default function LeaderboardSettingsCard() {
   }, []);
 
   async function saveSettings() {
+    const cleanedName = leaderboardName.trim();
+
+    if (leaderboardOptIn && !cleanedName) {
+      setMsg("Bitte einen Anzeigenamen eintragen, wenn du im Ranking erscheinen möchtest.");
+      setMsgOk(false);
+      return;
+    }
+
     setSaving(true);
     setMsg("");
     setMsgOk(false);
@@ -100,14 +107,21 @@ export default function LeaderboardSettingsCard() {
         },
         body: JSON.stringify({
           leaderboardOptIn,
-          leaderboardName,
+          leaderboardName: cleanedName,
         }),
       });
 
       const data = (await res.json().catch(() => null)) as SaveResponse | null;
 
       if (!res.ok || !data?.ok) {
-        setMsg("Ranking-Einstellungen konnten nicht gespeichert werden.");
+        if (data?.error === "LEADERBOARD_NAME_REQUIRED") {
+          setMsg(
+            "Bitte einen Anzeigenamen eintragen, wenn du im Ranking erscheinen möchtest."
+          );
+        } else {
+          setMsg("Ranking-Einstellungen konnten nicht gespeichert werden.");
+        }
+
         setMsgOk(false);
         return;
       }
@@ -125,12 +139,7 @@ export default function LeaderboardSettingsCard() {
   }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: 14,
-      }}
-    >
+    <div style={{ display: "grid", gap: 14, width: "100%" }}>
       <div>
         <h2
           style={{
@@ -153,7 +162,7 @@ export default function LeaderboardSettingsCard() {
           }}
         >
           Du kannst freiwillig im Credit-Ranking erscheinen. Angezeigt werden
-          nur dein gewählter Anzeigename und deine Credits.
+          nur dein Anzeigename und deine Credits.
         </p>
       </div>
 
@@ -209,25 +218,36 @@ export default function LeaderboardSettingsCard() {
             <span>Ich möchte im VFA-Credit-Ranking erscheinen.</span>
           </label>
 
-          <AppInput
-            label="Anzeigename im Ranking"
-            value={leaderboardName}
-            placeholder={suggestedName || "z. B. Max M."}
-            onChange={setLeaderboardName}
-          />
+          <label style={{ display: "grid", gap: 8, width: "100%" }}>
+            <span
+              style={{
+                color: "#007873",
+                fontWeight: 800,
+                fontSize: 14,
+              }}
+            >
+              Anzeigename im Ranking
+            </span>
 
-          <p
-            style={{
-              margin: 0,
-              color: "#666666",
-              lineHeight: 1.55,
-              fontSize: 13,
-            }}
-          >
-            Wenn du keinen Anzeigenamen einträgst, verwendet die App deinen
-            Namen aus deinem Profil. Du kannst die Freigabe jederzeit wieder
-            deaktivieren.
-          </p>
+            <input
+              value={leaderboardName}
+              placeholder={suggestedName || "z. B. Max M."}
+              onChange={(event) => setLeaderboardName(event.target.value)}
+              maxLength={60}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                minHeight: 44,
+                border: "1px solid #C7C7C7",
+                background: "#FFFFFF",
+                color: "#1F1F1F",
+                padding: "10px 12px",
+                fontSize: 15,
+                fontWeight: 700,
+                outline: "none",
+              }}
+            />
+          </label>
 
           <div>
             <AppButton
