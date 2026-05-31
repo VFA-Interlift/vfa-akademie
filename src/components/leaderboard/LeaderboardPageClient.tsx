@@ -134,7 +134,15 @@ export default function LeaderboardPageClient() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 10 }}>
+    <div
+      style={{
+        display: "grid",
+        gap: 10,
+        width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
+      }}
+    >
       {entries.map((entry) => {
         const rankStyle = getRankStyle(entry.rank);
 
@@ -143,17 +151,20 @@ export default function LeaderboardPageClient() {
             key={entry.id}
             style={{
               display: "grid",
-              gridTemplateColumns: "56px 1fr auto",
-              gap: 14,
+              gridTemplateColumns: "44px minmax(0, 1fr)",
+              gap: 12,
               alignItems: "center",
-              padding: "14px 0",
+              padding: "12px 0",
               borderBottom: "1px solid #E6E6E6",
+              width: "100%",
+              maxWidth: "100%",
+              overflow: "hidden",
             }}
           >
             <div
               style={{
-                width: 42,
-                height: 42,
+                width: 38,
+                height: 38,
                 borderRadius: 999,
                 background: rankStyle.background,
                 color: rankStyle.color,
@@ -161,6 +172,7 @@ export default function LeaderboardPageClient() {
                 display: "grid",
                 placeItems: "center",
                 fontWeight: 900,
+                flex: "0 0 auto",
               }}
             >
               {entry.rank}
@@ -169,26 +181,38 @@ export default function LeaderboardPageClient() {
             <div
               style={{
                 minWidth: 0,
-                color: "#007873",
-                fontSize: 18,
-                fontWeight: 900,
+                width: "100%",
+                display: "grid",
+                gap: 3,
                 overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
               }}
-              title={entry.displayName}
             >
-              {entry.displayName}
-            </div>
+              <div
+                style={{
+                  color: "#007873",
+                  fontSize: 17,
+                  fontWeight: 900,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={entry.displayName}
+              >
+                {entry.displayName}
+              </div>
 
-            <div
-              style={{
-                color: "#1F1F1F",
-                fontWeight: 900,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {entry.creditsTotal.toLocaleString("de-DE")} Credits
+              <div
+                style={{
+                  color: "#1F1F1F",
+                  fontWeight: 900,
+                  fontSize: 14,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {entry.creditsTotal.toLocaleString("de-DE")} Credits
+              </div>
             </div>
           </div>
         );

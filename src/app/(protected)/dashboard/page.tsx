@@ -248,8 +248,6 @@ export default async function DashboardPage() {
             </div>
           </AppCard>
         </div>
-
-        <SocialFooter />
       </div>
     </main>
   );
@@ -409,51 +407,5 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
       <strong style={{ color: "#007873" }}>{value}</strong>
     </div>
-  );
-}
-
-function SocialFooter() {
-  return (
-    <footer
-      style={{
-        marginTop: 26,
-        paddingTop: 18,
-        borderTop: "1px solid #E6E6E6",
-        display: "flex",
-        justifyContent: "center",
-        gap: 12,
-        flexWrap: "wrap",
-        color: "#555555",
-        fontSize: 13,
-      }}
-    >
-      <a
-        href="https://www.linkedin.com/company/vfa-interlift-e-v/?originalSubdomain=de"
-        target="_blank"
-        rel="noreferrer"
-        style={{
-          color: "#007873",
-          fontWeight: 800,
-          textDecoration: "none",
-        }}
-      >
-        LinkedIn
-      </a>
-
-      <span aria-hidden="true">·</span>
-
-      <a
-        href="https://www.instagram.com/vfaakademie/"
-        target="_blank"
-        rel="noreferrer"
-        style={{
-          color: "#007873",
-          fontWeight: 800,
-          textDecoration: "none",
-        }}
-      >
-        Instagram
-      </a>
-    </footer>
   );
 }

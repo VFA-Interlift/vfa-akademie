@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import HeaderClient from "@/components/HeaderClient";
 import Providers from "@/components/Providers";
 import SplashGate from "@/components/SplashGate";
+import SocialFooter from "@/components/layout/SocialFooter";
 
 export const metadata: Metadata = {
   title: "VFA-Akademie",
@@ -33,24 +34,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <Providers>
-          <SplashGate durationMs={2000} logoSrc="/logo.png" title="VFA Akademie" />
+          <SplashGate
+            durationMs={2000}
+            logoSrc="/logo.png"
+            title="VFA Akademie"
+          />
 
           <div
             style={{
               minHeight: "100vh",
               background: "#F7F7F4",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <HeaderClient />
 
-            <main
+            <div
               style={{
-                minHeight: "calc(100vh - 78px)",
+                flex: "1 0 auto",
                 paddingTop: 78,
               }}
             >
               {children}
-            </main>
+            </div>
+
+            <SocialFooter />
           </div>
         </Providers>
       </body>
