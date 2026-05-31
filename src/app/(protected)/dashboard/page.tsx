@@ -145,116 +145,108 @@ export default async function DashboardPage() {
           }}
         >
           <AppCard accent="green">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                alignItems: "flex-start",
+                marginBottom: 12,
+              }}
+            >
+              <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
+              <CreditInfo description={level.description} />
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                gap: 14,
+                alignItems: "center",
+              }}
+            >
+              <CreditCircle percent={level.progressPercent} />
+
+              <div>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: 6,
+                    color: "#007873",
+                    fontSize: 28,
+                    lineHeight: 1,
+                    fontWeight: 800,
+                  }}
+                >
+                  {credits.toLocaleString("de-DE")} Credits
+                </h2>
+
+                {level.nextLevel ? (
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#333333",
+                      lineHeight: 1.5,
+                      fontSize: 14,
+                    }}
+                  >
+                    Noch{" "}
+                    <strong>{level.remaining.toLocaleString("de-DE")}</strong>{" "}
+                    Credits bis <strong>{level.nextLevel}</strong>.
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#333333",
+                      lineHeight: 1.5,
+                      fontSize: 14,
+                    }}
+                  >
+                    Höchste Credit-Stufe erreicht.
+                  </p>
+                )}
+              </div>
+            </div>
+          </AppCard>
+
+          <AppCard accent="green">
             <DashboardLeaderboardTop />
           </AppCard>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 16,
-            }}
-          >
-            <AppCard accent="green">
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  alignItems: "flex-start",
-                  marginBottom: 12,
-                }}
-              >
-                <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
-                <CreditInfo description={level.description} />
-              </div>
+          <AppCard>
+            <h2
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: 22,
+                fontWeight: 500,
+              }}
+            >
+              Dein Überblick
+            </h2>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: 14,
-                  alignItems: "center",
-                }}
-              >
-                <CreditCircle percent={level.progressPercent} />
+            <div
+              style={{
+                marginTop: 16,
+                display: "grid",
+                gap: 12,
+              }}
+            >
+              <MiniStat
+                label="Bevorstehende Schulungen"
+                value={String(me.enrollments.length)}
+              />
 
-                <div>
-                  <h2
-                    style={{
-                      marginTop: 0,
-                      marginBottom: 6,
-                      color: "#007873",
-                      fontSize: 28,
-                      lineHeight: 1,
-                      fontWeight: 800,
-                    }}
-                  >
-                    {credits.toLocaleString("de-DE")} Credits
-                  </h2>
+              <MiniStat
+                label="Ausgestellte Zertifikate"
+                value={String(me.certificates.length)}
+              />
 
-                  {level.nextLevel ? (
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#333333",
-                        lineHeight: 1.5,
-                        fontSize: 14,
-                      }}
-                    >
-                      Noch{" "}
-                      <strong>{level.remaining.toLocaleString("de-DE")}</strong>{" "}
-                      Credits bis <strong>{level.nextLevel}</strong>.
-                    </p>
-                  ) : (
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#333333",
-                        lineHeight: 1.5,
-                        fontSize: 14,
-                      }}
-                    >
-                      Höchste Credit-Stufe erreicht.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </AppCard>
-
-            <AppCard>
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#007873",
-                  fontSize: 22,
-                  fontWeight: 500,
-                }}
-              >
-                Dein Überblick
-              </h2>
-
-              <div
-                style={{
-                  marginTop: 16,
-                  display: "grid",
-                  gap: 12,
-                }}
-              >
-                <MiniStat
-                  label="Bevorstehende Schulungen"
-                  value={String(me.enrollments.length)}
-                />
-
-                <MiniStat
-                  label="Ausgestellte Zertifikate"
-                  value={String(me.certificates.length)}
-                />
-
-                <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
-              </div>
-            </AppCard>
-          </div>
+              <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
+            </div>
+          </AppCard>
         </div>
       </div>
     </main>
