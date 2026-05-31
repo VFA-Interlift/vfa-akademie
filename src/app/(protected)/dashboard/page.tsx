@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DashboardLeaderboardTop from "@/components/leaderboard/DashboardLeaderboardTop";
-import LeaderboardSettingsCard from "@/components/leaderboard/LeaderboardSettingsCard";
 
 export const dynamic = "force-dynamic";
 
@@ -73,12 +72,17 @@ function getCreditLevel(credits: number): CreditLevel {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) redirect("/login");
+
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
 
   const email = session.user.email.trim().toLowerCase();
 
   const me = await prisma.user.findUnique({
-    where: { email },
+    where: {
+      email,
+    },
     select: {
       role: true,
       name: true,
@@ -106,16 +110,13 @@ export default async function DashboardPage() {
     },
   });
 
-  if (!me) redirect("/login");
+  if (!me) {
+    redirect("/login");
+  }
 
   const isAdmin = me.role === "ADMIN";
   const credits = me.creditsTotal ?? 0;
   const level = getCreditLevel(credits);
-
-  const displayName =
-    [me.firstName, me.lastName].filter(Boolean).join(" ").trim() ||
-    me.name ||
-    "Willkommen";
 
   return (
     <main
@@ -126,7 +127,7 @@ export default async function DashboardPage() {
       }}
     >
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        <section style={{ marginBottom: 28 }}>
+        <section style={{ marginBottom: 22 }}>
           <div
             style={{
               width: 58,
@@ -148,21 +149,6 @@ export default async function DashboardPage() {
           >
             Dashboard
           </h1>
-
-          <p
-            style={{
-              color: "#333333",
-              marginTop: 14,
-              marginBottom: 0,
-              lineHeight: 1.65,
-              maxWidth: 760,
-              fontSize: 16,
-            }}
-          >
-            Willkommen, {displayName}. Hier siehst du deinen aktuellen
-            Credit-Status, deinen Fortschritt und eine kurze Übersicht über
-            deine Akademie-Daten.
-          </p>
         </section>
 
         <div
@@ -172,6 +158,10 @@ export default async function DashboardPage() {
             gap: 16,
           }}
         >
+          <AppCard accent="green">
+            <DashboardLeaderboardTop />
+          </AppCard>
+
           <AppCard accent="green">
             <div
               style={{
@@ -284,14 +274,6 @@ export default async function DashboardPage() {
 
               <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
             </div>
-          </AppCard>
-
-          <AppCard accent="green">
-            <DashboardLeaderboardTop />
-          </AppCard>
-
-          <AppCard>
-            <LeaderboardSettingsCard />
           </AppCard>
         </div>
       </div>
