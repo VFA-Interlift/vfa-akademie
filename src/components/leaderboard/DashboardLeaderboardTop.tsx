@@ -66,17 +66,12 @@ export default function DashboardLeaderboardTop() {
   }, []);
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: 14,
-      }}
-    >
+    <div style={{ display: "grid", gap: 12 }}>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: 14,
+          gap: 12,
           alignItems: "center",
           flexWrap: "wrap",
         }}
@@ -98,8 +93,8 @@ export default function DashboardLeaderboardTop() {
             display: "inline-flex",
             justifyContent: "center",
             alignItems: "center",
-            minHeight: 38,
-            padding: "9px 16px",
+            minHeight: 36,
+            padding: "8px 14px",
             borderRadius: 999,
             background: "#007873",
             color: "#FFFFFF",
@@ -124,17 +119,24 @@ export default function DashboardLeaderboardTop() {
           Noch keine freigegebenen Ranking-Einträge vorhanden.
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 10,
+          }}
+        >
           {entries.map((entry) => (
             <div
               key={entry.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "44px 1fr auto",
-                gap: 12,
+                gridTemplateColumns: "42px 1fr",
+                gap: 10,
                 alignItems: "center",
-                padding: "10px 0",
-                borderBottom: "1px solid #E6E6E6",
+                padding: 12,
+                border: "1px solid #E6E6E6",
+                background: "#FFFFFF",
               }}
             >
               <div
@@ -153,28 +155,31 @@ export default function DashboardLeaderboardTop() {
                 {entry.rank}
               </div>
 
-              <div
-                style={{
-                  minWidth: 0,
-                  color: "#007873",
-                  fontWeight: 900,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-                title={entry.displayName}
-              >
-                {entry.displayName}
-              </div>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    color: "#007873",
+                    fontWeight: 900,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={entry.displayName}
+                >
+                  {entry.displayName}
+                </div>
 
-              <div
-                style={{
-                  color: "#1F1F1F",
-                  fontWeight: 900,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {entry.creditsTotal.toLocaleString("de-DE")} Credits
+                <div
+                  style={{
+                    marginTop: 3,
+                    color: "#1F1F1F",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {entry.creditsTotal.toLocaleString("de-DE")} Credits
+                </div>
               </div>
             </div>
           ))}

@@ -11,8 +11,6 @@ export const dynamic = "force-dynamic";
 type CreditLevel = {
   currentLevel: string;
   nextLevel: string | null;
-  currentMin: number;
-  nextTarget: number | null;
   progressPercent: number;
   remaining: number;
   description: string;
@@ -23,8 +21,6 @@ function getCreditLevel(credits: number): CreditLevel {
     return {
       currentLevel: "VFA-Experte",
       nextLevel: null,
-      currentMin: 3500,
-      nextTarget: null,
       progressPercent: 100,
       remaining: 0,
       description:
@@ -36,8 +32,6 @@ function getCreditLevel(credits: number): CreditLevel {
     return {
       currentLevel: "Gold",
       nextLevel: "VFA-Experte",
-      currentMin: 1500,
-      nextTarget: 3500,
       progressPercent: Math.round(((credits - 1500) / 2000) * 100),
       remaining: 3500 - credits,
       description:
@@ -49,8 +43,6 @@ function getCreditLevel(credits: number): CreditLevel {
     return {
       currentLevel: "Silber",
       nextLevel: "Gold",
-      currentMin: 500,
-      nextTarget: 1500,
       progressPercent: Math.round(((credits - 500) / 1000) * 100),
       remaining: 1500 - credits,
       description:
@@ -61,8 +53,6 @@ function getCreditLevel(credits: number): CreditLevel {
   return {
     currentLevel: "Bronze",
     nextLevel: "Silber",
-    currentMin: 0,
-    nextTarget: 500,
     progressPercent: Math.round((credits / 500) * 100),
     remaining: 500 - credits,
     description:
@@ -85,9 +75,6 @@ export default async function DashboardPage() {
     },
     select: {
       role: true,
-      name: true,
-      firstName: true,
-      lastName: true,
       creditsTotal: true,
       enrollments: {
         where: {
@@ -154,7 +141,6 @@ export default async function DashboardPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: 16,
           }}
         >
@@ -162,133 +148,127 @@ export default async function DashboardPage() {
             <DashboardLeaderboardTop />
           </AppCard>
 
-          <AppCard accent="green">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                alignItems: "flex-start",
-                marginBottom: 8,
-              }}
-            >
-              <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
-              <CreditInfo />
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gap: 18,
-                alignItems: "center",
-              }}
-            >
-              <CreditCircle percent={level.progressPercent} />
-
-              <div>
-                <h2
-                  style={{
-                    marginTop: 0,
-                    marginBottom: 8,
-                    color: "#007873",
-                    fontSize: 32,
-                    lineHeight: 1,
-                    fontWeight: 800,
-                  }}
-                >
-                  {credits.toLocaleString("de-DE")} Credits
-                </h2>
-
-                <p
-                  style={{
-                    marginTop: 0,
-                    marginBottom: 10,
-                    color: "#333333",
-                    lineHeight: 1.6,
-                    fontSize: 15,
-                  }}
-                >
-                  {level.description}
-                </p>
-
-                {level.nextLevel && level.nextTarget ? (
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#333333",
-                      lineHeight: 1.6,
-                      fontSize: 15,
-                    }}
-                  >
-                    Noch{" "}
-                    <strong>{level.remaining.toLocaleString("de-DE")}</strong>{" "}
-                    Credits bis <strong>{level.nextLevel}</strong>.
-                  </p>
-                ) : (
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#333333",
-                      lineHeight: 1.6,
-                      fontSize: 15,
-                    }}
-                  >
-                    Höchste Credit-Stufe erreicht. Eine weiterführende fachliche
-                    Anerkennung kann auf dieser Grundlage gesondert geprüft
-                    werden.
-                  </p>
-                )}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 16,
+            }}
+          >
+            <AppCard accent="green">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  alignItems: "flex-start",
+                  marginBottom: 12,
+                }}
+              >
+                <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
+                <CreditInfo description={level.description} />
               </div>
-            </div>
-          </AppCard>
 
-          <AppCard>
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 22,
-                fontWeight: 500,
-              }}
-            >
-              Dein Überblick
-            </h2>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr",
+                  gap: 14,
+                  alignItems: "center",
+                }}
+              >
+                <CreditCircle percent={level.progressPercent} />
 
-            <div
-              style={{
-                marginTop: 16,
-                display: "grid",
-                gap: 12,
-              }}
-            >
-              <MiniStat
-                label="Bevorstehende Schulungen"
-                value={String(me.enrollments.length)}
-              />
+                <div>
+                  <h2
+                    style={{
+                      marginTop: 0,
+                      marginBottom: 6,
+                      color: "#007873",
+                      fontSize: 28,
+                      lineHeight: 1,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {credits.toLocaleString("de-DE")} Credits
+                  </h2>
 
-              <MiniStat
-                label="Ausgestellte Zertifikate"
-                value={String(me.certificates.length)}
-              />
+                  {level.nextLevel ? (
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#333333",
+                        lineHeight: 1.5,
+                        fontSize: 14,
+                      }}
+                    >
+                      Noch{" "}
+                      <strong>{level.remaining.toLocaleString("de-DE")}</strong>{" "}
+                      Credits bis <strong>{level.nextLevel}</strong>.
+                    </p>
+                  ) : (
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#333333",
+                        lineHeight: 1.5,
+                        fontSize: 14,
+                      }}
+                    >
+                      Höchste Credit-Stufe erreicht.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </AppCard>
 
-              <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
-            </div>
-          </AppCard>
+            <AppCard>
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#007873",
+                  fontSize: 22,
+                  fontWeight: 500,
+                }}
+              >
+                Dein Überblick
+              </h2>
+
+              <div
+                style={{
+                  marginTop: 16,
+                  display: "grid",
+                  gap: 12,
+                }}
+              >
+                <MiniStat
+                  label="Bevorstehende Schulungen"
+                  value={String(me.enrollments.length)}
+                />
+
+                <MiniStat
+                  label="Ausgestellte Zertifikate"
+                  value={String(me.certificates.length)}
+                />
+
+                <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
+              </div>
+            </AppCard>
+          </div>
         </div>
       </div>
     </main>
   );
 }
 
-function CreditInfo() {
+function CreditInfo({ description }: { description: string }) {
   return (
     <details style={{ position: "relative" }}>
       <summary
         style={{
           listStyle: "none",
-          width: 34,
-          height: 34,
+          width: 32,
+          height: 32,
           borderRadius: "50%",
           border: "1px solid #C7C7C7",
           background: "#FFFFFF",
@@ -308,7 +288,7 @@ function CreditInfo() {
         style={{
           position: "absolute",
           right: 0,
-          top: 42,
+          top: 40,
           zIndex: 20,
           width: "min(340px, calc(100vw - 48px))",
           padding: 16,
@@ -328,8 +308,20 @@ function CreditInfo() {
             marginBottom: 10,
           }}
         >
-          Credit-Ränge
+          Credit-Status
         </div>
+
+        <p
+          style={{
+            marginTop: 0,
+            marginBottom: 14,
+            color: "#333333",
+            lineHeight: 1.55,
+            fontSize: 14,
+          }}
+        >
+          {description}
+        </p>
 
         <div style={{ display: "grid", gap: 10 }}>
           <Rank label="Bronze" range="0 bis 499 Credits" />
@@ -337,21 +329,6 @@ function CreditInfo() {
           <Rank label="Gold" range="1.500 bis 3.499 Credits" />
           <Rank label="VFA-Experte" range="ab 3.500 Credits" />
         </div>
-
-        <p
-          style={{
-            marginTop: 14,
-            marginBottom: 0,
-            color: "#333333",
-            lineHeight: 1.55,
-            fontSize: 14,
-          }}
-        >
-          Die Credit-Stufen zeigen deinen dokumentierten Weiterbildungsstand
-          innerhalb der VFA-Akademie. Sie ersetzen keine formale
-          Berufsqualifikation, machen aber sichtbar, wie regelmäßig und
-          umfangreich du dich weitergebildet hast.
-        </p>
       </div>
     </details>
   );
@@ -381,8 +358,8 @@ function CreditCircle({ percent }: { percent: number }) {
   return (
     <div
       style={{
-        width: 118,
-        height: 118,
+        width: 88,
+        height: 88,
         borderRadius: "50%",
         background,
         display: "grid",
@@ -392,8 +369,8 @@ function CreditCircle({ percent }: { percent: number }) {
     >
       <div
         style={{
-          width: 86,
-          height: 86,
+          width: 64,
+          height: 64,
           borderRadius: "50%",
           background: "#FFFFFF",
           display: "grid",
@@ -405,7 +382,7 @@ function CreditCircle({ percent }: { percent: number }) {
           style={{
             color: "#007873",
             fontWeight: 900,
-            fontSize: 22,
+            fontSize: 18,
             lineHeight: 1,
           }}
         >
