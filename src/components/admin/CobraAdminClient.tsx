@@ -15,16 +15,6 @@ type CobraTraining = {
   description: string | null;
 };
 
-type CobraParticipant = {
-  cobraParticipantId: number | null;
-  caption: string | null;
-  trainingCaption: string | null;
-  status: string | null;
-  participantType: string | null;
-  participantText: string | null;
-  note: string | null;
-};
-
 type TrainingsResponse =
   | {
       ok: true;
@@ -40,14 +30,53 @@ type TrainingsResponse =
       details?: unknown;
     };
 
-type ParticipantsResponse =
+type PreviewResponse =
   | {
       ok: true;
-      source: "cobra";
-      endpoint: string;
-      cobraId: string;
-      count: number;
-      participants: CobraParticipant[];
+      mode: "PREVIEW_ONLY";
+      action: "CREATE_NEW" | "UPDATE_EXISTING_BY_CODE";
+      cobra: {
+        cobraId: number;
+        code: string;
+        title: string;
+        date: string;
+        endDate: string | null;
+        location: string | null;
+        instructor: string | null;
+        description: string | null;
+      };
+      app: {
+        exists: boolean;
+        existingTraining: {
+          id: string;
+          title: string;
+          code: string | null;
+          date: string;
+          endDate: string | null;
+          location: string | null;
+          instructor: string | null;
+          description: string | null;
+          creditsAward: number;
+          certificateKind: string;
+        } | null;
+      };
+      proposed: {
+        title: string;
+        code: string;
+        date: string;
+        endDate: string | null;
+        location: string | null;
+        instructor: string | null;
+        description: string | null;
+        creditsAward: number;
+        creditRule: {
+          credits: number;
+          automatic: boolean;
+          reason: string;
+          label: string;
+        };
+      };
+      warnings: string[];
     }
   | {
       ok: false;
@@ -55,6 +84,12 @@ type ParticipantsResponse =
       message?: string;
       details?: unknown;
     };
+
+type PreviewState = {
+  loading: boolean;
+  error: string;
+  data: PreviewResponse | null;
+};
 
 function formatDateTime(value: string | null) {
   if (!value) {
@@ -112,17 +147,20 @@ function getTrainingTimestamp(training: CobraTraining) {
   return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
 }
 
+function getPreviewKey(cobraId: number | null) {
+  return String(cobraId ?? "unknown");
+}
+
 export default function CobraAdminClient() {
   const [trainings, setTrainings] = useState<CobraTraining[]>([]);
   const [loadingTrainings, setLoadingTrainings] = useState(true);
   const [trainingError, setTrainingError] = useState("");
 
   const [query, setQuery] = useState("");
-  const [selectedCobraId, setSelectedCobraId] = useState<number | null>(null);
 
-  const [participants, setParticipants] = useState<CobraParticipant[]>([]);
-  const [loadingParticipants, setLoadingParticipants] = useState(false);
-  const [participantError, setParticipantError] = useState("");
+  const [previewByTraining, setPreviewByTraining] = useState<
+    Record<string, PreviewState>
+  >({});
 
   useEffect(() => {
     let cancelled = false;
@@ -188,43 +226,66 @@ export default function CobraAdminClient() {
     });
   }, [query, trainings]);
 
-  async function loadParticipants(cobraId: number | null) {
-    if (!cobraId) {
-      return;
-    }
+  async function loadPreview(training: CobraTraining) {
+    const key = getPreviewKey(training.cobraId);
 
-    setSelectedCobraId(cobraId);
-    setParticipants([]);
-    setParticipantError("");
-    setLoadingParticipants(true);
+    setPreviewByTraining((current) => ({
+      ...current,
+      [key]: {
+        loading: true,
+        error: "",
+        data: null,
+      },
+    }));
 
     try {
-      const res = await fetch(`/api/cobra/trainings/${cobraId}/participants`, {
+      const res = await fetch("/api/admin/cobra/preview-training", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         cache: "no-store",
+        body: JSON.stringify(training),
       });
 
-      const data = (await res.json()) as ParticipantsResponse;
+      const data = (await res.json()) as PreviewResponse;
 
       if (!res.ok || !data.ok) {
-        setParticipantError(
-          data.ok === false
-            ? data.message ?? data.error
-            : "Teilnehmer konnten nicht geladen werden."
-        );
-        setParticipants([]);
+        setPreviewByTraining((current) => ({
+          ...current,
+          [key]: {
+            loading: false,
+            error:
+              data.ok === false
+                ? data.message ?? data.error
+                : "Import-Vorschau konnte nicht geladen werden.",
+            data,
+          },
+        }));
+
         return;
       }
 
-      setParticipants(data.participants);
+      setPreviewByTraining((current) => ({
+        ...current,
+        [key]: {
+          loading: false,
+          error: "",
+          data,
+        },
+      }));
     } catch (error) {
-      setParticipantError(
-        error instanceof Error
-          ? error.message
-          : "Teilnehmer konnten nicht geladen werden."
-      );
-      setParticipants([]);
-    } finally {
-      setLoadingParticipants(false);
+      setPreviewByTraining((current) => ({
+        ...current,
+        [key]: {
+          loading: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Import-Vorschau konnte nicht geladen werden.",
+          data: null,
+        },
+      }));
     }
   }
 
@@ -272,8 +333,8 @@ export default function CobraAdminClient() {
                 lineHeight: 1.6,
               }}
             >
-              Read-only-Testansicht. Hier werden Daten aus Cobra angezeigt, aber
-              nicht in die App-Datenbank übernommen.
+              Read-only-Testansicht. Hier werden Schulungen aus Cobra geprüft.
+              Die App-Datenbank wird noch nicht verändert.
             </p>
           </div>
 
@@ -290,6 +351,23 @@ export default function CobraAdminClient() {
           >
             {trainings.length.toLocaleString("de-DE")} Schulungen geladen
           </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 14,
+            padding: "12px 14px",
+            border: "1px solid #E6E6E6",
+            background: "#FAFAF8",
+            color: "#333333",
+            lineHeight: 1.6,
+            fontSize: 14,
+          }}
+        >
+          Für die spätere automatische Zuordnung zu App-Usern brauchen wir im
+          Cobra-Teilnehmer-Endpunkt zusätzlich die E-Mail-Adresse des
+          Teilnehmers. Der aktuelle Teilnehmertext reicht für einen sicheren
+          Abgleich nicht aus.
         </div>
 
         <div style={{ marginTop: 16 }}>
@@ -357,15 +435,14 @@ export default function CobraAdminClient() {
             }}
           >
             {filteredTrainings.map((training) => {
-              const isSelected = selectedCobraId === training.cobraId;
+              const previewState =
+                previewByTraining[getPreviewKey(training.cobraId)];
 
               return (
                 <article
                   key={`${training.cobraId}-${training.code}`}
                   style={{
-                    border: isSelected
-                      ? "2px solid #007873"
-                      : "1px solid #E6E6E6",
+                    border: "1px solid #E6E6E6",
                     background: "#FFFFFF",
                     padding: 14,
                     display: "grid",
@@ -409,29 +486,29 @@ export default function CobraAdminClient() {
 
                     <button
                       type="button"
-                      onClick={() => void loadParticipants(training.cobraId)}
-                      disabled={!training.cobraId || loadingParticipants}
+                      onClick={() => void loadPreview(training)}
+                      disabled={!training.cobraId || previewState?.loading}
                       style={{
                         minHeight: 38,
                         padding: "8px 14px",
                         borderRadius: 999,
-                        border: "none",
-                        background: "#007873",
-                        color: "#FFFFFF",
+                        border: "1px solid #007873",
+                        background: "#FFFFFF",
+                        color: "#007873",
                         fontWeight: 900,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.08em",
                         cursor:
-                          !training.cobraId || loadingParticipants
+                          !training.cobraId || previewState?.loading
                             ? "not-allowed"
                             : "pointer",
                         opacity:
-                          !training.cobraId || loadingParticipants ? 0.55 : 1,
+                          !training.cobraId || previewState?.loading ? 0.55 : 1,
                         whiteSpace: "nowrap",
                       }}
                     >
-                      Teilnehmer laden
+                      {previewState?.loading ? "Prüfe..." : "Vorschau"}
                     </button>
                   </div>
 
@@ -450,6 +527,25 @@ export default function CobraAdminClient() {
                     <Info label="Ort" value={training.location ?? "—"} />
                     <Info label="Dozent" value={training.instructor ?? "—"} />
                   </div>
+
+                  {previewState?.error && (
+                    <div
+                      style={{
+                        padding: "10px 12px",
+                        border: "1px solid rgba(176,0,32,0.28)",
+                        background: "rgba(176,0,32,0.08)",
+                        color: "#B00020",
+                        fontWeight: 800,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {previewState.error}
+                    </div>
+                  )}
+
+                  {previewState?.data?.ok && (
+                    <PreviewBox preview={previewState.data} />
+                  )}
                 </article>
               );
             })}
@@ -469,142 +565,105 @@ export default function CobraAdminClient() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
 
-      <section
+function PreviewBox({
+  preview,
+}: {
+  preview: Extract<PreviewResponse, { ok: true }>;
+}) {
+  return (
+    <div
+      style={{
+        border: "1px solid #FFC100",
+        background: "rgba(255,193,0,0.08)",
+        padding: 14,
+        display: "grid",
+        gap: 10,
+      }}
+    >
+      <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #FFC100",
-          padding: 18,
-          boxShadow: "0 10px 28px rgba(0,0,0,0.04)",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+          alignItems: "center",
         }}
       >
-        <h2
+        <strong style={{ color: "#007873", fontSize: 16 }}>
+          Import-Vorschau
+        </strong>
+
+        <span
           style={{
-            margin: 0,
-            color: "#007873",
-            fontSize: 24,
-            fontWeight: 500,
+            padding: "6px 10px",
+            borderRadius: 999,
+            background:
+              preview.action === "CREATE_NEW" ? "#007873" : "#FFC100",
+            color: preview.action === "CREATE_NEW" ? "#FFFFFF" : "#1F1F1F",
+            fontWeight: 900,
+            fontSize: 12,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
           }}
         >
-          Teilnehmer zur Schulung
-        </h2>
+          {preview.action === "CREATE_NEW"
+            ? "Neu anlegen"
+            : "Bestehende aktualisieren"}
+        </span>
+      </div>
 
-        <p
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 10,
+          fontSize: 14,
+          lineHeight: 1.5,
+        }}
+      >
+        <Info label="Code" value={preview.proposed.code} />
+        <Info label="Titel" value={preview.proposed.title} />
+        <Info
+          label="Credits"
+          value={`${preview.proposed.creditsAward} Credits`}
+        />
+        <Info label="Credit-Regel" value={preview.proposed.creditRule.label} />
+      </div>
+
+      {preview.app.exists && preview.app.existingTraining && (
+        <div
           style={{
-            marginTop: 8,
-            marginBottom: 0,
-            color: "#333333",
-            lineHeight: 1.6,
+            padding: "10px 12px",
+            border: "1px solid #E6E6E6",
+            background: "#FFFFFF",
+            color: "#1F1F1F",
+            lineHeight: 1.5,
           }}
         >
-          Wähle oben eine Schulung aus, um die verknüpften Cobra-Teilnehmer zu
-          laden.
-        </p>
+          Bestehende App-Schulung gefunden:{" "}
+          <strong>{preview.app.existingTraining.title}</strong>
+        </div>
+      )}
 
-        {selectedCobraId && (
-          <div
-            style={{
-              marginTop: 12,
-              color: "#1F1F1F",
-              fontWeight: 900,
-            }}
-          >
-            Ausgewählte Cobra-Schulungs-ID: {selectedCobraId}
-          </div>
-        )}
-
-        {loadingParticipants ? (
-          <p
-            style={{
-              marginTop: 18,
-              marginBottom: 0,
-              color: "#333333",
-              lineHeight: 1.6,
-            }}
-          >
-            Teilnehmer werden geladen...
-          </p>
-        ) : participantError ? (
-          <div
-            style={{
-              marginTop: 18,
-              padding: "12px 14px",
-              border: "1px solid rgba(176,0,32,0.28)",
-              background: "rgba(176,0,32,0.08)",
-              color: "#B00020",
-              fontWeight: 800,
-              lineHeight: 1.5,
-            }}
-          >
-            {participantError}
-          </div>
-        ) : participants.length > 0 ? (
-          <div
-            style={{
-              marginTop: 18,
-              display: "grid",
-              gap: 10,
-            }}
-          >
-            {participants.map((participant) => (
-              <div
-                key={`${participant.cobraParticipantId}-${participant.caption}`}
-                style={{
-                  border: "1px solid #E6E6E6",
-                  padding: 14,
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
-                <div
-                  style={{
-                    color: "#007873",
-                    fontWeight: 900,
-                    fontSize: 16,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {participant.participantText ?? participant.caption ?? "—"}
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fit, minmax(160px, 1fr))",
-                    gap: 10,
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <Info
-                    label="Cobra-ID"
-                    value={String(participant.cobraParticipantId ?? "—")}
-                  />
-                  <Info
-                    label="Teilnehmerart"
-                    value={participant.participantType ?? "—"}
-                  />
-                  <Info label="Status" value={participant.status ?? "—"} />
-                  <Info label="Notiz" value={participant.note ?? "—"} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : selectedCobraId ? (
-          <div
-            style={{
-              marginTop: 18,
-              padding: "12px 14px",
-              border: "1px solid #E6E6E6",
-              color: "#333333",
-              lineHeight: 1.6,
-            }}
-          >
-            Für diese Schulung wurden keine Teilnehmer zurückgegeben.
-          </div>
-        ) : null}
-      </section>
+      {preview.warnings.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gap: 6,
+            color: "#B00020",
+            fontWeight: 800,
+            lineHeight: 1.5,
+          }}
+        >
+          {preview.warnings.map((warning) => (
+            <div key={warning}>Hinweis: {warning}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
