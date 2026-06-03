@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/certificates",
-      "schedule": "5 0 * * *"
+      "path": "/api/cron/cobra/trainings",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
