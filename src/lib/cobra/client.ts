@@ -3,17 +3,33 @@ import "server-only";
 import { CobraError, CobraQueryParams, CobraTokenResponse } from "./types";
 
 function getEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new CobraError(`Missing env var: ${name}`);
-  return v;
+  const value = process.env[name];
+
+  if (!value) {
+    throw new CobraError(`Missing env var: ${name}`);
+  }
+
+  return value;
+}
+
+function getEnvAny(names: string[]): string {
+  for (const name of names) {
+    const value = process.env[name];
+
+    if (value) {
+      return value;
+    }
+  }
+
+  throw new CobraError(`Missing env var: ${names.join(" or ")}`);
 }
 
 function getCobraConfig() {
   return {
     baseUrl: getEnv("COBRA_BASE_URL").replace(/\/+$/, ""),
     apiKey: getEnv("COBRA_API_KEY"),
-    username: getEnv("COBRA_USERNAME"),
-    password: getEnv("COBRA_PASSWORD"),
+    username: getEnvAny(["COBRA_USERNAME", "COBRA_USER"]),
+    password: getEnvAny(["COBRA_PASSWORD", "COBRA_PASS"]),
   };
 }
 
@@ -22,7 +38,10 @@ let cachedToken: { token: string; expEpochSeconds: number } | null = null;
 function readJwtExp(token: string): number {
   try {
     const [, payload] = token.split(".");
-    if (!payload) return Math.floor(Date.now() / 1000) + 60;
+
+    if (!payload) {
+      return Math.floor(Date.now() / 1000) + 60;
+    }
 
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
     const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
@@ -30,7 +49,10 @@ function readJwtExp(token: string): number {
     const json = Buffer.from(padded, "base64").toString("utf8");
     const data = JSON.parse(json) as { exp?: number };
 
-    if (typeof data.exp === "number") return data.exp;
+    if (typeof data.exp === "number") {
+      return data.exp;
+    }
+
     return Math.floor(Date.now() / 1000) + 60;
   } catch {
     return Math.floor(Date.now() / 1000) + 60;
@@ -58,10 +80,11 @@ async function fetchToken(): Promise<{ token: string; expEpochSeconds: number }>
   const text = await res.text();
 
   let data: CobraTokenResponse | null = null;
+
   try {
     data = JSON.parse(text) as CobraTokenResponse;
   } catch {
-    // ignore - handled below
+    // handled below
   }
 
   if (!res.ok) {
@@ -77,16 +100,21 @@ async function fetchToken(): Promise<{ token: string; expEpochSeconds: number }>
     });
   }
 
-  return { token: data.token, expEpochSeconds: readJwtExp(data.token) };
+  return {
+    token: data.token,
+    expEpochSeconds: readJwtExp(data.token),
+  };
 }
 
 async function getValidToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
+
   if (cachedToken && cachedToken.expEpochSeconds - 60 > now) {
     return cachedToken.token;
   }
 
   cachedToken = await fetchToken();
+
   return cachedToken.token;
 }
 
@@ -96,9 +124,12 @@ function buildUrl(path: string, params?: CobraQueryParams): string {
   const url = new URL(`${baseUrl}${cleanPath}`);
 
   if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      if (v === undefined) continue;
-      url.searchParams.set(k, String(v));
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) {
+        continue;
+      }
+
+      url.searchParams.set(key, String(value));
     }
   }
 
@@ -107,7 +138,10 @@ function buildUrl(path: string, params?: CobraQueryParams): string {
 
 export async function cobraRequest<T>(
   path: string,
-  opts?: { method?: "GET"; params?: CobraQueryParams }
+  opts?: {
+    method?: "GET";
+    params?: CobraQueryParams;
+  }
 ): Promise<T> {
   const { apiKey } = getCobraConfig();
   const method = opts?.method ?? "GET";
@@ -146,5 +180,8 @@ export async function cobraEndpointGet<T>(
   endpointName: string,
   params?: CobraQueryParams
 ): Promise<T> {
-  return cobraRequest<T>(`/api/${endpointName}`, { method: "GET", params });
+  return cobraRequest<T>(`/api/${endpointName}`, {
+    method: "GET",
+    params,
+  });
 }
