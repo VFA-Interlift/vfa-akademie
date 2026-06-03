@@ -55,7 +55,7 @@ function cleanNumber(value: unknown) {
   return null;
 }
 
-function normalizeCode(value: string | null) {
+function normalizeCode(value: unknown) {
   return String(value ?? "").trim().toUpperCase();
 }
 
@@ -79,13 +79,7 @@ function containsLutz(training: IncomingCobraTraining) {
 function isInhouseOrManual(code: string, title: string | null) {
   const normalized = `${code} ${String(title ?? "")}`.toUpperCase();
 
-  const manualPrefixes = [
-    "ARB",
-    "DGUV",
-    "FPFW",
-    "SICH",
-    "YLD",
-  ];
+  const manualPrefixes = ["ARB", "DGUV", "FPFW", "SICH", "YLD"];
 
   return manualPrefixes.some((prefix) => normalized.startsWith(prefix));
 }
@@ -289,8 +283,7 @@ function deriveCredits(training: IncomingCobraTraining) {
     credits: 0,
     automatic: false,
     reason: "UNKNOWN_CODE",
-    label:
-      "Schulungscode wurde keiner automatischen Credit-Regel zugeordnet.",
+    label: "Schulungscode wurde keiner automatischen Credit-Regel zugeordnet.",
   };
 }
 
@@ -359,7 +352,8 @@ export async function POST(req: Request) {
 
   const cobraId = cleanNumber(training.cobraId);
   const code = cleanString(training.code);
-  const title = cleanString(training.title) ?? code ?? cleanString(training.caption);
+  const title =
+    cleanString(training.title) ?? code ?? cleanString(training.caption);
   const startDate = parseDate(cleanString(training.date));
   const endDate = parseDate(cleanString(training.endDate));
   const location = cleanString(training.location);

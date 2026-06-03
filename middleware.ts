@@ -1,39 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-function hasSessionCookie(req: NextRequest) {
-  return Boolean(
-    req.cookies.get("next-auth.session-token")?.value ||
-      req.cookies.get("__Secure-next-auth.session-token")?.value
-  );
-}
-
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/api" ||
+    pathname.startsWith("/_next/") ||
     pathname.startsWith("/splash") ||
     pathname.includes(".")
   ) {
     return NextResponse.next();
   }
 
-  const isLoggedIn = hasSessionCookie(req);
-
-  if (
-    isLoggedIn &&
-    (pathname === "/" || pathname === "/login" || pathname === "/register")
-  ) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
-
-    return NextResponse.redirect(url);
-  }
-
-  if (isLoggedIn) {
+  if (pathname !== "/") {
     return NextResponse.next();
   }
 
@@ -58,5 +39,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|splash).*)"],
+  matcher: ["/:path*"],
 };
