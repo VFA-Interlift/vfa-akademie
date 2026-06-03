@@ -102,6 +102,16 @@ function searchText(training: CobraTraining) {
     .toLowerCase();
 }
 
+function getTrainingTimestamp(training: CobraTraining) {
+  if (!training.date) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const timestamp = new Date(training.date).getTime();
+
+  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+}
+
 export default function CobraAdminClient() {
   const [trainings, setTrainings] = useState<CobraTraining[]>([]);
   const [loadingTrainings, setLoadingTrainings] = useState(true);
@@ -169,13 +179,13 @@ export default function CobraAdminClient() {
   const filteredTrainings = useMemo(() => {
     const cleanQuery = query.trim().toLowerCase();
 
-    if (!cleanQuery) {
-      return trainings;
-    }
+    const result = cleanQuery
+      ? trainings.filter((training) => searchText(training).includes(cleanQuery))
+      : trainings;
 
-    return trainings.filter((training) =>
-      searchText(training).includes(cleanQuery)
-    );
+    return [...result].sort((a, b) => {
+      return getTrainingTimestamp(a) - getTrainingTimestamp(b);
+    });
   }, [query, trainings]);
 
   async function loadParticipants(cobraId: number | null) {
