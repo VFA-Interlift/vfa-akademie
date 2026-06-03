@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/cobra/trainings",
-      "schedule": "*/5 * * * *"
+      "schedule": "10 0 * * *"
     }
   ]
 }
