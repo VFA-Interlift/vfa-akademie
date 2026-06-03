@@ -2,8 +2,8 @@
 import "server-only";
 import { CobraError, CobraQueryParams, CobraTokenResponse } from "./types";
 
-function getEnv(name: string): string {
-  const value = process.env[name];
+function getRequiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
 
   if (!value) {
     throw new CobraError(`Missing env var: ${name}`);
@@ -12,9 +12,15 @@ function getEnv(name: string): string {
   return value;
 }
 
+function getOptionalEnv(name: string): string | null {
+  const value = process.env[name]?.trim();
+
+  return value || null;
+}
+
 function getEnvAny(names: string[]): string {
   for (const name of names) {
-    const value = process.env[name];
+    const value = getOptionalEnv(name);
 
     if (value) {
       return value;
@@ -26,8 +32,8 @@ function getEnvAny(names: string[]): string {
 
 function getCobraConfig() {
   return {
-    baseUrl: getEnv("COBRA_BASE_URL").replace(/\/+$/, ""),
-    apiKey: getEnv("COBRA_API_KEY"),
+    baseUrl: getRequiredEnv("COBRA_BASE_URL").replace(/\/+$/, ""),
+    apiKey: getRequiredEnv("COBRA_API_KEY"),
     username: getEnvAny(["COBRA_USERNAME", "COBRA_USER"]),
     password: getEnvAny(["COBRA_PASSWORD", "COBRA_PASS"]),
   };
@@ -61,6 +67,7 @@ function readJwtExp(token: string): number {
 
 async function fetchToken(): Promise<{ token: string; expEpochSeconds: number }> {
   const { baseUrl, apiKey, username, password } = getCobraConfig();
+
   const url = `${baseUrl}/api/token`;
 
   const res = await fetch(url, {
@@ -90,13 +97,13 @@ async function fetchToken(): Promise<{ token: string; expEpochSeconds: number }>
   if (!res.ok) {
     throw new CobraError(`Cobra token request failed (${res.status})`, {
       status: res.status,
-      details: data ?? text,
+      details: text || data || null,
     });
   }
 
   if (!data?.success || !data.token) {
     throw new CobraError("Cobra token response was not successful", {
-      details: data ?? text,
+      details: text || data || null,
     });
   }
 
