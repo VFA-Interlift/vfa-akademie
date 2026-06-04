@@ -9,8 +9,8 @@ datasource db {
 }
 
 enum CreditTxType {
-  AWARD       // Vergabe von Credits
-  ADJUSTMENT  // Admin-Korrektur (+/-)
+  AWARD
+  ADJUSTMENT
 }
 
 enum Role {
@@ -50,7 +50,6 @@ model User {
   email        String @unique
   passwordHash String
 
-  // Persönliche Daten
   name      String?
   firstName String?
   lastName  String?
@@ -58,7 +57,6 @@ model User {
   gender    String?
   phone     String?
 
-  // Firmendaten
   company        String?
   companyAddress String?
   companyStreet  String?
@@ -70,7 +68,6 @@ model User {
   role         Role @default(USER)
   creditsTotal Int  @default(0)
 
-  // Freiwillige Teilnahme am VFA-Credit-Ranking
   leaderboardOptIn Boolean @default(false)
   leaderboardName  String?
 
@@ -86,32 +83,26 @@ model Training {
   id    String @id @default(cuid())
   title String
 
-  // Kürzel aus Cobra oder manuell für Übergangszeit
-  // Beispiele: A1, A2, B, C, DOK, BETR, SICH, SER-SWB
   code String?
 
-  // Startdatum der Schulung
   date DateTime
 
-  // Detailfelder für Schulungen / spätere Cobra-Daten
   endDate     DateTime?
   location    String?
   instructor  String?
   description String?
 
-  // Dokumentart für spätere Zertifikats-/Teilnahmebestätigungslogik
   certificateKind CertificateKind?
 
-  // Optionaler späterer Cobra-Bezug
   cobraId String? @unique
 
-  // Credits werden erst bei Zertifikatserstellung vergeben
   creditsAward Int @default(0)
 
-  tokens       ClaimToken[]
-  creditTxs    CreditTransaction[]
-  enrollments  Enrollment[]
-  certificates Certificate[]
+  tokens            ClaimToken[]
+  creditTxs         CreditTransaction[]
+  enrollments       Enrollment[]
+  certificates      Certificate[]
+  cobraParticipants CobraTrainingParticipant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -160,7 +151,6 @@ model Certificate {
   status   CertificateStatus @default(ISSUED)
   credits  Int               @default(0)
 
-  // Wird bei Erstellung aus Training übernommen, damit das Zertifikat historisch stabil bleibt
   code            String?
   certificateKind CertificateKind?
 
@@ -217,4 +207,37 @@ model CreditTransaction {
   @@index([trainingId, createdAt])
   @@index([claimTokenId, createdAt])
   @@index([certificateId, createdAt])
+}
+
+model CobraTrainingParticipant {
+  id String @id @default(cuid())
+
+  cobraParticipantId String @unique
+
+  cobraTrainingCaption String?
+  cobraTrainingId      String?
+
+  trainingId String?
+  training   Training? @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+
+  caption         String?
+  participantText String
+  participantType String?
+  status          String?
+
+  email     String?
+  firstName String?
+  lastName  String?
+  company   String?
+
+  raw Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cobraTrainingId])
+  @@index([trainingId])
+  @@index([email])
+  @@index([participantType])
+  @@index([status])
 }
