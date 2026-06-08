@@ -108,27 +108,21 @@ export default async function DashboardPage() {
           min-width: 0;
         }
 
-        .statusCardGrid {
+        .academyStatusCard {
           display: grid;
-          grid-template-columns: auto minmax(0, 1fr);
-          gap: 26px;
-          align-items: center;
+          justify-items: center;
+          text-align: center;
+          gap: 14px;
+          padding: 8px 0;
         }
 
-        .eyebrow {
+        .academyEyebrow {
           color: #007873;
           font-size: 13px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          margin-bottom: 8px;
-        }
-
-        .statusTitleRow {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          gap: 10px;
+          margin-bottom: 2px;
         }
 
         .statusTitle {
@@ -139,39 +133,19 @@ export default async function DashboardPage() {
           font-weight: 850;
         }
 
-        .statusDescription {
-          margin-top: 10px;
-          margin-bottom: 0;
-          color: #333333;
-          line-height: 1.6;
-          font-size: 15px;
-          max-width: 640px;
-        }
-
         .creditValue {
-          margin-top: 18px;
+          margin-top: 4px;
           color: #007873;
-          font-size: 36px;
+          font-size: 38px;
           line-height: 1;
           font-weight: 900;
         }
 
         .creditHint {
-          margin-top: 8px;
-          margin-bottom: 0;
+          margin: 0;
           color: #333333;
           line-height: 1.5;
-          font-size: 14px;
-        }
-
-        .badgeDownloadHint {
-          margin-top: 14px;
-          padding: 12px 14px;
-          border: 1px solid rgba(0, 120, 115, 0.22);
-          background: rgba(0, 120, 115, 0.06);
-          color: #333333;
-          line-height: 1.5;
-          font-size: 14px;
+          font-size: 15px;
         }
 
         .sectionTitle {
@@ -197,10 +171,6 @@ export default async function DashboardPage() {
           .dashboardGrid {
             grid-template-columns: 1fr;
           }
-
-          .dashboardColumnSide {
-            order: 0;
-          }
         }
 
         @media (max-width: 680px) {
@@ -217,18 +187,12 @@ export default async function DashboardPage() {
             font-size: 15px;
           }
 
-          .statusCardGrid {
-            grid-template-columns: 1fr;
-            gap: 18px;
-            justify-items: start;
-          }
-
           .statusTitle {
             font-size: 30px;
           }
 
           .creditValue {
-            font-size: 32px;
+            font-size: 34px;
           }
         }
 
@@ -251,7 +215,7 @@ export default async function DashboardPage() {
           }
 
           .creditValue {
-            font-size: 30px;
+            font-size: 31px;
           }
         }
       `}</style>
@@ -268,46 +232,38 @@ export default async function DashboardPage() {
 
         <div className="dashboardColumn" style={{ marginBottom: 16 }}>
           <AppCard accent="green">
-            <div className="statusCardGrid">
+            <div className="academyStatusCard">
+              <div className="academyEyebrow">VFA-Akademie Status</div>
+
               <CreditCircle percent={progress.progressPercent} />
 
-              <div style={{ minWidth: 0 }}>
-                <div className="eyebrow">VFA-Akademie Status</div>
+              <div>
+                <h2 className="statusTitle">{progress.status.label} Status</h2>
 
-                <div className="statusTitleRow">
-                  <h2 className="statusTitle">{progress.status.label}</h2>
+                <div style={{ marginTop: 10 }}>
                   <StatusBadge variant="yellow">
                     {progress.status.label}
                   </StatusBadge>
                 </div>
-
-                <p className="statusDescription">
-                  {progress.status.description}
-                </p>
-
-                <div className="creditValue">
-                  {credits.toLocaleString("de-DE")} Credits
-                </div>
-
-                {progress.nextStatus ? (
-                  <p className="creditHint">
-                    Noch{" "}
-                    <strong>
-                      {progress.remainingCredits.toLocaleString("de-DE")}
-                    </strong>{" "}
-                    Credits bis <strong>{progress.nextStatus.label}</strong>.
-                  </p>
-                ) : (
-                  <p className="creditHint">
-                    Höchste VFA-Weiterbildungsstufe erreicht.
-                  </p>
-                )}
-
-                <div className="badgeDownloadHint">
-                  Dein digitales Status-Badge wird perspektivisch als Download
-                  für Signatur, Nachweis oder Profil verfügbar sein.
-                </div>
               </div>
+
+              <div className="creditValue">
+                {credits.toLocaleString("de-DE")} Credits
+              </div>
+
+              {progress.nextStatus ? (
+                <p className="creditHint">
+                  Noch{" "}
+                  <strong>
+                    {progress.remainingCredits.toLocaleString("de-DE")}
+                  </strong>{" "}
+                  Credits bis <strong>{progress.nextStatus.label}</strong>.
+                </p>
+              ) : (
+                <p className="creditHint">
+                  Höchste VFA-Weiterbildungsstufe erreicht.
+                </p>
+              )}
             </div>
           </AppCard>
         </div>
@@ -319,7 +275,7 @@ export default async function DashboardPage() {
             </AppCard>
           </div>
 
-          <div className="dashboardColumn dashboardColumnSide">
+          <div className="dashboardColumn">
             <AppCard>
               <h2 className="sectionTitle">Dein Überblick</h2>
 
@@ -419,20 +375,19 @@ function CreditCircle({ percent }: { percent: number }) {
   return (
     <div
       style={{
-        width: 128,
-        height: 128,
+        width: 178,
+        height: 178,
         borderRadius: "50%",
         background,
         display: "grid",
         placeItems: "center",
-        flex: "0 0 auto",
-        boxShadow: "0 14px 30px rgba(0,0,0,0.12)",
+        boxShadow: "0 18px 34px rgba(0,0,0,0.14)",
       }}
     >
       <div
         style={{
-          width: 92,
-          height: 92,
+          width: 126,
+          height: 126,
           borderRadius: "50%",
           background: "#FFFFFF",
           display: "grid",
@@ -444,7 +399,7 @@ function CreditCircle({ percent }: { percent: number }) {
           style={{
             color: "#007873",
             fontWeight: 900,
-            fontSize: 24,
+            fontSize: 34,
             lineHeight: 1,
           }}
         >
