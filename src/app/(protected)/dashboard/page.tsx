@@ -5,10 +5,7 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DashboardLeaderboardTop from "@/components/leaderboard/DashboardLeaderboardTop";
-import {
-  CREDIT_STATUSES,
-  getCreditStatusProgress,
-} from "@/lib/credits/status";
+import { getCreditStatusProgress } from "@/lib/credits/status";
 
 export const dynamic = "force-dynamic";
 
@@ -109,20 +106,11 @@ export default async function DashboardPage() {
         }
 
         .academyStatusCard {
-          position: relative;
           display: grid;
           justify-items: center;
           text-align: center;
           gap: 14px;
-          padding: 8px 0 4px;
-        }
-
-        .academyStatusHeader {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
+          padding: 8px 0;
         }
 
         .academyEyebrow {
@@ -131,80 +119,7 @@ export default async function DashboardPage() {
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-        }
-
-        .infoDetails {
-          position: relative;
-          display: inline-block;
-        }
-
-        .infoDetails summary {
-          list-style: none;
-        }
-
-        .infoDetails summary::-webkit-details-marker {
-          display: none;
-        }
-
-        .infoButton {
-          width: 24px;
-          height: 24px;
-          border-radius: 999px;
-          border: 1px solid rgba(0, 120, 115, 0.28);
-          background: rgba(0, 120, 115, 0.08);
-          color: #007873;
-          display: inline-grid;
-          place-items: center;
-          font-size: 14px;
-          font-weight: 900;
-          cursor: pointer;
-          user-select: none;
-        }
-
-        .infoPanel {
-          position: absolute;
-          z-index: 20;
-          top: 34px;
-          left: 50%;
-          width: 310px;
-          transform: translateX(-50%);
-          text-align: left;
-          background: #FFFFFF;
-          border: 1px solid rgba(0, 120, 115, 0.22);
-          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
-          padding: 14px;
-        }
-
-        .infoPanelTitle {
-          margin: 0 0 10px;
-          color: #007873;
-          font-size: 15px;
-          font-weight: 900;
-        }
-
-        .infoList {
-          display: grid;
-          gap: 8px;
-        }
-
-        .infoRow {
-          display: flex;
-          justify-content: space-between;
-          gap: 14px;
-          padding-bottom: 8px;
-          border-bottom: 1px solid #EFEFEF;
-          color: #333333;
-          font-size: 13px;
-          line-height: 1.35;
-        }
-
-        .infoRow:last-child {
-          padding-bottom: 0;
-          border-bottom: none;
-        }
-
-        .infoRow strong {
-          color: #007873;
+          margin-bottom: 2px;
         }
 
         .statusTitle {
@@ -270,13 +185,6 @@ export default async function DashboardPage() {
           .creditValue {
             font-size: 34px;
           }
-
-          .infoPanel {
-            width: min(310px, calc(100vw - 44px));
-            left: auto;
-            right: -8px;
-            transform: none;
-          }
         }
 
         @media (max-width: 420px) {
@@ -316,44 +224,7 @@ export default async function DashboardPage() {
         <div className="dashboardColumn" style={{ marginBottom: 16 }}>
           <AppCard accent="green">
             <div className="academyStatusCard">
-              <div className="academyStatusHeader">
-                <div className="academyEyebrow">VFA-Akademie Status</div>
-
-                <details className="infoDetails">
-                  <summary>
-                    <span
-                      className="infoButton"
-                      aria-label="Informationen zu den Weiterbildungsstufen"
-                      title="Weiterbildungsstufen anzeigen"
-                    >
-                      i
-                    </span>
-                  </summary>
-
-                  <div className="infoPanel">
-                    <p className="infoPanelTitle">Weiterbildungsstufen</p>
-
-                    <div className="infoList">
-                      {CREDIT_STATUSES.map((status) => (
-                        <div key={status.key} className="infoRow">
-                          <strong>{status.label}</strong>
-                          <span>
-                            {status.maxCredits === null
-                              ? `ab ${status.minCredits.toLocaleString(
-                                  "de-DE"
-                                )} Credits`
-                              : `${status.minCredits.toLocaleString(
-                                  "de-DE"
-                                )} bis ${status.maxCredits.toLocaleString(
-                                  "de-DE"
-                                )} Credits`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </details>
-              </div>
+              <div className="academyEyebrow">VFA-Akademie Status</div>
 
               <CreditCircle percent={progress.progressPercent} />
 
