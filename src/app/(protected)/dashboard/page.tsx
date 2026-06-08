@@ -59,90 +59,275 @@ export default async function DashboardPage() {
   const progress = getCreditStatusProgress(credits);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px 28px",
-      }}
-    >
-      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <section style={{ marginBottom: 22 }}>
-          <div
-            style={{
-              width: 58,
-              height: 5,
-              background: "#FFC100",
-              marginBottom: 12,
-            }}
-          />
+    <main className="dashboardPage">
+      <style>{`
+        .dashboardPage {
+          min-height: 100vh;
+          background: #F7F7F4;
+          padding: 40px 24px 28px;
+          overflow-x: hidden;
+        }
 
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 36,
-              fontWeight: 400,
-              letterSpacing: "0.02em",
-              color: "#007873",
-              textTransform: "uppercase",
-            }}
-          >
-            Dashboard
-          </h1>
+        .dashboardShell {
+          width: 100%;
+          max-width: 1120px;
+          margin: 0 auto;
+        }
 
-          <p
-            style={{
-              marginTop: 8,
-              marginBottom: 0,
-              maxWidth: 760,
-              color: "#555555",
-              lineHeight: 1.6,
-              fontSize: 15,
-            }}
-          >
+        .dashboardHero {
+          margin-bottom: 22px;
+        }
+
+        .dashboardAccent {
+          width: 58px;
+          height: 5px;
+          background: #FFC100;
+          margin-bottom: 12px;
+        }
+
+        .dashboardTitle {
+          margin: 0;
+          font-size: 36px;
+          font-weight: 400;
+          letter-spacing: 0.02em;
+          color: #007873;
+          text-transform: uppercase;
+        }
+
+        .dashboardIntro {
+          margin-top: 8px;
+          margin-bottom: 0;
+          max-width: 760px;
+          color: #555555;
+          line-height: 1.6;
+          font-size: 15px;
+        }
+
+        .dashboardGrid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+          gap: 16px;
+          align-items: start;
+        }
+
+        .dashboardColumn {
+          display: grid;
+          gap: 16px;
+          min-width: 0;
+        }
+
+        .statusCardGrid {
+          display: grid;
+          grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+          gap: 22px;
+          align-items: center;
+        }
+
+        .badgeWrap {
+          display: grid;
+          justify-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .badgeImage {
+          position: relative;
+          width: min(220px, 100%);
+          aspect-ratio: 1 / 1;
+          filter: drop-shadow(0 18px 28px rgba(0,0,0,0.16));
+        }
+
+        .eyebrow {
+          color: #007873;
+          font-size: 13px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          margin-bottom: 8px;
+        }
+
+        .statusTitle {
+          margin: 0;
+          color: #007873;
+          font-size: 34px;
+          line-height: 1.08;
+          font-weight: 850;
+        }
+
+        .statusDescription {
+          margin-top: 10px;
+          margin-bottom: 0;
+          color: #333333;
+          line-height: 1.6;
+          font-size: 15px;
+        }
+
+        .creditRow {
+          margin-top: 18px;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          gap: 16px;
+          align-items: center;
+        }
+
+        .creditValue {
+          color: #007873;
+          font-size: 30px;
+          line-height: 1;
+          font-weight: 900;
+        }
+
+        .creditHint {
+          margin-top: 8px;
+          margin-bottom: 0;
+          color: #333333;
+          line-height: 1.5;
+          font-size: 14px;
+        }
+
+        .progressBar {
+          margin-top: 18px;
+          height: 12px;
+          border-radius: 999px;
+          background: #E6E6E6;
+          overflow: hidden;
+        }
+
+        .progressBarFill {
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #007873 0%, #FFC100 100%);
+        }
+
+        .sectionTitle {
+          margin: 0;
+          color: #007873;
+          font-size: 22px;
+          font-weight: 600;
+        }
+
+        .bodyText {
+          margin-top: 10px;
+          margin-bottom: 0;
+          color: #333333;
+          line-height: 1.6;
+          font-size: 15px;
+        }
+
+        .mutedText {
+          margin-top: 10px;
+          margin-bottom: 0;
+          color: #555555;
+          line-height: 1.6;
+          font-size: 14px;
+        }
+
+        .miniStats {
+          margin-top: 16px;
+          display: grid;
+          gap: 12px;
+        }
+
+        .rankList {
+          margin-top: 16px;
+          display: grid;
+          gap: 10px;
+        }
+
+        @media (max-width: 900px) {
+          .dashboardGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .dashboardColumnSide {
+            order: -1;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .dashboardPage {
+            padding: 26px 14px 24px;
+          }
+
+          .dashboardTitle {
+            font-size: 30px;
+            line-height: 1.05;
+          }
+
+          .dashboardIntro {
+            font-size: 15px;
+          }
+
+          .statusCardGrid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+
+          .badgeImage {
+            width: min(190px, 72vw);
+          }
+
+          .statusTitle {
+            font-size: 30px;
+          }
+
+          .creditRow {
+            grid-template-columns: 1fr;
+            justify-items: start;
+          }
+
+          .creditValue {
+            font-size: 28px;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .dashboardPage {
+            padding-left: 10px;
+            padding-right: 10px;
+          }
+
+          .dashboardTitle {
+            font-size: 27px;
+          }
+
+          .sectionTitle {
+            font-size: 20px;
+          }
+
+          .statusTitle {
+            font-size: 28px;
+          }
+
+          .badgeImage {
+            width: min(170px, 70vw);
+          }
+        }
+      `}</style>
+
+      <div className="dashboardShell">
+        <section className="dashboardHero">
+          <div className="dashboardAccent" />
+
+          <h1 className="dashboardTitle">Dashboard</h1>
+
+          <p className="dashboardIntro">
             Dein persönlicher Überblick über Schulungen, Credits, Zertifikate
             und deinen VFA-Akademie Status.
           </p>
         </section>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.35fr) minmax(300px, 0.65fr)",
-            gap: 16,
-            alignItems: "start",
-          }}
-        >
-          <div style={{ display: "grid", gap: 16 }}>
+        <div className="dashboardGrid">
+          <div className="dashboardColumn">
             <AppCard accent="green">
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(180px, 260px) 1fr",
-                  gap: 22,
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{
-                    display: "grid",
-                    justifyItems: "center",
-                    gap: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "min(220px, 100%)",
-                      aspectRatio: "1 / 1",
-                      filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.16))",
-                    }}
-                  >
+              <div className="statusCardGrid">
+                <div className="badgeWrap">
+                  <div className="badgeImage">
                     <Image
                       src={progress.status.badgeSrc}
                       alt={`${progress.status.label} Badge`}
                       fill
-                      sizes="220px"
+                      sizes="(max-width: 680px) 190px, 220px"
                       priority
                       style={{
                         objectFit: "contain",
@@ -155,77 +340,25 @@ export default async function DashboardPage() {
                   </StatusBadge>
                 </div>
 
-                <div>
-                  <div
-                    style={{
-                      color: "#007873",
-                      fontSize: 13,
-                      fontWeight: 900,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      marginBottom: 8,
-                    }}
-                  >
-                    VFA-Akademie Status
-                  </div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="eyebrow">VFA-Akademie Status</div>
 
-                  <h2
-                    style={{
-                      margin: 0,
-                      color: "#007873",
-                      fontSize: 34,
-                      lineHeight: 1.08,
-                      fontWeight: 850,
-                    }}
-                  >
-                    {progress.status.label}
-                  </h2>
+                  <h2 className="statusTitle">{progress.status.label}</h2>
 
-                  <p
-                    style={{
-                      marginTop: 10,
-                      marginBottom: 0,
-                      color: "#333333",
-                      lineHeight: 1.6,
-                      fontSize: 15,
-                    }}
-                  >
+                  <p className="statusDescription">
                     {progress.status.description}
                   </p>
 
-                  <div
-                    style={{
-                      marginTop: 18,
-                      display: "grid",
-                      gridTemplateColumns: "auto 1fr",
-                      gap: 16,
-                      alignItems: "center",
-                    }}
-                  >
+                  <div className="creditRow">
                     <CreditCircle percent={progress.progressPercent} />
 
-                    <div>
-                      <div
-                        style={{
-                          color: "#007873",
-                          fontSize: 30,
-                          lineHeight: 1,
-                          fontWeight: 900,
-                        }}
-                      >
+                    <div style={{ minWidth: 0 }}>
+                      <div className="creditValue">
                         {credits.toLocaleString("de-DE")} Credits
                       </div>
 
                       {progress.nextStatus ? (
-                        <p
-                          style={{
-                            marginTop: 8,
-                            marginBottom: 0,
-                            color: "#333333",
-                            lineHeight: 1.5,
-                            fontSize: 14,
-                          }}
-                        >
+                        <p className="creditHint">
                           Noch{" "}
                           <strong>
                             {progress.remainingCredits.toLocaleString("de-DE")}
@@ -234,15 +367,7 @@ export default async function DashboardPage() {
                           <strong>{progress.nextStatus.label}</strong>.
                         </p>
                       ) : (
-                        <p
-                          style={{
-                            marginTop: 8,
-                            marginBottom: 0,
-                            color: "#333333",
-                            lineHeight: 1.5,
-                            fontSize: 14,
-                          }}
-                        >
+                        <p className="creditHint">
                           Höchste VFA-Weiterbildungsstufe erreicht.
                         </p>
                       )}
@@ -250,22 +375,13 @@ export default async function DashboardPage() {
                   </div>
 
                   <div
-                    style={{
-                      marginTop: 18,
-                      height: 12,
-                      borderRadius: 999,
-                      background: "#E6E6E6",
-                      overflow: "hidden",
-                    }}
+                    className="progressBar"
                     aria-label={`Fortschritt ${progress.progressPercent} Prozent`}
                   >
                     <div
+                      className="progressBarFill"
                       style={{
                         width: `${progress.progressPercent}%`,
-                        height: "100%",
-                        borderRadius: 999,
-                        background:
-                          "linear-gradient(90deg, #007873 0%, #FFC100 100%)",
                       }}
                     />
                   </div>
@@ -274,38 +390,11 @@ export default async function DashboardPage() {
             </AppCard>
 
             <AppCard accent="yellow">
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#007873",
-                  fontSize: 22,
-                  fontWeight: 600,
-                }}
-              >
-                Was bringt mir mein Status?
-              </h2>
+              <h2 className="sectionTitle">Was bringt mir mein Status?</h2>
 
-              <p
-                style={{
-                  marginTop: 10,
-                  marginBottom: 0,
-                  color: "#333333",
-                  lineHeight: 1.6,
-                  fontSize: 15,
-                }}
-              >
-                {progress.status.benefit}
-              </p>
+              <p className="bodyText">{progress.status.benefit}</p>
 
-              <p
-                style={{
-                  marginTop: 10,
-                  marginBottom: 0,
-                  color: "#555555",
-                  lineHeight: 1.6,
-                  fontSize: 14,
-                }}
-              >
+              <p className="mutedText">
                 Perspektivisch kann dein Status als digitales Badge für
                 Signatur, Nachweis oder Profil genutzt werden. Feste Rabatte
                 oder Ansprüche sind damit aktuell nicht verbunden.
@@ -317,26 +406,11 @@ export default async function DashboardPage() {
             </AppCard>
           </div>
 
-          <div style={{ display: "grid", gap: 16 }}>
+          <div className="dashboardColumn dashboardColumnSide">
             <AppCard>
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#007873",
-                  fontSize: 22,
-                  fontWeight: 600,
-                }}
-              >
-                Dein Überblick
-              </h2>
+              <h2 className="sectionTitle">Dein Überblick</h2>
 
-              <div
-                style={{
-                  marginTop: 16,
-                  display: "grid",
-                  gap: 12,
-                }}
-              >
+              <div className="miniStats">
                 <MiniStat
                   label="Bevorstehende Schulungen"
                   value={String(me.enrollments.length)}
@@ -352,18 +426,9 @@ export default async function DashboardPage() {
             </AppCard>
 
             <AppCard>
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#007873",
-                  fontSize: 22,
-                  fontWeight: 600,
-                }}
-              >
-                Weiterbildungsstufen
-              </h2>
+              <h2 className="sectionTitle">Weiterbildungsstufen</h2>
 
-              <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+              <div className="rankList">
                 {CREDIT_STATUSES.map((status) => (
                   <Rank
                     key={status.key}
@@ -408,9 +473,15 @@ function Rank({
         gap: 12,
         padding: "10px 0",
         borderBottom: "1px solid #E6E6E6",
+        minWidth: 0,
       }}
     >
-      <strong style={{ color: active ? "#007873" : "#333333" }}>
+      <strong
+        style={{
+          color: active ? "#007873" : "#333333",
+          minWidth: 0,
+        }}
+      >
         {label}
       </strong>
 
@@ -419,6 +490,7 @@ function Rank({
           color: active ? "#007873" : "#555555",
           textAlign: "right",
           fontWeight: active ? 800 : 500,
+          minWidth: 0,
         }}
       >
         {range}
@@ -479,18 +551,28 @@ function MiniStat({ label, value }: { label: string; value: string }) {
         gap: 12,
         paddingBottom: 10,
         borderBottom: "1px solid #E6E6E6",
+        minWidth: 0,
       }}
     >
       <span
         style={{
           color: "#555555",
           fontWeight: 700,
+          minWidth: 0,
         }}
       >
         {label}
       </span>
 
-      <strong style={{ color: "#007873" }}>{value}</strong>
+      <strong
+        style={{
+          color: "#007873",
+          textAlign: "right",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </strong>
     </div>
   );
 }
