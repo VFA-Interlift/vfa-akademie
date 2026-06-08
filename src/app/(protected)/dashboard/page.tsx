@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -5,60 +6,12 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DashboardLeaderboardTop from "@/components/leaderboard/DashboardLeaderboardTop";
+import {
+  CREDIT_STATUSES,
+  getCreditStatusProgress,
+} from "@/lib/credits/status";
 
 export const dynamic = "force-dynamic";
-
-type CreditLevel = {
-  currentLevel: string;
-  nextLevel: string | null;
-  progressPercent: number;
-  remaining: number;
-  description: string;
-};
-
-function getCreditLevel(credits: number): CreditLevel {
-  if (credits >= 3500) {
-    return {
-      currentLevel: "VFA-Experte",
-      nextLevel: null,
-      progressPercent: 100,
-      remaining: 0,
-      description:
-        "Du hast ein sehr hohes Weiterbildungsniveau innerhalb der VFA-Akademie erreicht.",
-    };
-  }
-
-  if (credits >= 1500) {
-    return {
-      currentLevel: "Gold",
-      nextLevel: "VFA-Experte",
-      progressPercent: Math.round(((credits - 1500) / 2000) * 100),
-      remaining: 3500 - credits,
-      description:
-        "Du verfügst über umfangreiche Weiterbildungserfahrung und kannst deinen Qualifikationsstand nachvollziehbar dokumentieren.",
-    };
-  }
-
-  if (credits >= 500) {
-    return {
-      currentLevel: "Silber",
-      nextLevel: "Gold",
-      progressPercent: Math.round(((credits - 500) / 1000) * 100),
-      remaining: 1500 - credits,
-      description:
-        "Du bildest dich regelmäßig weiter und baust dein Fachwissen in mehreren Themenbereichen aus.",
-    };
-  }
-
-  return {
-    currentLevel: "Bronze",
-    nextLevel: "Silber",
-    progressPercent: Math.round((credits / 500) * 100),
-    remaining: 500 - credits,
-    description:
-      "Du hast erste Schulungen absolviert und sammelst Grundlagenwissen in der Aufzugsbranche.",
-  };
-}
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -103,7 +56,7 @@ export default async function DashboardPage() {
 
   const isAdmin = me.role === "ADMIN";
   const credits = me.creditsTotal ?? 0;
-  const level = getCreditLevel(credits);
+  const progress = getCreditStatusProgress(credits);
 
   return (
     <main
@@ -113,7 +66,7 @@ export default async function DashboardPage() {
         padding: "40px 24px 28px",
       }}
     >
-      <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <section style={{ marginBottom: 22 }}>
           <div
             style={{
@@ -136,209 +89,340 @@ export default async function DashboardPage() {
           >
             Dashboard
           </h1>
+
+          <p
+            style={{
+              marginTop: 8,
+              marginBottom: 0,
+              maxWidth: 760,
+              color: "#555555",
+              lineHeight: 1.6,
+              fontSize: 15,
+            }}
+          >
+            Dein persönlicher Überblick über Schulungen, Credits, Zertifikate
+            und deinen VFA-Akademie Status.
+          </p>
         </section>
 
         <div
           style={{
             display: "grid",
+            gridTemplateColumns: "minmax(0, 1.35fr) minmax(300px, 0.65fr)",
             gap: 16,
+            alignItems: "start",
           }}
         >
-          <AppCard accent="green">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                alignItems: "flex-start",
-                marginBottom: 12,
-              }}
-            >
-              <StatusBadge variant="yellow">{level.currentLevel}</StatusBadge>
-              <CreditInfo description={level.description} />
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gap: 14,
-                alignItems: "center",
-              }}
-            >
-              <CreditCircle percent={level.progressPercent} />
-
-              <div>
-                <h2
+          <div style={{ display: "grid", gap: 16 }}>
+            <AppCard accent="green">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(180px, 260px) 1fr",
+                  gap: 22,
+                  alignItems: "center",
+                }}
+              >
+                <div
                   style={{
-                    marginTop: 0,
-                    marginBottom: 6,
-                    color: "#007873",
-                    fontSize: 28,
-                    lineHeight: 1,
-                    fontWeight: 800,
+                    display: "grid",
+                    justifyItems: "center",
+                    gap: 10,
                   }}
                 >
-                  {credits.toLocaleString("de-DE")} Credits
-                </h2>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "min(220px, 100%)",
+                      aspectRatio: "1 / 1",
+                      filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.16))",
+                    }}
+                  >
+                    <Image
+                      src={progress.status.badgeSrc}
+                      alt={`${progress.status.label} Badge`}
+                      fill
+                      sizes="220px"
+                      priority
+                      style={{
+                        objectFit: "contain",
+                      }}
+                    />
+                  </div>
 
-                {level.nextLevel ? (
-                  <p
+                  <StatusBadge variant="yellow">
+                    {progress.status.label}
+                  </StatusBadge>
+                </div>
+
+                <div>
+                  <div
                     style={{
-                      margin: 0,
-                      color: "#333333",
-                      lineHeight: 1.5,
-                      fontSize: 14,
+                      color: "#007873",
+                      fontSize: 13,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      marginBottom: 8,
                     }}
                   >
-                    Noch{" "}
-                    <strong>{level.remaining.toLocaleString("de-DE")}</strong>{" "}
-                    Credits bis <strong>{level.nextLevel}</strong>.
-                  </p>
-                ) : (
-                  <p
+                    VFA-Akademie Status
+                  </div>
+
+                  <h2
                     style={{
                       margin: 0,
-                      color: "#333333",
-                      lineHeight: 1.5,
-                      fontSize: 14,
+                      color: "#007873",
+                      fontSize: 34,
+                      lineHeight: 1.08,
+                      fontWeight: 850,
                     }}
                   >
-                    Höchste Credit-Stufe erreicht.
+                    {progress.status.label}
+                  </h2>
+
+                  <p
+                    style={{
+                      marginTop: 10,
+                      marginBottom: 0,
+                      color: "#333333",
+                      lineHeight: 1.6,
+                      fontSize: 15,
+                    }}
+                  >
+                    {progress.status.description}
                   </p>
-                )}
+
+                  <div
+                    style={{
+                      marginTop: 18,
+                      display: "grid",
+                      gridTemplateColumns: "auto 1fr",
+                      gap: 16,
+                      alignItems: "center",
+                    }}
+                  >
+                    <CreditCircle percent={progress.progressPercent} />
+
+                    <div>
+                      <div
+                        style={{
+                          color: "#007873",
+                          fontSize: 30,
+                          lineHeight: 1,
+                          fontWeight: 900,
+                        }}
+                      >
+                        {credits.toLocaleString("de-DE")} Credits
+                      </div>
+
+                      {progress.nextStatus ? (
+                        <p
+                          style={{
+                            marginTop: 8,
+                            marginBottom: 0,
+                            color: "#333333",
+                            lineHeight: 1.5,
+                            fontSize: 14,
+                          }}
+                        >
+                          Noch{" "}
+                          <strong>
+                            {progress.remainingCredits.toLocaleString("de-DE")}
+                          </strong>{" "}
+                          Credits bis{" "}
+                          <strong>{progress.nextStatus.label}</strong>.
+                        </p>
+                      ) : (
+                        <p
+                          style={{
+                            marginTop: 8,
+                            marginBottom: 0,
+                            color: "#333333",
+                            lineHeight: 1.5,
+                            fontSize: 14,
+                          }}
+                        >
+                          Höchste VFA-Weiterbildungsstufe erreicht.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 18,
+                      height: 12,
+                      borderRadius: 999,
+                      background: "#E6E6E6",
+                      overflow: "hidden",
+                    }}
+                    aria-label={`Fortschritt ${progress.progressPercent} Prozent`}
+                  >
+                    <div
+                      style={{
+                        width: `${progress.progressPercent}%`,
+                        height: "100%",
+                        borderRadius: 999,
+                        background:
+                          "linear-gradient(90deg, #007873 0%, #FFC100 100%)",
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </AppCard>
+            </AppCard>
 
-          <AppCard accent="green">
-            <DashboardLeaderboardTop />
-          </AppCard>
+            <AppCard accent="yellow">
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#007873",
+                  fontSize: 22,
+                  fontWeight: 600,
+                }}
+              >
+                Was bringt mir mein Status?
+              </h2>
 
-          <AppCard>
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 22,
-                fontWeight: 500,
-              }}
-            >
-              Dein Überblick
-            </h2>
+              <p
+                style={{
+                  marginTop: 10,
+                  marginBottom: 0,
+                  color: "#333333",
+                  lineHeight: 1.6,
+                  fontSize: 15,
+                }}
+              >
+                {progress.status.benefit}
+              </p>
 
-            <div
-              style={{
-                marginTop: 16,
-                display: "grid",
-                gap: 12,
-              }}
-            >
-              <MiniStat
-                label="Bevorstehende Schulungen"
-                value={String(me.enrollments.length)}
-              />
+              <p
+                style={{
+                  marginTop: 10,
+                  marginBottom: 0,
+                  color: "#555555",
+                  lineHeight: 1.6,
+                  fontSize: 14,
+                }}
+              >
+                Perspektivisch kann dein Status als digitales Badge für
+                Signatur, Nachweis oder Profil genutzt werden. Feste Rabatte
+                oder Ansprüche sind damit aktuell nicht verbunden.
+              </p>
+            </AppCard>
 
-              <MiniStat
-                label="Ausgestellte Zertifikate"
-                value={String(me.certificates.length)}
-              />
+            <AppCard accent="green">
+              <DashboardLeaderboardTop />
+            </AppCard>
+          </div>
 
-              <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
-            </div>
-          </AppCard>
+          <div style={{ display: "grid", gap: 16 }}>
+            <AppCard>
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#007873",
+                  fontSize: 22,
+                  fontWeight: 600,
+                }}
+              >
+                Dein Überblick
+              </h2>
+
+              <div
+                style={{
+                  marginTop: 16,
+                  display: "grid",
+                  gap: 12,
+                }}
+              >
+                <MiniStat
+                  label="Bevorstehende Schulungen"
+                  value={String(me.enrollments.length)}
+                />
+
+                <MiniStat
+                  label="Ausgestellte Zertifikate"
+                  value={String(me.certificates.length)}
+                />
+
+                <MiniStat label="Rolle" value={isAdmin ? "Admin" : "User"} />
+              </div>
+            </AppCard>
+
+            <AppCard>
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#007873",
+                  fontSize: 22,
+                  fontWeight: 600,
+                }}
+              >
+                Weiterbildungsstufen
+              </h2>
+
+              <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+                {CREDIT_STATUSES.map((status) => (
+                  <Rank
+                    key={status.key}
+                    label={status.label}
+                    range={
+                      status.maxCredits === null
+                        ? `ab ${status.minCredits.toLocaleString(
+                            "de-DE"
+                          )} Credits`
+                        : `${status.minCredits.toLocaleString(
+                            "de-DE"
+                          )} bis ${status.maxCredits.toLocaleString(
+                            "de-DE"
+                          )} Credits`
+                    }
+                    active={status.key === progress.status.key}
+                  />
+                ))}
+              </div>
+            </AppCard>
+          </div>
         </div>
       </div>
     </main>
   );
 }
 
-function CreditInfo({ description }: { description: string }) {
-  return (
-    <details style={{ position: "relative" }}>
-      <summary
-        style={{
-          listStyle: "none",
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          border: "1px solid #C7C7C7",
-          background: "#FFFFFF",
-          color: "#007873",
-          display: "grid",
-          placeItems: "center",
-          fontWeight: 900,
-          cursor: "pointer",
-          boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
-        }}
-        title="Credit-Ränge anzeigen"
-      >
-        i
-      </summary>
-
-      <div
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 40,
-          zIndex: 20,
-          width: "min(340px, calc(100vw - 48px))",
-          padding: 16,
-          background: "#FFFFFF",
-          border: "1px solid #FFC100",
-          boxShadow: "0 14px 34px rgba(0,0,0,0.12)",
-          color: "#1F1F1F",
-        }}
-      >
-        <div
-          style={{
-            color: "#007873",
-            fontWeight: 900,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            fontSize: 13,
-            marginBottom: 10,
-          }}
-        >
-          Credit-Status
-        </div>
-
-        <p
-          style={{
-            marginTop: 0,
-            marginBottom: 14,
-            color: "#333333",
-            lineHeight: 1.55,
-            fontSize: 14,
-          }}
-        >
-          {description}
-        </p>
-
-        <div style={{ display: "grid", gap: 10 }}>
-          <Rank label="Bronze" range="0 bis 499 Credits" />
-          <Rank label="Silber" range="500 bis 1.499 Credits" />
-          <Rank label="Gold" range="1.500 bis 3.499 Credits" />
-          <Rank label="VFA-Experte" range="ab 3.500 Credits" />
-        </div>
-      </div>
-    </details>
-  );
-}
-
-function Rank({ label, range }: { label: string; range: string }) {
+function Rank({
+  label,
+  range,
+  active,
+}: {
+  label: string;
+  range: string;
+  active: boolean;
+}) {
   return (
     <div
       style={{
         display: "flex",
         justifyContent: "space-between",
         gap: 12,
-        paddingBottom: 8,
+        padding: "10px 0",
         borderBottom: "1px solid #E6E6E6",
       }}
     >
-      <strong style={{ color: "#007873" }}>{label}</strong>
-      <span style={{ color: "#333333", textAlign: "right" }}>{range}</span>
+      <strong style={{ color: active ? "#007873" : "#333333" }}>
+        {label}
+      </strong>
+
+      <span
+        style={{
+          color: active ? "#007873" : "#555555",
+          textAlign: "right",
+          fontWeight: active ? 800 : 500,
+        }}
+      >
+        {range}
+      </span>
     </div>
   );
 }
@@ -350,19 +434,20 @@ function CreditCircle({ percent }: { percent: number }) {
   return (
     <div
       style={{
-        width: 88,
-        height: 88,
+        width: 92,
+        height: 92,
         borderRadius: "50%",
         background,
         display: "grid",
         placeItems: "center",
         flex: "0 0 auto",
+        boxShadow: "0 10px 26px rgba(0,0,0,0.10)",
       }}
     >
       <div
         style={{
-          width: 64,
-          height: 64,
+          width: 66,
+          height: 66,
           borderRadius: "50%",
           background: "#FFFFFF",
           display: "grid",
