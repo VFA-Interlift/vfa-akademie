@@ -8,6 +8,8 @@ type AnimatedProgressCircleProps = {
   color: string;
 };
 
+const ANIMATION_DURATION_MS = 1200;
+
 export default function AnimatedProgressCircle({
   percent,
   credits,
@@ -16,12 +18,31 @@ export default function AnimatedProgressCircle({
   const [animatedPercent, setAnimatedPercent] = useState(0);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setAnimatedPercent(percent);
-    }, 180);
+    let animationFrameId = 0;
+    let startTime: number | null = null;
+
+    function animate(timestamp: number) {
+      if (startTime === null) {
+        startTime = timestamp;
+      }
+
+      const elapsed = timestamp - startTime;
+      const rawProgress = Math.min(elapsed / ANIMATION_DURATION_MS, 1);
+      const easedProgress = easeOutCubic(rawProgress);
+      const nextPercent = Math.round(percent * easedProgress);
+
+      setAnimatedPercent(nextPercent);
+
+      if (rawProgress < 1) {
+        animationFrameId = window.requestAnimationFrame(animate);
+      }
+    }
+
+    setAnimatedPercent(0);
+    animationFrameId = window.requestAnimationFrame(animate);
 
     return () => {
-      window.clearTimeout(timeout);
+      window.cancelAnimationFrame(animationFrameId);
     };
   }, [percent]);
 
@@ -43,7 +64,6 @@ export default function AnimatedProgressCircle({
           display: "grid",
           placeItems: "center",
           position: "relative",
-          transition: "background 1100ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         <div
@@ -81,7 +101,6 @@ export default function AnimatedProgressCircle({
               fontSize: 42,
               fontWeight: 900,
               lineHeight: 1,
-              transition: "color 300ms ease",
             }}
           >
             {animatedPercent}%
@@ -102,4 +121,8 @@ export default function AnimatedProgressCircle({
       </div>
     </div>
   );
+}
+
+function easeOutCubic(value: number) {
+  return 1 - Math.pow(1 - value, 3);
 }
