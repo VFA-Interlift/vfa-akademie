@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import HeaderClient from "@/components/HeaderClient";
 import Providers from "@/components/Providers";
-import SplashGate from "@/components/SplashGate";
 import SocialFooter from "@/components/layout/SocialFooter";
 
 export const metadata: Metadata = {
@@ -34,12 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <Providers>
-          <SplashGate
-            durationMs={2000}
-            logoSrc="/logo.png"
-            title="VFA Akademie"
-          />
-
           <div
             style={{
               minHeight: "100vh",
