@@ -675,11 +675,15 @@ function formatDateRange(startValue: string, endValue: string | null) {
   const start = formatDate(startValue);
   const end = endValue ? formatDate(endValue) : null;
 
-  if (!end || end === start) {
-    return start;
+  if (!start) {
+    return "";
   }
 
-  return `${start} bis ${end}`;
+  if (!end || end === start) {
+    return `am ${start}`;
+  }
+
+  return `vom ${start} bis ${end}`;
 }
 
 function formatDate(value: string | null | undefined) {
