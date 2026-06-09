@@ -17,6 +17,10 @@ export async function renderCertificateDocx({
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
+    delimiters: {
+      start: "{{",
+      end: "}}",
+    },
     nullGetter() {
       return "";
     },
