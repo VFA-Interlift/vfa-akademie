@@ -41,9 +41,14 @@ export async function getMyCertificates(
       userId: user.id,
       status: "ISSUED",
     },
-    orderBy: {
-      issuedAt: "desc",
-    },
+    orderBy: [
+      {
+        issuedAt: "desc",
+      },
+      {
+        createdAt: "desc",
+      },
+    ],
     select: {
       id: true,
       title: true,

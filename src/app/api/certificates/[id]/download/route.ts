@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -13,19 +13,33 @@ type Ctx = {
   }>;
 };
 
-function fail(error: string, status = 400, details?: unknown) {
-  return NextResponse.json(
-    {
-      ok: false,
-      error,
-      details,
-    },
-    { status }
-  );
+type ApiErrorResponse = {
+  ok: false;
+  error: string;
+  message: string;
+  details?: unknown;
+};
+
+const DOWNLOADABLE_CERTIFICATE_STATUSES = ["ISSUED"];
+
+function fail(
+  error: string,
+  status = 400,
+  message = "Das Zertifikat konnte nicht geladen werden.",
+  details?: unknown
+) {
+  const body: ApiErrorResponse = {
+    ok: false,
+    error,
+    message,
+    details,
+  };
+
+  return NextResponse.json(body, { status });
 }
 
 function encodeFileName(fileName: string) {
-  return encodeURIComponent(fileName).replace(/['()]/g, escape);
+  return encodeURIComponent(fileName);
 }
 
 function getErrorMessage(error: unknown) {
@@ -40,13 +54,17 @@ export async function GET(_req: Request, context: Ctx) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return fail("UNAUTHENTICATED", 401);
+    return fail(
+      "UNAUTHENTICATED",
+      401,
+      "Bitte melde dich an, um das Dokument herunterzuladen."
+    );
   }
 
   const { id } = await context.params;
 
   if (!id) {
-    return fail("MISSING_CERTIFICATE_ID", 400);
+    return fail("MISSING_CERTIFICATE_ID", 400, "Die Zertifikats-ID fehlt.");
   }
 
   const email = session.user.email.trim().toLowerCase();
@@ -62,7 +80,11 @@ export async function GET(_req: Request, context: Ctx) {
   });
 
   if (!me) {
-    return fail("USER_NOT_FOUND", 404);
+    return fail(
+      "USER_NOT_FOUND",
+      404,
+      "Der angemeldete Nutzer wurde nicht gefunden."
+    );
   }
 
   const certificate = await prisma.certificate.findUnique({
@@ -71,31 +93,60 @@ export async function GET(_req: Request, context: Ctx) {
     },
     select: {
       userId: true,
+      status: true,
     },
   });
 
   if (!certificate) {
-    return fail("CERTIFICATE_NOT_FOUND", 404);
+    return fail(
+      "CERTIFICATE_NOT_FOUND",
+      404,
+      "Das Zertifikat wurde nicht gefunden."
+    );
   }
 
   const isOwner = certificate.userId === me.id;
   const isAdmin = me.role === "ADMIN";
 
   if (!isOwner && !isAdmin) {
-    return fail("FORBIDDEN", 403);
+    return fail(
+      "FORBIDDEN",
+      403,
+      "Du hast keine Berechtigung, dieses Zertifikat herunterzuladen."
+    );
+  }
+
+  if (!DOWNLOADABLE_CERTIFICATE_STATUSES.includes(certificate.status)) {
+    return fail(
+      "CERTIFICATE_NOT_DOWNLOADABLE",
+      400,
+      "Dieses Zertifikat ist aktuell nicht für den Download freigegeben.",
+      {
+        status: certificate.status,
+      }
+    );
   }
 
   const documentData = await getCertificateDocumentData(id);
 
   if (!documentData) {
-    return fail("CERTIFICATE_NOT_FOUND", 404);
+    return fail(
+      "CERTIFICATE_DOCUMENT_DATA_NOT_FOUND",
+      404,
+      "Die Zertifikatsdaten konnten nicht geladen werden."
+    );
   }
 
   if (!documentData.templateFileName) {
-    return fail("CERTIFICATE_TEMPLATE_NOT_CONFIGURED", 400, {
-      code: documentData.certificate.code,
-      trainingCode: documentData.certificate.training.code,
-    });
+    return fail(
+      "CERTIFICATE_TEMPLATE_NOT_CONFIGURED",
+      400,
+      "Für diesen Zertifikatstyp ist noch keine Vorlage hinterlegt.",
+      {
+        code: documentData.certificate.code,
+        trainingCode: documentData.certificate.training.code,
+      }
+    );
   }
 
   try {
@@ -122,9 +173,20 @@ export async function GET(_req: Request, context: Ctx) {
     const message = getErrorMessage(error);
 
     if (message.startsWith("TEMPLATE_NOT_FOUND")) {
-      return fail("TEMPLATE_NOT_FOUND", 404, message);
+      return fail(
+        "TEMPLATE_NOT_FOUND",
+        404,
+        "Die hinterlegte Zertifikatsvorlage wurde nicht gefunden.",
+        message
+      );
     }
 
-    return fail("CERTIFICATE_RENDER_FAILED", 500, message);
+    return fail(
+      "CERTIFICATE_RENDER_FAILED",
+      500,
+      "Das Zertifikat konnte nicht erstellt werden.",
+      message
+    );
   }
 }
+

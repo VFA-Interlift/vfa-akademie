@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 
+type DownloadErrorResponse = {
+  ok?: false;
+  error?: string;
+  message?: string;
+  details?: unknown;
+};
+
 export default function CertificateDownloadButton({
   certificateId,
   label = "Dokument herunterladen",
@@ -23,21 +30,28 @@ export default function CertificateDownloadButton({
       });
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        setMsg(text || "Download fehlgeschlagen.");
+        const errorMessage = await getDownloadErrorMessage(res);
+        setMsg(errorMessage);
         return;
       }
 
       const blob = await res.blob();
 
+      if (blob.size === 0) {
+        setMsg("Das Dokument ist leer und konnte nicht heruntergeladen werden.");
+        return;
+      }
+
       const contentDisposition = res.headers.get("Content-Disposition") ?? "";
-      const fileName = getFileNameFromContentDisposition(contentDisposition);
+      const fileName =
+        getFileNameFromContentDisposition(contentDisposition) ??
+        "zertifikat.docx";
 
       const url = window.URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName || "zertifikat.docx";
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -51,6 +65,13 @@ export default function CertificateDownloadButton({
       setLoading(false);
     }
   }
+
+  const isError =
+    msg.includes("fehlgeschlagen") ||
+    msg.includes("konnte") ||
+    msg.includes("nicht") ||
+    msg.includes("fehlt") ||
+    msg.includes("keine Berechtigung");
 
   return (
     <div style={{ display: "grid", gap: 8 }}>
@@ -74,17 +95,16 @@ export default function CertificateDownloadButton({
           letterSpacing: "0.08em",
           cursor: loading ? "not-allowed" : "pointer",
           opacity: loading ? 0.65 : 1,
+          transition: "opacity 180ms ease, transform 180ms ease",
         }}
       >
-        {loading ? "Wird geladen..." : label}
+        {loading ? "Dokument wird erstellt..." : label}
       </button>
 
       {msg && (
         <div
           style={{
-            color: msg.includes("fehlgeschlagen") || msg.includes("konnte")
-              ? "#B00020"
-              : "#007873",
+            color: isError ? "#B00020" : "#007873",
             fontSize: 13,
             fontWeight: 800,
             lineHeight: 1.4,
@@ -95,6 +115,64 @@ export default function CertificateDownloadButton({
       )}
     </div>
   );
+}
+
+async function getDownloadErrorMessage(res: Response) {
+  const contentType = res.headers.get("Content-Type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const data = (await res.json().catch(() => null)) as
+      | DownloadErrorResponse
+      | null;
+
+    if (data?.message) {
+      return data.message;
+    }
+
+    if (data?.error) {
+      return translateDownloadError(data.error);
+    }
+  }
+
+  const text = await res.text().catch(() => "");
+
+  if (text.trim()) {
+    return text;
+  }
+
+  return "Download fehlgeschlagen.";
+}
+
+function translateDownloadError(error: string) {
+  if (error === "UNAUTHENTICATED") {
+    return "Bitte melde dich an, um das Dokument herunterzuladen.";
+  }
+
+  if (error === "FORBIDDEN") {
+    return "Du hast keine Berechtigung, dieses Zertifikat herunterzuladen.";
+  }
+
+  if (error === "CERTIFICATE_NOT_FOUND") {
+    return "Das Zertifikat wurde nicht gefunden.";
+  }
+
+  if (error === "CERTIFICATE_NOT_DOWNLOADABLE") {
+    return "Dieses Zertifikat ist aktuell nicht für den Download freigegeben.";
+  }
+
+  if (error === "CERTIFICATE_TEMPLATE_NOT_CONFIGURED") {
+    return "Für diesen Zertifikatstyp ist noch keine Vorlage hinterlegt.";
+  }
+
+  if (error === "TEMPLATE_NOT_FOUND") {
+    return "Die hinterlegte Zertifikatsvorlage wurde nicht gefunden.";
+  }
+
+  if (error === "CERTIFICATE_RENDER_FAILED") {
+    return "Das Zertifikat konnte nicht erstellt werden.";
+  }
+
+  return "Download fehlgeschlagen.";
 }
 
 function getFileNameFromContentDisposition(value: string) {
