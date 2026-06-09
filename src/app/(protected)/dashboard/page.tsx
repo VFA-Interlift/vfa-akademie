@@ -6,6 +6,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
+import AnimatedSection from "@/components/ui/AnimatedSection";
+import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
 
 export const dynamic = "force-dynamic";
 
@@ -144,56 +146,58 @@ export default async function DashboardPage() {
       }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <section style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              width: 56,
-              height: 5,
-              background: "#FFC100",
-              marginBottom: 14,
-            }}
-          />
+        <AnimatedSection delayMs={0}>
+          <section style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                width: 56,
+                height: 5,
+                background: "#FFC100",
+                marginBottom: 14,
+              }}
+            />
 
-          <h1
-            style={{
-              margin: 0,
-              color: "#007873",
-              fontSize: 38,
-              fontWeight: 500,
-              lineHeight: 1.15,
-              textTransform: "uppercase",
-              letterSpacing: "0.02em",
-            }}
-          >
-            Dashboard
-          </h1>
+            <h1
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: 38,
+                fontWeight: 500,
+                lineHeight: 1.15,
+                textTransform: "uppercase",
+                letterSpacing: "0.02em",
+              }}
+            >
+              Dashboard
+            </h1>
 
-          <h2
-            style={{
-              margin: "18px 0 0",
-              color: "#1F1F1F",
-              fontSize: 30,
-              fontWeight: 500,
-              lineHeight: 1.2,
-            }}
-          >
-            Hallo {displayName || "und willkommen"}
-          </h2>
+            <h2
+              style={{
+                margin: "18px 0 0",
+                color: "#1F1F1F",
+                fontSize: 30,
+                fontWeight: 500,
+                lineHeight: 1.2,
+              }}
+            >
+              Hallo {displayName || "und willkommen"}
+            </h2>
 
-          <p
-            style={{
-              marginTop: 10,
-              marginBottom: 0,
-              maxWidth: 760,
-              color: "#333333",
-              lineHeight: 1.65,
-              fontSize: 16,
-            }}
-          >
-            Hier siehst du deinen aktuellen Stand in der VFA-Akademie –
-            inklusive Credits, persönlichem Status, Schulungen und Ranking.
-          </p>
-        </section>
+            <p
+              style={{
+                marginTop: 10,
+                marginBottom: 0,
+                maxWidth: 760,
+                color: "#333333",
+                lineHeight: 1.65,
+                fontSize: 16,
+              }}
+            >
+              Hier siehst du deinen aktuellen Stand in der VFA-Akademie –
+              inklusive Credits, persönlichem Status, Schulungen und Ranking.
+            </p>
+          </section>
+        </AnimatedSection>
 
         <div
           style={{
@@ -203,230 +207,165 @@ export default async function DashboardPage() {
             alignItems: "stretch",
           }}
         >
-          <AppCard accent="green">
-            <div
-              style={{
-                display: "grid",
-                gap: 18,
-                height: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      color: "#007873",
-                      fontSize: 13,
-                      fontWeight: 800,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Dein Status
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: 8,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "7px 12px",
-                      border: rank.softBorder,
-                      background: rank.softBackground,
-                      color: rank.color,
-                      fontWeight: 900,
-                      fontSize: 16,
-                      lineHeight: 1.2,
-                      borderRadius: 999,
-                    }}
-                  >
-                    {rank.label} Status
-                  </div>
-                </div>
-
-                <details
-                  style={{
-                    position: "relative",
-                  }}
-                >
-                  <summary
-                    style={{
-                      listStyle: "none",
-                      width: 38,
-                      height: 38,
-                      borderRadius: "50%",
-                      border: "1px solid #D6D6D6",
-                      background: "#FFFFFF",
-                      color: "#007873",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      fontWeight: 900,
-                      fontSize: 18,
-                      boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                    }}
-                    title="Infos zu den Rängen"
-                  >
-                    i
-                  </summary>
-
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 46,
-                      right: 0,
-                      width: 300,
-                      maxWidth: "calc(100vw - 80px)",
-                      background: "#FFFFFF",
-                      border: "1px solid #E6E6E6",
-                      boxShadow: "0 12px 28px rgba(0,0,0,0.10)",
-                      padding: 16,
-                      zIndex: 20,
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "#007873",
-                        fontWeight: 800,
-                        fontSize: 14,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        marginBottom: 12,
-                      }}
-                    >
-                      Weiterbildungsstufen
-                    </div>
-
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {RANKS.map((item) => (
-                        <div
-                          key={item.key}
-                          style={{
-                            border: item.softBorder,
-                            background: item.softBackground,
-                            padding: "10px 12px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              color: item.color,
-                              fontWeight: 900,
-                              fontSize: 15,
-                            }}
-                          >
-                            {item.label}
-                          </div>
-
-                          <div
-                            style={{
-                              marginTop: 4,
-                              color: "#333333",
-                              fontSize: 13,
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {item.max === null
-                              ? `ab ${item.min.toLocaleString(
-                                  "de-DE"
-                                )} Credits`
-                              : `${item.min.toLocaleString(
-                                  "de-DE"
-                                )} bis ${item.max.toLocaleString(
-                                  "de-DE"
-                                )} Credits`}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </details>
-              </div>
-
+          <AnimatedSection delayMs={90} style={{ height: "100%" }}>
+            <AppCard accent="green">
               <div
                 style={{
                   display: "grid",
-                  placeItems: "center",
-                  paddingTop: 4,
-                  paddingBottom: 4,
+                  gap: 18,
+                  height: "100%",
                 }}
               >
                 <div
                   style={{
-                    width: 230,
-                    height: 230,
-                    borderRadius: "50%",
-                    background: `conic-gradient(${rank.color} ${progress.percent}%, #E7E7E7 ${progress.percent}% 100%)`,
-                    display: "grid",
-                    placeItems: "center",
-                    position: "relative",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    alignItems: "flex-start",
+                    flexWrap: "wrap",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 170,
-                      height: 170,
-                      borderRadius: "50%",
-                      background: "#FFFFFF",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      padding: 16,
-                      boxSizing: "border-box",
-                    }}
-                  >
+                  <div>
                     <div
                       style={{
-                        color: "#666666",
-                        fontSize: 12,
+                        color: "#007873",
+                        fontSize: 13,
                         fontWeight: 800,
+                        letterSpacing: "0.08em",
                         textTransform: "uppercase",
-                        letterSpacing: "0.06em",
                       }}
                     >
-                      Fortschritt
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 6,
-                        color: rank.color,
-                        fontSize: 42,
-                        fontWeight: 900,
-                        lineHeight: 1,
-                      }}
-                    >
-                      {progress.percent}%
+                      Dein Status
                     </div>
 
                     <div
                       style={{
                         marginTop: 8,
-                        color: "#1F1F1F",
-                        fontSize: 15,
-                        fontWeight: 800,
-                        lineHeight: 1.3,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "7px 12px",
+                        border: rank.softBorder,
+                        background: rank.softBackground,
+                        color: rank.color,
+                        fontWeight: 900,
+                        fontSize: 16,
+                        lineHeight: 1.2,
+                        borderRadius: 999,
                       }}
                     >
-                      {user.creditsTotal.toLocaleString("de-DE")} Credits
+                      {rank.label} Status
                     </div>
                   </div>
+
+                  <details
+                    style={{
+                      position: "relative",
+                    }}
+                  >
+                    <summary
+                      style={{
+                        listStyle: "none",
+                        width: 38,
+                        height: 38,
+                        borderRadius: "50%",
+                        border: "1px solid #D6D6D6",
+                        background: "#FFFFFF",
+                        color: "#007873",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        fontWeight: 900,
+                        fontSize: 18,
+                        boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                      }}
+                      title="Infos zu den Rängen"
+                    >
+                      i
+                    </summary>
+
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 46,
+                        right: 0,
+                        width: 300,
+                        maxWidth: "calc(100vw - 80px)",
+                        background: "#FFFFFF",
+                        border: "1px solid #E6E6E6",
+                        boxShadow: "0 12px 28px rgba(0,0,0,0.10)",
+                        padding: 16,
+                        zIndex: 20,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#007873",
+                          fontWeight: 800,
+                          fontSize: 14,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          marginBottom: 12,
+                        }}
+                      >
+                        Weiterbildungsstufen
+                      </div>
+
+                      <div style={{ display: "grid", gap: 10 }}>
+                        {RANKS.map((item) => (
+                          <div
+                            key={item.key}
+                            style={{
+                              border: item.softBorder,
+                              background: item.softBackground,
+                              padding: "10px 12px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                color: item.color,
+                                fontWeight: 900,
+                                fontSize: 15,
+                              }}
+                            >
+                              {item.label}
+                            </div>
+
+                            <div
+                              style={{
+                                marginTop: 4,
+                                color: "#333333",
+                                fontSize: 13,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {item.max === null
+                                ? `ab ${item.min.toLocaleString(
+                                    "de-DE"
+                                  )} Credits`
+                                : `${item.min.toLocaleString(
+                                    "de-DE"
+                                  )} bis ${item.max.toLocaleString(
+                                    "de-DE"
+                                  )} Credits`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </details>
                 </div>
+
+                <AnimatedProgressCircle
+                  percent={progress.percent}
+                  credits={user.creditsTotal}
+                  color={rank.color}
+                />
 
                 <div
                   style={{
-                    marginTop: 14,
+                    marginTop: -4,
                     color: "#666666",
                     fontSize: 13,
                     textAlign: "center",
@@ -440,76 +379,78 @@ export default async function DashboardPage() {
                     : "Du hast die höchste Stufe bereits erreicht."}
                 </div>
               </div>
-            </div>
-          </AppCard>
+            </AppCard>
+          </AnimatedSection>
 
-          <AppCard accent="yellow">
-            <div
-              style={{
-                display: "grid",
-                gap: 16,
-                height: "100%",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    color: "#007873",
-                    fontSize: 13,
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Dein Überblick
-                </div>
-
-                <p
-                  style={{
-                    marginTop: 12,
-                    marginBottom: 0,
-                    color: "#333333",
-                    lineHeight: 1.65,
-                  }}
-                >
-                  Deine wichtigsten Kennzahlen und Stammdaten auf einen Blick.
-                </p>
-              </div>
-
+          <AnimatedSection delayMs={160} style={{ height: "100%" }}>
+            <AppCard accent="yellow">
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                  gap: 10,
+                  gap: 16,
+                  height: "100%",
                 }}
               >
-                <MiniStat
-                  label="Schulungen"
-                  value={String(user.enrollments.length)}
-                />
+                <div>
+                  <div
+                    style={{
+                      color: "#007873",
+                      fontSize: 13,
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Dein Überblick
+                  </div>
 
-                <MiniStat
-                  label="Zertifikate"
-                  value={String(user.certificates.length)}
-                />
+                  <p
+                    style={{
+                      marginTop: 12,
+                      marginBottom: 0,
+                      color: "#333333",
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    Deine wichtigsten Kennzahlen und Stammdaten auf einen Blick.
+                  </p>
+                </div>
 
-                <MiniStat label="Rolle" value={user.role} />
-              </div>
-
-              {user.company ? (
                 <div
                   style={{
-                    paddingTop: 4,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gap: 10,
                   }}
                 >
-                  <StatusBadge>Firma: {user.company}</StatusBadge>
+                  <MiniStat
+                    label="Schulungen"
+                    value={String(user.enrollments.length)}
+                  />
+
+                  <MiniStat
+                    label="Zertifikate"
+                    value={String(user.certificates.length)}
+                  />
+
+                  <MiniStat label="Rolle" value={user.role} />
                 </div>
-              ) : null}
-            </div>
-          </AppCard>
+
+                {user.company ? (
+                  <div
+                    style={{
+                      paddingTop: 4,
+                    }}
+                  >
+                    <StatusBadge>Firma: {user.company}</StatusBadge>
+                  </div>
+                ) : null}
+              </div>
+            </AppCard>
+          </AnimatedSection>
         </div>
 
-        <div style={{ marginTop: 18 }}>
+        <AnimatedSection delayMs={230} style={{ marginTop: 18 }}>
           <AppCard>
             <div
               style={{
@@ -636,7 +577,7 @@ export default async function DashboardPage() {
               </div>
             )}
           </AppCard>
-        </div>
+        </AnimatedSection>
       </div>
     </main>
   );
