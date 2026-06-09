@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
-import StatusBadge from "@/components/ui/StatusBadge";
 
 type SerializableTraining = {
   id: string;
@@ -29,8 +27,8 @@ export default function MeineSchulungenClient({
   if (trainings.length === 0) {
     return (
       <AppCard>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#007873" }}>
-          Aktuell sind dir keine aktiven Schulungen zugeordnet.
+        <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
+          Aktuell sind dir keine Schulungen zugeordnet.
         </div>
 
         <p
@@ -41,219 +39,370 @@ export default function MeineSchulungenClient({
             lineHeight: 1.6,
           }}
         >
-          Sobald dir eine Schulung zugeordnet wurde, erscheint sie hier.
+          Sobald eine Schulung über die VFA-Akademie oder später über
+          Cobra/WebConnect zugeordnet wurde, erscheint sie hier.
         </p>
       </AppCard>
     );
   }
 
-  return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {trainings.map((training) => {
-        const isOpen = openId === training.id;
+  const upcomingCount = trainings.filter((training) =>
+    isUpcoming(training.date)
+  ).length;
 
-        return (
-          <AppCard key={training.id} style={{ padding: 0, overflow: "hidden" }}>
-            <button
-              type="button"
-              onClick={() => setOpenId(isOpen ? null : training.id)}
+  const totalCredits = trainings.reduce(
+    (sum, training) => sum + training.creditsAward,
+    0
+  );
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 10,
+        }}
+      >
+        <SummaryBox label="Bevorstehend" value={upcomingCount} />
+        <SummaryBox label="Mögliche Credits" value={totalCredits} />
+      </div>
+
+      <div style={{ display: "grid", gap: 10 }}>
+        {trainings.map((training) => {
+          const isOpen = openId === training.id;
+          const dateText = formatDateRange(training.date, training.endDate);
+          const displayTitle = getDisplayTrainingTitle(training);
+          const addressLines = formatAddressLines(training.location);
+          const instructorName = formatInstructorName(training.instructor);
+
+          return (
+            <AppCard
+              key={training.id}
               style={{
-                width: "100%",
-                padding: 18,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                textAlign: "left",
+                padding: 0,
+                overflow: "hidden",
+                borderColor: isOpen ? "#FFC100" : undefined,
               }}
             >
-              <div
+              <button
+                type="button"
+                onClick={() => setOpenId(isOpen ? null : training.id)}
+                aria-expanded={isOpen}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr auto",
-                  gap: 14,
-                  alignItems: "center",
+                  width: "100%",
+                  border: "none",
+                  background: "transparent",
+                  padding: 0,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  color: "inherit",
                 }}
               >
                 <div
                   style={{
-                    minWidth: 58,
-                    minHeight: 42,
-                    borderRadius: 999,
-                    background: "#FFC100",
-                    color: "#1F1F1F",
+                    padding: "18px 20px",
                     display: "grid",
-                    placeItems: "center",
-                    fontWeight: 900,
-                    fontSize: 14,
-                    letterSpacing: "0.04em",
-                    padding: "0 10px",
+                    gridTemplateColumns: "minmax(0, 1fr) auto",
+                    gap: 18,
+                    alignItems: "start",
                   }}
                 >
-                  {training.code || "—"}
-                </div>
+                  <div style={{ minWidth: 0 }}>
+                    <h2
+                      style={{
+                        margin: 0,
+                        color: "#007873",
+                        fontSize: 32,
+                        fontWeight: 750,
+                        lineHeight: 1.12,
+                        maxWidth: 520,
+                        textWrap: "balance",
+                      }}
+                    >
+                      {displayTitle}
+                    </h2>
 
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      color: "#007873",
-                      fontSize: 18,
-                      fontWeight: 800,
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {training.title}
+                    <div
+                      style={{
+                        marginTop: 18,
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(170px, 1fr))",
+                        gap: "10px 18px",
+                      }}
+                    >
+                      <Info label="Zeitraum" value={dateText} />
+                    </div>
                   </div>
 
                   <div
                     style={{
-                      marginTop: 5,
-                      color: "#333333",
-                      fontSize: 14,
-                      lineHeight: 1.4,
+                      minWidth: 92,
+                      display: "grid",
+                      justifyItems: "end",
+                      alignContent: "start",
+                      gap: 6,
+                      paddingTop: 2,
                     }}
                   >
-                    {formatDate(training.date)}
-                    {training.endDate
-                      ? ` bis ${formatDate(training.endDate)}`
-                      : ""}
+                    <div
+                      style={{
+                        color: "#007873",
+                        fontWeight: 950,
+                        fontSize: 34,
+                        lineHeight: 1,
+                        textAlign: "right",
+                      }}
+                    >
+                      {training.creditsAward}
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#666666",
+                        fontSize: 12,
+                        fontWeight: 850,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        textAlign: "right",
+                      }}
+                    >
+                      Credits
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 8,
+                        color: "#007873",
+                        fontSize: 24,
+                        fontWeight: 900,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {isOpen ? "−" : "+"}
+                    </div>
                   </div>
                 </div>
+              </button>
 
+              {isOpen ? (
                 <div
                   style={{
-                    color: "#007873",
-                    fontWeight: 900,
-                    fontSize: 22,
+                    borderTop: "1px solid #E6E6E6",
+                    padding: "16px 20px 18px",
+                    background: "#FFFFFF",
                   }}
                 >
-                  {isOpen ? "−" : "+"}
-                </div>
-              </div>
-            </button>
-
-            {isOpen && (
-              <div
-                style={{
-                  padding: "0 18px 18px",
-                  borderTop: "1px solid #E6E6E6",
-                }}
-              >
-                <div
-                  style={{
-                    paddingTop: 16,
-                    display: "flex",
-                    gap: 8,
-                    flexWrap: "wrap",
-                    marginBottom: 16,
-                  }}
-                >
-                  <StatusBadge variant="success">
-                    {formatStatus(training.status)}
-                  </StatusBadge>
-
-                  <StatusBadge variant="yellow">
-                    Nach Abschluss: {training.certificateKindLabel}
-                  </StatusBadge>
-
-                  {training.code && (
-                    <StatusBadge>Kürzel: {training.code}</StatusBadge>
-                  )}
-
-                  <StatusBadge>{training.creditsAward} Credits</StatusBadge>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: 14,
-                  }}
-                >
-                  <Info label="Schulung" value={training.title} />
-
-                  <Info
-                    label="Zeitraum"
-                    value={`${formatDate(training.date)}${
-                      training.endDate
-                        ? ` bis ${formatDate(training.endDate)}`
-                        : ""
-                    }`}
-                  />
-
-                  {training.location && (
-                    <Info label="Ort" value={training.location} />
-                  )}
-
-                  {training.instructor && (
-                    <Info label="Dozent" value={training.instructor} />
-                  )}
-
-                  <Info
-                    label="Abschlussdokument"
-                    value={training.certificateKindLabel}
-                  />
-
-                  <Info
-                    label="Credits nach Abschluss"
-                    value={String(training.creditsAward)}
-                  />
-                </div>
-
-                {training.description && (
                   <div
                     style={{
-                      marginTop: 16,
-                      paddingTop: 16,
-                      borderTop: "1px solid #E6E6E6",
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(190px, 1fr))",
+                      gap: "16px 20px",
                     }}
                   >
-                    <Info label="Inhalte" value={training.description} />
-                  </div>
-                )}
+                    <Info
+                      label="Dozent"
+                      value={instructorName}
+                      muted={instructorName === "Noch nicht hinterlegt"}
+                    />
 
-                <div
-                  style={{
-                    marginTop: 18,
-                    display: "flex",
-                    gap: 10,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <AppButton
-                    href={`/training/${training.id}`}
-                    variant="primary"
-                  >
-                    Detailseite öffnen
-                  </AppButton>
+                    <Info
+                      label="Abschlussdokument"
+                      value={training.certificateKindLabel}
+                    />
+
+                    <AddressInfo lines={addressLines} />
+                  </div>
                 </div>
-              </div>
-            )}
-          </AppCard>
-        );
-      })}
+              ) : null}
+            </AppCard>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function SummaryBox({ label, value }: { label: string; value: number }) {
   return (
-    <div>
+    <div
+      style={{
+        border: "1px solid #E6E6E6",
+        background: "#FFFFFF",
+        padding: "14px 16px",
+      }}
+    >
       <div
         style={{
-          fontSize: 13,
-          fontWeight: 800,
           color: "#007873",
+          fontSize: 12,
+          fontWeight: 850,
           textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 4,
+          letterSpacing: "0.06em",
+          marginBottom: 6,
         }}
       >
         {label}
       </div>
 
-      <div style={{ color: "#1F1F1F", lineHeight: 1.5 }}>{value}</div>
+      <div
+        style={{
+          color: "#1F1F1F",
+          fontSize: 24,
+          fontWeight: 900,
+          lineHeight: 1.1,
+        }}
+      >
+        {value.toLocaleString("de-DE")}
+      </div>
     </div>
   );
+}
+
+function Info({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 850,
+          color: "#007873",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 3,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          color: muted ? "#777777" : "#1F1F1F",
+          lineHeight: 1.45,
+          fontSize: 14,
+          fontStyle: muted ? "italic" : "normal",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function AddressInfo({ lines }: { lines: string[] }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 850,
+          color: "#007873",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 3,
+        }}
+      >
+        Adresse
+      </div>
+
+      {lines.length === 0 ? (
+        <div
+          style={{
+            color: "#777777",
+            lineHeight: 1.45,
+            fontSize: 14,
+            fontStyle: "italic",
+          }}
+        >
+          Noch nicht hinterlegt
+        </div>
+      ) : (
+        <div
+          style={{
+            color: "#1F1F1F",
+            lineHeight: 1.45,
+            fontSize: 14,
+          }}
+        >
+          {lines.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getDisplayTrainingTitle(training: SerializableTraining) {
+  if (training.code?.trim()) {
+    return training.code.trim();
+  }
+
+  return cleanTrainingTitle(training.title);
+}
+
+function cleanTrainingTitle(value: string) {
+  return value
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatInstructorName(value: string | null) {
+  if (!value?.trim()) {
+    return "Noch nicht hinterlegt";
+  }
+
+  const cleaned = value.replace(/\s+/g, " ").trim();
+
+  const withoutAddressParts = cleaned
+    .split(/[,;|/]/)[0]
+    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil|Adresse|Straße|Str\.?|PLZ|Ort)\b.*$/i, "")
+    .trim();
+
+  const parts = withoutAddressParts.split(" ").filter(Boolean);
+
+  if (parts.length === 0) {
+    return "Noch nicht hinterlegt";
+  }
+
+  if (parts.length === 1) {
+    return parts[0];
+  }
+
+  return `${parts[0]} ${parts[1]}`;
+}
+
+function formatAddressLines(value: string | null) {
+  if (!value?.trim()) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function formatDateRange(startValue: string, endValue: string | null) {
+  const start = formatDate(startValue);
+  const end = endValue ? formatDate(endValue) : null;
+
+  if (!end || end === start) {
+    return start;
+  }
+
+  return `${start} bis ${end}`;
 }
 
 function formatDate(value: string | null | undefined) {
@@ -265,14 +414,15 @@ function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString("de-DE");
 }
 
-function formatStatus(status: string) {
-  if (status === "PENDING") return "Ausstehend";
-  if (status === "CONFIRMED") return "Angemeldet";
-  if (status === "ATTENDED") return "Teilgenommen";
-  if (status === "COMPLETED") return "Abgeschlossen";
-  if (status === "CERTIFICATE_ISSUED") return "Zertifikat erstellt";
-  if (status === "CANCELLED") return "Storniert";
-  if (status === "NO_SHOW") return "Nicht teilgenommen";
+function isUpcoming(value: string) {
+  const date = new Date(value);
 
-  return status;
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return date >= today;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CertificateDownloadButton from "@/components/CertificateDownloadButton";
@@ -43,7 +42,9 @@ export default function MeineZertifikateClient({
   }, [certificates]);
 
   const filteredCertificates = useMemo(() => {
-    if (selectedYear === "alle") return certificates;
+    if (selectedYear === "alle") {
+      return certificates;
+    }
 
     return certificates.filter((cert) => {
       return getYear(cert.trainingDate) === selectedYear;
@@ -53,7 +54,7 @@ export default function MeineZertifikateClient({
   if (certificates.length === 0) {
     return (
       <AppCard>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#007873" }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
           Aktuell sind noch keine Zertifikate vorhanden.
         </div>
 
@@ -65,55 +66,78 @@ export default function MeineZertifikateClient({
             lineHeight: 1.6,
           }}
         >
-          Sobald eine dir zugeordnete Schulung abgeschlossen ist, wird automatisch
-          eine Teilnahmebestätigung oder ein Zertifikat erstellt.
+          Sobald eine Schulung abgeschlossen ist, erscheinen deine
+          Teilnahmebestätigungen und Zertifikate hier.
         </p>
       </AppCard>
     );
   }
 
+  const issuedCount = certificates.filter((cert) =>
+    ["ISSUED", "CREATED"].includes(cert.status)
+  ).length;
+
+  const totalCredits = certificates.reduce(
+    (sum, cert) => sum + cert.credits,
+    0
+  );
+
   return (
     <div style={{ display: "grid", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 10,
+        }}
+      >
+        <SummaryBox label="Zertifikate" value={issuedCount} />
+        <SummaryBox label="Erhaltene Credits" value={totalCredits} />
+      </div>
+
       <AppCard accent="yellow">
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            gap: 16,
+            gap: 14,
             alignItems: "center",
             flexWrap: "wrap",
           }}
         >
           <div>
-            <h2
+            <div
               style={{
-                margin: 0,
                 color: "#007873",
-                fontSize: 22,
-                fontWeight: 500,
+                fontSize: 13,
+                fontWeight: 850,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
-              Übersicht
-            </h2>
+              Filter
+            </div>
 
-            <p
+            <div
               style={{
-                marginTop: 8,
-                marginBottom: 0,
+                marginTop: 5,
                 color: "#333333",
-                lineHeight: 1.6,
+                fontSize: 14,
+                lineHeight: 1.5,
               }}
             >
-              Wähle ein Jahr aus und öffne Details nur bei Bedarf.
-            </p>
+              Wähle ein Jahr aus, um deine Nachweise einzugrenzen.
+            </div>
           </div>
 
           <label style={{ display: "grid", gap: 6, minWidth: 180 }}>
             <span
               style={{
                 color: "#333333",
-                fontSize: 14,
-                fontWeight: 800,
+                fontSize: 13,
+                fontWeight: 850,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
               }}
             >
               Jahr
@@ -159,151 +183,165 @@ export default function MeineZertifikateClient({
         <div style={{ display: "grid", gap: 10 }}>
           {filteredCertificates.map((cert) => {
             const isOpen = openId === cert.id;
+            const displayTitle = getDisplayCertificateTitle(cert);
+            const dateText = formatDateRange(
+              cert.trainingDate,
+              cert.trainingEndDate
+            );
+            const addressLines = formatAddressLines(cert.location);
 
             return (
-              <AppCard key={cert.id} style={{ padding: 0, overflow: "hidden" }}>
+              <AppCard
+                key={cert.id}
+                style={{
+                  padding: 0,
+                  overflow: "hidden",
+                  borderColor: isOpen ? "#FFC100" : undefined,
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setOpenId(isOpen ? null : cert.id)}
+                  aria-expanded={isOpen}
                   style={{
                     width: "100%",
-                    padding: 18,
                     border: "none",
                     background: "transparent",
+                    padding: 0,
                     cursor: "pointer",
                     textAlign: "left",
+                    color: "inherit",
                   }}
                 >
                   <div
                     style={{
+                      padding: "18px 20px",
                       display: "grid",
-                      gridTemplateColumns: "auto 1fr auto",
-                      gap: 14,
-                      alignItems: "center",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      gap: 18,
+                      alignItems: "start",
                     }}
                   >
-                    <div
-                      style={{
-                        minWidth: 54,
-                        minHeight: 42,
-                        borderRadius: 999,
-                        background: "#FFC100",
-                        color: "#1F1F1F",
-                        display: "grid",
-                        placeItems: "center",
-                        fontWeight: 900,
-                        fontSize: 14,
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      {cert.code || "—"}
+                    <div style={{ minWidth: 0 }}>
+                      <h2
+                        style={{
+                          margin: 0,
+                          color: "#007873",
+                          fontSize: 32,
+                          fontWeight: 750,
+                          lineHeight: 1.12,
+                          maxWidth: 520,
+                          textWrap: "balance",
+                        }}
+                      >
+                        {displayTitle}
+                      </h2>
+
+                      <div
+                        style={{
+                          marginTop: 18,
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(170px, 1fr))",
+                          gap: "10px 18px",
+                        }}
+                      >
+                        <Info label="Zeitraum" value={dateText} />
+
+                        <Info
+                          label="Ausgestellt am"
+                          value={formatDate(cert.issuedAt)}
+                        />
+                      </div>
                     </div>
 
-                    <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        minWidth: 92,
+                        display: "grid",
+                        justifyItems: "end",
+                        alignContent: "start",
+                        gap: 6,
+                        paddingTop: 2,
+                      }}
+                    >
                       <div
                         style={{
                           color: "#007873",
-                          fontSize: 18,
-                          fontWeight: 800,
-                          lineHeight: 1.25,
+                          fontWeight: 950,
+                          fontSize: 34,
+                          lineHeight: 1,
+                          textAlign: "right",
                         }}
                       >
-                        {cert.trainingTitle || cert.title}
+                        {cert.credits}
                       </div>
 
                       <div
                         style={{
-                          marginTop: 5,
-                          color: "#333333",
-                          fontSize: 14,
-                          lineHeight: 1.4,
+                          color: "#666666",
+                          fontSize: 12,
+                          fontWeight: 850,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "right",
                         }}
                       >
-                        {cert.certificateKindLabel} ·{" "}
-                        {formatDate(cert.trainingDate)}
-                        {cert.trainingEndDate
-                          ? ` bis ${formatDate(cert.trainingEndDate)}`
-                          : ""}
+                        Credits
                       </div>
-                    </div>
 
-                    <div
-                      style={{
-                        color: "#007873",
-                        fontWeight: 900,
-                        fontSize: 22,
-                      }}
-                    >
-                      {isOpen ? "−" : "+"}
+                      <div
+                        style={{
+                          marginTop: 8,
+                          color: "#007873",
+                          fontSize: 24,
+                          fontWeight: 900,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {isOpen ? "−" : "+"}
+                      </div>
                     </div>
                   </div>
                 </button>
 
-                {isOpen && (
+                {isOpen ? (
                   <div
                     style={{
-                      padding: "0 18px 18px",
                       borderTop: "1px solid #E6E6E6",
+                      padding: "16px 20px 18px",
+                      background: "#FFFFFF",
                     }}
                   >
                     <div
                       style={{
-                        paddingTop: 16,
-                        display: "flex",
-                        gap: 8,
-                        flexWrap: "wrap",
-                        marginBottom: 16,
-                      }}
-                    >
-                      <StatusBadge variant="success">
-                        {cert.certificateKindLabel}
-                      </StatusBadge>
-
-                      {cert.code && (
-                        <StatusBadge variant="yellow">
-                          Kürzel: {cert.code}
-                        </StatusBadge>
-                      )}
-
-                      <StatusBadge>
-                        Ausgestellt: {formatDate(cert.issuedAt)}
-                      </StatusBadge>
-
-                      <StatusBadge>{cert.credits} Credits</StatusBadge>
-                    </div>
-
-                    <div
-                      style={{
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(auto-fit, minmax(220px, 1fr))",
-                        gap: 14,
+                          "repeat(auto-fit, minmax(190px, 1fr))",
+                        gap: "16px 20px",
                       }}
                     >
-                      <Info
-                        label="Schulung"
-                        value={cert.trainingTitle || cert.title}
-                      />
-
-                      <Info
-                        label="Zeitraum"
-                        value={`${formatDate(cert.trainingDate)}${
-                          cert.trainingEndDate
-                            ? ` bis ${formatDate(cert.trainingEndDate)}`
-                            : ""
-                        }`}
-                      />
-
-                      {cert.location && (
-                        <Info label="Ort" value={cert.location} />
-                      )}
-
-                      {cert.instructor && (
+                      {cert.instructor ? (
                         <Info label="Dozent" value={cert.instructor} />
+                      ) : (
+                        <Info
+                          label="Dozent"
+                          value="Noch nicht hinterlegt"
+                          muted
+                        />
                       )}
+
+                      <Info
+                        label="Abschlussdokument"
+                        value={cert.certificateKindLabel}
+                      />
+
+                      <Info label="Status" value={formatStatus(cert.status)} />
+
+                      <AddressInfo lines={addressLines} />
                     </div>
 
-                    {cert.description && (
+                    {cert.description ? (
                       <div
                         style={{
                           marginTop: 16,
@@ -313,7 +351,7 @@ export default function MeineZertifikateClient({
                       >
                         <Info label="Inhalte" value={cert.description} />
                       </div>
-                    )}
+                    ) : null}
 
                     <div
                       style={{
@@ -321,19 +359,19 @@ export default function MeineZertifikateClient({
                         display: "flex",
                         gap: 10,
                         flexWrap: "wrap",
-                        alignItems: "flex-start",
                       }}
                     >
-                      <CertificateDownloadButton certificateId={cert.id} />
-
-                      {cert.pdfUrl && (
-                        <AppButton href={cert.pdfUrl} variant="secondary">
-                          PDF öffnen
-                        </AppButton>
+                      {cert.pdfUrl ? (
+                        <CertificateDownloadButton
+                          certificateId={cert.id}
+                          label="Dokument herunterladen"
+                        />
+                      ) : (
+                        <StatusBadge>Dokument wird vorbereitet</StatusBadge>
                       )}
                     </div>
                   </div>
-                )}
+                ) : null}
               </AppCard>
             );
           })}
@@ -343,13 +381,160 @@ export default function MeineZertifikateClient({
   );
 }
 
-function getYear(value: string | null | undefined) {
-  if (!value) return null;
+function SummaryBox({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #E6E6E6",
+        background: "#FFFFFF",
+        padding: "14px 16px",
+      }}
+    >
+      <div
+        style={{
+          color: "#007873",
+          fontSize: 12,
+          fontWeight: 850,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
+      <div
+        style={{
+          color: "#1F1F1F",
+          fontSize: 24,
+          fontWeight: 900,
+          lineHeight: 1.1,
+        }}
+      >
+        {value.toLocaleString("de-DE")}
+      </div>
+    </div>
+  );
+}
 
-  return String(date.getFullYear());
+function Info({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 850,
+          color: "#007873",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 3,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          color: muted ? "#777777" : "#1F1F1F",
+          lineHeight: 1.45,
+          fontSize: 14,
+          fontStyle: muted ? "italic" : "normal",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function AddressInfo({ lines }: { lines: string[] }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 850,
+          color: "#007873",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 3,
+        }}
+      >
+        Adresse
+      </div>
+
+      {lines.length === 0 ? (
+        <div
+          style={{
+            color: "#777777",
+            lineHeight: 1.45,
+            fontSize: 14,
+            fontStyle: "italic",
+          }}
+        >
+          Noch nicht hinterlegt
+        </div>
+      ) : (
+        <div
+          style={{
+            color: "#1F1F1F",
+            lineHeight: 1.45,
+            fontSize: 14,
+          }}
+        >
+          {lines.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getDisplayCertificateTitle(cert: SerializableCertificate) {
+  if (cert.code?.trim()) {
+    return cert.code.trim();
+  }
+
+  const fallback = cert.trainingTitle || cert.title;
+  return cleanTitle(fallback);
+}
+
+function cleanTitle(value: string) {
+  return value
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatAddressLines(value: string | null) {
+  if (!value?.trim()) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function formatDateRange(startValue: string, endValue: string | null) {
+  const start = formatDate(startValue);
+  const end = endValue ? formatDate(endValue) : null;
+
+  if (!end || end === start) {
+    return start;
+  }
+
+  return `${start} bis ${end}`;
 }
 
 function formatDate(value: string | null | undefined) {
@@ -361,23 +546,21 @@ function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString("de-DE");
 }
 
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 800,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </div>
+function getYear(value: string | null | undefined) {
+  if (!value) return null;
 
-      <div style={{ color: "#1F1F1F", lineHeight: 1.5 }}>{value}</div>
-    </div>
-  );
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return String(date.getFullYear());
+}
+
+function formatStatus(status: string) {
+  if (status === "DRAFT") return "In Vorbereitung";
+  if (status === "READY") return "Bereit";
+  if (status === "ISSUED") return "Ausgestellt";
+  if (status === "CREATED") return "Erstellt";
+  if (status === "REVOKED") return "Widerrufen";
+
+  return status;
 }

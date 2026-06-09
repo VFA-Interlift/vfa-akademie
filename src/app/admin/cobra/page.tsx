@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
@@ -37,6 +38,30 @@ export default async function AdminCobraPage() {
       }}
     >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <div style={{ marginBottom: 18 }}>
+          <Link
+            href="/admin"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 38,
+              padding: "9px 16px",
+              borderRadius: 999,
+              border: "1px solid #007873",
+              color: "#007873",
+              background: "#FFFFFF",
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: 850,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+            }}
+          >
+            ← Zurück
+          </Link>
+        </div>
+
         <section style={{ marginBottom: 22 }}>
           <div
             style={{
@@ -57,7 +82,7 @@ export default async function AdminCobraPage() {
               textTransform: "uppercase",
             }}
           >
-            Cobra-Testbereich
+            Cobra/WebConnect
           </h1>
 
           <p
@@ -70,9 +95,9 @@ export default async function AdminCobraPage() {
               lineHeight: 1.7,
             }}
           >
-            Hier werden die neuen Cobra-Read-Endpunkte geprüft. Die Ansicht
-            liest Schulungen und verknüpfte Teilnehmer aus Cobra, übernimmt aber
-            noch keine Daten in die App.
+            Status der Anbindung zwischen Cobra/WebConnect und der
+            VFA-Akademie App. Schulungsdaten werden serverseitig gelesen und für
+            die spätere Automatisierung vorbereitet.
           </p>
         </section>
 

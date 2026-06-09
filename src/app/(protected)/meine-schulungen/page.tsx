@@ -33,7 +33,7 @@ export default async function MeineSchulungenPage() {
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader
           title="Meine Schulungen"
-          description="Hier siehst du die Schulungen, die dir aktuell zugeordnet sind. Öffne eine Schulung, um Ort, Dozent, Inhalte, Credits und das Abschlussdokument zu sehen."
+          description="Deine bevorstehenden Schulungen, Credits und Abschlussdokumente auf einen Blick."
         />
 
         <MeineSchulungenClient trainings={serializableTrainings} />

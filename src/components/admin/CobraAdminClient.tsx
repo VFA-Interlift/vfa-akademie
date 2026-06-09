@@ -92,9 +92,7 @@ type PreviewState = {
 };
 
 function formatDateTime(value: string | null) {
-  if (!value) {
-    return "—";
-  }
+  if (!value) return "—";
 
   const date = new Date(value);
 
@@ -151,11 +149,70 @@ function getPreviewKey(cobraId: number | null) {
   return String(cobraId ?? "unknown");
 }
 
+function formatInstructorNames(
+  values: string[] | null | undefined,
+  fallback: string | null | undefined
+) {
+  const sourceValues =
+    values && values.length > 0
+      ? values
+      : fallback
+        ? fallback.split("|")
+        : [];
+
+  const names = sourceValues
+    .map((value) => extractInstructorName(value))
+    .filter(Boolean);
+
+  const uniqueNames = Array.from(new Set(names));
+
+  return uniqueNames.length > 0
+    ? uniqueNames.join(" / ")
+    : "Noch nicht hinterlegt";
+}
+
+function extractInstructorName(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return "";
+  }
+
+  const cleaned = value
+    .replace(/\s+/g, " ")
+    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
+    .trim();
+
+  const firstPart = cleaned
+    .split(/[,;|/]/)[0]
+    .replace(
+      /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
+      ""
+    )
+    .trim();
+
+  const words = firstPart
+    .split(" ")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?)$/i.test(part))
+    .filter((part) => !/\d/.test(part))
+    .filter(
+      (part) =>
+        !/^(GmbH|AG|KG|OHG|UG|e\.V\.|mbH|Akademie|Institut|Training|Seminar|Service)$/i.test(
+          part
+        )
+    );
+
+  if (words.length < 2) {
+    return "";
+  }
+
+  return `${words[0]} ${words[1]}`;
+}
+
 export default function CobraAdminClient() {
   const [trainings, setTrainings] = useState<CobraTraining[]>([]);
   const [loadingTrainings, setLoadingTrainings] = useState(true);
   const [trainingError, setTrainingError] = useState("");
-
   const [query, setQuery] = useState("");
 
   const [previewByTraining, setPreviewByTraining] = useState<
@@ -176,9 +233,7 @@ export default function CobraAdminClient() {
 
         const data = (await res.json()) as TrainingsResponse;
 
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         if (!res.ok || !data.ok) {
           setTrainingError(
@@ -258,7 +313,7 @@ export default function CobraAdminClient() {
             error:
               data.ok === false
                 ? data.message ?? data.error
-                : "Import-Vorschau konnte nicht geladen werden.",
+                : "Vorschau konnte nicht geladen werden.",
             data,
           },
         }));
@@ -282,7 +337,7 @@ export default function CobraAdminClient() {
           error:
             error instanceof Error
               ? error.message
-              : "Import-Vorschau konnte nicht geladen werden.",
+              : "Vorschau konnte nicht geladen werden.",
           data: null,
         },
       }));
@@ -290,12 +345,7 @@ export default function CobraAdminClient() {
   }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: 16,
-      }}
-    >
+    <div style={{ display: "grid", gap: 16 }}>
       <section
         style={{
           background: "#FFFFFF",
@@ -304,6 +354,25 @@ export default function CobraAdminClient() {
           boxShadow: "0 10px 28px rgba(0,0,0,0.04)",
         }}
       >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 10,
+            marginBottom: 18,
+          }}
+        >
+          <SummaryBox label="Status" value="Verbunden" tone="green" />
+          <SummaryBox
+            label="Schulungen aus Cobra"
+            value={trainings.length.toLocaleString("de-DE")}
+          />
+          <SummaryBox
+            label="Gefilterte Ansicht"
+            value={filteredTrainings.length.toLocaleString("de-DE")}
+          />
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -322,7 +391,7 @@ export default function CobraAdminClient() {
                 fontWeight: 500,
               }}
             >
-              Cobra-Schulungen
+              Schulungsdaten aus Cobra
             </h2>
 
             <p
@@ -333,23 +402,9 @@ export default function CobraAdminClient() {
                 lineHeight: 1.6,
               }}
             >
-              Read-only-Testansicht. Hier werden Schulungen aus Cobra geprüft.
-              Die App-Datenbank wird noch nicht verändert.
+              Die App liest Schulungen aus Cobra/WebConnect und bereitet daraus
+              die spätere Darstellung in der VFA-Akademie vor.
             </p>
-          </div>
-
-          <div
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #FFC100",
-              background: "rgba(255,193,0,0.14)",
-              color: "#1F1F1F",
-              fontWeight: 900,
-              fontSize: 13,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {trainings.length.toLocaleString("de-DE")} Schulungen geladen
           </div>
         </div>
 
@@ -357,17 +412,16 @@ export default function CobraAdminClient() {
           style={{
             marginTop: 14,
             padding: "12px 14px",
-            border: "1px solid #E6E6E6",
-            background: "#FAFAF8",
+            border: "1px solid rgba(0,120,115,0.22)",
+            background: "rgba(0,120,115,0.06)",
             color: "#333333",
             lineHeight: 1.6,
             fontSize: 14,
           }}
         >
-          Für die spätere automatische Zuordnung zu App-Usern brauchen wir im
-          Cobra-Teilnehmer-Endpunkt zusätzlich die E-Mail-Adresse des
-          Teilnehmers. Der aktuelle Teilnehmertext reicht für einen sicheren
-          Abgleich nicht aus.
+          Nächster technischer Schritt: Im Teilnehmer-Endpunkt soll zusätzlich
+          die E-Mail-Adresse des jeweiligen Teilnehmers ausgegeben werden. Erst
+          damit ist eine sichere automatische Zuordnung zu App-Nutzern möglich.
         </div>
 
         <div style={{ marginTop: 16 }}>
@@ -451,11 +505,10 @@ export default function CobraAdminClient() {
                 >
                   <div
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      gap: 14,
+                      alignItems: "start",
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
@@ -463,12 +516,14 @@ export default function CobraAdminClient() {
                         style={{
                           color: "#007873",
                           fontWeight: 900,
-                          fontSize: 18,
+                          fontSize: 20,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}
                       >
-                        {training.code ?? training.title ?? training.caption}
+                        {training.code ??
+                          cleanTrainingTitle(training.title) ??
+                          training.caption}
                       </div>
 
                       <div
@@ -479,7 +534,7 @@ export default function CobraAdminClient() {
                           fontSize: 14,
                         }}
                       >
-                        ID {training.cobraId ?? "—"} ·{" "}
+                        Cobra-ID {training.cobraId ?? "—"} ·{" "}
                         {getCoursePrefix(training.code)}
                       </div>
                     </div>
@@ -508,7 +563,7 @@ export default function CobraAdminClient() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {previewState?.loading ? "Prüfe..." : "Vorschau"}
+                      {previewState?.loading ? "Prüfe..." : "Prüfen"}
                     </button>
                   </div>
 
@@ -523,9 +578,18 @@ export default function CobraAdminClient() {
                     }}
                   >
                     <Info label="Start" value={formatDateTime(training.date)} />
-                    <Info label="Ende" value={formatDateTime(training.endDate)} />
+                    <Info
+                      label="Ende"
+                      value={formatDateTime(training.endDate)}
+                    />
                     <Info label="Ort" value={training.location ?? "—"} />
-                    <Info label="Dozent" value={training.instructor ?? "—"} />
+                    <Info
+                      label="Dozent"
+                      value={formatInstructorNames(
+                        training.instructors,
+                        training.instructor
+                      )}
+                    />
                   </div>
 
                   {previewState?.error && (
@@ -569,11 +633,60 @@ export default function CobraAdminClient() {
   );
 }
 
+function SummaryBox({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "green";
+}) {
+  return (
+    <div
+      style={{
+        border:
+          tone === "green"
+            ? "1px solid rgba(0,120,115,0.25)"
+            : "1px solid #E6E6E6",
+        background: tone === "green" ? "rgba(0,120,115,0.06)" : "#FFFFFF",
+        padding: "14px 16px",
+      }}
+    >
+      <div
+        style={{
+          color: "#007873",
+          fontSize: 12,
+          fontWeight: 850,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          color: tone === "green" ? "#007873" : "#1F1F1F",
+          fontSize: 24,
+          fontWeight: 900,
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function PreviewBox({
   preview,
 }: {
   preview: Extract<PreviewResponse, { ok: true }>;
 }) {
+  const isNew = preview.action === "CREATE_NEW";
+
   return (
     <div
       style={{
@@ -593,26 +706,21 @@ function PreviewBox({
           alignItems: "center",
         }}
       >
-        <strong style={{ color: "#007873", fontSize: 16 }}>
-          Import-Vorschau
-        </strong>
+        <strong style={{ color: "#007873", fontSize: 16 }}>App-Abgleich</strong>
 
         <span
           style={{
             padding: "6px 10px",
             borderRadius: 999,
-            background:
-              preview.action === "CREATE_NEW" ? "#007873" : "#FFC100",
-            color: preview.action === "CREATE_NEW" ? "#FFFFFF" : "#1F1F1F",
+            background: isNew ? "#007873" : "#FFC100",
+            color: isNew ? "#FFFFFF" : "#1F1F1F",
             fontWeight: 900,
             fontSize: 12,
             textTransform: "uppercase",
             letterSpacing: "0.06em",
           }}
         >
-          {preview.action === "CREATE_NEW"
-            ? "Neu anlegen"
-            : "Bestehende aktualisieren"}
+          {isNew ? "Neue Schulung" : "Bestehende Schulung"}
         </span>
       </div>
 
@@ -625,13 +733,13 @@ function PreviewBox({
           lineHeight: 1.5,
         }}
       >
-        <Info label="Code" value={preview.proposed.code} />
-        <Info label="Titel" value={preview.proposed.title} />
+        <Info label="Kürzel" value={preview.proposed.code} />
+        <Info label="Titel" value={cleanTrainingTitle(preview.proposed.title)} />
         <Info
           label="Credits"
           value={`${preview.proposed.creditsAward} Credits`}
         />
-        <Info label="Credit-Regel" value={preview.proposed.creditRule.label} />
+        <Info label="Regel" value={preview.proposed.creditRule.label} />
       </div>
 
       {preview.app.exists && preview.app.existingTraining && (
@@ -644,8 +752,11 @@ function PreviewBox({
             lineHeight: 1.5,
           }}
         >
-          Bestehende App-Schulung gefunden:{" "}
-          <strong>{preview.app.existingTraining.title}</strong>
+          Passende App-Schulung gefunden:{" "}
+          <strong>
+            {preview.app.existingTraining.code ??
+              preview.app.existingTraining.title}
+          </strong>
         </div>
       )}
 
@@ -695,4 +806,13 @@ function Info({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
+}
+
+function cleanTrainingTitle(value: string | null | undefined) {
+  if (!value) return "—";
+
+  return value
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
