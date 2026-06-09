@@ -39,6 +39,140 @@ function splitName(name: string | null | undefined) {
   };
 }
 
+function formatTrainingDateRange(
+  startDate: Date | null | undefined,
+  endDate: Date | null | undefined
+) {
+  const formattedStartDate = formatDate(startDate);
+  const formattedEndDate = formatDate(endDate);
+
+  if (formattedStartDate && formattedEndDate) {
+    if (formattedStartDate === formattedEndDate) {
+      return `am ${formattedStartDate}`;
+    }
+
+    return `vom ${formattedStartDate} bis ${formattedEndDate}`;
+  }
+
+  if (formattedStartDate) {
+    return `am ${formattedStartDate}`;
+  }
+
+  return "";
+}
+
+function normalizeInstructorPart(value: string) {
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .trim();
+}
+
+function looksLikeAddressOrCompany(value: string) {
+  const lower = value.toLowerCase();
+
+  if (!value.trim()) return true;
+
+  const blockedTerms = [
+    "gmbh",
+    "ag",
+    "kg",
+    "ug",
+    "ohg",
+    "e.k.",
+    "straße",
+    "strasse",
+    "str.",
+    "weg",
+    "platz",
+    "allee",
+    "ring",
+    "chaussee",
+    "hamburg",
+    "berlin",
+    "münchen",
+    "koeln",
+    "köln",
+    "düsseldorf",
+    "stuttgart",
+    "frankfurt",
+    "hannover",
+    "bremen",
+  ];
+
+  if (blockedTerms.some((term) => lower.includes(term))) {
+    return true;
+  }
+
+  if (/\b\d{5}\b/.test(value)) {
+    return true;
+  }
+
+  if (/\b\d{1,4}[a-z]?\b/i.test(value) && /[a-zäöüß]/i.test(value)) {
+    return true;
+  }
+
+  return false;
+}
+
+function extractInstructorName(rawValue: string) {
+  const cleaned = normalizeInstructorPart(rawValue);
+
+  if (!cleaned) return "";
+
+  const commaParts = cleaned
+    .split(",")
+    .map((part) => normalizeInstructorPart(part))
+    .filter(Boolean);
+
+  if (commaParts.length >= 2) {
+    const possibleName = commaParts.find((part) => !looksLikeAddressOrCompany(part));
+
+    if (possibleName) {
+      return possibleName;
+    }
+  }
+
+  if (looksLikeAddressOrCompany(cleaned)) {
+    return "";
+  }
+
+  return cleaned;
+}
+
+function splitInstructors(rawValue: string | null | undefined) {
+  const cleaned = String(rawValue ?? "").trim();
+
+  if (!cleaned) return [];
+
+  const values = cleaned
+    .split(/\s*\|\s*|\s*;\s*|\n+/)
+    .map((value) => extractInstructorName(value))
+    .filter(Boolean);
+
+  return Array.from(new Set(values));
+}
+
+function formatInstructorTable(rawValue: string | null | undefined) {
+  const instructors = splitInstructors(rawValue);
+
+  if (instructors.length === 0) {
+    return "";
+  }
+
+  return instructors
+    .map((instructor) => {
+      const { firstName, lastName } = splitName(instructor);
+
+      if (firstName && lastName) {
+        return `${lastName}, ${firstName}`;
+      }
+
+      return instructor;
+    })
+    .join("\n");
+}
+
 export async function getCertificateDocumentData(certificateId: string) {
   const certificate = await prisma.certificate.findUnique({
     where: {
@@ -91,14 +225,10 @@ export async function getCertificateDocumentData(certificateId: string) {
   const fallbackName = splitName(certificate.user.name);
 
   const firstName =
-    certificate.user.firstName?.trim() ||
-    fallbackName.firstName ||
-    "";
+    certificate.user.firstName?.trim() || fallbackName.firstName || "";
 
   const lastName =
-    certificate.user.lastName?.trim() ||
-    fallbackName.lastName ||
-    "";
+    certificate.user.lastName?.trim() || fallbackName.lastName || "";
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
 
@@ -115,6 +245,18 @@ export async function getCertificateDocumentData(certificateId: string) {
     ? `${formatDate(trainingDate)} bis ${formatDate(trainingEndDate)}`
     : formatDate(trainingDate);
 
+  const trainingDateRange = formatTrainingDateRange(
+    trainingDate,
+    trainingEndDate
+  );
+
+  const trainingLocation = certificate.training.location ?? "";
+  const instructor = certificate.training.instructor ?? "";
+  const instructorTable = formatInstructorTable(instructor);
+
+  const participantBirthDate = formatDate(certificate.user.birthDate);
+  const issuedAt = formatDate(certificate.issuedAt);
+
   return {
     certificate,
     templateFileName,
@@ -124,12 +266,37 @@ export async function getCertificateDocumentData(certificateId: string) {
       title: certificate.training.title,
     }),
     data: {
+      /**
+       * Neue Standard-Platzhalter fuer Word-Vorlagen
+       */
+      participantName: fullName,
+      participantFirstName: firstName,
+      participantLastName: lastName,
+      participantBirthDate,
+
+      trainingTitle: certificate.training.title,
+      trainingCode: code,
+      trainingDateRange,
+      trainingLocation,
+      instructorTable,
+
+      certificateTitle: certificate.title,
+      certificateKind: formatCertificateKind(certificateKind),
+      certificateCode: code,
+      certificateDate: issuedAt,
+      certificateLocation: "Hamburg",
+
+      credits: String(certificate.credits),
+
+      /**
+       * Bestehende Platzhalter / Rueckwaertskompatibilitaet
+       */
       firstName,
       lastName,
       fullName,
       name: fullName,
 
-      birthDate: formatDate(certificate.user.birthDate),
+      birthDate: participantBirthDate,
       email: certificate.user.email,
       gender: certificate.user.gender ?? "",
 
@@ -141,22 +308,16 @@ export async function getCertificateDocumentData(certificateId: string) {
       companyCountry: certificate.user.companyCountry ?? "",
       position: certificate.user.position ?? "",
 
-      certificateTitle: certificate.title,
-      certificateKind: formatCertificateKind(certificateKind),
-      certificateCode: code,
       code,
 
-      trainingTitle: certificate.training.title,
-      trainingCode: code,
       trainingDate: formatDate(trainingDate),
       trainingEndDate: formatDate(trainingEndDate),
       trainingPeriod,
-      location: certificate.training.location ?? "",
-      instructor: certificate.training.instructor ?? "",
+      location: trainingLocation,
+      instructor,
       description: certificate.training.description ?? "",
 
-      issuedAt: formatDate(certificate.issuedAt),
-      credits: String(certificate.credits),
+      issuedAt,
     },
   };
 }
