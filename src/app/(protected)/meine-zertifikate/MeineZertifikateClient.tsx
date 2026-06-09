@@ -189,6 +189,7 @@ export default function MeineZertifikateClient({
               cert.trainingEndDate
             );
             const addressLines = formatAddressLines(cert.location);
+            const instructorName = formatInstructorName(cert.instructor);
 
             return (
               <AppCard
@@ -321,15 +322,11 @@ export default function MeineZertifikateClient({
                         gap: "16px 20px",
                       }}
                     >
-                      {cert.instructor ? (
-                        <Info label="Dozent" value={cert.instructor} />
-                      ) : (
-                        <Info
-                          label="Dozent"
-                          value="Noch nicht hinterlegt"
-                          muted
-                        />
-                      )}
+                      <Info
+                        label="Dozent"
+                        value={instructorName}
+                        muted={instructorName === "Noch nicht hinterlegt"}
+                      />
 
                       <Info
                         label="Abschlussdokument"
@@ -447,6 +444,7 @@ function Info({
           lineHeight: 1.45,
           fontSize: 14,
           fontStyle: muted ? "italic" : "normal",
+          overflowWrap: "anywhere",
         }}
       >
         {value}
@@ -513,6 +511,121 @@ function cleanTitle(value: string) {
     .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function formatInstructorName(value: string | null) {
+  const extractedName = extractInstructorName(value);
+
+  return extractedName || "Noch nicht hinterlegt";
+}
+
+function extractInstructorName(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return "";
+  }
+
+  const cleaned = value
+    .replace(/\s+/g, " ")
+    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
+    .trim();
+
+  const commaParts = cleaned
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const likelyName =
+    commaParts.length >= 2
+      ? commaParts[1]
+      : cleaned
+          .split(/[;|/]/)[0]
+          .replace(
+            /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
+            ""
+          )
+          .trim();
+
+  if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) {
+    return "";
+  }
+
+  const words = likelyName
+    .split(" ")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(part))
+    .filter((part) => !/\d/.test(part));
+
+  if (words.length < 2) {
+    return "";
+  }
+
+  const possibleName = `${words[0]} ${words[1]}`;
+
+  if (looksLikeCompany(possibleName) || looksLikeAddress(possibleName)) {
+    return "";
+  }
+
+  return possibleName;
+}
+
+function looksLikeCompany(value: string) {
+  const normalized = value.toLowerCase();
+
+  const companyIndicators = [
+    "gmbh",
+    "mbh",
+    "ag",
+    "kg",
+    "ohg",
+    "ug",
+    "e.v.",
+    "ev",
+    "gbr",
+    "holding",
+    "gruppe",
+    "group",
+    "company",
+    "unternehmen",
+    "firma",
+    "werke",
+    "aufzug",
+    "aufzüge",
+    "aufzuege",
+    "elevator",
+    "lift",
+    "lifts",
+    "hydraulic",
+    "hydraulics",
+    "hydraulik",
+    "metallbau",
+    "maschinenbau",
+    "service",
+    "services",
+    "technik",
+    "technical",
+    "akademie",
+    "academy",
+    "institut",
+    "institute",
+    "training",
+    "seminar",
+    "flughafen",
+    "airport",
+  ];
+
+  return companyIndicators.some((indicator) => normalized.includes(indicator));
+}
+
+function looksLikeAddress(value: string) {
+  const normalized = value.toLowerCase();
+
+  return (
+    /\d/.test(normalized) ||
+    /\b(strasse|straße|str\.|weg|platz|allee|ring|d\s?\d{4,5}|\d{4,5})\b/i.test(
+      normalized
+    )
+  );
 }
 
 function formatAddressLines(value: string | null) {
