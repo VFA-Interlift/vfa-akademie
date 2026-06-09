@@ -10,7 +10,9 @@ type AnimatedProgressCircleProps = {
 
 const SIZE = 230;
 const STROKE_WIDTH = 18;
+const SPLASH_DELAY_MS = 900;
 const ANIMATION_DURATION_MS = 1400;
+const SPLASH_MARKER_KEY = "vfa-came-from-splash";
 
 export default function AnimatedProgressCircle({
   percent,
@@ -18,6 +20,7 @@ export default function AnimatedProgressCircle({
   color,
 }: AnimatedProgressCircleProps) {
   const [animatedPercent, setAnimatedPercent] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const circle = useMemo(() => {
     const radius = (SIZE - STROKE_WIDTH) / 2;
@@ -32,7 +35,24 @@ export default function AnimatedProgressCircle({
 
   useEffect(() => {
     let animationFrameId = 0;
+    let delayTimeoutId = 0;
     let startTime: number | null = null;
+
+    function getStartDelay() {
+      try {
+        const cameFromSplash =
+          window.sessionStorage.getItem(SPLASH_MARKER_KEY) === "1";
+
+        if (cameFromSplash) {
+          window.sessionStorage.removeItem(SPLASH_MARKER_KEY);
+          return SPLASH_DELAY_MS;
+        }
+      } catch {
+        return 0;
+      }
+
+      return 0;
+    }
 
     function animate(timestamp: number) {
       if (startTime === null) {
@@ -52,16 +72,25 @@ export default function AnimatedProgressCircle({
     }
 
     setAnimatedPercent(0);
-    animationFrameId = window.requestAnimationFrame(animate);
+    setHasStarted(false);
+
+    const startDelay = getStartDelay();
+
+    delayTimeoutId = window.setTimeout(() => {
+      setHasStarted(true);
+      animationFrameId = window.requestAnimationFrame(animate);
+    }, startDelay);
 
     return () => {
+      window.clearTimeout(delayTimeoutId);
       window.cancelAnimationFrame(animationFrameId);
     };
   }, [percent]);
 
+  const safePercent = Math.min(animatedPercent, 100);
+
   const strokeOffset =
-    circle.circumference -
-    (circle.circumference * Math.min(animatedPercent, 100)) / 100;
+    circle.circumference - (circle.circumference * safePercent) / 100;
 
   return (
     <div
@@ -70,6 +99,9 @@ export default function AnimatedProgressCircle({
         placeItems: "center",
         paddingTop: 4,
         paddingBottom: 4,
+        opacity: hasStarted ? 1 : 0.92,
+        transform: hasStarted ? "scale(1)" : "scale(0.985)",
+        transition: "opacity 420ms ease, transform 420ms ease",
       }}
     >
       <div
@@ -153,7 +185,7 @@ export default function AnimatedProgressCircle({
               lineHeight: 1,
             }}
           >
-            {animatedPercent}%
+            {safePercent}%
           </div>
 
           <div
