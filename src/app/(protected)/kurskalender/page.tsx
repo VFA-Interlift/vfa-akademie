@@ -4,7 +4,6 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
-import StatusBadge from "@/components/ui/StatusBadge";
 
 type CalendarTraining = {
   id: string;
@@ -136,23 +135,6 @@ export default function KurskalenderPage() {
 
   const weeks = useMemo(() => buildCalendarWeeks(monthDate), [monthDate]);
 
-  const monthTrainings = useMemo(() => {
-    return trainings
-      .filter((training) => isTrainingInMonth(training, monthDate))
-      .sort((a, b) => {
-        return toLocalDate(a.date).getTime() - toLocalDate(b.date).getTime();
-      });
-  }, [monthDate, trainings]);
-
-  const upcomingCount = useMemo(() => {
-    return trainings.filter((training) => isUpcoming(training.date)).length;
-  }, [trainings]);
-
-  const monthCredits = monthTrainings.reduce(
-    (sum, training) => sum + training.creditsAward,
-    0
-  );
-
   function previousMonth() {
     setSelectedTraining(null);
     setMonthDate((current) => {
@@ -198,21 +180,6 @@ export default function KurskalenderPage() {
         )}
 
         <div style={{ display: "grid", gap: 16 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 10,
-            }}
-          >
-            <SummaryBox
-              label="Kurse im Monat"
-              value={monthTrainings.length}
-            />
-            <SummaryBox label="Bevorstehend" value={upcomingCount} />
-            <SummaryBox label="Mögliche Credits" value={monthCredits} />
-          </div>
-
           <AppCard accent="green">
             <div
               style={{
@@ -409,108 +376,6 @@ export default function KurskalenderPage() {
               </>
             )}
           </AppCard>
-
-          <AppCard>
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 24,
-                fontWeight: 550,
-                lineHeight: 1.25,
-              }}
-            >
-              Kurse im ausgewählten Monat
-            </h2>
-
-            {loading ? (
-              <p
-                style={{
-                  marginTop: 10,
-                  marginBottom: 0,
-                  color: "#333333",
-                  lineHeight: 1.6,
-                }}
-              >
-                Kurse werden geladen...
-              </p>
-            ) : monthTrainings.length === 0 ? (
-              <p
-                style={{
-                  marginTop: 10,
-                  marginBottom: 0,
-                  color: "#333333",
-                  lineHeight: 1.6,
-                }}
-              >
-                Für diesen Monat sind aktuell keine Kurse hinterlegt.
-              </p>
-            ) : (
-              <div
-                style={{
-                  marginTop: 14,
-                  display: "grid",
-                  gap: 10,
-                }}
-              >
-                {monthTrainings.map((training) => (
-                  <button
-                    key={training.id}
-                    type="button"
-                    onClick={() => setSelectedTraining(training)}
-                    style={{
-                      width: "100%",
-                      border: "1px solid #E6E6E6",
-                      background: "#FFFFFF",
-                      padding: "14px 16px",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) auto",
-                      gap: 16,
-                      alignItems: "center",
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          color: "#007873",
-                          fontSize: 22,
-                          fontWeight: 800,
-                          lineHeight: 1.2,
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {getDisplayTrainingTitle(training)}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 6,
-                          color: "#333333",
-                          fontSize: 14,
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        {formatDateRange(training.date, training.endDate)}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#007873",
-                        fontWeight: 950,
-                        fontSize: 22,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {training.creditsAward}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </AppCard>
         </div>
       </div>
 
@@ -564,63 +429,36 @@ function TrainingDialog({
           padding: 22,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 16,
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
-            <div
+        <button type="button" onClick={onClose} style={backButtonStyle}>
+          Zurück zum Kalender
+        </button>
+
+        <div style={{ marginTop: 18 }}>
+          <h2
+            style={{
+              margin: 0,
+              color: "#007873",
+              fontSize: 30,
+              fontWeight: 650,
+              lineHeight: 1.18,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {displayTitle}
+          </h2>
+
+          {training.code && cleanTrainingTitle(training.title) !== training.code && (
+            <p
               style={{
-                display: "flex",
-                gap: 8,
-                flexWrap: "wrap",
-                marginBottom: 10,
+                marginTop: 8,
+                marginBottom: 0,
+                color: "#333333",
+                lineHeight: 1.5,
               }}
             >
-              {training.code && (
-                <StatusBadge variant="yellow">{training.code}</StatusBadge>
-              )}
-
-              <StatusBadge>{training.certificateKindLabel}</StatusBadge>
-
-              <StatusBadge>{training.creditsAward} Credits</StatusBadge>
-            </div>
-
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 30,
-                fontWeight: 650,
-                lineHeight: 1.18,
-                overflowWrap: "anywhere",
-              }}
-            >
-              {displayTitle}
-            </h2>
-
-            {training.code && cleanTrainingTitle(training.title) !== training.code && (
-              <p
-                style={{
-                  marginTop: 8,
-                  marginBottom: 0,
-                  color: "#333333",
-                  lineHeight: 1.5,
-                }}
-              >
-                {cleanTrainingTitle(training.title)}
-              </p>
-            )}
-          </div>
-
-          <button type="button" onClick={onClose} style={smallButtonStyle}>
-            Schließen
-          </button>
+              {cleanTrainingTitle(training.title)}
+            </p>
+          )}
         </div>
 
         <div
@@ -631,6 +469,8 @@ function TrainingDialog({
             gap: 14,
           }}
         >
+          <Info label="Kürzel" value={training.code ?? "Nicht hinterlegt"} />
+
           <Info
             label="Zeitraum"
             value={formatDateRange(training.date, training.endDate)}
@@ -657,7 +497,7 @@ function TrainingDialog({
               borderTop: "1px solid #E6E6E6",
             }}
           >
-            <Info label="Inhalte" value={training.description} />
+            <Info label="Weitere Informationen" value={training.description} />
           </div>
         )}
 
@@ -680,7 +520,7 @@ function TrainingDialog({
               lineHeight: 1.5,
             }}
           >
-            Weitere Informationen und Buchung auf der VFA-Website.
+            Buchung und weitere Details laufen über die VFA-Website.
           </div>
 
           <a
@@ -692,42 +532,6 @@ function TrainingDialog({
             Zur Buchung
           </a>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function SummaryBox({ label, value }: { label: string; value: number }) {
-  return (
-    <div
-      style={{
-        border: "1px solid #E6E6E6",
-        background: "#FFFFFF",
-        padding: "14px 16px",
-      }}
-    >
-      <div
-        style={{
-          color: "#007873",
-          fontSize: 12,
-          fontWeight: 850,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          color: "#1F1F1F",
-          fontSize: 24,
-          fontWeight: 900,
-          lineHeight: 1.1,
-        }}
-      >
-        {value.toLocaleString("de-DE")}
       </div>
     </div>
   );
@@ -795,13 +599,23 @@ function buildCalendarWeeks(monthDate: Date): CalendarWeek[] {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
-  const firstDay = new Date(year, month, 1);
-  const mondayOffset = (firstDay.getDay() + 6) % 7;
-  const start = new Date(year, month, 1 - mondayOffset);
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
 
-  const days = Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
+  const firstDayWeekIndex = (firstDayOfMonth.getDay() + 6) % 7;
+  const lastDayWeekIndex = (lastDayOfMonth.getDay() + 6) % 7;
+
+  const calendarStart = new Date(firstDayOfMonth);
+  calendarStart.setDate(firstDayOfMonth.getDate() - firstDayWeekIndex);
+
+  const calendarEnd = new Date(lastDayOfMonth);
+  calendarEnd.setDate(lastDayOfMonth.getDate() + (6 - lastDayWeekIndex));
+
+  const totalDays = diffDays(calendarStart, calendarEnd) + 1;
+
+  const days = Array.from({ length: totalDays }, (_, index) => {
+    const date = new Date(calendarStart);
+    date.setDate(calendarStart.getDate() + index);
 
     return {
       date,
@@ -810,7 +624,7 @@ function buildCalendarWeeks(monthDate: Date): CalendarWeek[] {
     };
   });
 
-  return Array.from({ length: 6 }, (_, weekIndex) => {
+  return Array.from({ length: totalDays / 7 }, (_, weekIndex) => {
     const weekDays = days.slice(weekIndex * 7, weekIndex * 7 + 7);
 
     return {
@@ -1047,18 +861,6 @@ function AddressInfo({ lines }: { lines: string[] }) {
   );
 }
 
-function isTrainingInMonth(training: CalendarTraining, monthDate: Date) {
-  const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-
-  const trainingStart = startOfDay(toLocalDate(training.date));
-  const trainingEnd = training.endDate
-    ? startOfDay(toLocalDate(training.endDate))
-    : trainingStart;
-
-  return trainingEnd >= monthStart && trainingStart <= monthEnd;
-}
-
 function formatDateRange(startValue: string, endValue: string | null) {
   const start = formatDate(startValue);
   const end = endValue ? formatDate(endValue) : null;
@@ -1077,19 +879,6 @@ function formatDate(value: string | null | undefined) {
   if (Number.isNaN(date.getTime())) return value;
 
   return date.toLocaleDateString("de-DE");
-}
-
-function isUpcoming(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return false;
-  }
-
-  const currentDate = new Date();
-  currentDate.setHours(0, 0, 0, 0);
-
-  return date >= currentDate;
 }
 
 function diffDays(start: Date, end: Date) {
@@ -1178,14 +967,14 @@ const arrowButtonStyle: CSSProperties = {
   boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
 };
 
-const smallButtonStyle: CSSProperties = {
+const backButtonStyle: CSSProperties = {
   minHeight: 38,
   padding: "8px 14px",
   borderRadius: 999,
-  border: "1px solid #C7C7C7",
+  border: "1px solid #007873",
   background: "#FFFFFF",
   color: "#007873",
-  fontWeight: 800,
+  fontWeight: 850,
   fontSize: 13,
   textTransform: "uppercase",
   letterSpacing: "0.08em",
