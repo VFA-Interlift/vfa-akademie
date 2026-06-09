@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
+import AnimatedSection from "@/components/ui/AnimatedSection";
 
 type CalendarTraining = {
   id: string;
@@ -158,224 +159,263 @@ export default function KurskalenderPage() {
       }}
     >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <PageHeader
-          title="Kurskalender"
-          description="Übersicht der geplanten Schulungen der VFA-Akademie."
-        />
+        <AnimatedSection delayMs={0}>
+          <PageHeader
+            title="Kurskalender"
+            description="Übersicht der geplanten Schulungen der VFA-Akademie."
+          />
+        </AnimatedSection>
 
         {msg && (
-          <div
-            style={{
-              marginBottom: 18,
-              padding: "12px 14px",
-              border: "1px solid rgba(176,0,32,0.28)",
-              background: "rgba(176,0,32,0.08)",
-              color: "#B00020",
-              fontWeight: 800,
-              lineHeight: 1.5,
-            }}
-          >
-            {msg}
-          </div>
+          <AnimatedSection delayMs={60}>
+            <div
+              style={{
+                marginBottom: 18,
+                padding: "12px 14px",
+                border: "1px solid rgba(176,0,32,0.28)",
+                background: "rgba(176,0,32,0.08)",
+                color: "#B00020",
+                fontWeight: 800,
+                lineHeight: 1.5,
+              }}
+            >
+              {msg}
+            </div>
+          </AnimatedSection>
         )}
 
         <div style={{ display: "grid", gap: 16 }}>
-          <AppCard accent="green">
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "44px 1fr 44px",
-                gap: 12,
-                alignItems: "center",
-              }}
-            >
-              <button
-                type="button"
-                onClick={previousMonth}
-                aria-label="Vorheriger Monat"
-                style={arrowButtonStyle}
-              >
-                ←
-              </button>
-
+          <AnimatedSection delayMs={90}>
+            <AppCard accent="green">
               <div
                 style={{
-                  textAlign: "center",
-                  color: "#007873",
-                  fontSize: 30,
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.02em",
-                  lineHeight: 1.15,
+                  display: "grid",
+                  gridTemplateColumns: "44px 1fr 44px",
+                  gap: 12,
+                  alignItems: "center",
                 }}
               >
-                {monthDate.toLocaleDateString("de-DE", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </div>
+                <button
+                  type="button"
+                  onClick={previousMonth}
+                  aria-label="Vorheriger Monat"
+                  style={arrowButtonStyle}
+                >
+                  ←
+                </button>
 
-              <button
-                type="button"
-                onClick={nextMonth}
-                aria-label="Nächster Monat"
-                style={arrowButtonStyle}
-              >
-                →
-              </button>
-            </div>
-          </AppCard>
-
-          <AppCard>
-            {loading ? (
-              <div style={{ color: "#333333", lineHeight: 1.6 }}>
-                Kurskalender wird geladen...
-              </div>
-            ) : (
-              <>
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                    gap: 6,
-                    marginBottom: 8,
+                    textAlign: "center",
+                    color: "#007873",
+                    fontSize: 30,
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.02em",
+                    lineHeight: 1.15,
                   }}
                 >
-                  {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
-                    <div
-                      key={day}
-                      style={{
-                        color: "#007873",
-                        fontWeight: 900,
-                        fontSize: 13,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        textAlign: "center",
-                      }}
-                    >
-                      {day}
-                    </div>
-                  ))}
+                  {monthDate.toLocaleDateString("de-DE", {
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </div>
 
-                <div style={{ display: "grid", gap: 6 }}>
-                  {weeks.map((week) => {
-                    const bars = buildWeekTrainingBars(trainings, week.days);
+                <button
+                  type="button"
+                  onClick={nextMonth}
+                  aria-label="Nächster Monat"
+                  style={arrowButtonStyle}
+                >
+                  →
+                </button>
+              </div>
+            </AppCard>
+          </AnimatedSection>
 
-                    return (
+          <AnimatedSection delayMs={160}>
+            <AppCard>
+              {loading ? (
+                <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                  Kurskalender wird geladen...
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                      gap: 6,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
                       <div
-                        key={week.key}
+                        key={day}
                         style={{
-                          position: "relative",
-                          minHeight: 92,
-                          display: "grid",
-                          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                          gap: 6,
+                          color: "#007873",
+                          fontWeight: 900,
+                          fontSize: 13,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          textAlign: "center",
                         }}
                       >
-                        {week.days.map((day) => (
-                          <div
-                            key={day.key}
-                            style={{
-                              minHeight: 92,
-                              padding: 7,
-                              border: "1px solid #E6E6E6",
-                              background: !day.isCurrentMonth
-                                ? "#F1F1EE"
-                                : isWeekend(day.date)
-                                  ? "#ECECE8"
-                                  : "#FFFFFF",
-                              opacity: day.isCurrentMonth ? 1 : 0.55,
-                            }}
-                          >
-                            <div
-                              style={{
-                                color: isToday(day.date) ? "#FFFFFF" : "#333333",
-                                background: isToday(day.date)
-                                  ? "#007873"
-                                  : "transparent",
-                                width: 26,
-                                height: 26,
-                                borderRadius: 999,
-                                display: "grid",
-                                placeItems: "center",
-                                fontWeight: 900,
-                                fontSize: 13,
-                              }}
-                            >
-                              {day.date.getDate()}
-                            </div>
-                          </div>
-                        ))}
+                        {day}
+                      </div>
+                    ))}
+                  </div>
 
+                  <div style={{ display: "grid", gap: 6 }}>
+                    {weeks.map((week) => {
+                      const bars = buildWeekTrainingBars(trainings, week.days);
+
+                      return (
                         <div
+                          key={week.key}
                           style={{
-                            position: "absolute",
-                            left: 0,
-                            right: 0,
-                            bottom: 8,
+                            position: "relative",
+                            minHeight: 92,
                             display: "grid",
                             gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
                             gap: 6,
-                            pointerEvents: "none",
                           }}
                         >
-                          {bars.slice(0, 2).map((bar) => (
-                            <button
-                              key={`${week.key}-${bar.training.id}-${bar.gridColumn}`}
-                              type="button"
-                              onClick={() => setSelectedTraining(bar.training)}
+                          {week.days.map((day) => (
+                            <div
+                              key={day.key}
                               style={{
-                                gridColumn: bar.gridColumn,
-                                border: "none",
-                                background: "#FFC100",
-                                color: "#1F1F1F",
-                                minHeight: 24,
-                                padding: "4px 9px",
-                                borderRadius: 999,
-                                cursor: "pointer",
-                                textAlign: "left",
-                                fontWeight: 900,
-                                fontSize: 11,
-                                lineHeight: 1.15,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                pointerEvents: "auto",
-                                boxShadow: "0 5px 14px rgba(0,0,0,0.10)",
+                                minHeight: 92,
+                                padding: 7,
+                                border: "1px solid #E6E6E6",
+                                background: !day.isCurrentMonth
+                                  ? "#F1F1EE"
+                                  : isWeekend(day.date)
+                                    ? "#ECECE8"
+                                    : "#FFFFFF",
+                                opacity: day.isCurrentMonth ? 1 : 0.55,
                               }}
-                              title={getDisplayTrainingTitle(bar.training)}
                             >
-                              {formatTrainingBarLabel(bar.training)}
-                            </button>
+                              <div
+                                style={{
+                                  color: isToday(day.date)
+                                    ? "#FFFFFF"
+                                    : "#333333",
+                                  background: isToday(day.date)
+                                    ? "#007873"
+                                    : "transparent",
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: 999,
+                                  display: "grid",
+                                  placeItems: "center",
+                                  fontWeight: 900,
+                                  fontSize: 13,
+                                }}
+                              >
+                                {day.date.getDate()}
+                              </div>
+                            </div>
                           ))}
-                        </div>
 
-                        {bars.length > 2 && (
                           <div
                             style={{
                               position: "absolute",
-                              right: 8,
-                              top: 8,
-                              color: "#007873",
-                              fontSize: 12,
-                              fontWeight: 900,
-                              background: "#FFFFFF",
-                              border: "1px solid #E6E6E6",
-                              borderRadius: 999,
-                              padding: "4px 8px",
+                              left: 0,
+                              right: 0,
+                              bottom: 8,
+                              display: "grid",
+                              gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                              gap: 6,
+                              pointerEvents: "none",
                             }}
                           >
-                            +{bars.length - 2}
+                            {bars.slice(0, 2).map((bar, index) => (
+                              <button
+                                key={`${week.key}-${bar.training.id}-${bar.gridColumn}`}
+                                type="button"
+                                onClick={() => setSelectedTraining(bar.training)}
+                                style={{
+                                  gridColumn: bar.gridColumn,
+                                  border: "none",
+                                  background: "#FFC100",
+                                  color: "#1F1F1F",
+                                  minHeight: 24,
+                                  padding: "4px 9px",
+                                  borderRadius: 999,
+                                  cursor: "pointer",
+                                  textAlign: "left",
+                                  fontWeight: 900,
+                                  fontSize: 11,
+                                  lineHeight: 1.15,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  pointerEvents: "auto",
+                                  boxShadow: "0 5px 14px rgba(0,0,0,0.10)",
+                                  animationName: "vfaCalendarBarIn",
+                                  animationDuration: "420ms",
+                                  animationTimingFunction:
+                                    "cubic-bezier(0.22, 1, 0.36, 1)",
+                                  animationFillMode: "both",
+                                  animationDelay: `${index * 70}ms`,
+                                  transition:
+                                    "box-shadow 180ms ease, transform 180ms ease",
+                                }}
+                                title={getDisplayTrainingTitle(bar.training)}
+                              >
+                                {formatTrainingBarLabel(bar.training)}
+                              </button>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </AppCard>
+
+                          {bars.length > 2 && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                right: 8,
+                                top: 8,
+                                color: "#007873",
+                                fontSize: 12,
+                                fontWeight: 900,
+                                background: "#FFFFFF",
+                                border: "1px solid #E6E6E6",
+                                borderRadius: 999,
+                                padding: "4px 8px",
+                              }}
+                            >
+                              +{bars.length - 2}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <style jsx>{`
+                    @keyframes vfaCalendarBarIn {
+                      from {
+                        opacity: 0;
+                        transform: translateY(6px);
+                      }
+
+                      to {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+
+                    @media (prefers-reduced-motion: reduce) {
+                      button {
+                        animation: none !important;
+                        transition: none !important;
+                      }
+                    }
+                  `}</style>
+                </>
+              )}
+            </AppCard>
+          </AnimatedSection>
         </div>
       </div>
 
@@ -414,6 +454,10 @@ function TrainingDialog({
         display: "grid",
         placeItems: "center",
         padding: 18,
+        animationName: "vfaDialogBackdropIn",
+        animationDuration: "180ms",
+        animationTimingFunction: "ease-out",
+        animationFillMode: "both",
       }}
     >
       <div
@@ -427,6 +471,10 @@ function TrainingDialog({
           border: "1px solid #FFC100",
           boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
           padding: 22,
+          animationName: "vfaDialogCardIn",
+          animationDuration: "280ms",
+          animationTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+          animationFillMode: "both",
         }}
       >
         <button type="button" onClick={onClose} style={backButtonStyle}>
@@ -533,6 +581,36 @@ function TrainingDialog({
           </a>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes vfaDialogBackdropIn {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes vfaDialogCardIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.985);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          div {
+            animation: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
@@ -965,6 +1043,7 @@ const arrowButtonStyle: CSSProperties = {
   fontSize: 22,
   cursor: "pointer",
   boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
+  transition: "background 180ms ease, border-color 180ms ease, transform 180ms ease",
 };
 
 const backButtonStyle: CSSProperties = {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AppCard from "@/components/ui/AppCard";
+import AnimatedSection from "@/components/ui/AnimatedSection";
 
 type SerializableTraining = {
   id: string;
@@ -26,23 +27,25 @@ export default function MeineSchulungenClient({
 
   if (trainings.length === 0) {
     return (
-      <AppCard>
-        <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
-          Aktuell sind dir keine Schulungen zugeordnet.
-        </div>
+      <AnimatedSection>
+        <AppCard>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
+            Aktuell sind dir keine Schulungen zugeordnet.
+          </div>
 
-        <p
-          style={{
-            marginTop: 10,
-            marginBottom: 0,
-            color: "#333333",
-            lineHeight: 1.6,
-          }}
-        >
-          Sobald eine Schulung über die VFA-Akademie oder später über
-          Cobra/WebConnect zugeordnet wurde, erscheint sie hier.
-        </p>
-      </AppCard>
+          <p
+            style={{
+              marginTop: 10,
+              marginBottom: 0,
+              color: "#333333",
+              lineHeight: 1.6,
+            }}
+          >
+            Sobald eine Schulung über die VFA-Akademie oder später über
+            Cobra/WebConnect zugeordnet wurde, erscheint sie hier.
+          </p>
+        </AppCard>
+      </AnimatedSection>
     );
   }
 
@@ -57,19 +60,21 @@ export default function MeineSchulungenClient({
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 10,
-        }}
-      >
-        <SummaryBox label="Bevorstehend" value={upcomingCount} />
-        <SummaryBox label="Mögliche Credits" value={totalCredits} />
-      </div>
+      <AnimatedSection delayMs={0}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 10,
+          }}
+        >
+          <SummaryBox label="Bevorstehend" value={upcomingCount} />
+          <SummaryBox label="Mögliche Credits" value={totalCredits} />
+        </div>
+      </AnimatedSection>
 
       <div style={{ display: "grid", gap: 10 }}>
-        {trainings.map((training) => {
+        {trainings.map((training, index) => {
           const isOpen = openId === training.id;
           const dateText = formatDateRange(training.date, training.endDate);
           const displayTitle = getDisplayTrainingTitle(training);
@@ -77,147 +82,160 @@ export default function MeineSchulungenClient({
           const instructorName = formatInstructorName(training.instructor);
 
           return (
-            <AppCard
+            <AnimatedSection
               key={training.id}
-              style={{
-                padding: 0,
-                overflow: "hidden",
-                borderColor: isOpen ? "#FFC100" : undefined,
-              }}
+              delayMs={Math.min(90 + index * 55, 420)}
             >
-              <button
-                type="button"
-                onClick={() => setOpenId(isOpen ? null : training.id)}
-                aria-expanded={isOpen}
+              <AppCard
                 style={{
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
                   padding: 0,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  color: "inherit",
+                  overflow: "hidden",
+                  borderColor: isOpen ? "#FFC100" : undefined,
+                  transition:
+                    "border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease",
+                  boxShadow: isOpen
+                    ? "0 12px 30px rgba(0,0,0,0.08)"
+                    : undefined,
                 }}
               >
-                <div
+                <button
+                  type="button"
+                  onClick={() => setOpenId(isOpen ? null : training.id)}
+                  aria-expanded={isOpen}
                   style={{
-                    padding: "18px 20px",
-                    display: "grid",
-                    gridTemplateColumns: "minmax(0, 1fr) auto",
-                    gap: 18,
-                    alignItems: "start",
+                    width: "100%",
+                    border: "none",
+                    background: "transparent",
+                    padding: 0,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    color: "inherit",
                   }}
                 >
-                  <div style={{ minWidth: 0 }}>
-                    <h2
-                      style={{
-                        margin: 0,
-                        color: "#007873",
-                        fontSize: 32,
-                        fontWeight: 750,
-                        lineHeight: 1.12,
-                        maxWidth: 520,
-                        textWrap: "balance",
-                      }}
-                    >
-                      {displayTitle}
-                    </h2>
+                  <div
+                    style={{
+                      padding: "18px 20px",
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      gap: 18,
+                      alignItems: "start",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <h2
+                        style={{
+                          margin: 0,
+                          color: "#007873",
+                          fontSize: 32,
+                          fontWeight: 750,
+                          lineHeight: 1.12,
+                          maxWidth: 520,
+                          textWrap: "balance",
+                        }}
+                      >
+                        {displayTitle}
+                      </h2>
+
+                      <div
+                        style={{
+                          marginTop: 18,
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(170px, 1fr))",
+                          gap: "10px 18px",
+                        }}
+                      >
+                        <Info label="Zeitraum" value={dateText} />
+                      </div>
+                    </div>
 
                     <div
                       style={{
-                        marginTop: 18,
+                        minWidth: 92,
                         display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(170px, 1fr))",
-                        gap: "10px 18px",
+                        justifyItems: "end",
+                        alignContent: "start",
+                        gap: 6,
+                        paddingTop: 2,
                       }}
                     >
-                      <Info label="Zeitraum" value={dateText} />
+                      <div
+                        style={{
+                          color: "#007873",
+                          fontWeight: 950,
+                          fontSize: 34,
+                          lineHeight: 1,
+                          textAlign: "right",
+                        }}
+                      >
+                        {training.creditsAward}
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#666666",
+                          fontSize: 12,
+                          fontWeight: 850,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "right",
+                        }}
+                      >
+                        Credits
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 8,
+                          color: "#007873",
+                          fontSize: 24,
+                          fontWeight: 900,
+                          lineHeight: 1,
+                          transition: "transform 180ms ease",
+                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        }}
+                      >
+                        {isOpen ? "−" : "+"}
+                      </div>
                     </div>
                   </div>
+                </button>
 
-                  <div
-                    style={{
-                      minWidth: 92,
-                      display: "grid",
-                      justifyItems: "end",
-                      alignContent: "start",
-                      gap: 6,
-                      paddingTop: 2,
-                    }}
-                  >
+                {isOpen ? (
+                  <AnimatedSection delayMs={0}>
                     <div
                       style={{
-                        color: "#007873",
-                        fontWeight: 950,
-                        fontSize: 34,
-                        lineHeight: 1,
-                        textAlign: "right",
+                        borderTop: "1px solid #E6E6E6",
+                        padding: "16px 20px 18px",
+                        background: "#FFFFFF",
                       }}
                     >
-                      {training.creditsAward}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(190px, 1fr))",
+                          gap: "16px 20px",
+                        }}
+                      >
+                        <Info
+                          label="Dozent"
+                          value={instructorName}
+                          muted={instructorName === "Noch nicht hinterlegt"}
+                        />
+
+                        <Info
+                          label="Abschlussdokument"
+                          value={training.certificateKindLabel}
+                        />
+
+                        <AddressInfo lines={addressLines} />
+                      </div>
                     </div>
-
-                    <div
-                      style={{
-                        color: "#666666",
-                        fontSize: 12,
-                        fontWeight: 850,
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        textAlign: "right",
-                      }}
-                    >
-                      Credits
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 8,
-                        color: "#007873",
-                        fontSize: 24,
-                        fontWeight: 900,
-                        lineHeight: 1,
-                      }}
-                    >
-                      {isOpen ? "−" : "+"}
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              {isOpen ? (
-                <div
-                  style={{
-                    borderTop: "1px solid #E6E6E6",
-                    padding: "16px 20px 18px",
-                    background: "#FFFFFF",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(190px, 1fr))",
-                      gap: "16px 20px",
-                    }}
-                  >
-                    <Info
-                      label="Dozent"
-                      value={instructorName}
-                      muted={instructorName === "Noch nicht hinterlegt"}
-                    />
-
-                    <Info
-                      label="Abschlussdokument"
-                      value={training.certificateKindLabel}
-                    />
-
-                    <AddressInfo lines={addressLines} />
-                  </div>
-                </div>
-              ) : null}
-            </AppCard>
+                  </AnimatedSection>
+                ) : null}
+              </AppCard>
+            </AnimatedSection>
           );
         })}
       </div>
@@ -291,6 +309,7 @@ function Info({
           lineHeight: 1.45,
           fontSize: 14,
           fontStyle: muted ? "italic" : "normal",
+          overflowWrap: "anywhere",
         }}
       >
         {value}
