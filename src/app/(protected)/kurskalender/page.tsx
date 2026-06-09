@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
@@ -91,35 +92,66 @@ export default function KurskalenderPage() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
 
-  async function loadTrainings() {
-    setLoading(true);
-    setMsg("");
-
-    try {
-      const res = await fetch("/api/trainings/public", {
-        cache: "no-store",
-      });
-
-      const data = (await res.json()) as TrainingsResponse;
-
-      if (!data.ok) {
-        setMsg("Schulungen konnten nicht geladen werden.");
-        return;
-      }
-
-      setTrainings(data.trainings);
-    } catch {
-      setMsg("Schulungen konnten nicht geladen werden.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    loadTrainings();
+    let cancelled = false;
+
+    async function loadTrainings() {
+      setLoading(true);
+      setMsg("");
+
+      try {
+        const res = await fetch("/api/trainings/public", {
+          cache: "no-store",
+        });
+
+        const data = (await res.json()) as TrainingsResponse;
+
+        if (cancelled) return;
+
+        if (!res.ok || !data.ok) {
+          setMsg("Schulungen konnten nicht geladen werden.");
+          setTrainings([]);
+          return;
+        }
+
+        setTrainings(data.trainings);
+      } catch {
+        if (!cancelled) {
+          setMsg("Schulungen konnten nicht geladen werden.");
+          setTrainings([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadTrainings();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const weeks = useMemo(() => buildCalendarWeeks(monthDate), [monthDate]);
+
+  const monthTrainings = useMemo(() => {
+    return trainings
+      .filter((training) => isTrainingInMonth(training, monthDate))
+      .sort((a, b) => {
+        return toLocalDate(a.date).getTime() - toLocalDate(b.date).getTime();
+      });
+  }, [monthDate, trainings]);
+
+  const upcomingCount = useMemo(() => {
+    return trainings.filter((training) => isUpcoming(training.date)).length;
+  }, [trainings]);
+
+  const monthCredits = monthTrainings.reduce(
+    (sum, training) => sum + training.creditsAward,
+    0
+  );
 
   function previousMonth() {
     setSelectedTraining(null);
@@ -144,7 +176,10 @@ export default function KurskalenderPage() {
       }}
     >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <PageHeader title="Kurskalender" />
+        <PageHeader
+          title="Kurskalender"
+          description="Übersicht der geplanten Schulungen der VFA-Akademie."
+        />
 
         {msg && (
           <div
@@ -163,6 +198,21 @@ export default function KurskalenderPage() {
         )}
 
         <div style={{ display: "grid", gap: 16 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 10,
+            }}
+          >
+            <SummaryBox
+              label="Kurse im Monat"
+              value={monthTrainings.length}
+            />
+            <SummaryBox label="Bevorstehend" value={upcomingCount} />
+            <SummaryBox label="Mögliche Credits" value={monthCredits} />
+          </div>
+
           <AppCard accent="green">
             <div
               style={{
@@ -250,7 +300,7 @@ export default function KurskalenderPage() {
                         key={week.key}
                         style={{
                           position: "relative",
-                          minHeight: 86,
+                          minHeight: 92,
                           display: "grid",
                           gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
                           gap: 6,
@@ -260,7 +310,7 @@ export default function KurskalenderPage() {
                           <div
                             key={day.key}
                             style={{
-                              minHeight: 86,
+                              minHeight: 92,
                               padding: 7,
                               border: "1px solid #E6E6E6",
                               background: !day.isCurrentMonth
@@ -313,8 +363,8 @@ export default function KurskalenderPage() {
                                 border: "none",
                                 background: "#FFC100",
                                 color: "#1F1F1F",
-                                minHeight: 22,
-                                padding: "3px 9px",
+                                minHeight: 24,
+                                padding: "4px 9px",
                                 borderRadius: 999,
                                 cursor: "pointer",
                                 textAlign: "left",
@@ -327,7 +377,7 @@ export default function KurskalenderPage() {
                                 pointerEvents: "auto",
                                 boxShadow: "0 5px 14px rgba(0,0,0,0.10)",
                               }}
-                              title={bar.training.title}
+                              title={getDisplayTrainingTitle(bar.training)}
                             >
                               {formatTrainingBarLabel(bar.training)}
                             </button>
@@ -359,176 +409,327 @@ export default function KurskalenderPage() {
               </>
             )}
           </AppCard>
+
+          <AppCard>
+            <h2
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: 24,
+                fontWeight: 550,
+                lineHeight: 1.25,
+              }}
+            >
+              Kurse im ausgewählten Monat
+            </h2>
+
+            {loading ? (
+              <p
+                style={{
+                  marginTop: 10,
+                  marginBottom: 0,
+                  color: "#333333",
+                  lineHeight: 1.6,
+                }}
+              >
+                Kurse werden geladen...
+              </p>
+            ) : monthTrainings.length === 0 ? (
+              <p
+                style={{
+                  marginTop: 10,
+                  marginBottom: 0,
+                  color: "#333333",
+                  lineHeight: 1.6,
+                }}
+              >
+                Für diesen Monat sind aktuell keine Kurse hinterlegt.
+              </p>
+            ) : (
+              <div
+                style={{
+                  marginTop: 14,
+                  display: "grid",
+                  gap: 10,
+                }}
+              >
+                {monthTrainings.map((training) => (
+                  <button
+                    key={training.id}
+                    type="button"
+                    onClick={() => setSelectedTraining(training)}
+                    style={{
+                      width: "100%",
+                      border: "1px solid #E6E6E6",
+                      background: "#FFFFFF",
+                      padding: "14px 16px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      gap: 16,
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          color: "#007873",
+                          fontSize: 22,
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {getDisplayTrainingTitle(training)}
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 6,
+                          color: "#333333",
+                          fontSize: 14,
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        {formatDateRange(training.date, training.endDate)}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#007873",
+                        fontWeight: 950,
+                        fontSize: 22,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {training.creditsAward}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </AppCard>
         </div>
       </div>
 
       {selectedTraining && (
+        <TrainingDialog
+          training={selectedTraining}
+          onClose={() => setSelectedTraining(null)}
+        />
+      )}
+    </main>
+  );
+}
+
+function TrainingDialog({
+  training,
+  onClose,
+}: {
+  training: CalendarTraining;
+  onClose: () => void;
+}) {
+  const displayTitle = getDisplayTrainingTitle(training);
+  const instructorName = formatInstructorName(training.instructor);
+  const addressLines = formatAddressLines(training.location);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Schulungsdetails"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 5000,
+        background: "rgba(0,0,0,0.42)",
+        display: "grid",
+        placeItems: "center",
+        padding: 18,
+      }}
+    >
+      <div
+        onClick={(event) => event.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 760,
+          maxHeight: "calc(100vh - 36px)",
+          overflow: "auto",
+          background: "#FFFFFF",
+          border: "1px solid #FFC100",
+          boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
+          padding: 22,
+        }}
+      >
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Schulungsdetails"
-          onClick={() => setSelectedTraining(null)}
           style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 5000,
-            background: "rgba(0,0,0,0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 18,
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 16,
+            alignItems: "flex-start",
+            flexWrap: "wrap",
           }}
         >
-          <div
-            onClick={(event) => event.stopPropagation()}
-            style={{
-              width: "100%",
-              maxWidth: 720,
-              maxHeight: "calc(100vh - 36px)",
-              overflow: "auto",
-              background: "#FFFFFF",
-              border: "1px solid #FFC100",
-              boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
-              padding: 22,
-            }}
-          >
+          <div style={{ minWidth: 0 }}>
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                gap: 16,
-                alignItems: "flex-start",
+                gap: 8,
                 flexWrap: "wrap",
+                marginBottom: 10,
               }}
             >
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    flexWrap: "wrap",
-                    marginBottom: 10,
-                  }}
-                >
-                  {selectedTraining.code && (
-                    <StatusBadge variant="yellow">
-                      {selectedTraining.code}
-                    </StatusBadge>
-                  )}
-
-                  <StatusBadge>
-                    {selectedTraining.certificateKindLabel}
-                  </StatusBadge>
-
-                  <StatusBadge>
-                    {selectedTraining.creditsAward} Credits
-                  </StatusBadge>
-                </div>
-
-                <h2
-                  style={{
-                    margin: 0,
-                    color: "#007873",
-                    fontSize: 28,
-                    fontWeight: 500,
-                    lineHeight: 1.25,
-                  }}
-                >
-                  {selectedTraining.title}
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedTraining(null)}
-                style={smallButtonStyle}
-              >
-                Schließen
-              </button>
-            </div>
-
-            <div
-              style={{
-                marginTop: 18,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: 14,
-              }}
-            >
-              <Info
-                label="Zeitraum"
-                value={`${formatDate(selectedTraining.date)}${
-                  selectedTraining.endDate
-                    ? ` bis ${formatDate(selectedTraining.endDate)}`
-                    : ""
-                }`}
-              />
-
-              {selectedTraining.location && (
-                <Info label="Ort" value={selectedTraining.location} />
+              {training.code && (
+                <StatusBadge variant="yellow">{training.code}</StatusBadge>
               )}
 
-              {selectedTraining.instructor && (
-                <Info label="Dozent" value={selectedTraining.instructor} />
-              )}
+              <StatusBadge>{training.certificateKindLabel}</StatusBadge>
 
-              <Info
-                label="Abschluss"
-                value={selectedTraining.certificateKindLabel}
-              />
-
-              <Info
-                label="Credits"
-                value={String(selectedTraining.creditsAward)}
-              />
+              <StatusBadge>{training.creditsAward} Credits</StatusBadge>
             </div>
 
-            {selectedTraining.description && (
-              <div
-                style={{
-                  marginTop: 16,
-                  paddingTop: 16,
-                  borderTop: "1px solid #E6E6E6",
-                }}
-              >
-                <Info label="Inhalte" value={selectedTraining.description} />
-              </div>
-            )}
-
-            <div
+            <h2
               style={{
-                marginTop: 20,
-                paddingTop: 18,
-                borderTop: "1px solid #E6E6E6",
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                alignItems: "center",
-                flexWrap: "wrap",
+                margin: 0,
+                color: "#007873",
+                fontSize: 30,
+                fontWeight: 650,
+                lineHeight: 1.18,
+                overflowWrap: "anywhere",
               }}
             >
-              <div
+              {displayTitle}
+            </h2>
+
+            {training.code && cleanTrainingTitle(training.title) !== training.code && (
+              <p
                 style={{
+                  marginTop: 8,
+                  marginBottom: 0,
                   color: "#333333",
-                  fontSize: 14,
                   lineHeight: 1.5,
                 }}
               >
-                Weitere Informationen und Buchung auf der VFA-Website.
-              </div>
-
-              <a
-                href={getBookingUrl(selectedTraining)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={bookingButtonStyle}
-              >
-                Zur Buchung
-              </a>
-            </div>
+                {cleanTrainingTitle(training.title)}
+              </p>
+            )}
           </div>
+
+          <button type="button" onClick={onClose} style={smallButtonStyle}>
+            Schließen
+          </button>
         </div>
-      )}
-    </main>
+
+        <div
+          style={{
+            marginTop: 20,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 14,
+          }}
+        >
+          <Info
+            label="Zeitraum"
+            value={formatDateRange(training.date, training.endDate)}
+          />
+
+          <Info
+            label="Dozent"
+            value={instructorName}
+            muted={instructorName === "Noch nicht hinterlegt"}
+          />
+
+          <Info label="Abschluss" value={training.certificateKindLabel} />
+
+          <Info label="Credits" value={`${training.creditsAward} Credits`} />
+
+          <AddressInfo lines={addressLines} />
+        </div>
+
+        {training.description && (
+          <div
+            style={{
+              marginTop: 18,
+              paddingTop: 16,
+              borderTop: "1px solid #E6E6E6",
+            }}
+          >
+            <Info label="Inhalte" value={training.description} />
+          </div>
+        )}
+
+        <div
+          style={{
+            marginTop: 20,
+            paddingTop: 18,
+            borderTop: "1px solid #E6E6E6",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <div
+            style={{
+              color: "#333333",
+              fontSize: 14,
+              lineHeight: 1.5,
+            }}
+          >
+            Weitere Informationen und Buchung auf der VFA-Website.
+          </div>
+
+          <a
+            href={getBookingUrl(training)}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={bookingButtonStyle}
+          >
+            Zur Buchung
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryBox({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #E6E6E6",
+        background: "#FFFFFF",
+        padding: "14px 16px",
+      }}
+    >
+      <div
+        style={{
+          color: "#007873",
+          fontSize: 12,
+          fontWeight: 850,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          color: "#1F1F1F",
+          fontSize: 24,
+          fontWeight: 900,
+          lineHeight: 1.1,
+        }}
+      >
+        {value.toLocaleString("de-DE")}
+      </div>
+    </div>
   );
 }
 
@@ -658,7 +859,237 @@ function buildWeekTrainingBars(
 }
 
 function formatTrainingBarLabel(training: CalendarTraining) {
-  return training.title || training.code || "Kurs";
+  return getDisplayTrainingTitle(training);
+}
+
+function getDisplayTrainingTitle(training: CalendarTraining) {
+  if (training.code?.trim()) {
+    return training.code.trim();
+  }
+
+  return cleanTrainingTitle(training.title);
+}
+
+function cleanTrainingTitle(value: string) {
+  return value
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatInstructorName(value: string | null) {
+  const extractedName = extractInstructorName(value);
+
+  return extractedName || "Noch nicht hinterlegt";
+}
+
+function extractInstructorName(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return "";
+  }
+
+  const cleaned = value
+    .replace(/\s+/g, " ")
+    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
+    .trim();
+
+  const commaParts = cleaned
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const likelyName =
+    commaParts.length >= 2
+      ? commaParts[1]
+      : cleaned
+          .split(/[;|/]/)[0]
+          .replace(
+            /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
+            ""
+          )
+          .trim();
+
+  if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) {
+    return "";
+  }
+
+  const words = likelyName
+    .split(" ")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(part))
+    .filter((part) => !/\d/.test(part));
+
+  if (words.length < 2) {
+    return "";
+  }
+
+  const possibleName = `${words[0]} ${words[1]}`;
+
+  if (looksLikeCompany(possibleName) || looksLikeAddress(possibleName)) {
+    return "";
+  }
+
+  return possibleName;
+}
+
+function looksLikeCompany(value: string) {
+  const normalized = value.toLowerCase();
+
+  const companyIndicators = [
+    "gmbh",
+    "mbh",
+    "ag",
+    "kg",
+    "ohg",
+    "ug",
+    "e.v.",
+    "ev",
+    "gbr",
+    "holding",
+    "gruppe",
+    "group",
+    "company",
+    "unternehmen",
+    "firma",
+    "werke",
+    "aufzug",
+    "aufzüge",
+    "aufzuege",
+    "elevator",
+    "lift",
+    "lifts",
+    "hydraulic",
+    "hydraulics",
+    "hydraulik",
+    "metallbau",
+    "maschinenbau",
+    "service",
+    "services",
+    "technik",
+    "technical",
+    "akademie",
+    "academy",
+    "institut",
+    "institute",
+    "training",
+    "seminar",
+    "flughafen",
+    "airport",
+  ];
+
+  return companyIndicators.some((indicator) => normalized.includes(indicator));
+}
+
+function looksLikeAddress(value: string) {
+  const normalized = value.toLowerCase();
+
+  return (
+    /\d/.test(normalized) ||
+    /\b(strasse|straße|str\.|weg|platz|allee|ring|d\s?\d{4,5}|\d{4,5})\b/i.test(
+      normalized
+    )
+  );
+}
+
+function formatAddressLines(value: string | null) {
+  if (!value?.trim()) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function AddressInfo({ lines }: { lines: string[] }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 850,
+          color: "#007873",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: 3,
+        }}
+      >
+        Adresse
+      </div>
+
+      {lines.length === 0 ? (
+        <div
+          style={{
+            color: "#777777",
+            lineHeight: 1.45,
+            fontSize: 14,
+            fontStyle: "italic",
+          }}
+        >
+          Noch nicht hinterlegt
+        </div>
+      ) : (
+        <div
+          style={{
+            color: "#1F1F1F",
+            lineHeight: 1.45,
+            fontSize: 14,
+          }}
+        >
+          {lines.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function isTrainingInMonth(training: CalendarTraining, monthDate: Date) {
+  const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+  const trainingStart = startOfDay(toLocalDate(training.date));
+  const trainingEnd = training.endDate
+    ? startOfDay(toLocalDate(training.endDate))
+    : trainingStart;
+
+  return trainingEnd >= monthStart && trainingStart <= monthEnd;
+}
+
+function formatDateRange(startValue: string, endValue: string | null) {
+  const start = formatDate(startValue);
+  const end = endValue ? formatDate(endValue) : null;
+
+  if (!end || end === start) {
+    return start;
+  }
+
+  return `${start} bis ${end}`;
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("de-DE");
+}
+
+function isUpcoming(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+
+  return date >= currentDate;
 }
 
 function diffDays(start: Date, end: Date) {
@@ -695,37 +1126,46 @@ function isWeekend(date: Date) {
   return day === 0 || day === 6;
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleDateString("de-DE");
-}
-
-function Info({ label, value }: { label: string; value: string }) {
+function Info({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
   return (
-    <div>
+    <div style={{ minWidth: 0 }}>
       <div
         style={{
-          fontSize: 13,
-          fontWeight: 800,
+          fontSize: 12,
+          fontWeight: 850,
           color: "#007873",
           textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 4,
+          letterSpacing: "0.06em",
+          marginBottom: 3,
         }}
       >
         {label}
       </div>
 
-      <div style={{ color: "#1F1F1F", lineHeight: 1.5 }}>{value}</div>
+      <div
+        style={{
+          color: muted ? "#777777" : "#1F1F1F",
+          lineHeight: 1.45,
+          fontSize: 14,
+          fontStyle: muted ? "italic" : "normal",
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
 
-const arrowButtonStyle: React.CSSProperties = {
+const arrowButtonStyle: CSSProperties = {
   width: 44,
   height: 44,
   borderRadius: 999,
@@ -738,7 +1178,7 @@ const arrowButtonStyle: React.CSSProperties = {
   boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
 };
 
-const smallButtonStyle: React.CSSProperties = {
+const smallButtonStyle: CSSProperties = {
   minHeight: 38,
   padding: "8px 14px",
   borderRadius: 999,
@@ -752,7 +1192,7 @@ const smallButtonStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const bookingButtonStyle: React.CSSProperties = {
+const bookingButtonStyle: CSSProperties = {
   minHeight: 42,
   padding: "10px 18px",
   borderRadius: 999,
