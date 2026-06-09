@@ -181,32 +181,103 @@ function extractInstructorName(value: string | null | undefined) {
     .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
     .trim();
 
-  const firstPart = cleaned
-    .split(/[,;|/]/)[0]
-    .replace(
-      /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
-      ""
-    )
-    .trim();
+  const commaParts = cleaned
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
 
-  const words = firstPart
+  const likelyName =
+    commaParts.length >= 2
+      ? commaParts[1]
+      : cleaned
+          .split(/[;|/]/)[0]
+          .replace(
+            /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
+            ""
+          )
+          .trim();
+
+  if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) {
+    return "";
+  }
+
+  const words = likelyName
     .split(" ")
     .map((part) => part.trim())
     .filter(Boolean)
-    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?)$/i.test(part))
-    .filter((part) => !/\d/.test(part))
-    .filter(
-      (part) =>
-        !/^(GmbH|AG|KG|OHG|UG|e\.V\.|mbH|Akademie|Institut|Training|Seminar|Service)$/i.test(
-          part
-        )
-    );
+    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(part))
+    .filter((part) => !/\d/.test(part));
 
   if (words.length < 2) {
     return "";
   }
 
-  return `${words[0]} ${words[1]}`;
+  const possibleName = `${words[0]} ${words[1]}`;
+
+  if (looksLikeCompany(possibleName) || looksLikeAddress(possibleName)) {
+    return "";
+  }
+
+  return possibleName;
+}
+
+function looksLikeCompany(value: string) {
+  const normalized = value.toLowerCase();
+
+  const companyIndicators = [
+    "gmbh",
+    "mbh",
+    "ag",
+    "kg",
+    "ohg",
+    "ug",
+    "e.v.",
+    "ev",
+    "gbr",
+    "holding",
+    "gruppe",
+    "group",
+    "company",
+    "unternehmen",
+    "firma",
+    "werke",
+    "aufzug",
+    "aufzüge",
+    "aufzuege",
+    "elevator",
+    "lift",
+    "lifts",
+    "hydraulic",
+    "hydraulics",
+    "hydraulik",
+    "metallbau",
+    "maschinenbau",
+    "service",
+    "services",
+    "technik",
+    "technical",
+    "akademie",
+    "academy",
+    "institut",
+    "institute",
+    "training",
+    "seminar",
+    "flughafen",
+    "airport",
+  ];
+
+  return companyIndicators.some((indicator) => normalized.includes(indicator));
+}
+
+function looksLikeAddress(value: string) {
+  const normalized = value.toLowerCase();
+
+  return (
+    /\d/.test(normalized) ||
+    /\b(strasse|straße|str\.|weg|platz|allee|ring|d\s?\d{4,5}|\d{4,5})\b/i.test(
+      normalized
+    )
+  );
 }
 
 export default function CobraAdminClient() {
