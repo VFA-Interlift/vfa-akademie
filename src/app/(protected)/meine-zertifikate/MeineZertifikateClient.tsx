@@ -77,7 +77,7 @@ export default function MeineZertifikateClient({
   }
 
   const issuedCount = certificates.filter((cert) =>
-    ["ISSUED", "CREATED"].includes(cert.status)
+    isDownloadableCertificate(cert)
   ).length;
 
   const totalCredits = certificates.reduce(
@@ -199,6 +199,7 @@ export default function MeineZertifikateClient({
             );
             const addressLines = formatAddressLines(cert.location);
             const instructorName = formatInstructorName(cert.instructor);
+            const canDownload = isDownloadableCertificate(cert);
 
             return (
               <AnimatedSection
@@ -316,7 +317,9 @@ export default function MeineZertifikateClient({
                             fontWeight: 900,
                             lineHeight: 1,
                             transition: "transform 180ms ease",
-                            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                            transform: isOpen
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
                           }}
                         >
                           {isOpen ? "−" : "+"}
@@ -381,7 +384,7 @@ export default function MeineZertifikateClient({
                             flexWrap: "wrap",
                           }}
                         >
-                          {cert.pdfUrl ? (
+                          {canDownload ? (
                             <CertificateDownloadButton
                               certificateId={cert.id}
                               label="Dokument herunterladen"
@@ -520,6 +523,10 @@ function AddressInfo({ lines }: { lines: string[] }) {
       )}
     </div>
   );
+}
+
+function isDownloadableCertificate(cert: SerializableCertificate) {
+  return cert.status === "ISSUED";
 }
 
 function getDisplayCertificateTitle(cert: SerializableCertificate) {
@@ -694,10 +701,7 @@ function getYear(value: string | null | undefined) {
 }
 
 function formatStatus(status: string) {
-  if (status === "DRAFT") return "In Vorbereitung";
-  if (status === "READY") return "Bereit";
   if (status === "ISSUED") return "Ausgestellt";
-  if (status === "CREATED") return "Erstellt";
   if (status === "REVOKED") return "Widerrufen";
 
   return status;
