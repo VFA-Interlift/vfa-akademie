@@ -64,6 +64,21 @@ function drawA1Certificate({
   boldFont: PDFFont;
   data: CertificatePdfData;
 }) {
+  /**
+   * PDF-Koordinaten:
+   * x = Abstand von links
+   * y = Abstand von unten
+   *
+   * Vorlage hat bereits:
+   * - "geb."
+   * - "hat"
+   *
+   * Deshalb setzen wir:
+   * - Teilnehmername auf die freie Namenszeile
+   * - Geburtsdatum rechts/neben "geb."
+   * - Zeitraum + Ort rechts/neben "hat"
+   */
+
   const participantName = data.participantName || data.fullName || "";
   const participantBirthDate = data.participantBirthDate || data.birthDate || "";
 
@@ -72,7 +87,7 @@ function drawA1Certificate({
 
   const trainingLocation = data.trainingLocation || data.location || "";
 
-  const participationSentence = ["hat", trainingDateRange, "in", trainingLocation]
+  const participationDetails = [trainingDateRange, "in", trainingLocation]
     .filter(Boolean)
     .join(" ");
 
@@ -81,7 +96,7 @@ function drawA1Certificate({
     font: boldFont,
     text: participantName,
     x: 126,
-    y: 546,
+    y: 632,
     size: 13,
     maxWidth: 360,
   });
@@ -90,18 +105,18 @@ function drawA1Certificate({
     page,
     font,
     text: participantBirthDate,
-    x: 151,
-    y: 521,
+    x: 242,
+    y: 606,
     size: 11,
-    maxWidth: 240,
+    maxWidth: 180,
   });
 
   drawText({
     page,
     font,
-    text: participationSentence,
-    x: 126,
-    y: 490,
+    text: participationDetails,
+    x: 154,
+    y: 566,
     size: 11,
     maxWidth: 420,
   });
