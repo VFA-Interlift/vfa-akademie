@@ -100,8 +100,8 @@ function drawA1Certificate({
     page,
     font,
     text: participationDetails,
-    x: 192,
-    y: 561,
+    x: 194,
+    y: 589,
     size: 11,
     maxWidth: 360,
   });
