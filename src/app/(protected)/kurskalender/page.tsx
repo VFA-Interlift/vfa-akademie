@@ -11,6 +11,7 @@ import {
   formatInstructorName,
   formatAddressLines,
   getDisplayTrainingTitle,
+  cleanTrainingTitle,
 } from "@/lib/trainings/format";
 
 type CalendarTraining = {
