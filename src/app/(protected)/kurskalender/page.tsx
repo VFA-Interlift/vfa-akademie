@@ -163,6 +163,7 @@ export default function KurskalenderPage() {
           <PageHeader
             title="Kurskalender"
             description="Übersicht der geplanten Schulungen der VFA-Akademie."
+            showTitle={false}
           />
         </AnimatedSection>
 

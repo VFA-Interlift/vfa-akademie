@@ -63,6 +63,7 @@ export default async function MeineDatenPage() {
         <PageHeader
           title="Meine Daten"
           description="Hier kannst du deine persönlichen Daten und Firmendaten pflegen. Diese Angaben können später für Schulungen, Zertifikate und die Cobra-Synchronisation genutzt werden."
+          showTitle={false}
         />
 
         <AppCard accent="green">

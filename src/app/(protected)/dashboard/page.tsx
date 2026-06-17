@@ -157,20 +157,6 @@ export default async function DashboardPage() {
               }}
             />
 
-            <h1
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 38,
-                fontWeight: 500,
-                lineHeight: 1.15,
-                textTransform: "uppercase",
-                letterSpacing: "0.02em",
-              }}
-            >
-              Dashboard
-            </h1>
-
             <h2
               style={{
                 margin: "18px 0 0",

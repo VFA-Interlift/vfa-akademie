@@ -37,6 +37,7 @@ export default async function MeineZertifikatePage() {
         <PageHeader
           title="Meine Zertifikate"
           description="Hier findest du deine Teilnahmebestätigungen und Zertifikate aus abgeschlossenen Schulungen. Über den Jahresfilter bleibt die Übersicht auch bei vielen Schulungen schlank."
+          showTitle={false}
         />
 
         <MeineZertifikateClient certificates={serializableCertificates} />

@@ -34,6 +34,7 @@ export default async function MeineSchulungenPage() {
         <PageHeader
           title="Meine Schulungen"
           description="Deine bevorstehenden Schulungen, Credits und Abschlussdokumente auf einen Blick."
+          showTitle={false}
         />
 
         <MeineSchulungenClient trainings={serializableTrainings} />
