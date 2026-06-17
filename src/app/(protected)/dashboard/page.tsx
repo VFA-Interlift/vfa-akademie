@@ -138,13 +138,7 @@ export default async function DashboardPage() {
   const nextRank = getNextRankInfo(user.creditsTotal);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px",
-      }}
-    >
+    <main className="page-main">
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
           <section style={{ marginBottom: 24 }}>
@@ -161,7 +155,7 @@ export default async function DashboardPage() {
               style={{
                 margin: "0 0 0",
                 color: "#1F1F1F",
-                fontSize: 30,
+                fontSize: "clamp(22px, 5vw, 30px)",
                 fontWeight: 500,
                 lineHeight: 1.2,
               }}
@@ -453,7 +447,7 @@ export default async function DashboardPage() {
                   style={{
                     margin: 0,
                     color: "#007873",
-                    fontSize: 24,
+                    fontSize: "clamp(18px, 4vw, 24px)",
                     fontWeight: 500,
                     lineHeight: 1.3,
                   }}

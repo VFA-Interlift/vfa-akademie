@@ -201,6 +201,18 @@ textarea {
   }
 }
 
+/* ── Protected page container ── */
+.page-main {
+  min-height: 100vh;
+  background: #f7f7f4;
+  padding: 24px 16px;
+}
+@media (min-width: 600px) {
+  .page-main {
+    padding: 40px 24px;
+  }
+}
+
 /* ── Page fade-in ── */
 @keyframes pageFadeUp {
   from { opacity: 0; transform: translateY(16px); }

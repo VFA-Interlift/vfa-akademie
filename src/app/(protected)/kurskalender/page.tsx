@@ -151,13 +151,7 @@ export default function KurskalenderPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px",
-      }}
-    >
+    <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
           <PageHeader
@@ -209,7 +203,7 @@ export default function KurskalenderPage() {
                   style={{
                     textAlign: "center",
                     color: "#007873",
-                    fontSize: 30,
+                    fontSize: "clamp(18px, 4vw, 30px)",
                     fontWeight: 500,
                     textTransform: "uppercase",
                     letterSpacing: "0.02em",
@@ -276,18 +270,18 @@ export default function KurskalenderPage() {
                           key={week.key}
                           style={{
                             position: "relative",
-                            minHeight: 92,
+                            minHeight: "clamp(56px, 14vw, 92px)",
                             display: "grid",
                             gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                            gap: 6,
+                            gap: "clamp(3px, 1vw, 6px)",
                           }}
                         >
                           {week.days.map((day) => (
                             <div
                               key={day.key}
                               style={{
-                                minHeight: 92,
-                                padding: 7,
+                                minHeight: "clamp(56px, 14vw, 92px)",
+                                padding: "clamp(3px, 1.5vw, 7px)",
                                 border: "1px solid #E6E6E6",
                                 background: !day.isCurrentMonth
                                   ? "#F1F1EE"
@@ -471,7 +465,7 @@ function TrainingDialog({
           background: "#FFFFFF",
           border: "1px solid #FFC100",
           boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
-          padding: 22,
+          padding: "clamp(14px, 4vw, 22px)",
           animationName: "vfaDialogCardIn",
           animationDuration: "280ms",
           animationTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -487,7 +481,7 @@ function TrainingDialog({
             style={{
               margin: 0,
               color: "#007873",
-              fontSize: 30,
+              fontSize: "clamp(18px, 5vw, 30px)",
               fontWeight: 650,
               lineHeight: 1.18,
               overflowWrap: "anywhere",
@@ -514,7 +508,7 @@ function TrainingDialog({
           style={{
             marginTop: 20,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
             gap: 14,
           }}
         >

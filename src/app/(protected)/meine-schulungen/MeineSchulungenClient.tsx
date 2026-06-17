@@ -64,7 +64,7 @@ export default function MeineSchulungenClient({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
             gap: 10,
           }}
         >
@@ -126,7 +126,7 @@ export default function MeineSchulungenClient({
                         style={{
                           margin: 0,
                           color: "#007873",
-                          fontSize: 32,
+                          fontSize: "clamp(18px, 5vw, 32px)",
                           fontWeight: 750,
                           lineHeight: 1.12,
                           maxWidth: 520,
@@ -163,7 +163,7 @@ export default function MeineSchulungenClient({
                         style={{
                           color: "#007873",
                           fontWeight: 950,
-                          fontSize: 34,
+                          fontSize: "clamp(22px, 5vw, 34px)",
                           lineHeight: 1,
                           textAlign: "right",
                         }}

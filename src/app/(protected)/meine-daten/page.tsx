@@ -52,13 +52,7 @@ export default async function MeineDatenPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px",
-      }}
-    >
+    <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader
           title="Meine Daten"
