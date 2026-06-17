@@ -311,17 +311,15 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px",
-      }}
+    <main className="page-main"
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ marginBottom: 10 }}>
+          <a href="/admin" style={{ color: "#007873", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>← Adminbereich</a>
+        </div>
         <PageHeader
           title="Nutzer verwalten"
-          description="Hier verwaltest du registrierte Nutzer, Credits, Schulungsübersichten und Adminrechte zentral an einer Stelle."
+          description="Profile prüfen, Credits bearbeiten, Rollen vergeben und Nutzer löschen."
         />
 
         {msg && (
@@ -459,8 +457,10 @@ export default function AdminUsersPage() {
                   <div
                     key={user.id}
                     style={{
-                      border: "1px solid #E6E6E6",
+                      border: "1px solid #EFEFEF",
                       background: "#FFFFFF",
+                      borderRadius: 12,
+                      overflow: "hidden",
                     }}
                   >
                     <button

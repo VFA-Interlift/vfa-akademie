@@ -229,7 +229,7 @@ textarea {
     border-top: 1px solid #e6e6e6;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    height: calc(68px + env(safe-area-inset-bottom, 0px));
+    height: calc(76px + env(safe-area-inset-bottom, 0px));
     align-items: stretch;
   }
   .bottom-nav-item {
@@ -274,7 +274,7 @@ textarea {
   /* Remove top padding when header is hidden */
   body.has-bottom-nav .page-content {
     padding-top: 0 !important;
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
   /* Hide footer on mobile when bottom nav is present */
   body.has-bottom-nav footer {

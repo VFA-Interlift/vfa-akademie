@@ -84,14 +84,11 @@ export default function AdminCreditsPage() {
   const isNegative = Number.isFinite(amount) && amount < 0;
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px",
-      }}
-    >
+    <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <div style={{ marginBottom: 10 }}>
+          <a href="/admin" style={{ color: "#007873", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>← Adminbereich</a>
+        </div>
         <PageHeader
           title="Credits verwalten"
           description="Hier kannst du Credits manuell vergeben oder abziehen. Jede Änderung wird als Credit-Transaktion gespeichert."

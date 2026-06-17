@@ -32,13 +32,7 @@ export default async function AdminCobraPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "40px 24px",
-      }}
-    >
+    <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
           <div style={{ marginBottom: 18 }}>
