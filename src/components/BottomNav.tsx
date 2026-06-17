@@ -46,6 +46,7 @@ export default function BottomNav() {
     pathname.startsWith("/meine-daten") ||
     pathname.startsWith("/badges") ||
     pathname.startsWith("/dozent") ||
+    pathname.startsWith("/leaderboard") ||
     pathname.startsWith("/admin");
 
   return (
@@ -79,16 +80,20 @@ export default function BottomNav() {
             <div className="mehr-handle" />
 
             <div className="mehr-items">
+              <SheetLink href="/meine-daten" active={pathname.startsWith("/meine-daten")} onClick={() => setSheetOpen(false)}>
+                <IconPerson active={false} /> Profil
+              </SheetLink>
+
               <SheetLink href="/badges" active={pathname.startsWith("/badges")} onClick={() => setSheetOpen(false)}>
                 <IconBadge /> Badges
               </SheetLink>
 
-              <SheetLink href="/dozent" active={pathname.startsWith("/dozent")} onClick={() => setSheetOpen(false)}>
-                <IconChalk /> Dozenten
+              <SheetLink href="/leaderboard" active={pathname.startsWith("/leaderboard")} onClick={() => setSheetOpen(false)}>
+                <IconRanking /> Ranking
               </SheetLink>
 
-              <SheetLink href="/meine-daten" active={pathname.startsWith("/meine-daten")} onClick={() => setSheetOpen(false)}>
-                <IconPerson active={false} /> Profil
+              <SheetLink href="/dozent" active={pathname.startsWith("/dozent")} onClick={() => setSheetOpen(false)}>
+                <IconChalk /> Dozenten
               </SheetLink>
 
               {role === "ADMIN" && (
@@ -210,6 +215,16 @@ function IconAdmin() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2l3 6.5H22l-5.5 4 2 6.5L12 15l-6.5 4 2-6.5L2 8.5h7z" />
+    </svg>
+  );
+}
+
+function IconRanking() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="14" width="4" height="8" rx="1" />
+      <rect x="9" y="9" width="4" height="13" rx="1" />
+      <rect x="16" y="4" width="4" height="18" rx="1" />
     </svg>
   );
 }

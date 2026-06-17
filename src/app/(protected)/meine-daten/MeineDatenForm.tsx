@@ -8,6 +8,7 @@ import AppSelect from "@/components/ui/AppSelect";
 import AppTextarea from "@/components/ui/AppTextarea";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
+import LeaderboardSettingsCard from "@/components/leaderboard/LeaderboardSettingsCard";
 
 type FormState = {
   email: string;
@@ -352,6 +353,21 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
           </div>
         )}
       </div>
+
+      <AppCard accent="none" style={{ boxShadow: "none" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
+          <div>
+            <h2 style={{ margin: 0, color: "#007873", fontSize: 24, fontWeight: 500, lineHeight: 1.3 }}>
+              Credit-Ranking
+            </h2>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
+              Entscheide, ob du im freiwilligen VFA-Credit-Ranking erscheinen möchtest.
+            </p>
+          </div>
+          <StatusBadge>Ranking</StatusBadge>
+        </div>
+        <LeaderboardSettingsCard />
+      </AppCard>
 
       <AppCard accent="none" style={{ boxShadow: "none" }}>
         <div

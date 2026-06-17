@@ -106,6 +106,35 @@ export default async function DashboardPage() {
           </div>
         </AnimatedSection>
 
+        {/* Profile completeness hint */}
+        {(!user.firstName || !user.lastName) && (
+          <AnimatedSection delayMs={80}>
+            <Link
+              href="/meine-daten"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                padding: "14px 18px",
+                background: "rgba(255,193,0,0.10)",
+                border: "1px solid rgba(255,193,0,0.45)",
+                borderRadius: 12,
+                textDecoration: "none",
+              }}
+            >
+              <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#7C5A0A", lineHeight: 1.25 }}>
+                  Profil unvollständig
+                </div>
+                <div style={{ fontSize: 13, color: "#7C5A0A", opacity: 0.8, marginTop: 2, lineHeight: 1.4 }}>
+                  Vor- und Nachname fehlen – werden für Zertifikate benötigt. Jetzt ausfüllen →
+                </div>
+              </div>
+            </Link>
+          </AnimatedSection>
+        )}
+
         {/* Next upcoming training */}
         {nextTraining && (
           <AnimatedSection delayMs={100}>
