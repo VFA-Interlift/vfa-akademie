@@ -5,6 +5,12 @@ import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CertificateDownloadButton from "@/components/CertificateDownloadButton";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import {
+  formatDate,
+  formatDateRange,
+  formatInstructorName,
+  formatAddressLines,
+} from "@/lib/trainings/format";
 
 type SerializableCertificate = {
   id: string;
@@ -410,9 +416,10 @@ function SummaryBox({ label, value }: { label: string; value: number }) {
   return (
     <div
       style={{
-        border: "1px solid #E6E6E6",
+        border: "1px solid #EFEFEF",
         background: "#FFFFFF",
         padding: "14px 16px",
+        borderRadius: 12,
       }}
     >
       <div
@@ -530,169 +537,9 @@ function isDownloadableCertificate(cert: SerializableCertificate) {
 }
 
 function getDisplayCertificateTitle(cert: SerializableCertificate) {
-  if (cert.code?.trim()) {
-    return cert.code.trim();
-  }
-
+  if (cert.code?.trim()) return cert.code.trim();
   const fallback = cert.trainingTitle || cert.title;
-  return cleanTitle(fallback);
-}
-
-function cleanTitle(value: string) {
-  return value
-    .replace(/\s*\([^)]*\)\s*/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function formatInstructorName(value: string | null) {
-  const extractedName = extractInstructorName(value);
-
-  return extractedName || "Noch nicht hinterlegt";
-}
-
-function extractInstructorName(value: string | null | undefined) {
-  if (!value?.trim()) {
-    return "";
-  }
-
-  const cleaned = value
-    .replace(/\s+/g, " ")
-    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
-    .trim();
-
-  const commaParts = cleaned
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const likelyName =
-    commaParts.length >= 2
-      ? commaParts[1]
-      : cleaned
-          .split(/[;|/]/)[0]
-          .replace(
-            /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
-            ""
-          )
-          .trim();
-
-  if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) {
-    return "";
-  }
-
-  const words = likelyName
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(part))
-    .filter((part) => !/\d/.test(part));
-
-  if (words.length < 2) {
-    return "";
-  }
-
-  const possibleName = `${words[0]} ${words[1]}`;
-
-  if (looksLikeCompany(possibleName) || looksLikeAddress(possibleName)) {
-    return "";
-  }
-
-  return possibleName;
-}
-
-function looksLikeCompany(value: string) {
-  const normalized = value.toLowerCase();
-
-  const companyIndicators = [
-    "gmbh",
-    "mbh",
-    "ag",
-    "kg",
-    "ohg",
-    "ug",
-    "e.v.",
-    "ev",
-    "gbr",
-    "holding",
-    "gruppe",
-    "group",
-    "company",
-    "unternehmen",
-    "firma",
-    "werke",
-    "aufzug",
-    "aufzüge",
-    "aufzuege",
-    "elevator",
-    "lift",
-    "lifts",
-    "hydraulic",
-    "hydraulics",
-    "hydraulik",
-    "metallbau",
-    "maschinenbau",
-    "service",
-    "services",
-    "technik",
-    "technical",
-    "akademie",
-    "academy",
-    "institut",
-    "institute",
-    "training",
-    "seminar",
-    "flughafen",
-    "airport",
-  ];
-
-  return companyIndicators.some((indicator) => normalized.includes(indicator));
-}
-
-function looksLikeAddress(value: string) {
-  const normalized = value.toLowerCase();
-
-  return (
-    /\d/.test(normalized) ||
-    /\b(strasse|straße|str\.|weg|platz|allee|ring|d\s?\d{4,5}|\d{4,5})\b/i.test(
-      normalized
-    )
-  );
-}
-
-function formatAddressLines(value: string | null) {
-  if (!value?.trim()) {
-    return [];
-  }
-
-  return value
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
-function formatDateRange(startValue: string, endValue: string | null) {
-  const start = formatDate(startValue);
-  const end = endValue ? formatDate(endValue) : null;
-
-  if (!start) {
-    return "";
-  }
-
-  if (!end || end === start) {
-    return `am ${start}`;
-  }
-
-  return `vom ${start} bis ${end}`;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleDateString("de-DE");
+  return fallback.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function getYear(value: string | null | undefined) {

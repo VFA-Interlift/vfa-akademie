@@ -5,6 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import {
+  formatDate,
+  formatDateRange,
+  formatInstructorName,
+  formatAddressLines,
+  getDisplayTrainingTitle,
+} from "@/lib/trainings/format";
 
 type CalendarTraining = {
   id: string;
@@ -89,6 +96,7 @@ export default function KurskalenderPage() {
   const [trainings, setTrainings] = useState<CalendarTraining[]>([]);
   const [selectedTraining, setSelectedTraining] =
     useState<CalendarTraining | null>(null);
+  const [overflowWeek, setOverflowWeek] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
 
@@ -138,6 +146,7 @@ export default function KurskalenderPage() {
 
   function previousMonth() {
     setSelectedTraining(null);
+    setOverflowWeek(null);
     setMonthDate((current) => {
       return new Date(current.getFullYear(), current.getMonth() - 1, 1);
     });
@@ -145,6 +154,7 @@ export default function KurskalenderPage() {
 
   function nextMonth() {
     setSelectedTraining(null);
+    setOverflowWeek(null);
     setMonthDate((current) => {
       return new Date(current.getFullYear(), current.getMonth() + 1, 1);
     });
@@ -365,22 +375,26 @@ export default function KurskalenderPage() {
                           </div>
 
                           {bars.length > 2 && (
-                            <div
+                            <button
+                              type="button"
+                              onClick={() => setOverflowWeek(overflowWeek === week.key ? null : week.key)}
                               style={{
                                 position: "absolute",
                                 right: 8,
                                 top: 8,
-                                color: "#007873",
                                 fontSize: 12,
                                 fontWeight: 900,
-                                background: "#FFFFFF",
-                                border: "1px solid #E6E6E6",
+                                background: overflowWeek === week.key ? "#007873" : "#FFFFFF",
+                                color: overflowWeek === week.key ? "#FFFFFF" : "#007873",
+                                border: "1px solid #007873",
                                 borderRadius: 999,
                                 padding: "4px 8px",
+                                cursor: "pointer",
+                                pointerEvents: "auto",
                               }}
                             >
                               +{bars.length - 2}
-                            </div>
+                            </button>
                           )}
                         </div>
                       );
@@ -413,6 +427,48 @@ export default function KurskalenderPage() {
           </AnimatedSection>
         </div>
       </div>
+
+      {/* Overflow week list */}
+      {overflowWeek && (() => {
+        const week = weeks.find((w) => w.key === overflowWeek);
+        if (!week) return null;
+        const bars = buildWeekTrainingBars(trainings, week.days);
+        const start = week.days[0].date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+        const end = week.days[6].date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+        return (
+          <AnimatedSection delayMs={0}>
+            <AppCard style={{ marginTop: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 12, flexWrap: "wrap" }}>
+                <div style={{ color: "#007873", fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Alle Schulungen {start}–{end}
+                </div>
+                <button type="button" onClick={() => setOverflowWeek(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#888888", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {bars.map((bar) => (
+                  <button
+                    key={bar.training.id}
+                    type="button"
+                    onClick={() => { setSelectedTraining(bar.training); setOverflowWeek(null); }}
+                    style={{
+                      display: "flex", gap: 12, alignItems: "center",
+                      padding: "10px 14px", borderRadius: 10,
+                      background: "#FFC10015", border: "1px solid #FFC10040",
+                      cursor: "pointer", textAlign: "left", width: "100%",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, color: "#1F1F1F", fontSize: 14, lineHeight: 1.2 }}>{getDisplayTrainingTitle(bar.training)}</div>
+                      <div style={{ fontSize: 12, color: "#666666", marginTop: 2 }}>{formatDateRange(bar.training.date, bar.training.endDate)}</div>
+                    </div>
+                    <div style={{ color: "#007873", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{bar.training.creditsAward} Cr.</div>
+                  </button>
+                ))}
+              </div>
+            </AppCard>
+          </AnimatedSection>
+        );
+      })()}
 
       {selectedTraining && (
         <TrainingDialog
@@ -749,147 +805,6 @@ function formatTrainingBarLabel(training: CalendarTraining) {
   return getDisplayTrainingTitle(training);
 }
 
-function getDisplayTrainingTitle(training: CalendarTraining) {
-  if (training.code?.trim()) {
-    return training.code.trim();
-  }
-
-  return cleanTrainingTitle(training.title);
-}
-
-function cleanTrainingTitle(value: string) {
-  return value
-    .replace(/\s*\([^)]*\)\s*/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function formatInstructorName(value: string | null) {
-  const extractedName = extractInstructorName(value);
-
-  return extractedName || "Noch nicht hinterlegt";
-}
-
-function extractInstructorName(value: string | null | undefined) {
-  if (!value?.trim()) {
-    return "";
-  }
-
-  const cleaned = value
-    .replace(/\s+/g, " ")
-    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
-    .trim();
-
-  const commaParts = cleaned
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const likelyName =
-    commaParts.length >= 2
-      ? commaParts[1]
-      : cleaned
-          .split(/[;|/]/)[0]
-          .replace(
-            /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
-            ""
-          )
-          .trim();
-
-  if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) {
-    return "";
-  }
-
-  const words = likelyName
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(part))
-    .filter((part) => !/\d/.test(part));
-
-  if (words.length < 2) {
-    return "";
-  }
-
-  const possibleName = `${words[0]} ${words[1]}`;
-
-  if (looksLikeCompany(possibleName) || looksLikeAddress(possibleName)) {
-    return "";
-  }
-
-  return possibleName;
-}
-
-function looksLikeCompany(value: string) {
-  const normalized = value.toLowerCase();
-
-  const companyIndicators = [
-    "gmbh",
-    "mbh",
-    "ag",
-    "kg",
-    "ohg",
-    "ug",
-    "e.v.",
-    "ev",
-    "gbr",
-    "holding",
-    "gruppe",
-    "group",
-    "company",
-    "unternehmen",
-    "firma",
-    "werke",
-    "aufzug",
-    "aufzüge",
-    "aufzuege",
-    "elevator",
-    "lift",
-    "lifts",
-    "hydraulic",
-    "hydraulics",
-    "hydraulik",
-    "metallbau",
-    "maschinenbau",
-    "service",
-    "services",
-    "technik",
-    "technical",
-    "akademie",
-    "academy",
-    "institut",
-    "institute",
-    "training",
-    "seminar",
-    "flughafen",
-    "airport",
-  ];
-
-  return companyIndicators.some((indicator) => normalized.includes(indicator));
-}
-
-function looksLikeAddress(value: string) {
-  const normalized = value.toLowerCase();
-
-  return (
-    /\d/.test(normalized) ||
-    /\b(strasse|straße|str\.|weg|platz|allee|ring|d\s?\d{4,5}|\d{4,5})\b/i.test(
-      normalized
-    )
-  );
-}
-
-function formatAddressLines(value: string | null) {
-  if (!value?.trim()) {
-    return [];
-  }
-
-  return value
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
 function AddressInfo({ lines }: { lines: string[] }) {
   return (
     <div style={{ minWidth: 0 }}>
@@ -932,26 +847,6 @@ function AddressInfo({ lines }: { lines: string[] }) {
       )}
     </div>
   );
-}
-
-function formatDateRange(startValue: string, endValue: string | null) {
-  const start = formatDate(startValue);
-  const end = endValue ? formatDate(endValue) : null;
-
-  if (!end || end === start) {
-    return start;
-  }
-
-  return `${start} bis ${end}`;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleDateString("de-DE");
 }
 
 function diffDays(start: Date, end: Date) {

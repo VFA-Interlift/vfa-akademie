@@ -47,6 +47,7 @@ export default function BottomNav() {
     pathname.startsWith("/badges") ||
     pathname.startsWith("/dozent") ||
     pathname.startsWith("/leaderboard") ||
+    pathname.startsWith("/meine-credits") ||
     pathname.startsWith("/admin");
 
   return (
@@ -86,6 +87,10 @@ export default function BottomNav() {
 
               <SheetLink href="/badges" active={pathname.startsWith("/badges")} onClick={() => setSheetOpen(false)}>
                 <IconBadge /> Badges
+              </SheetLink>
+
+              <SheetLink href="/meine-credits" active={pathname.startsWith("/meine-credits")} onClick={() => setSheetOpen(false)}>
+                <IconCredits /> Meine Credits
               </SheetLink>
 
               <SheetLink href="/leaderboard" active={pathname.startsWith("/leaderboard")} onClick={() => setSheetOpen(false)}>
@@ -235,6 +240,17 @@ function IconLogout() {
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function IconCredits() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M14.5 9.5a3 3 0 00-5 2.2c0 1.7 1.3 2.8 3 3.3s3 1.6 3 3.3a3 3 0 01-5 .2" />
+      <line x1="12" y1="6" x2="12" y2="8" />
+      <line x1="12" y1="16" x2="12" y2="18" />
     </svg>
   );
 }

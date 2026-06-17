@@ -28,13 +28,7 @@ export default async function TrainingPage({
 
   if (!training) {
     return (
-      <main
-        style={{
-          minHeight: "100vh",
-          background: "#F7F7F4",
-          padding: "40px 24px",
-        }}
-      >
+      <main className="page-main">
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <PageHeader
             title="Schulung nicht gefunden"

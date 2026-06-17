@@ -19,6 +19,41 @@ type AdminUser = {
   createdAt: string;
 };
 
+type AdminEnrollment = {
+  id: string;
+  status: string;
+  attended: boolean;
+  registeredAt: string;
+  training: {
+    id: string;
+    title: string;
+    code: string | null;
+    date: string;
+    endDate: string | null;
+    creditsAward: number;
+  };
+  hasCertificate: boolean;
+};
+
+const ENROLLMENT_STATUSES = [
+  { value: "PENDING", label: "Ausstehend" },
+  { value: "CONFIRMED", label: "Bestätigt" },
+  { value: "ATTENDED", label: "Teilgenommen" },
+  { value: "NO_SHOW", label: "Nicht erschienen" },
+  { value: "CANCELLED", label: "Storniert" },
+] as const;
+
+function statusColor(status: string) {
+  if (status === "CONFIRMED") return { color: "#007873", bg: "rgba(0,120,115,0.08)", border: "1px solid rgba(0,120,115,0.25)" };
+  if (status === "ATTENDED") return { color: "#005f5b", bg: "rgba(0,120,115,0.14)", border: "1px solid rgba(0,120,115,0.35)" };
+  if (status === "CANCELLED" || status === "NO_SHOW") return { color: "#B00020", bg: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.22)" };
+  return { color: "#7C5A0A", bg: "rgba(255,193,0,0.10)", border: "1px solid rgba(255,193,0,0.35)" };
+}
+
+function statusLabel(status: string) {
+  return ENROLLMENT_STATUSES.find((s) => s.value === status)?.label ?? status;
+}
+
 type UsersResponse =
   | {
       ok: true;
@@ -50,12 +85,47 @@ export default function AdminUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  const [creditAmountByUser, setCreditAmountByUser] = useState<
-    Record<string, string>
-  >({});
-  const [creditNoteByUser, setCreditNoteByUser] = useState<
-    Record<string, string>
-  >({});
+  const [creditAmountByUser, setCreditAmountByUser] = useState<Record<string, string>>({});
+  const [creditNoteByUser, setCreditNoteByUser] = useState<Record<string, string>>({});
+
+  const [enrollmentsByUser, setEnrollmentsByUser] = useState<Record<string, AdminEnrollment[]>>({});
+  const [enrollmentsLoadingId, setEnrollmentsLoadingId] = useState<string | null>(null);
+  const [enrollmentActionId, setEnrollmentActionId] = useState<string | null>(null);
+
+  async function loadEnrollments(userId: string) {
+    if (enrollmentsByUser[userId]) return;
+    setEnrollmentsLoadingId(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/enrollments`, { cache: "no-store" });
+      const data = await res.json();
+      if (data.ok) setEnrollmentsByUser((prev) => ({ ...prev, [userId]: data.enrollments }));
+    } catch { /* ignore */ }
+    finally { setEnrollmentsLoadingId(null); }
+  }
+
+  async function changeEnrollmentStatus(enrollmentId: string, userId: string, newStatus: string) {
+    setEnrollmentActionId(enrollmentId);
+    try {
+      const res = await fetch(`/api/admin/enrollments/${enrollmentId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setEnrollmentsByUser((prev) => ({
+          ...prev,
+          [userId]: (prev[userId] ?? []).map((e) =>
+            e.id === enrollmentId ? { ...e, status: newStatus, attended: newStatus === "ATTENDED" } : e
+          ),
+        }));
+        showMessage(`Status auf "${statusLabel(newStatus)}" geändert.`, true);
+      } else {
+        showMessage(data.error ?? "Fehler beim Ändern des Status.");
+      }
+    } catch { showMessage("Serverfehler."); }
+    finally { setEnrollmentActionId(null); }
+  }
 
   function showMessage(message: string, ok = false) {
     setMsg(message);
@@ -465,7 +535,11 @@ export default function AdminUsersPage() {
                   >
                     <button
                       type="button"
-                      onClick={() => setOpenId(isOpen ? null : user.id)}
+                      onClick={() => {
+                        const next = isOpen ? null : user.id;
+                        setOpenId(next);
+                        if (next) loadEnrollments(next);
+                      }}
                       style={{
                         width: "100%",
                         padding: 14,
@@ -575,6 +649,59 @@ export default function AdminUsersPage() {
                             label="Registriert"
                             value={formatDate(user.createdAt)}
                           />
+                        </div>
+
+                        {/* Enrollments */}
+                        <div style={{ paddingTop: 16, borderTop: "1px solid #E6E6E6", display: "grid", gap: 12 }}>
+                          <h3 style={{ margin: 0, color: "#007873", fontSize: 18, fontWeight: 700 }}>
+                            Schulungen & Status
+                          </h3>
+                          {enrollmentsLoadingId === user.id ? (
+                            <div style={{ color: "#888888", fontSize: 13 }}>Wird geladen…</div>
+                          ) : (enrollmentsByUser[user.id] ?? []).length === 0 ? (
+                            <div style={{ color: "#888888", fontSize: 13 }}>Keine Schulungen zugeordnet.</div>
+                          ) : (
+                            <div style={{ display: "grid", gap: 8 }}>
+                              {(enrollmentsByUser[user.id] ?? []).map((enr) => {
+                                const sc = statusColor(enr.status);
+                                const title = enr.training.code?.trim() || enr.training.title;
+                                const date = new Date(enr.training.date).toLocaleDateString("de-DE");
+                                return (
+                                  <div key={enr.id} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAFA", display: "grid", gap: 8 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+                                      <div>
+                                        <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", lineHeight: 1.2 }}>{title}</div>
+                                        <div style={{ fontSize: 12, color: "#888888", marginTop: 2 }}>{date} · {enr.training.creditsAward} Credits{enr.hasCertificate ? " · Zertifikat vorhanden" : ""}</div>
+                                      </div>
+                                      <span style={{ display: "inline-flex", padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: sc.border, whiteSpace: "nowrap" }}>
+                                        {statusLabel(enr.status)}
+                                      </span>
+                                    </div>
+                                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                      {ENROLLMENT_STATUSES.map((s) => (
+                                        <button
+                                          key={s.value}
+                                          type="button"
+                                          disabled={enr.status === s.value || enrollmentActionId === enr.id}
+                                          onClick={() => changeEnrollmentStatus(enr.id, user.id, s.value)}
+                                          style={{
+                                            padding: "4px 12px", borderRadius: 999, fontSize: 11, fontWeight: 700,
+                                            border: enr.status === s.value ? "1px solid #007873" : "1px solid #D8D8D8",
+                                            background: enr.status === s.value ? "#007873" : "#FFFFFF",
+                                            color: enr.status === s.value ? "#FFFFFF" : "#555555",
+                                            cursor: enr.status === s.value ? "default" : "pointer",
+                                            opacity: enrollmentActionId === enr.id ? 0.6 : 1,
+                                          }}
+                                        >
+                                          {s.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
 
                         <div
