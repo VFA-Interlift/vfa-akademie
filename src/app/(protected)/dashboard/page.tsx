@@ -5,14 +5,12 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
-import StatusBadge from "@/components/ui/StatusBadge";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
 
 export const dynamic = "force-dynamic";
 
 type RankKey = "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
-
 type RankInfo = {
   key: RankKey;
   label: string;
@@ -24,57 +22,22 @@ type RankInfo = {
 };
 
 const RANKS: RankInfo[] = [
-  {
-    key: "BRONZE",
-    label: "Bronze",
-    min: 0,
-    max: 499,
-    color: "#A86C3D",
-    softBackground: "rgba(168,108,61,0.10)",
-    softBorder: "1px solid rgba(168,108,61,0.28)",
-  },
-  {
-    key: "SILBER",
-    label: "Silber",
-    min: 500,
-    max: 1499,
-    color: "#8E99A8",
-    softBackground: "rgba(142,153,168,0.12)",
-    softBorder: "1px solid rgba(142,153,168,0.32)",
-  },
-  {
-    key: "GOLD",
-    label: "Gold",
-    min: 1500,
-    max: 3499,
-    color: "#C79A16",
-    softBackground: "rgba(199,154,22,0.12)",
-    softBorder: "1px solid rgba(199,154,22,0.32)",
-  },
-  {
-    key: "EXPERTE",
-    label: "VFA-Experte",
-    min: 3500,
-    max: null,
-    color: "#1F1F1F",
-    softBackground: "rgba(31,31,31,0.08)",
-    softBorder: "1px solid rgba(31,31,31,0.20)",
-  },
+  { key: "BRONZE", label: "Bronze", min: 0, max: 499, color: "#A86C3D", softBackground: "rgba(168,108,61,0.10)", softBorder: "1px solid rgba(168,108,61,0.28)" },
+  { key: "SILBER", label: "Silber", min: 500, max: 1499, color: "#8E99A8", softBackground: "rgba(142,153,168,0.12)", softBorder: "1px solid rgba(142,153,168,0.32)" },
+  { key: "GOLD", label: "Gold", min: 1500, max: 3499, color: "#C79A16", softBackground: "rgba(199,154,22,0.12)", softBorder: "1px solid rgba(199,154,22,0.32)" },
+  { key: "EXPERTE", label: "VFA-Experte", min: 3500, max: null, color: "#1F1F1F", softBackground: "rgba(31,31,31,0.08)", softBorder: "1px solid rgba(31,31,31,0.20)" },
 ];
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-
-  if (!session?.user?.email) {
-    redirect("/login");
-  }
+  if (!session?.user?.email) redirect("/login");
 
   const email = session.user.email.trim().toLowerCase();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
+    where: { email },
     select: {
       id: true,
       email: true,
@@ -82,54 +45,32 @@ export default async function DashboardPage() {
       firstName: true,
       lastName: true,
       company: true,
-      role: true,
       creditsTotal: true,
       enrollments: {
-        where: {
-          status: {
-            in: ["PENDING", "CONFIRMED", "ATTENDED"],
+        where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED"] } },
+        select: {
+          id: true,
+          status: true,
+          training: {
+            select: { id: true, title: true, code: true, date: true, endDate: true, location: true },
           },
         },
-        select: {
-          id: true,
-        },
+        orderBy: { training: { date: "asc" } },
       },
       certificates: {
-        where: {
-          status: "ISSUED",
-        },
-        select: {
-          id: true,
-        },
+        where: { status: "ISSUED" },
+        select: { id: true },
       },
     },
   });
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const leaderboardTop = await prisma.user.findMany({
-    where: {
-      leaderboardOptIn: true,
-      leaderboardName: {
-        not: null,
-      },
-    },
-    orderBy: [
-      {
-        creditsTotal: "desc",
-      },
-      {
-        updatedAt: "asc",
-      },
-    ],
+    where: { leaderboardOptIn: true, leaderboardName: { not: null } },
+    orderBy: [{ creditsTotal: "desc" }, { updatedAt: "asc" }],
     take: 3,
-    select: {
-      id: true,
-      leaderboardName: true,
-      creditsTotal: true,
-    },
+    select: { id: true, leaderboardName: true, creditsTotal: true },
   });
 
   const displayName = getDisplayName(user);
@@ -137,204 +78,79 @@ export default async function DashboardPage() {
   const progress = getRankProgress(user.creditsTotal);
   const nextRank = getNextRankInfo(user.creditsTotal);
 
+  const nextTraining = user.enrollments.find(
+    (e) => new Date(e.training.date) >= today && e.status !== "ATTENDED"
+  );
+
+  const enrollmentCount = user.enrollments.length;
+  const certCount = user.certificates.length;
+
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 18 }}>
+
+        {/* Greeting */}
         <AnimatedSection delayMs={0}>
-          <section style={{ marginBottom: 24 }}>
-            <div
-              style={{
-                width: 56,
-                height: 5,
-                background: "#FFC100",
-                marginBottom: 14,
-              }}
-            />
-
-            <h2
-              style={{
-                margin: "0 0 0",
-                color: "#1F1F1F",
-                fontSize: "clamp(22px, 5vw, 30px)",
-                fontWeight: 500,
-                lineHeight: 1.2,
-              }}
-            >
-              Hallo {displayName || "und willkommen"}
-            </h2>
-
-            <p
-              style={{
-                marginTop: 10,
-                marginBottom: 0,
-                maxWidth: 760,
-                color: "#333333",
-                lineHeight: 1.65,
-                fontSize: 16,
-              }}
-            >
-              Hier siehst du deinen aktuellen Stand in der VFA-Akademie –
-              inklusive Credits, persönlichem Status, Schulungen und Ranking.
-            </p>
-          </section>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <h2 style={{ margin: 0, color: "#1F1F1F", fontSize: "clamp(22px, 5vw, 30px)", fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.02em" }}>
+                Hallo{displayName ? `, ${displayName}` : ""}
+              </h2>
+              <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14, lineHeight: 1.5 }}>
+                {nextTraining ? "Du hast eine Schulung in Kürze." : "Dein aktueller Stand."}
+              </p>
+            </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, background: rank.softBackground, border: rank.softBorder, color: rank.color, fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
+              ★ {rank.label}
+            </div>
+          </div>
         </AnimatedSection>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 18,
-            alignItems: "stretch",
-          }}
-        >
-          <AnimatedSection delayMs={90} style={{ height: "100%" }}>
-            <AppCard accent="green">
-              <div
-                style={{
-                  display: "grid",
-                  gap: 18,
-                  height: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        color: "#007873",
-                        fontSize: 13,
-                        fontWeight: 800,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Dein Status
-                    </div>
+        {/* Quick actions */}
+        <AnimatedSection delayMs={60}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            <QuickTile href="/meine-schulungen" icon="📚" label="Schulungen" />
+            <QuickTile href="/meine-zertifikate" icon="🎓" label="Zertifikate" />
+            <QuickTile href="/kurskalender" icon="📅" label="Kalender" />
+            <QuickTile href="/badges" icon="★" label="Badges" isText />
+          </div>
+        </AnimatedSection>
 
-                    <div
-                      style={{
-                        marginTop: 8,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "7px 12px",
-                        border: rank.softBorder,
-                        background: rank.softBackground,
-                        color: rank.color,
-                        fontWeight: 900,
-                        fontSize: 16,
-                        lineHeight: 1.2,
-                        borderRadius: 999,
-                      }}
-                    >
-                      {rank.label} Status
-                    </div>
+        {/* Next upcoming training */}
+        {nextTraining && (
+          <AnimatedSection delayMs={100}>
+            <div style={{ padding: "16px 18px", background: "#007873", borderRadius: 14, display: "grid", gap: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Nächste Schulung
+              </div>
+              <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.25 }}>
+                {nextTraining.training.code?.trim() || nextTraining.training.title}
+              </div>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 2 }}>
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
+                  📅 {formatDateRange(nextTraining.training.date, nextTraining.training.endDate)}
+                </span>
+                {nextTraining.training.location && (
+                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
+                    📍 {nextTraining.training.location.split(",")[0]?.trim()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </AnimatedSection>
+        )}
+
+        {/* Status + Stats row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18, alignItems: "stretch" }}>
+
+          {/* Status card */}
+          <AnimatedSection delayMs={140} style={{ height: "100%" }}>
+            <AppCard accent="green" style={{ height: "100%" }}>
+              <div style={{ display: "grid", gap: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    Mein Status
                   </div>
-
-                  <details
-                    style={{
-                      position: "relative",
-                    }}
-                  >
-                    <summary
-                      style={{
-                        listStyle: "none",
-                        width: 38,
-                        height: 38,
-                        borderRadius: "50%",
-                        border: "1px solid #D6D6D6",
-                        background: "#FFFFFF",
-                        color: "#007873",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        fontWeight: 900,
-                        fontSize: 18,
-                        boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                      }}
-                      title="Infos zu den Rängen"
-                    >
-                      i
-                    </summary>
-
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 46,
-                        right: 0,
-                        width: 300,
-                        maxWidth: "calc(100vw - 80px)",
-                        background: "#FFFFFF",
-                        border: "1px solid #E6E6E6",
-                        boxShadow: "0 12px 28px rgba(0,0,0,0.10)",
-                        padding: 16,
-                        zIndex: 20,
-                      }}
-                    >
-                      <div
-                        style={{
-                          color: "#007873",
-                          fontWeight: 800,
-                          fontSize: 14,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          marginBottom: 12,
-                        }}
-                      >
-                        Weiterbildungsstufen
-                      </div>
-
-                      <div style={{ display: "grid", gap: 10 }}>
-                        {RANKS.map((item) => (
-                          <div
-                            key={item.key}
-                            style={{
-                              border: item.softBorder,
-                              background: item.softBackground,
-                              padding: "10px 12px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                color: item.color,
-                                fontWeight: 900,
-                                fontSize: 15,
-                              }}
-                            >
-                              {item.label}
-                            </div>
-
-                            <div
-                              style={{
-                                marginTop: 4,
-                                color: "#333333",
-                                fontSize: 13,
-                                lineHeight: 1.5,
-                              }}
-                            >
-                              {item.max === null
-                                ? `ab ${item.min.toLocaleString(
-                                    "de-DE"
-                                  )} Credits`
-                                : `${item.min.toLocaleString(
-                                    "de-DE"
-                                  )} bis ${item.max.toLocaleString(
-                                    "de-DE"
-                                  )} Credits`}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </details>
                 </div>
 
                 <AnimatedProgressCircle
@@ -343,291 +159,196 @@ export default async function DashboardPage() {
                   color={rank.color}
                 />
 
-                <div
-                  style={{
-                    marginTop: -4,
-                    color: "#666666",
-                    fontSize: 13,
-                    textAlign: "center",
-                    lineHeight: 1.5,
-                  }}
-                >
+                <div style={{ color: "#666666", fontSize: 13, textAlign: "center", lineHeight: 1.5 }}>
                   {nextRank
-                    ? `Noch ${progress.remainingToNext.toLocaleString(
-                        "de-DE"
-                      )} Credits bis ${nextRank.label}.`
-                    : "Du hast die höchste Stufe bereits erreicht."}
+                    ? `Noch ${progress.remainingToNext.toLocaleString("de-DE")} Credits bis ${nextRank.label}`
+                    : "Höchste Stufe erreicht ✓"}
+                </div>
+
+                {/* Rank overview */}
+                <div style={{ display: "grid", gap: 6 }}>
+                  {RANKS.map((r) => (
+                    <div
+                      key={r.key}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: r.key === rank.key ? r.softBorder : "1px solid #F0F0F0",
+                        background: r.key === rank.key ? r.softBackground : "transparent",
+                        transition: "all 140ms",
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: r.key === rank.key ? 800 : 600, color: r.key === rank.key ? r.color : "#999999" }}>
+                        {r.label}
+                      </span>
+                      <span style={{ fontSize: 12, color: "#AAAAAA" }}>
+                        {r.max === null ? `ab ${r.min.toLocaleString("de-DE")}` : `${r.min.toLocaleString("de-DE")}–${r.max.toLocaleString("de-DE")}`}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </AppCard>
           </AnimatedSection>
 
-          <AnimatedSection delayMs={160} style={{ height: "100%" }}>
-            <AppCard accent="yellow">
-              <div
-                style={{
-                  display: "grid",
-                  gap: 16,
-                  height: "100%",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      color: "#007873",
-                      fontSize: 13,
-                      fontWeight: 800,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Dein Überblick
-                  </div>
-
-                  <p
-                    style={{
-                      marginTop: 12,
-                      marginBottom: 0,
-                      color: "#333333",
-                      lineHeight: 1.65,
-                    }}
-                  >
-                    Deine wichtigsten Kennzahlen und Stammdaten auf einen Blick.
-                  </p>
+          {/* Stats card */}
+          <AnimatedSection delayMs={200} style={{ height: "100%" }}>
+            <AppCard accent="yellow" style={{ height: "100%" }}>
+              <div style={{ display: "grid", gap: 14 }}>
+                <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  Mein Überblick
                 </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                    gap: 10,
-                  }}
-                >
-                  <MiniStat
-                    label="Schulungen"
-                    value={String(user.enrollments.length)}
-                  />
-
-                  <MiniStat
-                    label="Zertifikate"
-                    value={String(user.certificates.length)}
-                  />
-
-                  <MiniStat label="Rolle" value={user.role} />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <StatBox label="Schulungen" value={enrollmentCount} />
+                  <StatBox label="Zertifikate" value={certCount} />
+                  <StatBox label="Credits gesamt" value={user.creditsTotal.toLocaleString("de-DE")} wide />
                 </div>
 
-                {user.company ? (
-                  <div
-                    style={{
-                      paddingTop: 4,
-                    }}
-                  >
-                    <StatusBadge>Firma: {user.company}</StatusBadge>
+                {user.company && (
+                  <div style={{ padding: "10px 12px", borderRadius: 8, background: "#FFFFFF", border: "1px solid #E6E6E6", fontSize: 13, color: "#555555", fontWeight: 600 }}>
+                    🏢 {user.company}
                   </div>
-                ) : null}
+                )}
+
+                <Link href="/meine-schulungen" style={linkStyle}>
+                  Alle Schulungen →
+                </Link>
               </div>
             </AppCard>
           </AnimatedSection>
         </div>
 
-        <AnimatedSection delayMs={230} style={{ marginTop: 18 }}>
+        {/* Leaderboard */}
+        <AnimatedSection delayMs={260}>
           <AppCard>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 16,
-                alignItems: "flex-start",
-                flexWrap: "wrap",
-                marginBottom: 16,
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    margin: 0,
-                    color: "#007873",
-                    fontSize: "clamp(18px, 4vw, 24px)",
-                    fontWeight: 500,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  Top 3 im Credit-Ranking
-                </h2>
-
-                <p
-                  style={{
-                    marginTop: 10,
-                    marginBottom: 0,
-                    color: "#333333",
-                    lineHeight: 1.6,
-                    maxWidth: 760,
-                  }}
-                >
-                  Die aktuell führenden Plätze im freiwilligen
-                  VFA-Credit-Ranking.
-                </p>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+              <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                Top 3 im Credit-Ranking
               </div>
-
               <Link href="/leaderboard" style={secondaryLinkStyle}>
                 Zum Ranking
               </Link>
             </div>
 
             {leaderboardTop.length === 0 ? (
-              <div style={{ color: "#333333", lineHeight: 1.6 }}>
-                Aktuell sind noch keine Teilnehmer im Ranking sichtbar.
+              <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+                Noch keine Teilnehmer im Ranking sichtbar.
               </div>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gap: 10,
-                }}
-              >
-                {leaderboardTop.map((entry, index) => (
-                  <div
-                    key={entry.id}
-                    style={{
-                      border: "1px solid #E6E6E6",
-                      background: "#FFFFFF",
-                      padding: 14,
-                      display: "grid",
-                      gridTemplateColumns: "42px minmax(0, 1fr)",
-                      gap: 14,
-                      alignItems: "center",
-                    }}
-                  >
+              <div style={{ display: "grid", gap: 8 }}>
+                {leaderboardTop.map((entry, index) => {
+                  const medalColors = ["#C79A16", "#8E99A8", "#A86C3D"];
+                  return (
                     <div
+                      key={entry.id}
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 36,
-                        height: 36,
-                        borderRadius: 999,
-                        background:
-                          index === 0
-                            ? "#C79A16"
-                            : index === 1
-                              ? "#8E99A8"
-                              : "#A86C3D",
-                        color: "#FFFFFF",
-                        fontWeight: 900,
-                        fontSize: 16,
-                      }}
-                    >
-                      {index + 1}
-                    </div>
-
-                    <div
-                      style={{
-                        minWidth: 0,
-                        display: "flex",
-                        justifyContent: "space-between",
+                        border: "1px solid #EFEFEF",
+                        background: index === 0 ? "rgba(199,154,22,0.04)" : "#FFFFFF",
+                        padding: "12px 14px",
+                        borderRadius: 10,
+                        display: "grid",
+                        gridTemplateColumns: "36px minmax(0, 1fr)",
                         gap: 12,
                         alignItems: "center",
-                        flexWrap: "wrap",
                       }}
                     >
-                      <div
-                        style={{
-                          color: "#007873",
-                          fontSize: 18,
-                          fontWeight: 800,
-                          lineHeight: 1.3,
-                          minWidth: 0,
-                        }}
-                      >
-                        {entry.leaderboardName || "Ohne Namen"}
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: medalColors[index], color: "#FFFFFF", fontWeight: 900, fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {index + 1}
                       </div>
-
-                      <div
-                        style={{
-                          color: "#333333",
-                          fontWeight: 800,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {entry.creditsTotal.toLocaleString("de-DE")} Credits
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
+                        <div style={{ color: "#1F1F1F", fontSize: 16, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
+                          {entry.leaderboardName}
+                        </div>
+                        <div style={{ color: "#007873", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap" }}>
+                          {entry.creditsTotal.toLocaleString("de-DE")} Cr.
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </AppCard>
         </AnimatedSection>
+
       </div>
     </main>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function QuickTile({ href, icon, label, isText }: { href: string; icon: string; label: string; isText?: boolean }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        padding: "14px 8px",
+        borderRadius: 14,
+        background: "#FFFFFF",
+        border: "1px solid #EFEFEF",
+        textDecoration: "none",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        transition: "box-shadow 140ms ease",
+      }}
+    >
+      <span style={{ fontSize: isText ? 18 : 22, color: "#007873", lineHeight: 1, fontWeight: isText ? 900 : undefined }}>
+        {icon}
+      </span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: "#555555", textAlign: "center", lineHeight: 1.2, letterSpacing: "0.01em" }}>
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+function StatBox({ label, value, wide }: { label: string; value: string | number; wide?: boolean }) {
   return (
     <div
       style={{
-        border: "1px solid #E6E6E6",
-        background: "#FFFFFF",
         padding: "12px 14px",
+        borderRadius: 10,
+        border: "1px solid #EFEFEF",
+        background: "#FFFFFF",
+        gridColumn: wide ? "1 / -1" : undefined,
       }}
     >
-      <div
-        style={{
-          color: "#007873",
-          fontSize: 12,
-          fontWeight: 800,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 4,
-        }}
-      >
+      <div style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
         {label}
       </div>
-
-      <div
-        style={{
-          color: "#1F1F1F",
-          fontWeight: 800,
-          fontSize: 18,
-          lineHeight: 1.3,
-        }}
-      >
+      <div style={{ fontSize: 22, fontWeight: 900, color: "#1F1F1F", lineHeight: 1.1 }}>
         {value}
       </div>
     </div>
   );
 }
 
-function getDisplayName(user: {
-  firstName: string | null;
-  lastName: string | null;
-  name: string | null;
-  email: string;
-}) {
-  const combined = [user.firstName, user.lastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+function formatDateRange(start: Date | string, end: Date | null | string) {
+  const fmt = (d: Date | string) => new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const s = fmt(start);
+  const e = end ? fmt(end) : null;
+  if (!e || e === s) return s;
+  return `${s} – ${e}`;
+}
 
+function getDisplayName(user: { firstName: string | null; lastName: string | null; name: string | null; email: string }) {
+  const combined = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
   if (combined) return combined;
   if (user.name?.trim()) return user.name.trim();
-  return user.email;
+  return "";
 }
 
 function getRankInfo(credits: number) {
-  if (credits >= 3500) {
-    return RANKS[3];
-  }
-
-  if (credits >= 1500) {
-    return RANKS[2];
-  }
-
-  if (credits >= 500) {
-    return RANKS[1];
-  }
-
+  if (credits >= 3500) return RANKS[3];
+  if (credits >= 1500) return RANKS[2];
+  if (credits >= 500) return RANKS[1];
   return RANKS[0];
 }
 
@@ -639,67 +360,36 @@ function getNextRankInfo(credits: number) {
 }
 
 function getRankProgress(credits: number) {
-  if (credits < 500) {
-    const currentMin = 0;
-    const nextMin = 500;
-    const range = nextMin - currentMin;
-    const valueInRange = credits - currentMin;
-
-    return {
-      percent: clampPercent(Math.round((valueInRange / range) * 100)),
-      remainingToNext: Math.max(0, nextMin - credits),
-    };
+  const thresholds = [0, 500, 1500, 3500];
+  for (let i = 0; i < thresholds.length - 1; i++) {
+    if (credits < thresholds[i + 1]) {
+      const range = thresholds[i + 1] - thresholds[i];
+      const val = credits - thresholds[i];
+      return { percent: Math.round((val / range) * 100), remainingToNext: thresholds[i + 1] - credits };
+    }
   }
-
-  if (credits < 1500) {
-    const currentMin = 500;
-    const nextMin = 1500;
-    const range = nextMin - currentMin;
-    const valueInRange = credits - currentMin;
-
-    return {
-      percent: clampPercent(Math.round((valueInRange / range) * 100)),
-      remainingToNext: Math.max(0, nextMin - credits),
-    };
-  }
-
-  if (credits < 3500) {
-    const currentMin = 1500;
-    const nextMin = 3500;
-    const range = nextMin - currentMin;
-    const valueInRange = credits - currentMin;
-
-    return {
-      percent: clampPercent(Math.round((valueInRange / range) * 100)),
-      remainingToNext: Math.max(0, nextMin - credits),
-    };
-  }
-
-  return {
-    percent: 100,
-    remainingToNext: 0,
-  };
-}
-
-function clampPercent(value: number) {
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return value;
+  return { percent: 100, remainingToNext: 0 };
 }
 
 const secondaryLinkStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  justifyContent: "center",
-  minHeight: 42,
-  padding: "10px 18px",
+  padding: "6px 14px",
   borderRadius: 999,
-  background: "#FFFFFF",
+  background: "transparent",
   color: "#007873",
-  fontWeight: 800,
-  fontSize: 14,
+  fontWeight: 700,
+  fontSize: 13,
   textDecoration: "none",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
   border: "1px solid #007873",
+};
+
+const linkStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  color: "#007873",
+  fontWeight: 700,
+  fontSize: 13,
+  textDecoration: "none",
+  letterSpacing: "0.01em",
 };
