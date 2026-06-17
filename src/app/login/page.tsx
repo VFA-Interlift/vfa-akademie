@@ -41,8 +41,9 @@ export default function LoginPage() {
     <div className="auth-split">
       <AuthBrandPanel />
 
-      <div className="auth-panel-right">
-        <div style={{ width: "100%", maxWidth: 420 }} className="page-enter">
+      <div className="auth-panel-right" style={{ padding: 0 }}>
+        <AuthMobileBanner />
+        <div style={{ width: "100%", maxWidth: 420, padding: "36px 24px" }} className="page-enter">
           <h1
             style={{
               margin: "0 0 6px",
@@ -84,6 +85,20 @@ export default function LoginPage() {
               Jetzt registrieren
             </Link>
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthMobileBanner() {
+  return (
+    <div className="auth-mobile-brand">
+      <img src="/logo.png" alt="VFA Logo" style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }} />
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em" }}>VFA-Akademie</div>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 500, letterSpacing: "0.04em", marginTop: 1 }}>
+          SCHULUNGEN · ZERTIFIKATE
         </div>
       </div>
     </div>

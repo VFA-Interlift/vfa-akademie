@@ -14,29 +14,24 @@ export default function HomePage() {
         >
           {/* Hero */}
           <div className="page-enter">
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
               <img
                 src="/logo.png"
                 alt="VFA Logo"
-                style={{ width: 64, height: 64, objectFit: "contain" }}
+                style={{ width: 56, height: 56, objectFit: "contain", flexShrink: 0 }}
               />
-              <div
-                style={{
-                  width: 1,
-                  height: 40,
-                  background: "#D8D8D4",
-                }}
-              />
+              <div style={{ width: 1, height: 36, background: "#D8D8D4", flexShrink: 0 }} />
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 700,
                   color: "#888888",
                   textTransform: "uppercase",
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.07em",
+                  lineHeight: 1.4,
                 }}
               >
-                Verband Freier Aufzugsunternehmer
+                Verband Freier<br />Aufzugsunternehmer
               </span>
             </div>
 
@@ -69,7 +64,7 @@ export default function HomePage() {
               Credits — zentral verwaltet, automatisch ausgestellt.
             </p>
 
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <div className="hero-ctas">
               <Link href="/login" style={primaryButtonStyle} className="vfa-btn">
                 Zur Anmeldung
               </Link>
