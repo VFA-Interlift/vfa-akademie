@@ -33,6 +33,45 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwMsg, setPwMsg] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  async function changePassword() {
+    if (pwNew !== pwConfirm) {
+      setPwMsg("Die neuen Passwörter stimmen nicht überein.");
+      setPwSuccess(false);
+      return;
+    }
+    setPwLoading(true);
+    setPwMsg(null);
+    setPwSuccess(false);
+    try {
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPwMsg(data?.error ?? "Fehler beim Ändern.");
+        return;
+      }
+      setPwMsg("Passwort erfolgreich geändert.");
+      setPwSuccess(true);
+      setPwCurrent("");
+      setPwNew("");
+      setPwConfirm("");
+    } catch {
+      setPwMsg("Serverfehler. Bitte versuche es erneut.");
+    } finally {
+      setPwLoading(false);
+    }
+  }
+
   async function save() {
     setLoading(true);
     setMsg(null);
@@ -313,6 +352,85 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
           </div>
         )}
       </div>
+
+      <AppCard accent="none" style={{ boxShadow: "none" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 16,
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            marginBottom: 18,
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0, color: "#007873", fontSize: 24, fontWeight: 500, lineHeight: 1.3 }}>
+              Passwort ändern
+            </h2>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
+              Lege ein neues Passwort für deinen Account fest.
+            </p>
+          </div>
+          <StatusBadge>Sicherheit</StatusBadge>
+        </div>
+
+        <div style={{ display: "grid", gap: 14 }}>
+          <AppInput
+            label="Aktuelles Passwort"
+            value={pwCurrent}
+            placeholder="Dein bisheriges Passwort"
+            type="password"
+            onChange={setPwCurrent}
+          />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 14,
+            }}
+          >
+            <AppInput
+              label="Neues Passwort"
+              value={pwNew}
+              placeholder="Mindestens 8 Zeichen"
+              type="password"
+              onChange={setPwNew}
+            />
+            <AppInput
+              label="Passwort bestätigen"
+              value={pwConfirm}
+              placeholder="Passwort wiederholen"
+              type="password"
+              onChange={setPwConfirm}
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <AppButton
+              onClick={changePassword}
+              disabled={pwLoading || !pwCurrent || !pwNew || !pwConfirm}
+              variant="primary"
+            >
+              {pwLoading ? "Wird gespeichert..." : "Passwort speichern"}
+            </AppButton>
+            {pwMsg && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  border: pwSuccess ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)",
+                  background: pwSuccess ? "rgba(0,120,115,0.08)" : "rgba(176,0,32,0.08)",
+                  color: pwSuccess ? "#007873" : "#B00020",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  borderRadius: 4,
+                }}
+              >
+                {pwMsg}
+              </div>
+            )}
+          </div>
+        </div>
+      </AppCard>
 
       <div className="logout-mobile-only">
         <button
