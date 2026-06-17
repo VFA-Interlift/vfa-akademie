@@ -106,16 +106,6 @@ export default async function DashboardPage() {
           </div>
         </AnimatedSection>
 
-        {/* Quick actions */}
-        <AnimatedSection delayMs={60}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-            <QuickTile href="/meine-schulungen" icon="📚" label="Schulungen" />
-            <QuickTile href="/meine-zertifikate" icon="🎓" label="Zertifikate" />
-            <QuickTile href="/kurskalender" icon="📅" label="Kalender" />
-            <QuickTile href="/badges" icon="★" label="Badges" isText />
-          </div>
-        </AnimatedSection>
-
         {/* Next upcoming training */}
         {nextTraining && (
           <AnimatedSection delayMs={100}>
@@ -280,34 +270,6 @@ export default async function DashboardPage() {
   );
 }
 
-function QuickTile({ href, icon, label, isText }: { href: string; icon: string; label: string; isText?: boolean }) {
-  return (
-    <Link
-      href={href}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        padding: "14px 8px",
-        borderRadius: 14,
-        background: "#FFFFFF",
-        border: "1px solid #EFEFEF",
-        textDecoration: "none",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        transition: "box-shadow 140ms ease",
-      }}
-    >
-      <span style={{ fontSize: isText ? 18 : 22, color: "#007873", lineHeight: 1, fontWeight: isText ? 900 : undefined }}>
-        {icon}
-      </span>
-      <span style={{ fontSize: 11, fontWeight: 700, color: "#555555", textAlign: "center", lineHeight: 1.2, letterSpacing: "0.01em" }}>
-        {label}
-      </span>
-    </Link>
-  );
-}
 
 function StatBox({ label, value, wide }: { label: string; value: string | number; wide?: boolean }) {
   return (
