@@ -179,6 +179,21 @@ export default function LoginPage() {
               {loading ? "Einloggen..." : "Einloggen"}
             </AppButton>
 
+            <div style={{ textAlign: "right", marginTop: -4 }}>
+              <Link
+                href="/forgot-password"
+                style={{
+                  color: "#007873",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Passwort vergessen?
+              </Link>
+            </div>
+
             {msg && (
               <div
                 style={{

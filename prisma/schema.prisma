@@ -45,6 +45,19 @@ enum CertificateKind {
   VDI_CERTIFICATE
 }
 
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
 model User {
   id           String @id @default(cuid())
   email        String @unique
@@ -71,9 +84,10 @@ model User {
   leaderboardOptIn Boolean @default(false)
   leaderboardName  String?
 
-  creditTxs    CreditTransaction[]
-  enrollments  Enrollment[]
-  certificates Certificate[]
+  creditTxs          CreditTransaction[]
+  enrollments        Enrollment[]
+  certificates       Certificate[]
+  passwordResetTokens PasswordResetToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
