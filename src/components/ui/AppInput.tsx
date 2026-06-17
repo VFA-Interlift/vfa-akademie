@@ -16,12 +16,13 @@ export default function AppInput({
   disabled = false,
 }: AppInputProps) {
   return (
-    <label style={{ display: "grid", gap: 7 }}>
+    <label style={{ display: "grid", gap: 6 }}>
       <span
         style={{
-          color: "#333333",
-          fontSize: 14,
-          fontWeight: 700,
+          color: "#444444",
+          fontSize: 13,
+          fontWeight: 600,
+          letterSpacing: "0.01em",
         }}
       >
         {label}
@@ -33,16 +34,17 @@ export default function AppInput({
         placeholder={placeholder}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
+        className="vfa-input"
         style={{
           width: "100%",
-          padding: "12px 14px",
-          borderRadius: 4,
-          border: "1px solid #C7C7C7",
-          background: "#FFFFFF",
+          padding: "11px 14px",
+          borderRadius: 8,
+          border: "1px solid #D4D4D4",
+          background: disabled ? "#F7F7F4" : "#FFFFFF",
           color: "#1F1F1F",
           fontSize: 15,
-          opacity: disabled ? 0.6 : 1,
-          outlineColor: "#007873",
+          opacity: disabled ? 0.7 : 1,
+          transition: "border-color 120ms ease",
         }}
       />
     </label>

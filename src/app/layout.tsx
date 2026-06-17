@@ -1,8 +1,15 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import HeaderClient from "@/components/HeaderClient";
 import Providers from "@/components/Providers";
 import SocialFooter from "@/components/layout/SocialFooter";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "VFA-Akademie",
@@ -23,7 +30,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de">
+    <html lang="de" className={inter.variable}>
       <body
         style={{
           margin: 0,

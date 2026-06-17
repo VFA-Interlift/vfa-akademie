@@ -39,163 +39,118 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "32px 18px",
-        display: "grid",
-        placeItems: "center",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 620, display: "grid", gap: 22 }}>
-        <section
-          style={{
-            textAlign: "center",
-            display: "grid",
-            justifyItems: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 70,
-              height: 6,
-              background: "#FFC100",
-              marginBottom: 18,
-            }}
-          />
+    <div className="auth-split">
+      <div className="auth-panel-left">
+        <img
+          src="/logo.png"
+          alt="VFA Logo"
+          style={{ width: 80, height: 80, objectFit: "contain", opacity: 0.95 }}
+        />
+        <div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>
+            VFA-Akademie
+          </div>
+          <div style={{ marginTop: 10, fontSize: 15, color: "rgba(255,255,255,0.75)", lineHeight: 1.6, maxWidth: 280 }}>
+            Schulungen, Zertifikate und Credits – alles an einem Ort.
+          </div>
+        </div>
+        <div style={{ width: 48, height: 4, background: "#FFC100", borderRadius: 999 }} />
+      </div>
 
-          <img
-            src="/logo.png"
-            alt="VFA Logo"
-            style={{
-              width: 92,
-              height: 92,
-              objectFit: "contain",
-              marginBottom: 18,
-            }}
-          />
+      <div className="auth-panel-right">
+        <div style={{ width: "100%", maxWidth: 460, display: "grid", gap: 24 }}>
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: "clamp(24px, 5vw, 34px)",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Passwort vergessen
+            </h1>
+            <p style={{ marginTop: 8, color: "#666666", fontSize: 15, lineHeight: 1.5 }}>
+              Wir schicken dir einen Reset-Link per E-Mail.
+            </p>
+          </div>
 
-          <h1
-            style={{
-              margin: 0,
-              color: "#007873",
-              fontSize: "clamp(30px, 9vw, 48px)",
-              fontWeight: 400,
-              lineHeight: 1.05,
-              textTransform: "uppercase",
-              letterSpacing: "0.03em",
-            }}
-          >
-            Passwort vergessen
-          </h1>
-
-          <p
-            style={{
-              marginTop: 16,
-              marginBottom: 0,
-              color: "#333333",
-              fontSize: 17,
-              lineHeight: 1.6,
-              maxWidth: 480,
-            }}
-          >
-            Gib deine E-Mail-Adresse ein. Falls ein Konto existiert, senden wir
-            dir einen Link zum Zurücksetzen des Passworts.
-          </p>
-        </section>
-
-        <AppCard accent="green">
-          {sent ? (
-            <div style={{ display: "grid", gap: 16, textAlign: "center" }}>
-              <div
-                style={{
-                  padding: "14px 18px",
-                  border: "1px solid #007873",
-                  background: "rgba(0,120,115,0.06)",
-                  color: "#007873",
-                  fontWeight: 700,
-                  lineHeight: 1.5,
-                  borderRadius: 4,
-                }}
-              >
-                Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein
-                Reset-Link gesendet. Bitte prüfe auch deinen Spam-Ordner.
-              </div>
-
-              <Link
-                href="/login"
-                style={{
-                  color: "#007873",
-                  fontWeight: 800,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                  fontSize: 15,
-                }}
-              >
-                Zurück zur Anmeldung
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={onSubmit} style={{ display: "grid", gap: 14 }}>
-              <AppInput
-                label="E-Mail"
-                value={email}
-                placeholder="max@firma.de"
-                type="email"
-                onChange={setEmail}
-              />
-
-              <AppButton
-                type="submit"
-                disabled={loading || !email.trim()}
-                variant="primary"
-                fullWidth
-              >
-                {loading ? "Wird gesendet..." : "Reset-Link senden"}
-              </AppButton>
-
-              {error && (
+          <AppCard accent="none" style={{ padding: 28 }}>
+            {sent ? (
+              <div style={{ display: "grid", gap: 16 }}>
                 <div
                   style={{
-                    padding: "12px 14px",
-                    border: "1px solid rgba(176,0,32,0.28)",
-                    background: "rgba(176,0,32,0.08)",
-                    color: "#B00020",
-                    fontWeight: 800,
+                    padding: "14px 16px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(0,120,115,0.3)",
+                    background: "rgba(0,120,115,0.06)",
+                    color: "#007873",
+                    fontWeight: 600,
+                    fontSize: 14,
                     lineHeight: 1.5,
-                    borderRadius: 4,
                   }}
                 >
-                  {error}
+                  Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link
+                  gesendet. Bitte prüfe auch deinen Spam-Ordner.
                 </div>
-              )}
-
-              <div
-                style={{
-                  marginTop: 6,
-                  paddingTop: 18,
-                  borderTop: "1px solid #E6E6E6",
-                  color: "#333333",
-                  lineHeight: 1.6,
-                }}
-              >
                 <Link
                   href="/login"
-                  style={{
-                    color: "#007873",
-                    fontWeight: 800,
-                    textDecoration: "underline",
-                    textUnderlineOffset: 3,
-                  }}
+                  style={{ color: "#007873", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3, fontSize: 14 }}
                 >
                   Zurück zur Anmeldung
                 </Link>
               </div>
-            </form>
-          )}
-        </AppCard>
+            ) : (
+              <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
+                <AppInput
+                  label="E-Mail"
+                  value={email}
+                  placeholder="max@firma.de"
+                  type="email"
+                  onChange={setEmail}
+                />
+
+                <AppButton
+                  type="submit"
+                  disabled={loading || !email.trim()}
+                  variant="primary"
+                  fullWidth
+                >
+                  {loading ? "Wird gesendet..." : "Reset-Link senden"}
+                </AppButton>
+
+                {error && (
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(176,0,32,0.24)",
+                      background: "rgba(176,0,32,0.06)",
+                      color: "#B00020",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {error}
+                  </div>
+                )}
+              </form>
+            )}
+          </AppCard>
+
+          <p style={{ textAlign: "center", color: "#666666", fontSize: 14 }}>
+            <Link
+              href="/login"
+              style={{ color: "#007873", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}
+            >
+              Zurück zur Anmeldung
+            </Link>
+          </p>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

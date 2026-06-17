@@ -7,7 +7,6 @@ import { useState } from "react";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
-import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,177 +40,152 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#F7F7F4",
-        padding: "32px 18px",
-        display: "grid",
-        placeItems: "center",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 620,
-          display: "grid",
-          gap: 22,
-        }}
-      >
-        <section
-          style={{
-            textAlign: "center",
-            display: "grid",
-            justifyItems: "center",
-          }}
-        >
+    <div className="auth-split">
+      {/* Left branding panel */}
+      <div className="auth-panel-left">
+        <img
+          src="/logo.png"
+          alt="VFA Logo"
+          style={{ width: 80, height: 80, objectFit: "contain", opacity: 0.95 }}
+        />
+        <div>
           <div
             style={{
-              width: 70,
-              height: 6,
-              background: "#FFC100",
-              marginBottom: 18,
-            }}
-          />
-
-          <img
-            src="/logo.png"
-            alt="VFA Logo"
-            style={{
-              width: 92,
-              height: 92,
-              objectFit: "contain",
-              marginBottom: 18,
-            }}
-          />
-
-          <h1
-            style={{
-              margin: 0,
-              color: "#007873",
-              fontSize: "clamp(38px, 11vw, 56px)",
-              fontWeight: 400,
-              lineHeight: 1.05,
-              textTransform: "uppercase",
-              letterSpacing: "0.03em",
+              fontSize: 26,
+              fontWeight: 700,
+              color: "#FFFFFF",
+              letterSpacing: "0.02em",
             }}
           >
-            Anmeldung
-          </h1>
-
-          <p
+            VFA-Akademie
+          </div>
+          <div
             style={{
-              marginTop: 16,
-              marginBottom: 0,
-              color: "#333333",
-              fontSize: 17,
+              marginTop: 10,
+              fontSize: 15,
+              color: "rgba(255,255,255,0.75)",
               lineHeight: 1.6,
-              maxWidth: 560,
+              maxWidth: 280,
             }}
           >
-            Melde dich mit deinem VFA-Akademie-Konto an, um deine Schulungen,
-            Zertifikate, Credits und Profildaten zu verwalten.
-          </p>
-        </section>
+            Schulungen, Zertifikate und Credits – alles an einem Ort.
+          </div>
+        </div>
+        <div
+          style={{
+            width: 48,
+            height: 4,
+            background: "#FFC100",
+            borderRadius: 999,
+          }}
+        />
+      </div>
 
-        <AppCard accent="green">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 16,
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              marginBottom: 20,
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#007873",
-                  fontSize: 26,
-                  fontWeight: 500,
-                  lineHeight: 1.3,
-                }}
-              >
-                Einloggen
-              </h2>
-
-              <p
-                style={{
-                  marginTop: 8,
-                  marginBottom: 0,
-                  color: "#333333",
-                  lineHeight: 1.6,
-                }}
-              >
-                Zugang zur VFA-Akademie-App.
-              </p>
-            </div>
-
-            <StatusBadge variant="yellow">Login</StatusBadge>
+      {/* Right form panel */}
+      <div className="auth-panel-right">
+        <div style={{ width: "100%", maxWidth: 460, display: "grid", gap: 24 }}>
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                color: "#007873",
+                fontSize: "clamp(26px, 6vw, 36px)",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Willkommen zurück
+            </h1>
+            <p
+              style={{
+                marginTop: 8,
+                color: "#666666",
+                fontSize: 15,
+                lineHeight: 1.5,
+              }}
+            >
+              Melde dich mit deinem VFA-Akademie-Konto an.
+            </p>
           </div>
 
-          <form onSubmit={onSubmit} style={{ display: "grid", gap: 14 }}>
-            <AppInput
-              label="E-Mail"
-              value={email}
-              placeholder="max@firma.de"
-              type="email"
-              onChange={setEmail}
-            />
+          <AppCard accent="none" style={{ padding: 28 }}>
+            <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
+              <AppInput
+                label="E-Mail"
+                value={email}
+                placeholder="max@firma.de"
+                type="email"
+                onChange={setEmail}
+              />
 
-            <AppInput
-              label="Passwort"
-              value={password}
-              placeholder="Passwort eingeben"
-              type="password"
-              onChange={setPassword}
-            />
+              <AppInput
+                label="Passwort"
+                value={password}
+                placeholder="Passwort eingeben"
+                type="password"
+                onChange={setPassword}
+              />
 
-            <AppButton
-              type="submit"
-              disabled={loading || !email.trim() || !password.trim()}
-              variant="primary"
-              fullWidth
-            >
-              {loading ? "Einloggen..." : "Einloggen"}
-            </AppButton>
-
-            <div style={{ textAlign: "right", marginTop: -4 }}>
-              <Link
-                href="/forgot-password"
-                style={{
-                  color: "#007873",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Passwort vergessen?
-              </Link>
-            </div>
-
-            {msg && (
-              <div
-                style={{
-                  padding: "12px 14px",
-                  border: "1px solid rgba(176,0,32,0.28)",
-                  background: "rgba(176,0,32,0.08)",
-                  color: "#B00020",
-                  fontWeight: 800,
-                  lineHeight: 1.5,
-                }}
-              >
-                {msg}
+              <div style={{ textAlign: "right", marginTop: -8 }}>
+                <Link
+                  href="/forgot-password"
+                  style={{
+                    color: "#007873",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Passwort vergessen?
+                </Link>
               </div>
-            )}
-          </form>
 
-        </AppCard>
+              <AppButton
+                type="submit"
+                disabled={loading || !email.trim() || !password.trim()}
+                variant="primary"
+                fullWidth
+              >
+                {loading ? "Einloggen..." : "Einloggen"}
+              </AppButton>
+
+              {msg && (
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(176,0,32,0.24)",
+                    background: "rgba(176,0,32,0.06)",
+                    color: "#B00020",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {msg}
+                </div>
+              )}
+            </form>
+          </AppCard>
+
+          <p style={{ textAlign: "center", color: "#666666", fontSize: 14 }}>
+            Noch kein Konto?{" "}
+            <Link
+              href="/register"
+              style={{
+                color: "#007873",
+                fontWeight: 700,
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
+              }}
+            >
+              Jetzt registrieren
+            </Link>
+          </p>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -29,14 +29,14 @@ export default function AppButton({
 
   if (href) {
     return (
-      <Link href={href} style={style}>
+      <Link href={href} style={style} className="vfa-btn">
         {children}
       </Link>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} style={style}>
+    <button type={type} onClick={onClick} disabled={disabled} style={style} className="vfa-btn">
       {children}
     </button>
   );
@@ -54,17 +54,17 @@ function getButtonStyle(
     gap: 8,
     width: fullWidth ? "100%" : "fit-content",
     minHeight: 42,
-    padding: "11px 22px",
+    padding: "10px 22px",
     borderRadius: 999,
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 14,
-    letterSpacing: "0.08em",
+    letterSpacing: "0.05em",
     textTransform: "uppercase",
     textDecoration: "none",
     cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.55 : 1,
-    transition: "opacity 120ms ease, transform 120ms ease, background 120ms ease",
+    opacity: disabled ? 0.5 : 1,
     whiteSpace: "nowrap",
+    border: "none",
   };
 
   if (variant === "primary") {
@@ -88,18 +88,18 @@ function getButtonStyle(
   if (variant === "secondary") {
     return {
       ...base,
-      background: "#EFEFEF",
-      color: "#1F1F1F",
-      border: "1px solid #E0E0E0",
+      background: "#F0F0F0",
+      color: "#333333",
+      border: "1px solid #DEDEDE",
     };
   }
 
   if (variant === "danger") {
     return {
       ...base,
-      background: "rgba(176,0,32,0.10)",
+      background: "rgba(176,0,32,0.08)",
       color: "#B00020",
-      border: "1px solid rgba(176,0,32,0.28)",
+      border: "1px solid rgba(176,0,32,0.24)",
     };
   }
 

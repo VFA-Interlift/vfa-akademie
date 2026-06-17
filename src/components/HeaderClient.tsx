@@ -208,13 +208,13 @@ export default function HeaderClient() {
             }}
           />
 
-          <div style={{ lineHeight: 1.1, minWidth: 0 }}>
+          <div style={{ lineHeight: 1.15, minWidth: 0 }}>
             <div
               style={{
-                fontSize: 18,
-                fontWeight: 800,
+                fontSize: 17,
+                fontWeight: 700,
                 color: VFA_GREEN,
-                letterSpacing: "0.01em",
+                letterSpacing: "-0.01em",
                 whiteSpace: "nowrap",
               }}
             >
@@ -223,12 +223,12 @@ export default function HeaderClient() {
 
             <div
               style={{
-                marginTop: 3,
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#555555",
+                marginTop: 2,
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#888888",
                 textTransform: "uppercase",
-                letterSpacing: "0.08em",
+                letterSpacing: "0.07em",
                 whiteSpace: "nowrap",
               }}
             >
@@ -305,9 +305,9 @@ export default function HeaderClient() {
           >
             <div
               style={{
-                padding: "10px 12px",
-                borderRadius: 0,
-                border: "1px solid #E6E6E6",
+                padding: "12px 14px",
+                borderRadius: 10,
+                border: "1px solid #EBEBEB",
                 background: "#F7F7F4",
                 color: "#1F1F1F",
               }}

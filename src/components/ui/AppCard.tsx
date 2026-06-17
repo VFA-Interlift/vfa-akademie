@@ -20,17 +20,17 @@ export default function AppCard({
     <Component
       style={{
         position: "relative",
-        padding: 18,
-        borderRadius: 6,
+        padding: 22,
+        borderRadius: 12,
         border:
           accent === "green"
             ? `1px solid ${VFA_GREEN}`
             : accent === "yellow"
               ? `1px solid ${VFA_YELLOW}`
-              : "1px solid #E6E6E6",
+              : "1px solid #E8E8E8",
         background: "#FFFFFF",
         color: "#1F1F1F",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
         ...style,
       }}
     >
