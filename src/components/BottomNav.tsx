@@ -3,59 +3,127 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 
-const TABS = [
-  {
-    href: "/dashboard",
-    label: "Home",
-    icon: IconHome,
-  },
-  {
-    href: "/meine-schulungen",
-    label: "Schulungen",
-    icon: IconBook,
-  },
-  {
-    href: "/meine-zertifikate",
-    label: "Zertifikate",
-    icon: IconCert,
-  },
-  {
-    href: "/kurskalender",
-    label: "Kalender",
-    icon: IconCalendar,
-  },
-  {
-    href: "/meine-daten",
-    label: "Profil",
-    icon: IconPerson,
-  },
+const MAIN_TABS = [
+  { href: "/dashboard", label: "Home", icon: IconHome },
+  { href: "/meine-schulungen", label: "Schulungen", icon: IconBook },
+  { href: "/meine-zertifikate", label: "Zertifikate", icon: IconCert },
+  { href: "/kurskalender", label: "Kalender", icon: IconCalendar },
 ];
+
+type MeResponse =
+  | { ok: false }
+  | { ok: true; role: "USER" | "ADMIN" };
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { status } = useSession();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [role, setRole] = useState<"USER" | "ADMIN">("USER");
 
   useEffect(() => {
     document.body.classList.add("has-bottom-nav");
     return () => document.body.classList.remove("has-bottom-nav");
   }, []);
 
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/me", { cache: "no-store" })
+      .then((r) => r.json() as Promise<MeResponse>)
+      .then((d) => { if (d.ok) setRole(d.role); })
+      .catch(() => {});
+  }, [status]);
+
+  useEffect(() => {
+    setSheetOpen(false);
+  }, [pathname]);
+
   if (status !== "authenticated") return null;
 
+  const mehrActive =
+    pathname.startsWith("/meine-daten") ||
+    pathname.startsWith("/badges") ||
+    pathname.startsWith("/dozent") ||
+    pathname.startsWith("/admin");
+
   return (
-    <nav className="bottom-nav" aria-label="Navigation">
-      {TABS.map(({ href, label, icon: Icon }) => {
-        const active = pathname.startsWith(href);
-        return (
-          <Link key={href} href={href} className={`bottom-nav-item${active ? " active" : ""}`}>
-            <Icon active={active} />
-            <span className="bottom-nav-label">{label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+    <>
+      <nav className="bottom-nav" aria-label="Navigation">
+        {MAIN_TABS.map(({ href, label, icon: Icon }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link key={href} href={href} className={`bottom-nav-item${active ? " active" : ""}`}>
+              <Icon active={active} />
+              <span className="bottom-nav-label">{label}</span>
+            </Link>
+          );
+        })}
+
+        <button
+          type="button"
+          className={`bottom-nav-item${mehrActive ? " active" : ""}`}
+          onClick={() => setSheetOpen(true)}
+          aria-label="Mehr"
+        >
+          <IconMore active={mehrActive} />
+          <span className="bottom-nav-label">Mehr</span>
+        </button>
+      </nav>
+
+      {sheetOpen && (
+        <>
+          <div className="mehr-backdrop" onClick={() => setSheetOpen(false)} />
+          <div className="mehr-sheet" role="dialog" aria-label="Weitere Navigation">
+            <div className="mehr-handle" />
+
+            <div className="mehr-items">
+              <SheetLink href="/badges" active={pathname.startsWith("/badges")} onClick={() => setSheetOpen(false)}>
+                <IconBadge /> Badges
+              </SheetLink>
+
+              <SheetLink href="/dozent" active={pathname.startsWith("/dozent")} onClick={() => setSheetOpen(false)}>
+                <IconChalk /> Dozenten
+              </SheetLink>
+
+              <SheetLink href="/meine-daten" active={pathname.startsWith("/meine-daten")} onClick={() => setSheetOpen(false)}>
+                <IconPerson active={false} /> Profil
+              </SheetLink>
+
+              {role === "ADMIN" && (
+                <SheetLink href="/admin" active={pathname.startsWith("/admin")} onClick={() => setSheetOpen(false)}>
+                  <IconAdmin /> Adminbereich
+                </SheetLink>
+              )}
+
+              <div className="mehr-divider" />
+
+              <button
+                type="button"
+                className="mehr-logout"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+              >
+                <IconLogout /> Abmelden
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function SheetLink({ href, active, onClick, children }: {
+  href: string;
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link href={href} onClick={onClick} className={`mehr-item${active ? " active" : ""}`}>
+      {children}
+    </Link>
   );
 }
 
@@ -103,11 +171,55 @@ function IconCalendar({ active }: { active: boolean }) {
   );
 }
 
-function IconPerson({ active }: { active: boolean }) {
+function IconMore({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconPerson({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  );
+}
+
+function IconBadge() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l2.4 4.8L20 8l-4 3.9 1 5.6L12 15l-5 2.5 1-5.6L4 8l5.6-1.2z" />
+    </svg>
+  );
+}
+
+function IconChalk() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  );
+}
+
+function IconAdmin() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l3 6.5H22l-5.5 4 2 6.5L12 15l-6.5 4 2-6.5L2 8.5h7z" />
+    </svg>
+  );
+}
+
+function IconLogout() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }
