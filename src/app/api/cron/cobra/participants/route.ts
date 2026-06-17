@@ -16,6 +16,10 @@ type CobraParticipantRaw = {
   Teilnehmerart?: string | null;
   Status?: string | null;
   Notiz?: string | null;
+  Email?: string | null;
+  "E-Mail"?: string | null;
+  EMail?: string | null;
+  email?: string | null;
 };
 
 type NormalizedCobraParticipant = {
@@ -26,6 +30,7 @@ type NormalizedCobraParticipant = {
   participantText: string;
   participantType: string | null;
   status: string | null;
+  email: string | null;
   raw: CobraParticipantRaw;
 };
 
@@ -74,6 +79,18 @@ function cleanNumber(value: unknown) {
   return null;
 }
 
+function extractEmail(raw: CobraParticipantRaw): string | null {
+  const raw2 = raw as Record<string, unknown>;
+  const candidates = [raw2["Email"], raw2["E-Mail"], raw2["EMail"], raw2["email"], raw2["eMail"]];
+  for (const c of candidates) {
+    const cleaned = cleanString(c);
+    if (cleaned && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) {
+      return cleaned.toLowerCase();
+    }
+  }
+  return null;
+}
+
 function extractCobraTrainingId(value: string | null) {
   if (!value) {
     return null;
@@ -105,6 +122,7 @@ function normalizeParticipant(
   );
 
   const status = cleanString(raw.Status);
+  const email = extractEmail(raw);
 
   if (!numericParticipantId || !participantText) {
     return null;
@@ -118,6 +136,7 @@ function normalizeParticipant(
     participantText,
     participantType,
     status,
+    email,
     raw,
   };
 }
@@ -174,6 +193,7 @@ async function syncParticipant(participant: NormalizedCobraParticipant) {
       participantText: participant.participantText,
       participantType: participant.participantType,
       status: participant.status,
+      email: participant.email,
       raw: participant.raw,
     },
     update: {
@@ -184,6 +204,7 @@ async function syncParticipant(participant: NormalizedCobraParticipant) {
       participantText: participant.participantText,
       participantType: participant.participantType,
       status: participant.status,
+      email: participant.email,
       raw: participant.raw,
     },
     select: {

@@ -206,6 +206,7 @@ textarea {
   min-height: 100vh;
   background: #f7f7f4;
   padding: 24px 16px;
+  overflow-x: hidden;
 }
 @media (min-width: 600px) {
   .page-main {
@@ -237,7 +238,7 @@ textarea {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 4px;
     text-decoration: none;
     color: #aaaaaa;
@@ -245,11 +246,12 @@ textarea {
     font-weight: 600;
     letter-spacing: 0.03em;
     transition: color 140ms ease;
-    padding: 8px 4px;
+    padding: 11px 2px 0;
     position: relative;
     background: none;
     border: none;
     cursor: pointer;
+    min-width: 0;
   }
   .bottom-nav-item.active {
     color: #007873;

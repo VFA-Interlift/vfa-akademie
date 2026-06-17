@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
     const { firstName, lastName } = splitName(name);
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email,
         passwordHash,
@@ -134,7 +134,26 @@ export async function POST(req: Request) {
         lastName,
         birthDate,
       },
+      select: { id: true },
     });
+
+    // Auto-enroll from matching Cobra participant records (email sync)
+    try {
+      const cobraMatches = await prisma.cobraTrainingParticipant.findMany({
+        where: { email, trainingId: { not: null } },
+        select: { trainingId: true },
+      });
+      for (const match of cobraMatches) {
+        if (!match.trainingId) continue;
+        await prisma.enrollment.upsert({
+          where: { userId_trainingId: { userId: newUser.id, trainingId: match.trainingId } },
+          create: { userId: newUser.id, trainingId: match.trainingId, status: "CONFIRMED" },
+          update: {},
+        });
+      }
+    } catch {
+      // Auto-enrollment failure does not block registration
+    }
 
     return NextResponse.json({
       ok: true,

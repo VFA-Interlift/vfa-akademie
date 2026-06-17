@@ -138,24 +138,26 @@ export default async function DashboardPage() {
         {/* Next upcoming training */}
         {nextTraining && (
           <AnimatedSection delayMs={100}>
-            <div style={{ padding: "16px 18px", background: "#007873", borderRadius: 14, display: "grid", gap: 6 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Nächste Schulung
-              </div>
-              <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.25 }}>
-                {nextTraining.training.code?.trim() || nextTraining.training.title}
-              </div>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 2 }}>
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
-                  📅 {formatDateRange(nextTraining.training.date, nextTraining.training.endDate)}
-                </span>
-                {nextTraining.training.location && (
+            <Link href="/meine-schulungen" style={{ textDecoration: "none", display: "block" }}>
+              <div style={{ padding: "16px 18px", background: "#007873", borderRadius: 14, display: "grid", gap: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Nächste Schulung
+                </div>
+                <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.25 }}>
+                  {nextTraining.training.code?.trim() || nextTraining.training.title}
+                </div>
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 2 }}>
                   <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
-                    📍 {nextTraining.training.location.split(",")[0]?.trim()}
+                    📅 {formatDateRange(nextTraining.training.date, nextTraining.training.endDate)}
                   </span>
-                )}
+                  {nextTraining.training.location && (
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
+                      📍 {nextTraining.training.location.split(",")[0]?.trim()}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+            </Link>
           </AnimatedSection>
         )}
 

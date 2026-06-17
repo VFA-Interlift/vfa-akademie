@@ -130,6 +130,27 @@ function downloadBadge(rank: RankDef, credits: number) {
   URL.revokeObjectURL(url);
 }
 
+function downloadBadgePng(rank: RankDef, credits: number) {
+  const svg = generateBadgeSVG(rank, credits, true);
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 720;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0, 640, 720);
+    URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `vfa-badge-${rank.key.toLowerCase()}.png`;
+    a.click();
+  };
+  img.src = url;
+}
+
 export default function BadgesClient({ credits }: { credits: number }) {
   const currentRank = getCurrentRank(credits);
 
@@ -234,24 +255,42 @@ export default function BadgesClient({ credits }: { credits: number }) {
               </div>
 
               {isEarned && (
-                <button
-                  type="button"
-                  onClick={() => downloadBadge(rank, credits)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 0",
-                    borderRadius: 999,
-                    border: `1px solid ${rank.accent}`,
-                    background: "transparent",
-                    color: rank.color,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    letterSpacing: "0.03em",
-                  }}
-                >
-                  ↓ Herunterladen
-                </button>
+                <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => downloadBadge(rank, credits)}
+                    style={{
+                      padding: "9px 0",
+                      borderRadius: 999,
+                      border: `1px solid ${rank.accent}`,
+                      background: "transparent",
+                      color: rank.color,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    ↓ SVG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadBadgePng(rank, credits)}
+                    style={{
+                      padding: "9px 0",
+                      borderRadius: 999,
+                      border: `1px solid ${rank.accent}`,
+                      background: rank.accent,
+                      color: "#FFFFFF",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    ↓ PNG
+                  </button>
+                </div>
               )}
             </div>
           );
