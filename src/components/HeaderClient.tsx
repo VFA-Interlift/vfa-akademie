@@ -1,8 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+
+const PAGE_LABELS: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/meine-schulungen": "Meine Schulungen",
+  "/meine-zertifikate": "Meine Zertifikate",
+  "/meine-daten": "Meine Daten",
+  "/kurskalender": "Kurskalender",
+  "/admin": "Administration",
+};
 
 type MeResponse =
   | { ok: false; loggedIn: false }
@@ -21,6 +31,11 @@ const VFA_GREY = "#C7C7C7";
 
 export default function HeaderClient() {
   const { status } = useSession();
+  const pathname = usePathname();
+
+  const pageLabel = Object.entries(PAGE_LABELS).find(([key]) =>
+    pathname.startsWith(key)
+  )?.[1] ?? "Schulungen · Zertifikate";
 
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -217,7 +232,7 @@ export default function HeaderClient() {
                 whiteSpace: "nowrap",
               }}
             >
-              Schulungen · Zertifikate
+              {pageLabel}
             </div>
           </div>
         </Link>
