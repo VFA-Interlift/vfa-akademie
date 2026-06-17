@@ -270,18 +270,18 @@ export default function KurskalenderPage() {
                           key={week.key}
                           style={{
                             position: "relative",
-                            minHeight: "clamp(56px, 14vw, 92px)",
+                            minHeight: 92,
                             display: "grid",
                             gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                            gap: "clamp(3px, 1vw, 6px)",
+                            gap: 6,
                           }}
                         >
                           {week.days.map((day) => (
                             <div
                               key={day.key}
                               style={{
-                                minHeight: "clamp(56px, 14vw, 92px)",
-                                padding: "clamp(3px, 1.5vw, 7px)",
+                                minHeight: 92,
+                                padding: 7,
                                 border: "1px solid #E6E6E6",
                                 background: !day.isCurrentMonth
                                   ? "#F1F1EE"
