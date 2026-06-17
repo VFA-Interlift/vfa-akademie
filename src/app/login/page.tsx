@@ -195,28 +195,6 @@ export default function LoginPage() {
             )}
           </form>
 
-          <div
-            style={{
-              marginTop: 22,
-              paddingTop: 18,
-              borderTop: "1px solid #E6E6E6",
-              color: "#333333",
-              lineHeight: 1.6,
-            }}
-          >
-            Noch kein Konto?{" "}
-            <Link
-              href="/register"
-              style={{
-                color: "#007873",
-                fontWeight: 800,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Jetzt registrieren
-            </Link>
-          </div>
         </AppCard>
       </div>
     </main>

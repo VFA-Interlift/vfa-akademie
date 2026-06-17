@@ -73,10 +73,6 @@ export default function HomePage() {
               <Link href="/login" style={primaryButtonStyle}>
                 Anmelden
               </Link>
-
-              <Link href="/register" style={yellowButtonStyle}>
-                Registrieren
-              </Link>
             </div>
           </div>
 
@@ -190,8 +186,3 @@ const primaryButtonStyle: React.CSSProperties = {
   textDecoration: "none",
 };
 
-const yellowButtonStyle: React.CSSProperties = {
-  ...primaryButtonStyle,
-  background: "#FFC100",
-  color: "#1F1F1F",
-};

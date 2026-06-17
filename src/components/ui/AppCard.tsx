@@ -21,7 +21,7 @@ export default function AppCard({
       style={{
         position: "relative",
         padding: 18,
-        borderRadius: 0,
+        borderRadius: 6,
         border:
           accent === "green"
             ? `1px solid ${VFA_GREEN}`

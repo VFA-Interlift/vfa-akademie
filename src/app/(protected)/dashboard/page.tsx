@@ -159,7 +159,7 @@ export default async function DashboardPage() {
 
             <h2
               style={{
-                margin: "18px 0 0",
+                margin: "0 0 0",
                 color: "#1F1F1F",
                 fontSize: 30,
                 fontWeight: 500,

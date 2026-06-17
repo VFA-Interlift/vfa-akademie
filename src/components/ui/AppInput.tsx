@@ -36,7 +36,7 @@ export default function AppInput({
         style={{
           width: "100%",
           padding: "12px 14px",
-          borderRadius: 0,
+          borderRadius: 4,
           border: "1px solid #C7C7C7",
           background: "#FFFFFF",
           color: "#1F1F1F",
