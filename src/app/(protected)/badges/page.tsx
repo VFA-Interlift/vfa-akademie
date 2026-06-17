@@ -23,11 +23,7 @@ export default async function BadgesPage() {
     <main className="page-main">
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
-          <PageHeader
-            title="Badges"
-            description="Lade deine persönlichen Weiterbildungs-Badges herunter und teile deinen Fortschritt."
-            showTitle={true}
-          />
+          <PageHeader title="Badges" showTitle={true} />
         </AnimatedSection>
 
         <AnimatedSection delayMs={80}>

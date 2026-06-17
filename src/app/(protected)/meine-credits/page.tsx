@@ -45,7 +45,7 @@ export default function MeineCreditsPage() {
     <main className="page-main">
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
-          <PageHeader title="Meine Credits" description="Alle Credit-Buchungen auf einen Blick." showTitle />
+          <PageHeader title="Meine Credits" showTitle />
         </AnimatedSection>
 
         <AnimatedSection delayMs={60}>

@@ -54,11 +54,7 @@ export default async function MeineDatenPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <PageHeader
-          title="Meine Daten"
-          description="Hier kannst du deine persönlichen Daten und Firmendaten pflegen. Diese Angaben können später für Schulungen, Zertifikate und die Cobra-Synchronisation genutzt werden."
-          showTitle={true}
-        />
+        <PageHeader title="Meine Daten" showTitle={true} />
 
         <AppCard accent="green">
           <MeineDatenForm

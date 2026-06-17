@@ -125,34 +125,21 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
             display: "flex",
             justifyContent: "space-between",
             gap: 16,
-            alignItems: "flex-start",
+            alignItems: "center",
             flexWrap: "wrap",
-            marginBottom: 18,
+            marginBottom: 14,
           }}
         >
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 24,
-                fontWeight: 500,
-                lineHeight: 1.3,
-              }}
-            >
-              Persönliche Daten
-            </h2>
-
-            <p
-              style={{
-                marginTop: 8,
-                marginBottom: 0,
-                color: "#333333",
-                lineHeight: 1.6,
-              }}
-            >
-              Diese Daten werden für dein Profil und später für Zertifikate verwendet.
-            </p>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: "#007873",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Persönliche Daten
           </div>
 
           <StatusBadge variant="yellow">Profil</StatusBadge>
@@ -233,34 +220,21 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
             display: "flex",
             justifyContent: "space-between",
             gap: 16,
-            alignItems: "flex-start",
+            alignItems: "center",
             flexWrap: "wrap",
-            marginBottom: 18,
+            marginBottom: 14,
           }}
         >
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 24,
-                fontWeight: 500,
-                lineHeight: 1.3,
-              }}
-            >
-              Firmendaten
-            </h2>
-
-            <p
-              style={{
-                marginTop: 8,
-                marginBottom: 0,
-                color: "#333333",
-                lineHeight: 1.6,
-              }}
-            >
-              Diese Angaben helfen bei Schulungsverwaltung, Kommunikation und späterer Cobra-Zuordnung.
-            </p>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: "#007873",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Firmendaten
           </div>
 
           <StatusBadge>Firma</StatusBadge>
@@ -355,14 +329,17 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
       </div>
 
       <AppCard accent="none" style={{ boxShadow: "none" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 18 }}>
-          <div>
-            <h2 style={{ margin: 0, color: "#007873", fontSize: 24, fontWeight: 500, lineHeight: 1.3 }}>
-              Credit-Ranking
-            </h2>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
-              Entscheide, ob du im freiwilligen VFA-Credit-Ranking erscheinen möchtest.
-            </p>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 18 }}>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: "#007873",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Credit-Ranking
           </div>
           <StatusBadge>Ranking</StatusBadge>
         </div>
@@ -375,18 +352,21 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
             display: "flex",
             justifyContent: "space-between",
             gap: 16,
-            alignItems: "flex-start",
+            alignItems: "center",
             flexWrap: "wrap",
-            marginBottom: 18,
+            marginBottom: 14,
           }}
         >
-          <div>
-            <h2 style={{ margin: 0, color: "#007873", fontSize: 24, fontWeight: 500, lineHeight: 1.3 }}>
-              Passwort ändern
-            </h2>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
-              Lege ein neues Passwort für deinen Account fest.
-            </p>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: "#007873",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Passwort ändern
           </div>
           <StatusBadge>Sicherheit</StatusBadge>
         </div>

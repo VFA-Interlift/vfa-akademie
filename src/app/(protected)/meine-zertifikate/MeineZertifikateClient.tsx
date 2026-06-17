@@ -117,29 +117,16 @@ export default function MeineZertifikateClient({
               flexWrap: "wrap",
             }}
           >
-            <div>
-              <div
-                style={{
-                  color: "#007873",
-                  fontSize: 13,
-                  fontWeight: 850,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Filter
-              </div>
-
-              <div
-                style={{
-                  marginTop: 5,
-                  color: "#333333",
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                }}
-              >
-                Wähle ein Jahr aus, um deine Nachweise einzugrenzen.
-              </div>
+            <div
+              style={{
+                color: "#007873",
+                fontSize: 12,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              Jahresfilter
             </div>
 
             <label style={{ display: "grid", gap: 6, minWidth: 180 }}>

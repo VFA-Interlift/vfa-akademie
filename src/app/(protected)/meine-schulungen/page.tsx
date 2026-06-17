@@ -25,11 +25,7 @@ export default async function MeineSchulungenPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <PageHeader
-          title="Meine Schulungen"
-          description="Deine bevorstehenden Schulungen, Credits und Abschlussdokumente auf einen Blick."
-          showTitle={true}
-        />
+        <PageHeader title="Meine Schulungen" showTitle={true} />
 
         <MeineSchulungenClient trainings={serializableTrainings} />
       </div>

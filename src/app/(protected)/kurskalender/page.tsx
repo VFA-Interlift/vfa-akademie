@@ -165,11 +165,7 @@ export default function KurskalenderPage() {
     <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
-          <PageHeader
-            title="Kurskalender"
-            description="Übersicht der geplanten Schulungen der VFA-Akademie."
-            showTitle={false}
-          />
+          <PageHeader title="Kurskalender" showTitle={true} />
         </AnimatedSection>
 
         {msg && (

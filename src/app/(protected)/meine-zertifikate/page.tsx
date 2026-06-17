@@ -28,11 +28,7 @@ export default async function MeineZertifikatePage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <PageHeader
-          title="Meine Zertifikate"
-          description="Hier findest du deine Teilnahmebestätigungen und Zertifikate aus abgeschlossenen Schulungen. Über den Jahresfilter bleibt die Übersicht auch bei vielen Schulungen schlank."
-          showTitle={true}
-        />
+        <PageHeader title="Meine Zertifikate" showTitle={true} />
 
         <MeineZertifikateClient certificates={serializableCertificates} />
       </div>

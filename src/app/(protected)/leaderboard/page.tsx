@@ -17,11 +17,7 @@ export default async function LeaderboardPage() {
     <main className="page-main">
       <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
         <AnimatedSection delayMs={0}>
-          <PageHeader
-            title="Credit-Ranking"
-            description="Das freiwillige VFA-Credit-Ranking. Nur Anzeigename und Credits werden sichtbar."
-            showTitle={true}
-          />
+          <PageHeader title="Credit-Ranking" showTitle={true} />
         </AnimatedSection>
 
         <AnimatedSection delayMs={80}>
