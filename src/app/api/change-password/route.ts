@@ -31,14 +31,14 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email.toLowerCase() },
-    select: { id: true, password: true },
+    select: { id: true, passwordHash: true },
   });
 
-  if (!user?.password) {
+  if (!user?.passwordHash) {
     return NextResponse.json({ error: "Kein Passwort hinterlegt." }, { status: 400 });
   }
 
-  const valid = await bcrypt.compare(currentPassword, user.password);
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) {
     return NextResponse.json({ error: "Aktuelles Passwort ist falsch." }, { status: 400 });
   }
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   const hashed = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({
     where: { id: user.id },
-    data: { password: hashed },
+    data: { passwordHash: hashed },
   });
 
   return NextResponse.json({ ok: true });
