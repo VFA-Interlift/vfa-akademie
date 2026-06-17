@@ -313,6 +313,27 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
           </div>
         )}
       </div>
+
+      <div className="logout-mobile-only">
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          style={{
+            width: "100%",
+            padding: "14px 16px",
+            borderRadius: 999,
+            border: "1px solid #D4D4D4",
+            background: "#F4F4F4",
+            color: "#666666",
+            fontWeight: 700,
+            fontSize: 14,
+            letterSpacing: "0.04em",
+            cursor: "pointer",
+          }}
+        >
+          Abmelden
+        </button>
+      </div>
     </div>
   );
 }

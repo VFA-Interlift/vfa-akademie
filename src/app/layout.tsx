@@ -50,12 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <HeaderClient />
 
-            <div
-              style={{
-                flex: "1 0 auto",
-                paddingTop: 78,
-              }}
-            >
+            <div className="page-content" style={{ flex: "1 0 auto", paddingTop: 78 }}>
               {children}
             </div>
 

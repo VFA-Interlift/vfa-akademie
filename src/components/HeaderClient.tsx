@@ -156,6 +156,7 @@ export default function HeaderClient() {
 
   return (
     <header
+      className={isLoggedIn ? "app-header app-header--authed" : "app-header"}
       style={{
         position: "fixed",
         top: 0,

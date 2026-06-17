@@ -213,6 +213,82 @@ textarea {
   }
 }
 
+/* ── Bottom Navigation ── */
+.bottom-nav {
+  display: none;
+}
+@media (max-width: 759px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3000;
+    background: #ffffff;
+    border-top: 1px solid #e6e6e6;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    align-items: stretch;
+  }
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-decoration: none;
+    color: #999999;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: color 140ms ease;
+    padding: 6px 4px;
+    position: relative;
+  }
+  .bottom-nav-item.active {
+    color: #007873;
+  }
+  .bottom-nav-item.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: #007873;
+    border-radius: 0 0 2px 2px;
+  }
+  .bottom-nav-label {
+    line-height: 1;
+  }
+  /* Hide header when logged in on mobile */
+  .app-header--authed {
+    display: none !important;
+  }
+  /* Remove top padding when header is hidden */
+  body.has-bottom-nav .page-content {
+    padding-top: 0 !important;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Hide footer on mobile when bottom nav is present */
+  body.has-bottom-nav footer {
+    display: none;
+  }
+}
+
+/* ── Logout button (only on mobile, in Profil/Meine Daten) ── */
+.logout-mobile-only {
+  display: none;
+}
+@media (max-width: 759px) {
+  .logout-mobile-only {
+    display: block;
+  }
+}
+
 /* ── Page fade-in ── */
 @keyframes pageFadeUp {
   from { opacity: 0; transform: translateY(16px); }
