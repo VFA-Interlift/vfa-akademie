@@ -5,9 +5,8 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
-  const [userCount, trainingCount, certCount, enrollmentCount] = await Promise.all([
+  const [userCount, certCount, enrollmentCount] = await Promise.all([
     prisma.user.count(),
-    prisma.training.count(),
     prisma.certificate.count({ where: { status: "ISSUED" } }),
     prisma.enrollment.count({ where: { status: { in: ["CONFIRMED", "ATTENDED"] } } }),
   ]);
@@ -32,7 +31,6 @@ export default async function AdminMenuPage() {
         <AnimatedSection delayMs={60}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 28 }}>
             <StatCard label="Nutzer" value={userCount} />
-            <StatCard label="Schulungen" value={trainingCount} />
             <StatCard label="Anmeldungen" value={enrollmentCount} />
             <StatCard label="Zertifikate" value={certCount} />
           </div>
@@ -59,23 +57,16 @@ export default async function AdminMenuPage() {
           </div>
         </AnimatedSection>
 
-        {/* Section: Schulungen */}
+        {/* Section: Einschreibungen */}
         <AnimatedSection delayMs={140}>
-          <SectionLabel>Schulungen & Zertifikate</SectionLabel>
+          <SectionLabel>Einschreibungen</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 28 }}>
             <AdminTile
-              href="/admin/trainings"
-              abbr="SG"
-              title="Schulungen"
-              description="Schulungen anlegen, bearbeiten, Teilnehmer aus Cobra importieren."
+              href="/admin/trainings/add"
+              abbr="TN"
+              title="Teilnehmer zuordnen"
+              description="User manuell einer Schulung zuordnen oder Zuordnung entfernen."
               color="#007873"
-            />
-            <AdminTile
-              href="/admin/certificates"
-              abbr="ZE"
-              title="Zertifikate"
-              description="Zertifikate für abgeschlossene Schulungen erstellen und Credits vergeben."
-              color="#C79A16"
             />
           </div>
         </AnimatedSection>
@@ -88,7 +79,7 @@ export default async function AdminMenuPage() {
               href="/admin/cobra"
               abbr="CB"
               title="Cobra/WebConnect"
-              description="Verbindungsstatus prüfen, Schulungen und Teilnehmer aus Cobra synchronisieren."
+              description="Verbindungsstatus, Schulungen aus Cobra prüfen, Zertifikate manuell auslösen."
               color="#5A6472"
             />
           </div>

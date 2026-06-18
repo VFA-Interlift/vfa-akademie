@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatInstructorName } from "@/lib/trainings/format";
 
 type CobraTraining = {
   cobraId: number | null;
@@ -153,131 +154,8 @@ function formatInstructorNames(
   values: string[] | null | undefined,
   fallback: string | null | undefined
 ) {
-  const sourceValues =
-    values && values.length > 0
-      ? values
-      : fallback
-        ? fallback.split("|")
-        : [];
-
-  const names = sourceValues
-    .map((value) => extractInstructorName(value))
-    .filter(Boolean);
-
-  const uniqueNames = Array.from(new Set(names));
-
-  return uniqueNames.length > 0
-    ? uniqueNames.join(" / ")
-    : "Noch nicht hinterlegt";
-}
-
-function extractInstructorName(value: string | null | undefined) {
-  if (!value?.trim()) {
-    return "";
-  }
-
-  const cleaned = value
-    .replace(/\s+/g, " ")
-    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
-    .trim();
-
-  const commaParts = cleaned
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const likelyName =
-    commaParts.length >= 2
-      ? commaParts[1]
-      : cleaned
-          .split(/[;|/]/)[0]
-          .replace(
-            /\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i,
-            ""
-          )
-          .trim();
-
-  if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) {
-    return "";
-  }
-
-  const words = likelyName
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(part))
-    .filter((part) => !/\d/.test(part));
-
-  if (words.length < 2) {
-    return "";
-  }
-
-  const possibleName = `${words[0]} ${words[1]}`;
-
-  if (looksLikeCompany(possibleName) || looksLikeAddress(possibleName)) {
-    return "";
-  }
-
-  return possibleName;
-}
-
-function looksLikeCompany(value: string) {
-  const normalized = value.toLowerCase();
-
-  const companyIndicators = [
-    "gmbh",
-    "mbh",
-    "ag",
-    "kg",
-    "ohg",
-    "ug",
-    "e.v.",
-    "ev",
-    "gbr",
-    "holding",
-    "gruppe",
-    "group",
-    "company",
-    "unternehmen",
-    "firma",
-    "werke",
-    "aufzug",
-    "aufzüge",
-    "aufzuege",
-    "elevator",
-    "lift",
-    "lifts",
-    "hydraulic",
-    "hydraulics",
-    "hydraulik",
-    "metallbau",
-    "maschinenbau",
-    "service",
-    "services",
-    "technik",
-    "technical",
-    "akademie",
-    "academy",
-    "institut",
-    "institute",
-    "training",
-    "seminar",
-    "flughafen",
-    "airport",
-  ];
-
-  return companyIndicators.some((indicator) => normalized.includes(indicator));
-}
-
-function looksLikeAddress(value: string) {
-  const normalized = value.toLowerCase();
-
-  return (
-    /\d/.test(normalized) ||
-    /\b(strasse|straße|str\.|weg|platz|allee|ring|d\s?\d{4,5}|\d{4,5})\b/i.test(
-      normalized
-    )
-  );
+  const joined = values && values.length > 0 ? values.join(" | ") : (fallback ?? "");
+  return formatInstructorName(joined);
 }
 
 export default function CobraAdminClient() {
@@ -285,6 +163,10 @@ export default function CobraAdminClient() {
   const [loadingTrainings, setLoadingTrainings] = useState(true);
   const [trainingError, setTrainingError] = useState("");
   const [query, setQuery] = useState("");
+  const [dbTrainingCount, setDbTrainingCount] = useState<number | null>(null);
+  const [certMsg, setCertMsg] = useState("");
+  const [certOk, setCertOk] = useState(false);
+  const [certLoading, setCertLoading] = useState(false);
 
   const [previewByTraining, setPreviewByTraining] = useState<
     Record<string, PreviewState>
@@ -298,25 +180,30 @@ export default function CobraAdminClient() {
       setTrainingError("");
 
       try {
-        const res = await fetch("/api/cobra/trainings", {
-          cache: "no-store",
-        });
+        const [cobraRes, dbRes] = await Promise.all([
+          fetch("/api/cobra/trainings", { cache: "no-store" }),
+          fetch("/api/trainings/public", { cache: "no-store" }),
+        ]);
 
-        const data = (await res.json()) as TrainingsResponse;
+        const cobraData = (await cobraRes.json()) as TrainingsResponse;
+        const dbData = await dbRes.json() as { ok: boolean; trainings?: unknown[] };
 
         if (cancelled) return;
 
-        if (!res.ok || !data.ok) {
+        if (!cobraRes.ok || !cobraData.ok) {
           setTrainingError(
-            data.ok === false
-              ? data.message ?? data.error
+            cobraData.ok === false
+              ? cobraData.message ?? cobraData.error
               : "Cobra-Schulungen konnten nicht geladen werden."
           );
           setTrainings([]);
-          return;
+        } else {
+          setTrainings(cobraData.trainings);
         }
 
-        setTrainings(data.trainings);
+        if (dbData.ok && Array.isArray(dbData.trainings)) {
+          setDbTrainingCount(dbData.trainings.length);
+        }
       } catch (error) {
         if (!cancelled) {
           setTrainingError(
@@ -339,6 +226,29 @@ export default function CobraAdminClient() {
       cancelled = true;
     };
   }, []);
+
+  async function generateCertificates() {
+    if (!confirm("Zertifikate für alle abgeschlossenen Schulungen erstellen und Credits vergeben?")) return;
+    setCertLoading(true);
+    setCertMsg("");
+    setCertOk(false);
+    try {
+      const res = await fetch("/api/admin/certificates/generate", { method: "POST" });
+      const data = await res.json();
+      if (!data.ok) {
+        setCertMsg(data.error ?? "Fehler beim Erstellen der Zertifikate.");
+        setCertOk(false);
+        return;
+      }
+      setCertMsg(`Fertig. Geprüfte Zuordnungen: ${data.checkedEnrollments}. Zertifikate erstellt: ${data.createdCertificates}. Vergebene Credits: ${data.awardedCredits}.`);
+      setCertOk(true);
+    } catch {
+      setCertMsg("Serverfehler.");
+      setCertOk(false);
+    } finally {
+      setCertLoading(false);
+    }
+  }
 
   const filteredTrainings = useMemo(() => {
     const cleanQuery = query.trim().toLowerCase();
@@ -428,56 +338,77 @@ export default function CobraAdminClient() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: 10,
             marginBottom: 18,
           }}
         >
-          <SummaryBox label="Status" value="Verbunden" tone="green" />
           <SummaryBox
-            label="Schulungen aus Cobra"
-            value={trainings.length.toLocaleString("de-DE")}
+            label="Status"
+            value={loadingTrainings ? "Wird geprüft..." : trainingError ? "Fehler" : "Verbunden"}
+            tone={!loadingTrainings && !trainingError ? "green" : trainingError ? "error" : "default"}
           />
           <SummaryBox
-            label="Gefilterte Ansicht"
+            label="Schulungen in Cobra"
+            value={loadingTrainings ? "…" : trainings.length.toLocaleString("de-DE")}
+          />
+          <SummaryBox
+            label="Schulungen in App-DB"
+            value={dbTrainingCount !== null ? dbTrainingCount.toLocaleString("de-DE") : "…"}
+            tone={
+              dbTrainingCount !== null && trainings.length > 0 && dbTrainingCount < trainings.length
+                ? "error"
+                : "default"
+            }
+          />
+          <SummaryBox
+            label="Gefiltert"
             value={filteredTrainings.length.toLocaleString("de-DE")}
           />
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 14,
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-          }}
-        >
+        {dbTrainingCount !== null && trainings.length > 0 && dbTrainingCount < trainings.length && (
+          <div style={{ marginBottom: 14, padding: "10px 14px", border: "1px solid rgba(176,0,32,0.28)", background: "rgba(176,0,32,0.06)", color: "#B00020", fontSize: 13, fontWeight: 800, lineHeight: 1.5 }}>
+            Cobra liefert {trainings.length} Schulungen, aber nur {dbTrainingCount} sind in der App-DB.
+            Trainings ohne Cobra-ID, Code, Titel oder Datum werden beim Sync übersprungen.
+            Schulungen aus der Liste &quot;Prüfen&quot; → dort siehst du den Status.
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
           <div>
-            <h2
-              style={{
-                margin: 0,
-                color: "#007873",
-                fontSize: 24,
-                fontWeight: 500,
-              }}
-            >
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>
+              Automatische Synchronisation
+            </div>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1F1F1F", letterSpacing: "-0.01em" }}>
               Schulungsdaten aus Cobra
             </h2>
-
-            <p
-              style={{
-                marginTop: 8,
-                marginBottom: 0,
-                color: "#333333",
-                lineHeight: 1.6,
-              }}
-            >
-              Die App liest Schulungen aus Cobra/WebConnect und bereitet daraus
-              die spätere Darstellung in der VFA-Akademie vor.
+            <p style={{ marginTop: 8, marginBottom: 0, color: "#555555", lineHeight: 1.6, fontSize: 14 }}>
+              Schulungen und Teilnehmer werden täglich automatisch aus Cobra/WebConnect synchronisiert.
+              Zertifikate entstehen automatisch am Tag nach Schulungsende.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => void generateCertificates()}
+            disabled={certLoading}
+            style={{
+              minHeight: 40, padding: "9px 16px", borderRadius: 999,
+              border: "1px solid #007873", background: "#007873", color: "#FFFFFF",
+              fontWeight: 900, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.07em",
+              cursor: certLoading ? "not-allowed" : "pointer", opacity: certLoading ? 0.65 : 1,
+              whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            {certLoading ? "Läuft..." : "Zertifikate erstellen"}
+          </button>
         </div>
+
+        {certMsg && (
+          <div style={{ marginTop: 10, padding: "10px 14px", border: certOk ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)", background: certOk ? "rgba(0,120,115,0.06)" : "rgba(176,0,32,0.06)", color: certOk ? "#007873" : "#B00020", fontWeight: 800, lineHeight: 1.5, fontSize: 13 }}>
+            {certMsg}
+          </div>
+        )}
 
         <div
           style={{
@@ -490,9 +421,7 @@ export default function CobraAdminClient() {
             fontSize: 14,
           }}
         >
-          Nächster technischer Schritt: Im Teilnehmer-Endpunkt soll zusätzlich
-          die E-Mail-Adresse des jeweiligen Teilnehmers ausgegeben werden. Erst
-          damit ist eine sichere automatische Zuordnung zu App-Nutzern möglich.
+          Cron-Zeiten: Schulungen 00:10 UTC · Teilnehmer 00:15 UTC · Zertifikate 00:05 UTC (täglich)
         </div>
 
         <div style={{ marginTop: 16 }}>
@@ -711,19 +640,25 @@ function SummaryBox({
 }: {
   label: string;
   value: string;
-  tone?: "default" | "green";
+  tone?: "default" | "green" | "error";
 }) {
+  const borderColor =
+    tone === "green"
+      ? "1px solid rgba(0,120,115,0.25)"
+      : tone === "error"
+        ? "1px solid rgba(176,0,32,0.25)"
+        : "1px solid #E6E6E6";
+  const bgColor =
+    tone === "green"
+      ? "rgba(0,120,115,0.06)"
+      : tone === "error"
+        ? "rgba(176,0,32,0.06)"
+        : "#FFFFFF";
+  const textColor =
+    tone === "green" ? "#007873" : tone === "error" ? "#B00020" : "#1F1F1F";
+
   return (
-    <div
-      style={{
-        border:
-          tone === "green"
-            ? "1px solid rgba(0,120,115,0.25)"
-            : "1px solid #E6E6E6",
-        background: tone === "green" ? "rgba(0,120,115,0.06)" : "#FFFFFF",
-        padding: "14px 16px",
-      }}
-    >
+    <div style={{ border: borderColor, background: bgColor, padding: "14px 16px" }}>
       <div
         style={{
           color: "#007873",
@@ -736,15 +671,7 @@ function SummaryBox({
       >
         {label}
       </div>
-
-      <div
-        style={{
-          color: tone === "green" ? "#007873" : "#1F1F1F",
-          fontSize: 24,
-          fontWeight: 900,
-          lineHeight: 1.1,
-        }}
-      >
+      <div style={{ color: textColor, fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>
         {value}
       </div>
     </div>

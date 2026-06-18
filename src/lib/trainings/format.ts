@@ -24,17 +24,49 @@ export function formatAddressLines(value: string | null) {
 
 function extractInstructorName(value: string | null | undefined) {
   if (!value?.trim()) return "";
-  const cleaned = value.replace(/\s+/g, " ").replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "").trim();
+  // Multiple instructors stored joined with " | "
+  const parts = value.split("|").map((p) => p.trim()).filter(Boolean);
+  const names = parts.map(parseSingleInstructor).filter(Boolean);
+  return names.join(", ");
+}
+
+function parseSingleInstructor(raw: string): string {
+  const cleaned = raw
+    .replace(/\s+/g, " ")
+    .replace(/\b(E-Mail|Email|Mail|Telefon|Tel\.?|Mobil)\b.*$/i, "")
+    .trim();
+
   const commaParts = cleaned.split(",").map((p) => p.trim()).filter(Boolean);
-  const likelyName =
-    commaParts.length >= 2
-      ? commaParts[1]
-      : cleaned.split(/[;|/]/)[0].replace(/\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i, "").trim();
+
+  // Cobra CRM format: "Nachname, Vorname[, Adresse...]" → return "Vorname Nachname"
+  if (commaParts.length >= 2) {
+    const lastName = commaParts[0];
+    const firstName = commaParts[1].split(/\s+/)[0].trim();
+    if (
+      firstName &&
+      lastName &&
+      !looksLikeAddress(firstName) &&
+      !looksLikeCompany(lastName) &&
+      !looksLikeCompany(`${firstName} ${lastName}`) &&
+      !looksLikeAddress(`${firstName} ${lastName}`)
+    ) {
+      return `${firstName} ${lastName}`;
+    }
+  }
+
+  // Direct format: "Vorname Nachname"
+  const likelyName = cleaned
+    .split(/[;|/]/)[0]
+    .replace(/\b(Adresse|Strasse|Straße|Str\.?|PLZ|Ort|Firma|Unternehmen)\b.*$/i, "")
+    .trim();
+
   if (!likelyName || looksLikeCompany(likelyName) || looksLikeAddress(likelyName)) return "";
+
   const words = likelyName
     .split(" ").map((p) => p.trim()).filter(Boolean)
     .filter((p) => !/^(Herr|Frau|Dr\.?|Prof\.?|Dipl\.?-?Ing\.?)$/i.test(p))
     .filter((p) => !/\d/.test(p));
+
   if (words.length < 2) return "";
   const name = `${words[0]} ${words[1]}`;
   if (looksLikeCompany(name) || looksLikeAddress(name)) return "";
