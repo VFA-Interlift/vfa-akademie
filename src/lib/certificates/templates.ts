@@ -5,6 +5,7 @@ export type CertificateTemplateConfig = {
   label: string;
   kind: CertificateKind;
   templateFileName: string;
+  pdfTemplateFileName?: string;
   isVdiCertificate: boolean;
 };
 
@@ -14,6 +15,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "VDI 2168 Grundkurs A1",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "VDI2168_A1_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "VDI2168_A1_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -22,6 +24,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "VDI 2168 Kategorie A2",
     kind: "VDI_CERTIFICATE",
     templateFileName: "VDI2168_A2_TN-Zert_VDI.docx",
+    pdfTemplateFileName: "VDI2168_A2_TN-Zert_VDI App.pdf",
     isVdiCertificate: true,
   },
 
@@ -30,6 +33,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "VDI 2168 Kategorie B",
     kind: "VDI_CERTIFICATE",
     templateFileName: "VDI2168_B_TN-Zert_VDI.docx",
+    pdfTemplateFileName: "VDI2168_B_TN-Zert_VDI App.pdf",
     isVdiCertificate: true,
   },
 
@@ -38,6 +42,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "VDI 2168 Kategorie C",
     kind: "VDI_CERTIFICATE",
     templateFileName: "VDI2168_C_TN-Zert_VDI.docx",
+    pdfTemplateFileName: "VDI2168_C_TN-Zert_VDI App.pdf",
     isVdiCertificate: true,
   },
 
@@ -46,6 +51,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Grundlegende Sicherheitsanforderungen fuer Arbeiten an Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "ARB_TN-Zert.docx",
+    pdfTemplateFileName: "ARB_TN-Zert App.pdf",
     isVdiCertificate: false,
   },
 
@@ -54,6 +60,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "VFA-Einfuehrungsseminar / Welcome Azubis",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "AZUBI_TN-Best.docx",
+    pdfTemplateFileName: "AZUBI_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -62,6 +69,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Betreiber-Schulung",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "BETR_TN-Best.dotx",
+    pdfTemplateFileName: "BETR_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -70,6 +78,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Berechnungen im Aufzugbau",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "BRG_TN-Best-neu.docx",
+    pdfTemplateFileName: "BRG_TN-Best App.pdf",
     isVdiCertificate: false,
   },
 
@@ -78,6 +87,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Fachkunde im eingeschraenkten Aufgabengebiet nach DGUV 309-011",
     kind: "CERTIFICATE",
     templateFileName: "DGUV-TN-Zert.docx",
+    pdfTemplateFileName: "DGUV-TN-Zert. App.pdf",
     isVdiCertificate: false,
   },
 
@@ -86,6 +96,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Dokumentation im Aufzugbau",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "DOK_TN-Zert.docx",
+    pdfTemplateFileName: "DOK_TN-Zert App.pdf",
     isVdiCertificate: false,
   },
 
@@ -94,6 +105,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Elektrofachkraft fuer festgelegte Taetigkeiten im Aufzugbau",
     kind: "CERTIFICATE",
     templateFileName: "EFK2-Zertifikat_neu.docx",
+    pdfTemplateFileName: "EFK2-Zertifikat App.pdf",
     isVdiCertificate: false,
   },
 
@@ -102,6 +114,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Aufzuege fuer Einsteiger",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "EINST-Online_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "EINST-Online_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -110,6 +123,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Fachkundige Person fuer die Befreiung von Personen aus Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "FFPW-Teilnahmebest.docx",
+    pdfTemplateFileName: "FFPW-Teilnahmebest. App.pdf",
     isVdiCertificate: false,
   },
 
@@ -118,6 +132,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Fachkundige Person fuer die Erstellung von Gefaehrdungsbeurteilungen",
     kind: "CERTIFICATE",
     templateFileName: "GEF-TN-Zert_neu.docx",
+    pdfTemplateFileName: "GEF-TN-Zert._neu App.pdf",
     isVdiCertificate: false,
   },
 
@@ -126,6 +141,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Grundlagen der Modernisierung im Aufzugbau",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "MOD_Teilnahmebestaetigung-aktuell.docx",
+    pdfTemplateFileName: "MOD_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -134,6 +150,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Normen und Richtlinien - Grundlagen zum aktuellen Regelwerk",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "NuR-1_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "NuR-1_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -142,6 +159,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Normen und Richtlinien - Neuerungen aus der EN ISO 8100-1/2",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "NuR-2_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "NuR-2_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
@@ -150,6 +168,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Aufzugsplanung als Teil der Gebaeudeplanung",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "PLG_neue_TN-Best.docx",
+    pdfTemplateFileName: "PLG TN-Best App.pdf",
     isVdiCertificate: false,
   },
 
@@ -158,6 +177,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Schallschutz an Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "SCHALL_TN-Best.docx",
+    pdfTemplateFileName: "SCHALL_TN-Best App.pdf",
     isVdiCertificate: false,
   },
 
@@ -182,6 +202,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     label: "Sonderanlagen: Feuerwehr-, Lasten- und Glasaufzuege",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "SON-TN-Bestaetigung.docx",
+    pdfTemplateFileName: "SON-TN-Bestätigung App.pdf",
     isVdiCertificate: false,
   },
 };

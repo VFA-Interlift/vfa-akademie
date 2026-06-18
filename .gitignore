@@ -42,3 +42,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# local / private files (not for git)
+/private/
+.claude-flow/
+.mcp.json

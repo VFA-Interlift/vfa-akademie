@@ -266,9 +266,6 @@ export async function getCertificateDocumentData(certificateId: string) {
       title: certificate.training.title,
     }),
     data: {
-      /**
-       * Neue Standard-Platzhalter fuer Word-Vorlagen
-       */
       participantName: fullName,
       participantFirstName: firstName,
       participantLastName: lastName,
@@ -280,6 +277,8 @@ export async function getCertificateDocumentData(certificateId: string) {
       trainingLocation,
       instructorTable,
 
+      participationDetails: [trainingDateRange, trainingLocation ? `in ${trainingLocation}` : ""].filter(Boolean).join(" "),
+
       certificateTitle: certificate.title,
       certificateKind: formatCertificateKind(certificateKind),
       certificateCode: code,
@@ -288,9 +287,6 @@ export async function getCertificateDocumentData(certificateId: string) {
 
       credits: String(certificate.credits),
 
-      /**
-       * Bestehende Platzhalter / Rueckwaertskompatibilitaet
-       */
       firstName,
       lastName,
       fullName,
