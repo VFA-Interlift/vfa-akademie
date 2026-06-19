@@ -20,6 +20,7 @@ export async function GET() {
       name: true,
       creditsTotal: true,
       role: true,
+      isInstructor: true,
     },
   });
 
@@ -30,5 +31,6 @@ export async function GET() {
     name: user?.name ?? null,
     creditsTotal: user?.creditsTotal ?? 0,
     role: user?.role ?? "USER",
+    isInstructor: user?.isInstructor ?? false,
   });
 }

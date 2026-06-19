@@ -13,6 +13,7 @@ type AdminUser = {
   name: string;
   company: string;
   role: "USER" | "ADMIN";
+  isInstructor: boolean;
   creditsTotal: number;
   enrollmentsCount: number;
   certificatesCount: number;
@@ -78,6 +79,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("created_desc");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [activeTabByUser, setActiveTabByUser] = useState<Record<string, string>>({});
 
   const [msg, setMsg] = useState("");
   const [msgOk, setMsgOk] = useState(false);
@@ -249,6 +251,57 @@ export default function AdminUsersPage() {
       await loadUsers();
     } catch {
       showMessage("Serverfehler beim Ernennen des Admins.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
+  async function toggleInstructor(user: AdminUser) {
+    const makeInstructor = !user.isInstructor;
+
+    setActionLoadingId(user.id);
+    showMessage(
+      makeInstructor
+        ? "Dozentenstatus wird vergeben..."
+        : "Dozentenstatus wird entzogen...",
+      true
+    );
+
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/make-instructor`, {
+        method: makeInstructor ? "POST" : "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.ok) {
+        if (data?.error === "INVALID_USER_ID") {
+          showMessage("Ungültige Nutzer-ID.");
+        } else if (data?.error === "USER_NOT_FOUND") {
+          showMessage("Nutzer wurde nicht gefunden.");
+        } else if (data?.error === "UNAUTHENTICATED") {
+          showMessage("Du bist nicht eingeloggt.");
+        } else if (data?.error === "FORBIDDEN") {
+          showMessage("Du hast keine Berechtigung.");
+        } else {
+          showMessage(data?.error ?? "Dozentenstatus konnte nicht geändert werden.");
+        }
+
+        return;
+      }
+
+      showMessage(
+        makeInstructor
+          ? `${user.email} ist jetzt Dozent.`
+          : `${user.email} ist kein Dozent mehr.`,
+        true
+      );
+      await loadUsers();
+    } catch {
+      showMessage("Serverfehler beim Ändern des Dozentenstatus.");
     } finally {
       setActionLoadingId(null);
     }
@@ -538,7 +591,12 @@ export default function AdminUsersPage() {
                       onClick={() => {
                         const next = isOpen ? null : user.id;
                         setOpenId(next);
-                        if (next) loadEnrollments(next);
+                        if (next) {
+                          loadEnrollments(next);
+                          setActiveTabByUser((prev) =>
+                            prev[next] ? prev : { ...prev, [next]: "überblick" }
+                          );
+                        }
                       }}
                       style={{
                         width: "100%",
@@ -595,16 +653,57 @@ export default function AdminUsersPage() {
                       </div>
                     </button>
 
-                    {isOpen && (
+                    {isOpen && (() => {
+                      const activeTab = activeTabByUser[user.id] ?? "überblick";
+                      const tabs = [
+                        { id: "überblick", label: "Überblick" },
+                        { id: "schulungen", label: "Schulungen" },
+                        { id: "credits", label: "Credits" },
+                        { id: "rollen", label: "Rollen" },
+                        { id: "löschen", label: "Löschen" },
+                      ];
+
+                      return (
                       <div
                         style={{
                           padding: "0 14px 14px",
                           borderTop: "1px solid #E6E6E6",
                         }}
                       >
+                        <div style={{ display: "flex", borderBottom: "1px solid #E6E6E6", marginBottom: 16, gap: 0, overflowX: "auto", paddingTop: 14 }}>
+                          {tabs.map((tab) => (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() =>
+                                setActiveTabByUser((prev) => ({ ...prev, [user.id]: tab.id }))
+                              }
+                              style={{
+                                padding: "10px 16px",
+                                border: "none",
+                                borderBottom:
+                                  activeTab === tab.id
+                                    ? "2px solid #007873"
+                                    : "2px solid transparent",
+                                background: "transparent",
+                                color: activeTab === tab.id ? "#007873" : "#888888",
+                                fontWeight: activeTab === tab.id ? 800 : 600,
+                                fontSize: 13,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                              }}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {activeTab === "überblick" && (
+                        <>
                         <div
                           style={{
-                            paddingTop: 14,
                             display: "flex",
                             gap: 8,
                             flexWrap: "wrap",
@@ -616,6 +715,10 @@ export default function AdminUsersPage() {
                           >
                             Rolle: {user.role}
                           </StatusBadge>
+
+                          {user.isInstructor && (
+                            <StatusBadge variant="yellow">Dozent</StatusBadge>
+                          )}
 
                           <StatusBadge>{user.creditsTotal} Credits</StatusBadge>
 
@@ -630,7 +733,6 @@ export default function AdminUsersPage() {
                             gridTemplateColumns:
                               "repeat(auto-fit, minmax(150px, 1fr))",
                             gap: 10,
-                            marginBottom: 18,
                           }}
                         >
                           <MiniInfo
@@ -650,9 +752,11 @@ export default function AdminUsersPage() {
                             value={formatDate(user.createdAt)}
                           />
                         </div>
+                        </>
+                        )}
 
-                        {/* Enrollments */}
-                        <div style={{ paddingTop: 16, borderTop: "1px solid #E6E6E6", display: "grid", gap: 12 }}>
+                        {activeTab === "schulungen" && (
+                        <div style={{ display: "grid", gap: 12 }}>
                           <h3 style={{ margin: 0, color: "#007873", fontSize: 18, fontWeight: 700 }}>
                             Schulungen & Status
                           </h3>
@@ -703,13 +807,13 @@ export default function AdminUsersPage() {
                             </div>
                           )}
                         </div>
+                        )}
 
+                        {activeTab === "credits" && (
                         <div
                           style={{
                             display: "grid",
                             gap: 14,
-                            paddingTop: 16,
-                            borderTop: "1px solid #E6E6E6",
                           }}
                         >
                           <h3
@@ -782,12 +886,11 @@ export default function AdminUsersPage() {
                             </AppButton>
                           </div>
                         </div>
+                        )}
 
+                        {activeTab === "rollen" && (
                         <div
                           style={{
-                            marginTop: 18,
-                            paddingTop: 16,
-                            borderTop: "1px solid #E6E6E6",
                             display: "grid",
                             gap: 12,
                           }}
@@ -820,25 +923,17 @@ export default function AdminUsersPage() {
                                 : "Zum Admin machen"}
                             </AppButton>
 
-                            <button
-                              type="button"
-                              disabled
-                              title="Wird später mit isInstructor-Feld ergänzt"
-                              style={{
-                                minHeight: 42,
-                                padding: "10px 18px",
-                                borderRadius: 999,
-                                border: "1px solid #C7C7C7",
-                                background: "#F3F3F3",
-                                color: "#777777",
-                                fontWeight: 800,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.06em",
-                                cursor: "not-allowed",
-                              }}
+                            <AppButton
+                              onClick={() => toggleInstructor(user)}
+                              disabled={isLoading}
+                              variant={user.isInstructor ? "danger" : "primary"}
                             >
-                              Dozentenstatus folgt
-                            </button>
+                              {isLoading
+                                ? "Speichern..."
+                                : user.isInstructor
+                                ? "Dozentenstatus entziehen"
+                                : "Zum Dozenten machen"}
+                            </AppButton>
                           </div>
 
                           <p
@@ -849,17 +944,15 @@ export default function AdminUsersPage() {
                               fontSize: 14,
                             }}
                           >
-                            Der Dozentenstatus wird als eigener Status ergänzt,
-                            damit jemand gleichzeitig User, Admin und Dozent sein
-                            kann.
+                            Der Dozentenstatus ist ein eigener Status, damit jemand
+                            gleichzeitig User, Admin und Dozent sein kann.
                           </p>
                         </div>
+                        )}
 
+                        {activeTab === "löschen" && (
                         <div
                           style={{
-                            marginTop: 18,
-                            paddingTop: 16,
-                            borderTop: "1px solid #E6E6E6",
                             display: "grid",
                             gap: 12,
                           }}
@@ -900,8 +993,10 @@ export default function AdminUsersPage() {
                             </AppButton>
                           </div>
                         </div>
+                        )}
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 );
               })}

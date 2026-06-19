@@ -60,6 +60,7 @@ export async function GET() {
       lastName: true,
       company: true,
       role: true,
+      isInstructor: true,
       creditsTotal: true,
       createdAt: true,
       _count: {
@@ -82,6 +83,7 @@ export async function GET() {
         "",
       company: user.company ?? "",
       role: user.role,
+      isInstructor: user.isInstructor,
       creditsTotal: user.creditsTotal,
       enrollmentsCount: user._count.enrollments,
       certificatesCount: user._count.certificates,

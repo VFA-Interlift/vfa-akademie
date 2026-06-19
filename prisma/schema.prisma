@@ -79,6 +79,7 @@ model User {
   position       String?
 
   role         Role @default(USER)
+  isInstructor Boolean @default(false)
   creditsTotal Int  @default(0)
 
   leaderboardOptIn Boolean @default(false)

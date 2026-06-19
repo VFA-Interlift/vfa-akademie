@@ -15,13 +15,14 @@ const MAIN_TABS = [
 
 type MeResponse =
   | { ok: false }
-  | { ok: true; role: "USER" | "ADMIN" };
+  | { ok: true; role: "USER" | "ADMIN"; isInstructor: boolean };
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { status } = useSession();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
+  const [isInstructor, setIsInstructor] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("has-bottom-nav");
@@ -32,7 +33,7 @@ export default function BottomNav() {
     if (status !== "authenticated") return;
     fetch("/api/me", { cache: "no-store" })
       .then((r) => r.json() as Promise<MeResponse>)
-      .then((d) => { if (d.ok) setRole(d.role); })
+      .then((d) => { if (d.ok) { setRole(d.role); setIsInstructor(d.isInstructor ?? false); } })
       .catch(() => {});
   }, [status]);
 
@@ -97,9 +98,11 @@ export default function BottomNav() {
                 <IconRanking /> Ranking
               </SheetLink>
 
-              <SheetLink href="/dozent" active={pathname.startsWith("/dozent")} onClick={() => setSheetOpen(false)}>
-                <IconChalk /> Dozenten
-              </SheetLink>
+              {isInstructor && (
+                <SheetLink href="/dozent" active={pathname.startsWith("/dozent")} onClick={() => setSheetOpen(false)}>
+                  <IconChalk /> Dozenten
+                </SheetLink>
+              )}
 
               {role === "ADMIN" && (
                 <SheetLink href="/admin" active={pathname.startsWith("/admin")} onClick={() => setSheetOpen(false)}>

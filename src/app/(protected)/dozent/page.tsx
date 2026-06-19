@@ -61,10 +61,11 @@ export default async function DozentPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email.toLowerCase() },
-    select: { firstName: true, lastName: true, name: true },
+    select: { firstName: true, lastName: true, name: true, isInstructor: true },
   });
 
   if (!user) redirect("/login");
+  if (!user.isInstructor) redirect("/dashboard");
 
   const allTrainings = await prisma.training.findMany({
     where: {
