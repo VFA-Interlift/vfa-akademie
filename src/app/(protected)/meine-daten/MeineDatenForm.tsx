@@ -8,7 +8,6 @@ import AppSelect from "@/components/ui/AppSelect";
 import AppTextarea from "@/components/ui/AppTextarea";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import LeaderboardSettingsCard from "@/components/leaderboard/LeaderboardSettingsCard";
 
 type FormState = {
   email: string;
@@ -119,7 +118,7 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
-      <AppCard accent="none" style={{ boxShadow: "none" }}>
+      <AppCard accent="none">
         <div
           style={{
             display: "flex",
@@ -214,7 +213,7 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
         </div>
       </AppCard>
 
-      <AppCard accent="none" style={{ boxShadow: "none" }}>
+      <AppCard accent="none">
         <div
           style={{
             display: "flex",
@@ -328,25 +327,7 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
         )}
       </div>
 
-      <AppCard accent="none" style={{ boxShadow: "none" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 18 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: "#007873",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Credit-Ranking
-          </div>
-          <StatusBadge>Ranking</StatusBadge>
-        </div>
-        <LeaderboardSettingsCard />
-      </AppCard>
-
-      <AppCard accent="none" style={{ boxShadow: "none" }}>
+      <AppCard accent="none">
         <div
           style={{
             display: "flex",

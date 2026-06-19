@@ -45,7 +45,7 @@ function formatDate(value: string | Date | null) {
   if (!value) return "";
   const d = new Date(value as string);
   if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleDateString("de-DE");
+  return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 function formatDateRange(start: Date | string, end: Date | string | null) {

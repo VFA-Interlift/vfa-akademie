@@ -213,14 +213,47 @@ export function normalizeCertificateCode(code: string | null | undefined) {
   return String(code ?? "").trim().toUpperCase();
 }
 
+/**
+ * Resolves a full Cobra training code (e.g. "A1-2603", "NuR-2603.1",
+ * "EFK2-2603") to the matching template key (e.g. "A1", "NUR1", "EFK2").
+ * Cobra codes carry a date suffix, the template map only knows the base code.
+ */
+export function resolveCertificateTemplateKey(
+  code: string | null | undefined
+): string | null {
+  const normalized = normalizeCertificateCode(code);
+
+  if (!normalized) return null;
+
+  // 1) Exact match (e.g. "A1", "SER-SWB")
+  if (CERTIFICATE_TEMPLATES[normalized]) return normalized;
+
+  // 2) "Normen und Richtlinien" Teil 1/2 → NUR1 / NUR2
+  //    Codes look like "NuR-2603.1" (Teil 1) or "NuR-2603.2" (Teil 2).
+  if (normalized.startsWith("NUR")) {
+    if (normalized.startsWith("NUR2")) return "NUR2";
+    if (normalized.startsWith("NUR1")) return "NUR1";
+    if (/[.\-]2(\D|$)/.test(normalized) || /TEIL\s*2/.test(normalized)) {
+      return "NUR2";
+    }
+    return "NUR1";
+  }
+
+  // 3) Base code before the first "-" (e.g. "A1-2603" → "A1")
+  const basePrefix = normalized.split("-")[0].trim();
+  if (CERTIFICATE_TEMPLATES[basePrefix]) return basePrefix;
+
+  return null;
+}
+
 export function getCertificateTemplateByCode(
   code: string | null | undefined
 ): CertificateTemplateConfig | null {
-  const normalizedCode = normalizeCertificateCode(code);
+  const key = resolveCertificateTemplateKey(code);
 
-  if (!normalizedCode) return null;
+  if (!key) return null;
 
-  return CERTIFICATE_TEMPLATES[normalizedCode] ?? null;
+  return CERTIFICATE_TEMPLATES[key] ?? null;
 }
 
 export function getCertificateKindByCode(

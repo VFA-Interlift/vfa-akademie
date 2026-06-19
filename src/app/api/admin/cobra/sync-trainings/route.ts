@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { CobraError } from "@/lib/cobra/types";
 import { syncCobraTrainings } from "@/lib/cobra/sync-trainings";
 
 export const dynamic = "force-dynamic";
 
-function fail(error: string, status = 400, details?: unknown) {
-  return NextResponse.json({ ok: false, error, details }, { status });
+function deny(status: number, error: string) {
+  return NextResponse.json({ ok: false, error }, { status });
 }
 
 function getErrorMessage(error: unknown) {
@@ -16,35 +19,33 @@ function getErrorMessage(error: unknown) {
   return String(error);
 }
 
-function isAuthorized(req: Request) {
-  const cronSecret = process.env.CRON_SECRET;
+async function requireAdmin() {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
 
-  if (!cronSecret) {
-    return {
-      ok: false as const,
-      response: fail("CRON_SECRET_NOT_CONFIGURED", 500),
-    };
+  if (!email) {
+    return { ok: false as const, res: deny(401, "UNAUTHENTICATED") };
   }
 
-  const authHeader = req.headers.get("authorization");
+  const me = await prisma.user.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { role: true },
+  });
 
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return {
-      ok: false as const,
-      response: fail("UNAUTHORIZED", 401),
-    };
+  if (!me || me.role !== "ADMIN") {
+    return { ok: false as const, res: deny(403, "FORBIDDEN") };
   }
 
-  return {
-    ok: true as const,
-  };
+  return { ok: true as const };
 }
 
-export async function GET(req: Request) {
-  const gate = isAuthorized(req);
+// Admin: pull trainings from Cobra into the App-DB on demand (same logic as the
+// daily cron) so newly added instructors/changes show up in the calendar.
+export async function POST() {
+  const gate = await requireAdmin();
 
   if (!gate.ok) {
-    return gate.response;
+    return gate.res;
   }
 
   try {

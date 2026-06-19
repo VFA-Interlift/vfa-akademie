@@ -769,7 +769,7 @@ export default function AdminUsersPage() {
                               {(enrollmentsByUser[user.id] ?? []).map((enr) => {
                                 const sc = statusColor(enr.status);
                                 const title = enr.training.code?.trim() || enr.training.title;
-                                const date = new Date(enr.training.date).toLocaleDateString("de-DE");
+                                const date = new Date(enr.training.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
                                 return (
                                   <div key={enr.id} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAFA", display: "grid", gap: 8 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
@@ -1040,5 +1040,5 @@ function formatDate(value: string) {
     return value;
   }
 
-  return date.toLocaleDateString("de-DE");
+  return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }

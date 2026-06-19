@@ -61,6 +61,44 @@ function formatTrainingDateRange(
   return "";
 }
 
+/**
+ * Reduces a full address ("VFA, Süderstraße, Hamburg, Deutschland") to just
+ * the city ("Hamburg") for the certificate participation line.
+ */
+function extractCity(location: string | null | undefined) {
+  const cleaned = String(location ?? "").trim();
+
+  if (!cleaned) return "";
+
+  const parts = cleaned
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return "";
+
+  const countries = [
+    "deutschland",
+    "germany",
+    "österreich",
+    "oesterreich",
+    "austria",
+    "schweiz",
+    "switzerland",
+  ];
+
+  let candidate = parts[parts.length - 1];
+
+  if (countries.includes(candidate.toLowerCase()) && parts.length >= 2) {
+    candidate = parts[parts.length - 2];
+  }
+
+  // Drop a leading/trailing ZIP code ("20537 Hamburg" → "Hamburg")
+  const withoutZip = candidate.replace(/\b\d{4,5}\b/g, "").trim();
+
+  return withoutZip || candidate;
+}
+
 function normalizeInstructorPart(value: string) {
   return value
     .replace(/\s+/g, " ")
@@ -251,6 +289,7 @@ export async function getCertificateDocumentData(certificateId: string) {
   );
 
   const trainingLocation = certificate.training.location ?? "";
+  const trainingCity = extractCity(trainingLocation);
   const instructor = certificate.training.instructor ?? "";
   const instructorTable = formatInstructorTable(instructor);
 
@@ -277,7 +316,11 @@ export async function getCertificateDocumentData(certificateId: string) {
       trainingLocation,
       instructorTable,
 
-      participationDetails: [trainingDateRange, trainingLocation ? `in ${trainingLocation}` : ""].filter(Boolean).join(" "),
+      // Completes the pre-printed certificate text:
+      // "[Name] geb. … hat am/vom … in [Stadt]  ‹an folgender VFA-Schulung teilgenommen›"
+      participationDetails: ["hat", trainingDateRange, trainingCity ? `in ${trainingCity}` : ""]
+        .filter(Boolean)
+        .join(" "),
 
       certificateTitle: certificate.title,
       certificateKind: formatCertificateKind(certificateKind),

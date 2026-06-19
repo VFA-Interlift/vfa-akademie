@@ -28,7 +28,6 @@ type SerializableTraining = {
 
 export default function MeineSchulungenClient({ trainings }: { trainings: SerializableTraining[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"alle" | "upcoming" | "past">("alle");
 
   if (trainings.length === 0) {
     return (
@@ -48,55 +47,30 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const upcomingCount = trainings.filter((t) => new Date(t.date) >= today).length;
-  const pastCount = trainings.length - upcomingCount;
-  const totalCredits = trainings.reduce((sum, t) => sum + t.creditsAward, 0);
-
-  const visible = trainings.filter((t) => {
-    if (filter === "upcoming") return new Date(t.date) >= today;
-    if (filter === "past") return new Date(t.date) < today;
-    return true;
-  });
+  // Nur bevorstehende/laufende Schulungen anzeigen. Vergangene Schulungen werden
+  // automatisch (Cron) in Zertifikate umgewandelt (Enrollment → CERTIFICATE_ISSUED)
+  // und erscheinen dann unter „Meine Zertifikate".
+  const visible = trainings.filter((t) => new Date(t.endDate ?? t.date) >= today);
+  const totalCredits = visible.reduce((sum, t) => sum + t.creditsAward, 0);
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <AnimatedSection delayMs={0}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
-          <SummaryBox label="Bevorstehend" value={upcomingCount} />
-          <SummaryBox label="Vergangen" value={pastCount} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+          <SummaryBox label="Bevorstehende Schulungen" value={visible.length} />
           <SummaryBox label="Mögliche Credits" value={totalCredits} />
-        </div>
-      </AnimatedSection>
-
-      {/* Filter */}
-      <AnimatedSection delayMs={60}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {(["alle", "upcoming", "past"] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => { setFilter(f); setOpenId(null); }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                border: filter === f ? "1px solid #007873" : "1px solid #D8D8D8",
-                background: filter === f ? "#007873" : "#FFFFFF",
-                color: filter === f ? "#FFFFFF" : "#555555",
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
-              {f === "alle" ? "Alle" : f === "upcoming" ? `Bevorstehend (${upcomingCount})` : `Vergangen (${pastCount})`}
-            </button>
-          ))}
         </div>
       </AnimatedSection>
 
       {visible.length === 0 ? (
         <AnimatedSection delayMs={80}>
           <AppCard>
-            <div style={{ color: "#888888", fontSize: 14 }}>Keine Schulungen in dieser Ansicht.</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#007873" }}>
+              Aktuell sind keine bevorstehenden Schulungen geplant.
+            </div>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+              Abgeschlossene Schulungen findest du unter &bdquo;Meine Zertifikate&ldquo;.
+            </p>
           </AppCard>
         </AnimatedSection>
       ) : (
@@ -109,7 +83,6 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
             const instructorName = formatInstructorName(training.instructor);
             const statusLabel = formatEnrollmentStatus(training.status);
             const statusStyle = enrollmentStatusColor(training.status);
-            const isUpcoming = new Date(training.date) >= today;
 
             return (
               <AnimatedSection key={training.id} delayMs={Math.min(80 + index * 50, 400)}>
@@ -141,11 +114,6 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
                           }}>
                             {statusLabel}
                           </span>
-                          {isUpcoming && (
-                            <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: "rgba(255,193,0,0.12)", color: "#7C5A0A", border: "1px solid rgba(255,193,0,0.35)" }}>
-                              Bevorstehend
-                            </span>
-                          )}
                         </div>
 
                         <h2 style={{ margin: 0, color: "#007873", fontSize: "clamp(17px, 4vw, 26px)", fontWeight: 750, lineHeight: 1.15, maxWidth: 520 }}>

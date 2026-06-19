@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import MeineDatenForm from "./MeineDatenForm";
 import PageHeader from "@/components/ui/PageHeader";
-import AppCard from "@/components/ui/AppCard";
 
 export const dynamic = "force-dynamic";
 
@@ -56,26 +55,24 @@ export default async function MeineDatenPage() {
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader title="Meine Daten" showTitle={true} />
 
-        <AppCard accent="green">
-          <MeineDatenForm
-            initial={{
-              email: user.email ?? "",
-              name: user.name ?? "",
-              firstName: user.firstName ?? "",
-              lastName: user.lastName ?? "",
-              birthDate: formatBirthDate(user.birthDate),
-              gender: user.gender ?? "",
-              phone: user.phone ?? "",
-              company: user.company ?? "",
-              companyAddress: user.companyAddress ?? "",
-              companyStreet: user.companyStreet ?? "",
-              companyZip: user.companyZip ?? "",
-              companyCity: user.companyCity ?? "",
-              companyCountry: user.companyCountry ?? "Deutschland",
-              position: user.position ?? "",
-            }}
-          />
-        </AppCard>
+        <MeineDatenForm
+          initial={{
+            email: user.email ?? "",
+            name: user.name ?? "",
+            firstName: user.firstName ?? "",
+            lastName: user.lastName ?? "",
+            birthDate: formatBirthDate(user.birthDate),
+            gender: user.gender ?? "",
+            phone: user.phone ?? "",
+            company: user.company ?? "",
+            companyAddress: user.companyAddress ?? "",
+            companyStreet: user.companyStreet ?? "",
+            companyZip: user.companyZip ?? "",
+            companyCity: user.companyCity ?? "",
+            companyCountry: user.companyCountry ?? "Deutschland",
+            position: user.position ?? "",
+          }}
+        />
       </div>
     </main>
   );

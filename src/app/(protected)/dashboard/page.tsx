@@ -224,9 +224,8 @@ export default async function DashboardPage() {
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <StatBox label="Schulungen" value={enrollmentCount} />
+                  <StatBox label="Bevorstehende Schulungen" value={enrollmentCount} />
                   <StatBox label="Zertifikate" value={certCount} />
-                  <StatBox label="Credits gesamt" value={user.creditsTotal.toLocaleString("de-DE")} wide />
                 </div>
 
                 {user.company && (

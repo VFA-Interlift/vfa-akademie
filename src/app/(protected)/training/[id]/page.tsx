@@ -124,9 +124,9 @@ export default async function TrainingPage({
               >
                 <strong>Zeitraum</strong>
                 <br />
-                {training.date.toLocaleDateString("de-DE")}
+                {training.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
                 {training.endDate
-                  ? ` bis ${training.endDate.toLocaleDateString("de-DE")}`
+                  ? ` bis ${training.endDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`
                   : ""}
               </div>
             </div>
@@ -226,7 +226,7 @@ export default async function TrainingPage({
                   <div style={{ marginTop: 14 }}>
                     <StatusBadge>
                       Gültig bis:{" "}
-                      {claimToken.expiresAt.toLocaleDateString("de-DE")}
+                      {claimToken.expiresAt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
                     </StatusBadge>
                   </div>
                 )}

@@ -422,7 +422,7 @@ export default function AdminTrainingParticipantsPage() {
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("de-DE");
+  return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 const selectStyle: React.CSSProperties = {

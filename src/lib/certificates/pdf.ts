@@ -36,7 +36,7 @@ const LAYOUT_VDI_URKUNDE: PdfTemplateCoords = {
   fields: {
     participantName:      { y: 590, size: 14, bold: true, maxWidth: 415, centered: true },
     participantBirthDate: { y: 568, size: 11,             maxWidth: 415, centered: true, prefix: "geb. am " },
-    participationDetails: { y: 548, size: 11,             maxWidth: 415, centered: true, prefix: "hat " },
+    participationDetails: { y: 548, size: 11,             maxWidth: 415, centered: true },
   },
 };
 

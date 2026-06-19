@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatInstructorName } from "@/lib/trainings/format";
 
 type CobraTraining = {
@@ -14,6 +14,7 @@ type CobraTraining = {
   instructor: string | null;
   instructors: string[];
   description: string | null;
+  raw?: Record<string, unknown> | null;
 };
 
 type TrainingsResponse =
@@ -101,10 +102,13 @@ function formatDateTime(value: string | null) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return date.toLocaleString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function getCoursePrefix(code: string | null) {
@@ -167,65 +171,87 @@ export default function CobraAdminClient() {
   const [certMsg, setCertMsg] = useState("");
   const [certOk, setCertOk] = useState(false);
   const [certLoading, setCertLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
+  const [syncOk, setSyncOk] = useState(false);
+  const [showFields, setShowFields] = useState(false);
 
   const [previewByTraining, setPreviewByTraining] = useState<
     Record<string, PreviewState>
   >({});
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadTrainings = useCallback(async () => {
+    setLoadingTrainings(true);
+    setTrainingError("");
 
-    async function loadTrainings() {
-      setLoadingTrainings(true);
-      setTrainingError("");
+    try {
+      const [cobraRes, dbRes] = await Promise.all([
+        fetch("/api/cobra/trainings", { cache: "no-store" }),
+        fetch("/api/trainings/public", { cache: "no-store" }),
+      ]);
 
-      try {
-        const [cobraRes, dbRes] = await Promise.all([
-          fetch("/api/cobra/trainings", { cache: "no-store" }),
-          fetch("/api/trainings/public", { cache: "no-store" }),
-        ]);
+      const cobraData = (await cobraRes.json()) as TrainingsResponse;
+      const dbData = (await dbRes.json()) as { ok: boolean; trainings?: unknown[] };
 
-        const cobraData = (await cobraRes.json()) as TrainingsResponse;
-        const dbData = await dbRes.json() as { ok: boolean; trainings?: unknown[] };
-
-        if (cancelled) return;
-
-        if (!cobraRes.ok || !cobraData.ok) {
-          setTrainingError(
-            cobraData.ok === false
-              ? cobraData.message ?? cobraData.error
-              : "Cobra-Schulungen konnten nicht geladen werden."
-          );
-          setTrainings([]);
-        } else {
-          setTrainings(cobraData.trainings);
-        }
-
-        if (dbData.ok && Array.isArray(dbData.trainings)) {
-          setDbTrainingCount(dbData.trainings.length);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setTrainingError(
-            error instanceof Error
-              ? error.message
-              : "Cobra-Schulungen konnten nicht geladen werden."
-          );
-          setTrainings([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingTrainings(false);
-        }
+      if (!cobraRes.ok || !cobraData.ok) {
+        setTrainingError(
+          cobraData.ok === false
+            ? cobraData.message ?? cobraData.error
+            : "Cobra-Schulungen konnten nicht geladen werden."
+        );
+        setTrainings([]);
+      } else {
+        setTrainings(cobraData.trainings);
       }
+
+      if (dbData.ok && Array.isArray(dbData.trainings)) {
+        setDbTrainingCount(dbData.trainings.length);
+      }
+    } catch (error) {
+      setTrainingError(
+        error instanceof Error
+          ? error.message
+          : "Cobra-Schulungen konnten nicht geladen werden."
+      );
+      setTrainings([]);
+    } finally {
+      setLoadingTrainings(false);
     }
-
-    void loadTrainings();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    void loadTrainings();
+  }, [loadTrainings]);
+
+  async function syncTrainings() {
+    setSyncLoading(true);
+    setSyncMsg("");
+    setSyncOk(false);
+
+    try {
+      const res = await fetch("/api/admin/cobra/sync-trainings", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        setSyncMsg(data.message ?? data.error ?? "Synchronisation fehlgeschlagen.");
+        setSyncOk(false);
+        return;
+      }
+
+      setSyncMsg(
+        `Synchronisiert. Neu: ${data.created}, aktualisiert: ${data.updatedByCobraId + data.updatedByCode}, übersprungen: ${data.skipped}.`
+      );
+      setSyncOk(true);
+      await loadTrainings();
+    } catch {
+      setSyncMsg("Serverfehler bei der Synchronisation.");
+      setSyncOk(false);
+    } finally {
+      setSyncLoading(false);
+    }
+  }
 
   async function generateCertificates() {
     if (!confirm("Zertifikate für alle abgeschlossenen Schulungen erstellen und Credits vergeben?")) return;
@@ -385,24 +411,47 @@ export default function CobraAdminClient() {
             </h2>
             <p style={{ marginTop: 8, marginBottom: 0, color: "#555555", lineHeight: 1.6, fontSize: 14 }}>
               Schulungen und Teilnehmer werden täglich automatisch aus Cobra/WebConnect synchronisiert.
-              Zertifikate entstehen automatisch am Tag nach Schulungsende.
+              Zertifikate entstehen automatisch am Tag nach Schulungsende. Mit &bdquo;Jetzt synchronisieren&ldquo;
+              überträgst du Änderungen (z. B. einen neuen Dozenten) sofort in die App-DB und damit in den Kalender.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void generateCertificates()}
-            disabled={certLoading}
-            style={{
-              minHeight: 40, padding: "9px 16px", borderRadius: 999,
-              border: "1px solid #007873", background: "#007873", color: "#FFFFFF",
-              fontWeight: 900, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.07em",
-              cursor: certLoading ? "not-allowed" : "pointer", opacity: certLoading ? 0.65 : 1,
-              whiteSpace: "nowrap", flexShrink: 0,
-            }}
-          >
-            {certLoading ? "Läuft..." : "Zertifikate erstellen"}
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => void syncTrainings()}
+              disabled={syncLoading}
+              style={{
+                minHeight: 40, padding: "9px 16px", borderRadius: 999,
+                border: "1px solid #007873", background: "#007873", color: "#FFFFFF",
+                fontWeight: 900, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.07em",
+                cursor: syncLoading ? "not-allowed" : "pointer", opacity: syncLoading ? 0.65 : 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {syncLoading ? "Synchronisiere..." : "Jetzt synchronisieren"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void generateCertificates()}
+              disabled={certLoading}
+              style={{
+                minHeight: 40, padding: "9px 16px", borderRadius: 999,
+                border: "1px solid #007873", background: "#FFFFFF", color: "#007873",
+                fontWeight: 900, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.07em",
+                cursor: certLoading ? "not-allowed" : "pointer", opacity: certLoading ? 0.65 : 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {certLoading ? "Läuft..." : "Zertifikate erstellen"}
+            </button>
+          </div>
         </div>
+
+        {syncMsg && (
+          <div style={{ marginTop: 10, padding: "10px 14px", border: syncOk ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)", background: syncOk ? "rgba(0,120,115,0.06)" : "rgba(176,0,32,0.06)", color: syncOk ? "#007873" : "#B00020", fontWeight: 800, lineHeight: 1.5, fontSize: 13 }}>
+            {syncMsg}
+          </div>
+        )}
 
         {certMsg && (
           <div style={{ marginTop: 10, padding: "10px 14px", border: certOk ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)", background: certOk ? "rgba(0,120,115,0.06)" : "rgba(176,0,32,0.06)", color: certOk ? "#007873" : "#B00020", fontWeight: 800, lineHeight: 1.5, fontSize: 13 }}>
@@ -422,6 +471,82 @@ export default function CobraAdminClient() {
           }}
         >
           Cron-Zeiten: Schulungen 00:10 UTC · Teilnehmer 00:15 UTC · Zertifikate 00:05 UTC (täglich)
+        </div>
+
+        {/* Diagnose: alle Felder, die Cobra liefert – z.B. um das Inhouse/Öffentlich-Kennzeichen zu finden */}
+        <div style={{ marginTop: 14 }}>
+          <button
+            type="button"
+            onClick={() => setShowFields((value) => !value)}
+            style={{
+              minHeight: 36,
+              padding: "8px 14px",
+              borderRadius: 999,
+              border: "1px solid #C7C7C7",
+              background: "#FFFFFF",
+              color: "#007873",
+              fontWeight: 800,
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            {showFields ? "Cobra-Felder ausblenden" : "Cobra-Felder anzeigen (Diagnose)"}
+          </button>
+
+          {showFields &&
+            (() => {
+              const sampleRaw =
+                trainings.find(
+                  (training) =>
+                    training.raw && Object.keys(training.raw).length > 0
+                )?.raw ?? null;
+
+              if (!sampleRaw) {
+                return (
+                  <div style={{ marginTop: 10, color: "#888888", fontSize: 13 }}>
+                    Keine Felddaten verfügbar.
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  style={{
+                    marginTop: 10,
+                    border: "1px solid #E6E6E6",
+                    background: "#FAFAFA",
+                    padding: 12,
+                    display: "grid",
+                    gap: 6,
+                    fontSize: 13,
+                  }}
+                >
+                  <div style={{ color: "#555555", marginBottom: 4, lineHeight: 1.5 }}>
+                    Felder einer Beispiel-Schulung aus Cobra. Sag mir den Feldnamen
+                    für &bdquo;öffentlich/inhouse&ldquo; und welcher Wert was bedeutet &ndash; dann
+                    filtere ich den Kalender automatisch.
+                  </div>
+                  {Object.entries(sampleRaw).map(([key, value]) => (
+                    <div
+                      key={key}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "minmax(120px, 220px) 1fr",
+                        gap: 10,
+                        alignItems: "start",
+                      }}
+                    >
+                      <span style={{ fontWeight: 800, color: "#007873", overflowWrap: "anywhere" }}>
+                        {key}
+                      </span>
+                      <span style={{ color: "#1F1F1F", overflowWrap: "anywhere" }}>
+                        {formatRawValue(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
         </div>
 
         <div style={{ marginTop: 16 }}>
@@ -813,4 +938,10 @@ function cleanTrainingTitle(value: string | null | undefined) {
     .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function formatRawValue(value: unknown) {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
 }
