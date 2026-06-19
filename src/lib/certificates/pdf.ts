@@ -11,36 +11,32 @@ import {
 type CertificatePdfData = Record<string, string>;
 
 type FieldConfig = {
-  x: number;
+  x?: number;
   y: number;
   size?: number;
   maxWidth?: number;
   bold?: boolean;
   prefix?: string;
+  centered?: boolean;
 };
 
 type PdfTemplateCoords = {
   fields: Partial<Record<string, FieldConfig>>;
 };
 
-// Standard Teilnahmebestätigung (teal header-banner)
-// App-PDF has no "geb." label and no "hat am … in …" text — only "an folgender VFA-Schulung
-// teilgenommen:" remains as fixed text at y≈589. All three fields go in the blank area above it.
 const LAYOUT_STANDARD: PdfTemplateCoords = {
   fields: {
-    participantName:      { x: 185, y: 647, size: 13, bold: true, maxWidth: 300 },
-    participantBirthDate: { x: 185, y: 627, size: 11,             maxWidth: 300, prefix: "geb. " },
-    participationDetails: { x: 185, y: 609, size: 11,             maxWidth: 300 },
+    participantName:      { y: 647, size: 13, bold: true, maxWidth: 400, centered: true },
+    participantBirthDate: { y: 627, size: 11,             maxWidth: 400, centered: true, prefix: "geb. " },
+    participationDetails: { y: 609, size: 11,             maxWidth: 400, centered: true },
   },
 };
 
-// VDI Urkunde (A2/B/C) – blank area between "Urkunde" heading and the fixed "an der Schulung..."
-// paragraph at y≈530; "geb. am" and "hat" were removed from template and must be written by us.
 const LAYOUT_VDI_URKUNDE: PdfTemplateCoords = {
   fields: {
-    participantName:      { x: 90, y: 590, size: 14, bold: true, maxWidth: 415 },
-    participantBirthDate: { x: 90, y: 568, size: 11,             maxWidth: 250, prefix: "geb. am " },
-    participationDetails: { x: 90, y: 548, size: 11,             maxWidth: 415, prefix: "hat " },
+    participantName:      { y: 590, size: 14, bold: true, maxWidth: 415, centered: true },
+    participantBirthDate: { y: 568, size: 11,             maxWidth: 415, centered: true, prefix: "geb. am " },
+    participationDetails: { y: 548, size: 11,             maxWidth: 415, centered: true, prefix: "hat " },
   },
 };
 
@@ -120,6 +116,7 @@ export async function renderCertificatePdf({
       y: fieldCfg.y,
       size: fieldCfg.size ?? 11,
       maxWidth: fieldCfg.maxWidth,
+      centered: fieldCfg.centered,
     });
   }
 
@@ -130,29 +127,31 @@ type DrawTextOptions = {
   page: PDFPage;
   font: PDFFont;
   text: string;
-  x: number;
+  x?: number;
   y: number;
   size?: number;
   maxWidth?: number;
   lineHeight?: number;
+  centered?: boolean;
 };
 
-function drawText({ page, font, text, x, y, size = 11, maxWidth, lineHeight }: DrawTextOptions) {
+function drawText({ page, font, text, x = 0, y, size = 11, maxWidth, lineHeight, centered }: DrawTextOptions) {
   const safeText = normalizePdfText(text);
 
   if (!safeText) return;
 
-  if (!maxWidth) {
-    page.drawText(safeText, { x, y, size, font, color: rgb(0, 0, 0) });
-    return;
-  }
-
-  const lines = wrapText({ text: safeText, font, size, maxWidth });
+  const pageWidth = page.getWidth();
   const resolvedLineHeight = lineHeight ?? size * 1.25;
 
+  const lines = maxWidth
+    ? wrapText({ text: safeText, font, size, maxWidth })
+    : [safeText];
+
   lines.forEach((line, index) => {
+    const lineWidth = font.widthOfTextAtSize(line, size);
+    const drawX = centered ? (pageWidth - lineWidth) / 2 : x;
     page.drawText(line, {
-      x,
+      x: drawX,
       y: y - index * resolvedLineHeight,
       size,
       font,
