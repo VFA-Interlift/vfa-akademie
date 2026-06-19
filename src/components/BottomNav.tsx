@@ -38,6 +38,8 @@ export default function BottomNav() {
   }, [status]);
 
   useEffect(() => {
+    // Mobiles „Mehr"-Sheet schließen, wenn sich die Route ändert (z.B. Browser-Zurück).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSheetOpen(false);
   }, [pathname]);
 
@@ -49,6 +51,7 @@ export default function BottomNav() {
     pathname.startsWith("/dozent") ||
     pathname.startsWith("/leaderboard") ||
     pathname.startsWith("/meine-credits") ||
+    pathname.startsWith("/einstellungen") ||
     pathname.startsWith("/admin");
 
   return (
@@ -96,6 +99,10 @@ export default function BottomNav() {
 
               <SheetLink href="/leaderboard" active={pathname.startsWith("/leaderboard")} onClick={() => setSheetOpen(false)}>
                 <IconRanking /> Ranking
+              </SheetLink>
+
+              <SheetLink href="/einstellungen" active={pathname.startsWith("/einstellungen")} onClick={() => setSheetOpen(false)}>
+                <IconSettings /> Einstellungen
               </SheetLink>
 
               {isInstructor && (
@@ -254,6 +261,15 @@ function IconCredits() {
       <path d="M14.5 9.5a3 3 0 00-5 2.2c0 1.7 1.3 2.8 3 3.3s3 1.6 3 3.3a3 3 0 01-5 .2" />
       <line x1="12" y1="6" x2="12" y2="8" />
       <line x1="12" y1="16" x2="12" y2="18" />
+    </svg>
+  );
+}
+
+function IconSettings() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2a2 2 0 110-4h.09A1.65 1.65 0 003.6 8a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H8a1.65 1.65 0 001-1.51V2a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V8a1.65 1.65 0 001.51 1H22a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
   );
 }

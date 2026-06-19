@@ -97,6 +97,50 @@ export function cleanTrainingTitle(value: string) {
   return value.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Übergangs-Heuristik bis das Cobra-Feld „inhouse/öffentlich" durchgereicht wird:
+ * Öffentliche Schulungen heißen „Kürzel + Datum" (z.B. „A2-2704"), evtl. mit
+ * generischer Beschreibung in Klammern. Inhouse-Schulungen haben zusätzlich den
+ * Firmennamen im Titel (z.B. „A2-2704 Flughafen Stuttgart", „… Ritsche GmbH").
+ * Solche werden aus dem öffentlichen Kalender ausgeblendet.
+ */
+export function isLikelyInhouse(
+  title: string | null | undefined,
+  code: string | null | undefined
+): boolean {
+  const raw = String(title ?? "").trim();
+  if (!raw) return false;
+
+  // Eindeutige Firmen-Rechtsformen (kommen in echten Schulungstiteln nie vor) → Inhouse
+  if (/\b(?:gmbh|mbh|ag|kg|ohg|ug|gbr|e\.?\s?v\.?|e\.?\s?k\.?)\b/i.test(raw)) {
+    return true;
+  }
+
+  // Generische Beschreibung in Klammern entfernen (kein Firmenname)
+  let rest = raw.replace(/\([^)]*\)/g, " ");
+
+  // Bekannten Schulungscode entfernen (z.B. „A2-2704")
+  const codeStr = String(code ?? "").trim();
+  if (codeStr) {
+    rest = rest.replace(new RegExp(escapeRegExp(codeStr), "ig"), " ");
+  }
+
+  // Generisches Code-/Datums-Muster + reine Zahlen entfernen
+  rest = rest
+    .replace(/\b[A-Za-zÄÖÜäöüß/]{1,12}-\d{2,4}(?:\.\d+)?\b/g, " ") // A2-2704, NuR-2603.1
+    .replace(/\b\d{2,4}\b/g, " ")
+    .replace(/[.\-–—:,/|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Bleibt ein echtes Wort übrig → vermutlich Firmenname → Inhouse
+  return /[A-Za-zÄÖÜäöüß]{3,}/.test(rest);
+}
+
 export function getDisplayTrainingTitle(training: { code?: string | null; title: string }) {
   if (training.code?.trim()) return training.code.trim();
   return cleanTrainingTitle(training.title);

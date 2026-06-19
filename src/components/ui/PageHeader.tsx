@@ -11,7 +11,9 @@ type PageHeaderProps = {
 export default function PageHeader({
   title,
   backLabel = "Zurück",
-  showBackButton = true,
+  // Untere Menüleiste (BottomNav) + Browser-Zurück decken die Navigation ab,
+  // daher standardmäßig kein redundanter Zurück-Button mehr oben.
+  showBackButton = false,
   showTitle = true,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   description: _description,

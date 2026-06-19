@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { formatCertificateKind } from "@/lib/certificates/templates";
+import { isLikelyInhouse } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
 
@@ -55,21 +56,25 @@ export async function GET() {
       },
     });
 
-    const mappedTrainings = trainings.map((training) => ({
-      id: training.id,
-      title: training.title,
-      code: training.code,
-      category: guessCategory(training.code, training.title),
-      certificateKind: training.certificateKind,
-      certificateKindLabel: formatCertificateKind(training.certificateKind),
-      date: training.date.toISOString(),
-      endDate: training.endDate ? training.endDate.toISOString() : null,
-      location: training.location,
-      instructor: training.instructor,
-      description: training.description,
-      creditsAward: training.creditsAward,
-      isPublic: true,
-    }));
+    // Inhouse-Schulungen (Firmenname im Titel) gehören nicht in den öffentlichen
+    // Kalender. Übergangslösung bis das Cobra-Feld „inhouse/öffentlich" kommt.
+    const mappedTrainings = trainings
+      .filter((training) => !isLikelyInhouse(training.title, training.code))
+      .map((training) => ({
+        id: training.id,
+        title: training.title,
+        code: training.code,
+        category: guessCategory(training.code, training.title),
+        certificateKind: training.certificateKind,
+        certificateKindLabel: formatCertificateKind(training.certificateKind),
+        date: training.date.toISOString(),
+        endDate: training.endDate ? training.endDate.toISOString() : null,
+        location: training.location,
+        instructor: training.instructor,
+        description: training.description,
+        creditsAward: training.creditsAward,
+        isPublic: true,
+      }));
 
     return NextResponse.json({
       ok: true,

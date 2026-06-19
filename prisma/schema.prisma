@@ -85,6 +85,8 @@ model User {
   leaderboardOptIn Boolean @default(false)
   leaderboardName  String?
 
+  notifyBeforeTraining Boolean @default(true)
+
   creditTxs          CreditTransaction[]
   enrollments        Enrollment[]
   certificates       Certificate[]

@@ -187,7 +187,7 @@ export default function CobraAdminClient() {
     try {
       const [cobraRes, dbRes] = await Promise.all([
         fetch("/api/cobra/trainings", { cache: "no-store" }),
-        fetch("/api/trainings/public", { cache: "no-store" }),
+        fetch("/api/admin/trainings", { cache: "no-store" }),
       ]);
 
       const cobraData = (await cobraRes.json()) as TrainingsResponse;
