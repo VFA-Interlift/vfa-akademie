@@ -51,6 +51,8 @@ export type SyncTrainingsResult = {
   created: number;
   updatedByCobraId: number;
   updatedByCode: number;
+  deleted: number;
+  orphansKept: number;
   warningsCount: number;
   synced: Array<{
     action:
@@ -61,6 +63,21 @@ export type SyncTrainingsResult = {
     cobraId: string | null;
     code: string | null;
     title: string;
+  }>;
+  deletedItems: Array<{
+    id: string;
+    cobraId: string | null;
+    code: string | null;
+    title: string;
+  }>;
+  keptOrphans: Array<{
+    id: string;
+    cobraId: string | null;
+    code: string | null;
+    title: string;
+    enrollments: number;
+    certificates: number;
+    cobraParticipants: number;
   }>;
   warnings: Array<{
     cobraId: string;
@@ -478,6 +495,8 @@ export async function syncCobraTrainings(): Promise<SyncTrainingsResult> {
     });
   }
 
+  const { deletedItems, keptOrphans } = await cleanupOrphanTrainings(normalized);
+
   return {
     source: "cobra",
     endpoint: "app-schulung",
@@ -488,10 +507,92 @@ export async function syncCobraTrainings(): Promise<SyncTrainingsResult> {
     created,
     updatedByCobraId,
     updatedByCode,
+    deleted: deletedItems.length,
+    orphansKept: keptOrphans.length,
     warningsCount: warnings.length,
     synced,
+    deletedItems,
+    keptOrphans,
     warnings,
     skippedItems: skipped,
     syncedAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Removes "orphan" trainings: rows that were once synced from Cobra (they have a
+ * `cobraId`) but no longer appear in the current `app-schulung` pull because they
+ * were unpublished/removed in WebConnect. The daily UPSERT-only sync never deletes,
+ * which is why the App-DB accumulates stale calendar entries (the 70-vs-50 gap).
+ *
+ * Safety rules:
+ * - Only trainings with a `cobraId` are considered (manually created rows are never touched).
+ * - An orphan is only hard-deleted when it has NO enrollments, certificates or Cobra
+ *   participants. Deleting a Training cascades to those, so anything carrying user
+ *   history is kept and reported instead of destroyed.
+ * - If the current pull produced zero normalized trainings (likely an API/auth hiccup),
+ *   cleanup is skipped entirely to avoid mass-deleting on a bad response.
+ */
+async function cleanupOrphanTrainings(normalized: NormalizedTraining[]) {
+  const deletedItems: SyncTrainingsResult["deletedItems"] = [];
+  const keptOrphans: SyncTrainingsResult["keptOrphans"] = [];
+
+  // Guard: never run cleanup against an empty/failed pull.
+  if (normalized.length === 0) {
+    return { deletedItems, keptOrphans };
+  }
+
+  const seenCobraIds = new Set(normalized.map((t) => t.cobraId));
+
+  const dbTrainings = await prisma.training.findMany({
+    where: { cobraId: { not: null } },
+    select: {
+      id: true,
+      cobraId: true,
+      code: true,
+      title: true,
+      _count: {
+        select: {
+          enrollments: true,
+          certificates: true,
+          cobraParticipants: true,
+        },
+      },
+    },
+  });
+
+  for (const training of dbTrainings) {
+    if (training.cobraId && seenCobraIds.has(training.cobraId)) {
+      continue;
+    }
+
+    const hasHistory =
+      training._count.enrollments > 0 ||
+      training._count.certificates > 0 ||
+      training._count.cobraParticipants > 0;
+
+    if (hasHistory) {
+      keptOrphans.push({
+        id: training.id,
+        cobraId: training.cobraId,
+        code: training.code,
+        title: training.title,
+        enrollments: training._count.enrollments,
+        certificates: training._count.certificates,
+        cobraParticipants: training._count.cobraParticipants,
+      });
+      continue;
+    }
+
+    await prisma.training.delete({ where: { id: training.id } });
+
+    deletedItems.push({
+      id: training.id,
+      cobraId: training.cobraId,
+      code: training.code,
+      title: training.title,
+    });
+  }
+
+  return { deletedItems, keptOrphans };
 }

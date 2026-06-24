@@ -1,0 +1,296 @@
+"use client";
+
+import { formatDate, formatDateRange } from "@/lib/trainings/format";
+
+type SerializableCertificate = {
+  id: string;
+  code: string | null;
+  title: string;
+  certificateKindLabel: string;
+  credits: number;
+  issuedAt: string;
+  trainingTitle: string;
+  trainingDate: string;
+  trainingEndDate: string | null;
+  location: string | null;
+  instructor: string | null;
+};
+
+type RankKey = "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
+
+type RankInfo = {
+  key: RankKey;
+  label: string;
+  sublabel: string;
+  min: number;
+  max: number | null;
+  color: string;
+};
+
+const RANKS: RankInfo[] = [
+  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, max: 499, color: "#A86C3D" },
+  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, max: 1499, color: "#8E99A8" },
+  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, max: 3499, color: "#C79A16" },
+  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, max: null, color: "#007873" },
+];
+
+function getRankInfo(credits: number): RankInfo {
+  if (credits >= 3500) return RANKS[3];
+  if (credits >= 1500) return RANKS[2];
+  if (credits >= 500) return RANKS[1];
+  return RANKS[0];
+}
+
+function getNextRank(credits: number): RankInfo | null {
+  if (credits < 500) return RANKS[1];
+  if (credits < 1500) return RANKS[2];
+  if (credits < 3500) return RANKS[3];
+  return null;
+}
+
+function cleanTitle(value: string) {
+  return value.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function getCompetencyTitle(cert: SerializableCertificate) {
+  if (cert.code?.trim()) return cert.code.trim();
+  return cleanTitle(cert.trainingTitle || cert.title);
+}
+
+export default function KompetenzpassClient({
+  displayName,
+  company,
+  position,
+  creditsTotal,
+  memberSince,
+  certificates,
+}: {
+  displayName: string;
+  company: string | null;
+  position: string | null;
+  creditsTotal: number;
+  memberSince: string;
+  certificates: SerializableCertificate[];
+}) {
+  const rank = getRankInfo(creditsTotal);
+  const nextRank = getNextRank(creditsTotal);
+  const remainingToNext = nextRank ? nextRank.min - creditsTotal : 0;
+  const totalCertificateCredits = certificates.reduce((sum, c) => sum + c.credits, 0);
+
+  return (
+    <main className="page-main kompetenzpass-page">
+      <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
+
+        {/* Action bar (hidden on print) */}
+        <div className="kp-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 800, color: "#1F1F1F", letterSpacing: "-0.02em" }}>
+              Kompetenzpass
+            </h1>
+            <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14 }}>
+              Dein persönlicher Qualifikationsnachweis – zum Drucken oder als PDF speichern.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="vfa-btn"
+            onClick={() => window.print()}
+            style={{
+              minHeight: 44, padding: "11px 20px", borderRadius: 999,
+              border: "1px solid #007873", background: "#007873", color: "#FFFFFF",
+              fontWeight: 900, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.06em",
+              cursor: "pointer", whiteSpace: "nowrap",
+            }}
+          >
+            ↓ Als PDF / Drucken
+          </button>
+        </div>
+
+        {/* The pass document */}
+        <div
+          className="kp-document"
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E6E6E6",
+            borderRadius: 16,
+            overflow: "hidden",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+          }}
+        >
+          {/* Branded header */}
+          <div
+            style={{
+              background: "linear-gradient(135deg, #007873 0%, #005f5b 100%)",
+              color: "#FFFFFF",
+              padding: "28px 30px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.7 }}>
+                VFA-Akademie
+              </div>
+              <div style={{ fontSize: "clamp(22px, 6vw, 32px)", fontWeight: 800, lineHeight: 1.1, marginTop: 6, letterSpacing: "-0.02em" }}>
+                {displayName || "Mein Kompetenzpass"}
+              </div>
+              {(position || company) && (
+                <div style={{ fontSize: 14, opacity: 0.85, marginTop: 6, lineHeight: 1.4 }}>
+                  {[position, company].filter(Boolean).join(" · ")}
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 2,
+                padding: "12px 18px", borderRadius: 14,
+                background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.25)",
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ fontSize: 22 }}>★</span>
+              <span style={{ fontSize: 16, fontWeight: 900, lineHeight: 1.1, whiteSpace: "nowrap" }}>{rank.label}</span>
+              <span style={{ fontSize: 11, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: 1,
+              background: "#EFEFEF",
+              borderBottom: "1px solid #EFEFEF",
+            }}
+          >
+            <StatCell label="Credits gesamt" value={creditsTotal.toLocaleString("de-DE")} highlight />
+            <StatCell label="Zertifikate" value={String(certificates.length)} />
+            <StatCell label="Credits aus Zertifikaten" value={totalCertificateCredits.toLocaleString("de-DE")} />
+            <StatCell label="Mitglied seit" value={formatMonthYear(memberSince)} />
+          </div>
+
+          {/* Rank progress (hidden on print to keep it document-like) */}
+          {nextRank && (
+            <div className="kp-progress" style={{ padding: "18px 30px", borderBottom: "1px solid #F0F0F0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 800, color: "#666666", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <span>Fortschritt zu {nextRank.label}</span>
+                <span>noch {remainingToNext.toLocaleString("de-DE")} Credits</span>
+              </div>
+              <div style={{ height: 8, borderRadius: 999, background: "#F0F0F0", overflow: "hidden" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${getProgressPercent(creditsTotal)}%`,
+                    background: rank.color,
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Competencies list */}
+          <div style={{ padding: "24px 30px 30px" }}>
+            <h2 style={{ margin: "0 0 16px", fontSize: 13, fontWeight: 900, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Absolvierte Kompetenzen
+            </h2>
+
+            {certificates.length === 0 ? (
+              <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+                Sobald deine erste Schulung abgeschlossen ist, erscheint sie hier als Kompetenz.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: 0 }}>
+                {certificates.map((cert, i) => (
+                  <div
+                    key={cert.id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      gap: 14,
+                      alignItems: "center",
+                      padding: "13px 0",
+                      borderBottom: i < certificates.length - 1 ? "1px solid #F0F0F0" : "none",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: "#1F1F1F", lineHeight: 1.25 }}>
+                        {getCompetencyTitle(cert)}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#888888", marginTop: 3, lineHeight: 1.4 }}>
+                        {cert.certificateKindLabel} · {formatDateRange(cert.trainingDate, cert.trainingEndDate)}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <div style={{ fontWeight: 900, fontSize: 16, color: "#007873", lineHeight: 1 }}>
+                        +{cert.credits.toLocaleString("de-DE")}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#AAAAAA", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
+                        Credits
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div
+            style={{
+              padding: "16px 30px",
+              borderTop: "1px solid #F0F0F0",
+              background: "#FAFAFA",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              fontSize: 11,
+              color: "#999999",
+              lineHeight: 1.5,
+            }}
+          >
+            <span>Ausgestellt von der VFA-Akademie</span>
+            <span>Stand: {formatDate(new Date().toISOString())}</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function StatCell({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div style={{ background: "#FFFFFF", padding: "16px 18px" }}>
+      <div style={{ fontSize: highlight ? 26 : 22, fontWeight: 900, color: highlight ? "#007873" : "#1F1F1F", lineHeight: 1 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 800, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 5 }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function getProgressPercent(credits: number) {
+  const thresholds = [0, 500, 1500, 3500];
+  for (let i = 0; i < thresholds.length - 1; i++) {
+    if (credits < thresholds[i + 1]) {
+      const range = thresholds[i + 1] - thresholds[i];
+      const val = credits - thresholds[i];
+      return Math.round((val / range) * 100);
+    }
+  }
+  return 100;
+}
+
+function formatMonthYear(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("de-DE", { month: "2-digit", year: "numeric" });
+}

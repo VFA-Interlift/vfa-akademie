@@ -387,6 +387,36 @@ textarea {
   }
 }
 
+/* ── Kompetenzpass print ── */
+@media print {
+  /* Hide everything chrome-like so only the pass document prints */
+  .app-header,
+  .bottom-nav,
+  .mehr-backdrop,
+  .mehr-sheet,
+  footer,
+  .kp-actions {
+    display: none !important;
+  }
+  body,
+  html {
+    background: #ffffff !important;
+  }
+  .page-content {
+    padding-top: 0 !important;
+  }
+  .kompetenzpass-page.page-main {
+    padding: 0 !important;
+    min-height: 0 !important;
+    background: #ffffff !important;
+  }
+  .kp-document {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
 /* ── Page fade-in ── */
 @keyframes pageFadeUp {
   from { opacity: 0; transform: translateY(16px); }

@@ -9,6 +9,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/meine-schulungen": "Meine Schulungen",
   "/meine-zertifikate": "Meine Zertifikate",
+  "/kompetenzpass": "Kompetenzpass",
   "/meine-daten": "Meine Daten",
   "/kurskalender": "Kurskalender",
   "/admin": "Administration",
@@ -380,6 +381,10 @@ export default function HeaderClient() {
                 onClick={() => setMenuOpen(false)}
               >
                 Meine Zertifikate
+              </MenuLink>
+
+              <MenuLink href="/kompetenzpass" onClick={() => setMenuOpen(false)}>
+                Kompetenzpass
               </MenuLink>
 
               <MenuLink href="/meine-daten" onClick={() => setMenuOpen(false)}>

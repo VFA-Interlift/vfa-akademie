@@ -150,6 +150,26 @@ function getTrainingTimestamp(training: CobraTraining) {
   return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
 }
 
+/**
+ * A training counts as "past" once its end (or its start, if no end) is before
+ * the start of today. Past trainings are auto-moved into the collapsed archive.
+ */
+function isPastTraining(training: CobraTraining, cutoff: number) {
+  const reference = training.endDate ?? training.date;
+
+  if (!reference) {
+    return false;
+  }
+
+  const timestamp = new Date(reference).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return false;
+  }
+
+  return timestamp < cutoff;
+}
+
 function getPreviewKey(cobraId: number | null) {
   return String(cobraId ?? "unknown");
 }
@@ -175,6 +195,7 @@ export default function CobraAdminClient() {
   const [syncMsg, setSyncMsg] = useState("");
   const [syncOk, setSyncOk] = useState(false);
   const [showFields, setShowFields] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
   const [previewByTraining, setPreviewByTraining] = useState<
     Record<string, PreviewState>
@@ -241,7 +262,7 @@ export default function CobraAdminClient() {
       }
 
       setSyncMsg(
-        `Synchronisiert. Neu: ${data.created}, aktualisiert: ${data.updatedByCobraId + data.updatedByCode}, übersprungen: ${data.skipped}.`
+        `Synchronisiert. Neu: ${data.created}, aktualisiert: ${data.updatedByCobraId + data.updatedByCode}, übersprungen: ${data.skipped}, gelöscht: ${data.deleted ?? 0}${data.orphansKept ? ` (${data.orphansKept} verwaiste mit Historie behalten)` : ""}.`
       );
       setSyncOk(true);
       await loadTrainings();
@@ -287,6 +308,28 @@ export default function CobraAdminClient() {
       return getTrainingTimestamp(a) - getTrainingTimestamp(b);
     });
   }, [query, trainings]);
+
+  const { upcomingTrainings, pastTrainings } = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const cutoff = startOfToday.getTime();
+
+    const upcoming: CobraTraining[] = [];
+    const past: CobraTraining[] = [];
+
+    for (const training of filteredTrainings) {
+      if (isPastTraining(training, cutoff)) {
+        past.push(training);
+      } else {
+        upcoming.push(training);
+      }
+    }
+
+    // Archiv: jüngste vergangene Schulung zuerst.
+    past.reverse();
+
+    return { upcomingTrainings: upcoming, pastTrainings: past };
+  }, [filteredTrainings]);
 
   async function loadPreview(training: CobraTraining) {
     const key = getPreviewKey(training.cobraId);
@@ -605,156 +648,267 @@ export default function CobraAdminClient() {
           >
             {trainingError}
           </div>
-        ) : (
+        ) : filteredTrainings.length === 0 ? (
           <div
             style={{
               marginTop: 18,
-              display: "grid",
-              gap: 10,
+              padding: "12px 14px",
+              border: "1px solid #E6E6E6",
+              color: "#333333",
+              lineHeight: 1.6,
             }}
           >
-            {filteredTrainings.map((training) => {
-              const previewState =
-                previewByTraining[getPreviewKey(training.cobraId)];
+            Keine Cobra-Schulung zur Suche gefunden.
+          </div>
+        ) : (
+          <div style={{ marginTop: 18, display: "grid", gap: 18 }}>
+            {/* Bevorstehende & laufende Schulungen */}
+            <div style={{ display: "grid", gap: 10 }}>
+              <SectionLabel
+                title="Aktuelle & bevorstehende Schulungen"
+                count={upcomingTrainings.length}
+              />
 
-              return (
-                <article
-                  key={`${training.cobraId}-${training.code}`}
+              {upcomingTrainings.length === 0 ? (
+                <div
                   style={{
-                    border: "1px solid #E6E6E6",
-                    background: "#FFFFFF",
-                    padding: 14,
-                    display: "grid",
-                    gap: 10,
+                    padding: "12px 14px",
+                    border: "1px dashed #D5D5D5",
+                    color: "#888888",
+                    lineHeight: 1.6,
+                    fontSize: 14,
                   }}
                 >
-                  <div
+                  Keine bevorstehenden Schulungen
+                  {query.trim() ? " zur Suche" : ""}. Vergangene findest du im Archiv.
+                </div>
+              ) : (
+                upcomingTrainings.map((training) => (
+                  <TrainingCard
+                    key={`${training.cobraId}-${training.code}`}
+                    training={training}
+                    previewState={previewByTraining[getPreviewKey(training.cobraId)]}
+                    onPreview={() => void loadPreview(training)}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Archiv: vergangene Schulungen (automatisch, zugeklappt) */}
+            {pastTrainings.length > 0 && (
+              <div style={{ display: "grid", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowArchive((value) => !value)}
+                  aria-expanded={showArchive}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    minHeight: 48,
+                    padding: "12px 16px",
+                    border: "1px solid #E6E6E6",
+                    background: "#FAFAFA",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <span
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) auto",
-                      gap: 14,
-                      alignItems: "start",
+                      fontSize: 12,
+                      fontWeight: 900,
+                      color: "#666666",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                     }}
                   >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          color: "#007873",
-                          fontWeight: 900,
-                          fontSize: 20,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {training.code ??
-                          cleanTrainingTitle(training.title) ??
-                          training.caption}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 4,
-                          color: "#333333",
-                          lineHeight: 1.5,
-                          fontSize: 14,
-                        }}
-                      >
-                        Cobra-ID {training.cobraId ?? "—"} ·{" "}
-                        {getCoursePrefix(training.code)}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => void loadPreview(training)}
-                      disabled={!training.cobraId || previewState?.loading}
-                      style={{
-                        minHeight: 38,
-                        padding: "8px 14px",
-                        borderRadius: 999,
-                        border: "1px solid #007873",
-                        background: "#FFFFFF",
-                        color: "#007873",
-                        fontWeight: 900,
-                        fontSize: 12,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        cursor:
-                          !training.cobraId || previewState?.loading
-                            ? "not-allowed"
-                            : "pointer",
-                        opacity:
-                          !training.cobraId || previewState?.loading ? 0.55 : 1,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {previewState?.loading ? "Prüfe..." : "Prüfen"}
-                    </button>
-                  </div>
-
-                  <div
+                    Archiv · vergangene Schulungen ({pastTrainings.length.toLocaleString("de-DE")})
+                  </span>
+                  <span
                     style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(190px, 1fr))",
-                      gap: 10,
-                      fontSize: 14,
-                      lineHeight: 1.5,
+                      color: "#007873",
+                      fontSize: 20,
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      transform: showArchive ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 180ms ease",
                     }}
                   >
-                    <Info label="Start" value={formatDateTime(training.date)} />
-                    <Info
-                      label="Ende"
-                      value={formatDateTime(training.endDate)}
+                    ⌄
+                  </span>
+                </button>
+
+                {showArchive &&
+                  pastTrainings.map((training) => (
+                    <TrainingCard
+                      key={`${training.cobraId}-${training.code}`}
+                      training={training}
+                      previewState={previewByTraining[getPreviewKey(training.cobraId)]}
+                      onPreview={() => void loadPreview(training)}
+                      muted
                     />
-                    <Info label="Ort" value={training.location ?? "—"} />
-                    <Info
-                      label="Dozent"
-                      value={formatInstructorNames(
-                        training.instructors,
-                        training.instructor
-                      )}
-                    />
-                  </div>
-
-                  {previewState?.error && (
-                    <div
-                      style={{
-                        padding: "10px 12px",
-                        border: "1px solid rgba(176,0,32,0.28)",
-                        background: "rgba(176,0,32,0.08)",
-                        color: "#B00020",
-                        fontWeight: 800,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {previewState.error}
-                    </div>
-                  )}
-
-                  {previewState?.data?.ok && (
-                    <PreviewBox preview={previewState.data} />
-                  )}
-                </article>
-              );
-            })}
-
-            {filteredTrainings.length === 0 && (
-              <div
-                style={{
-                  padding: "12px 14px",
-                  border: "1px solid #E6E6E6",
-                  color: "#333333",
-                  lineHeight: 1.6,
-                }}
-              >
-                Keine Cobra-Schulung zur Suche gefunden.
+                  ))}
               </div>
             )}
           </div>
         )}
       </section>
     </div>
+  );
+}
+
+function SectionLabel({ title, count }: { title: string; count: number }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 12,
+        fontWeight: 900,
+        color: "#007873",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+      }}
+    >
+      <span>{title}</span>
+      <span
+        style={{
+          padding: "2px 9px",
+          borderRadius: 999,
+          background: "rgba(0,120,115,0.10)",
+          color: "#007873",
+          fontSize: 12,
+          fontWeight: 900,
+        }}
+      >
+        {count.toLocaleString("de-DE")}
+      </span>
+    </div>
+  );
+}
+
+function TrainingCard({
+  training,
+  previewState,
+  onPreview,
+  muted = false,
+}: {
+  training: CobraTraining;
+  previewState: PreviewState | undefined;
+  onPreview: () => void;
+  muted?: boolean;
+}) {
+  return (
+    <article
+      style={{
+        border: "1px solid #E6E6E6",
+        background: muted ? "#FBFBFB" : "#FFFFFF",
+        padding: 14,
+        display: "grid",
+        gap: 10,
+        opacity: muted ? 0.85 : 1,
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 14,
+          alignItems: "start",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              color: "#007873",
+              fontWeight: 900,
+              fontSize: 20,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {training.code ??
+              cleanTrainingTitle(training.title) ??
+              training.caption}
+          </div>
+
+          <div
+            style={{
+              marginTop: 4,
+              color: "#333333",
+              lineHeight: 1.5,
+              fontSize: 14,
+            }}
+          >
+            Cobra-ID {training.cobraId ?? "—"} · {getCoursePrefix(training.code)}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onPreview}
+          disabled={!training.cobraId || previewState?.loading}
+          style={{
+            minHeight: 38,
+            padding: "8px 14px",
+            borderRadius: 999,
+            border: "1px solid #007873",
+            background: "#FFFFFF",
+            color: "#007873",
+            fontWeight: 900,
+            fontSize: 12,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            cursor:
+              !training.cobraId || previewState?.loading
+                ? "not-allowed"
+                : "pointer",
+            opacity: !training.cobraId || previewState?.loading ? 0.55 : 1,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {previewState?.loading ? "Prüfe..." : "Prüfen"}
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: 10,
+          fontSize: 14,
+          lineHeight: 1.5,
+        }}
+      >
+        <Info label="Start" value={formatDateTime(training.date)} />
+        <Info label="Ende" value={formatDateTime(training.endDate)} />
+        <Info label="Ort" value={training.location ?? "—"} />
+        <Info
+          label="Dozent"
+          value={formatInstructorNames(training.instructors, training.instructor)}
+        />
+      </div>
+
+      {previewState?.error && (
+        <div
+          style={{
+            padding: "10px 12px",
+            border: "1px solid rgba(176,0,32,0.28)",
+            background: "rgba(176,0,32,0.08)",
+            color: "#B00020",
+            fontWeight: 800,
+            lineHeight: 1.5,
+          }}
+        >
+          {previewState.error}
+        </div>
+      )}
+
+      {previewState?.data?.ok && <PreviewBox preview={previewState.data} />}
+    </article>
   );
 }
 

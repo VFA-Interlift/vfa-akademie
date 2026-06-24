@@ -47,6 +47,7 @@ export default function BottomNav() {
 
   const mehrActive =
     pathname.startsWith("/meine-daten") ||
+    pathname.startsWith("/kompetenzpass") ||
     pathname.startsWith("/badges") ||
     pathname.startsWith("/dozent") ||
     pathname.startsWith("/leaderboard") ||
@@ -87,6 +88,10 @@ export default function BottomNav() {
             <div className="mehr-items">
               <SheetLink href="/meine-daten" active={pathname.startsWith("/meine-daten")} onClick={() => setSheetOpen(false)}>
                 <IconPerson active={false} /> Profil
+              </SheetLink>
+
+              <SheetLink href="/kompetenzpass" active={pathname.startsWith("/kompetenzpass")} onClick={() => setSheetOpen(false)}>
+                <IconPass /> Kompetenzpass
               </SheetLink>
 
               <SheetLink href="/badges" active={pathname.startsWith("/badges")} onClick={() => setSheetOpen(false)}>
@@ -206,6 +211,18 @@ function IconPerson({ active }: { active: boolean }) {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  );
+}
+
+function IconPass() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="2.2" />
+      <path d="M5.5 16.5c0-1.9 1.6-3 3.5-3s3.5 1.1 3.5 3" />
+      <line x1="15" y1="9" x2="18.5" y2="9" />
+      <line x1="15" y1="13" x2="18.5" y2="13" />
     </svg>
   );
 }
