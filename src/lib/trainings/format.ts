@@ -45,15 +45,19 @@ function stripNameTokens(value: string): string {
     .trim();
 }
 
+function wordCount(value: string) {
+  return value.split(/\s+/).filter(Boolean).length;
+}
+
 /**
- * Extracts a clean person name from a single Cobra "Dozent" value. The field can
- * arrive in several shapes: "Vorname Nachname", "Nachname, Vorname",
- * "Name, Firma/Ort/Adresse …" or with titles/contact data appended.
+ * Extracts a clean person name from a single Cobra "Dozent" value. The field
+ * typically arrives as "Firma, Name, Adresse, Stadt", but can also be just
+ * "Vorname Nachname" or "Nachname, Vorname". We only want the person's name.
  *
- * The parser is intentionally conservative: it only swaps to "Vorname Nachname"
- * when the second comma segment really looks like a first name, otherwise it just
- * returns the first (person) segment as-is. It never recombines a name with a
- * company/address segment – that produced garbled output like "Firma Nachname".
+ * Strategy: split into comma segments, drop everything that looks like a company
+ * (legal form / industry keyword) or an address/city (contains digits), then pick
+ * the remaining segment that best resembles a name (prefer "Vorname Nachname").
+ * The special "Nachname, Vorname" two-part case is handled explicitly.
  */
 function parseSingleInstructor(raw: string): string {
   const cleaned = raw
@@ -70,38 +74,35 @@ function parseSingleInstructor(raw: string): string {
 
   if (segments.length === 0) return "";
 
-  const first = segments[0];
-
-  // "Nachname, Vorname[, …]" → "Vorname Nachname"
-  if (segments.length >= 2) {
-    const second = segments[1];
-    const secondLooksLikeFirstName =
-      second.split(/\s+/).filter(Boolean).length <= 2 &&
-      !looksLikeCompany(second) &&
-      !looksLikeAddress(second);
-
-    if (
-      secondLooksLikeFirstName &&
-      !looksLikeCompany(first) &&
-      !looksLikeAddress(first)
-    ) {
-      const lastName = stripNameTokens(first);
-      const firstName = stripNameTokens(second).split(/\s+/)[0] ?? "";
-      const name = `${firstName} ${lastName}`.trim();
-      if (name && !looksLikeCompany(name)) {
-        return name;
-      }
-    }
+  // Single value, e.g. "Vorname Nachname" – return it as-is (if it's a name).
+  if (segments.length === 1) {
+    if (looksLikeCompany(segments[0]) || looksLikeAddress(segments[0])) return "";
+    const words = stripNameTokens(segments[0]).split(/\s+/).filter(Boolean);
+    return words.slice(0, 3).join(" ");
   }
 
-  // Otherwise: use the first segment as the name (drop company/address segments).
-  if (looksLikeCompany(first) || looksLikeAddress(first)) return "";
+  // Keep only segments that are plausibly a person name (no company, no address).
+  const candidates = segments
+    .filter((segment) => !looksLikeCompany(segment) && !looksLikeAddress(segment))
+    .map((segment) => stripNameTokens(segment))
+    .filter(Boolean);
 
-  const words = stripNameTokens(first).split(/\s+/).filter(Boolean);
-  if (words.length === 0) return "";
+  if (candidates.length === 0) return "";
 
-  // Allow up to three words (e.g. "Hans-Peter Max Müller").
-  return words.slice(0, 3).join(" ");
+  // "Nachname, Vorname": exactly two short name-like parts → "Vorname Nachname".
+  if (
+    candidates.length === 2 &&
+    wordCount(candidates[0]) === 1 &&
+    wordCount(candidates[1]) === 1
+  ) {
+    return `${candidates[1]} ${candidates[0]}`;
+  }
+
+  // Prefer a "Vorname Nachname"-style candidate (2+ words), else the first one.
+  const fullName = candidates.find((candidate) => wordCount(candidate) >= 2);
+  const chosen = fullName ?? candidates[0];
+
+  return chosen.split(/\s+/).filter(Boolean).slice(0, 3).join(" ");
 }
 
 function looksLikeCompany(value: string) {

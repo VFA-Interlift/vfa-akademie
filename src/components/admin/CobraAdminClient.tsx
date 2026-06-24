@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatInstructorName } from "@/lib/trainings/format";
 
 type CobraTraining = {
   cobraId: number | null;
@@ -174,9 +175,9 @@ function getPreviewKey(cobraId: number | null) {
 }
 
 /**
- * WebConnect is an admin diagnostic surface: show the RAW Cobra "Dozent" value(s)
- * exactly as delivered (only whitespace-normalised), not the cleaned heuristic.
- * That way the admin can see whether Cobra actually delivers an instructor.
+ * Show the clean instructor name(s). Each Cobra "Dozent" value is parsed to just
+ * the person's name; only if parsing yields nothing do we fall back to the raw
+ * value so the admin can still diagnose unexpected data ("—" if truly empty).
  */
 function formatInstructorNames(
   values: string[] | null | undefined,
@@ -190,10 +191,18 @@ function formatInstructorNames(
         : [];
 
   const cleaned = list
+    .map((value) => formatInstructorName(value))
+    .filter((name) => name && name !== "Noch nicht hinterlegt");
+
+  if (cleaned.length > 0) {
+    return cleaned.join(", ");
+  }
+
+  const raw = list
     .map((value) => value.replace(/\s+/g, " ").trim())
     .filter(Boolean);
 
-  return cleaned.length > 0 ? cleaned.join(" · ") : "—";
+  return raw.length > 0 ? raw.join(" · ") : "—";
 }
 
 export default function CobraAdminClient() {
