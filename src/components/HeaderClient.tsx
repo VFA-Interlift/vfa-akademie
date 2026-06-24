@@ -155,9 +155,14 @@ export default function HeaderClient() {
 
   const isLoggedIn = status === "authenticated" && Boolean(email);
 
+  // Hide the mobile header as soon as we know a session exists (status), not
+  // only after the /api/me fetch resolves – otherwise the header flashes briefly
+  // on top before the bottom nav takes over on app start.
+  const hideMobileHeader = status === "authenticated" || status === "loading";
+
   return (
     <header
-      className={isLoggedIn ? "app-header app-header--authed" : "app-header"}
+      className={hideMobileHeader ? "app-header app-header--authed" : "app-header"}
       style={{
         position: "fixed",
         top: 0,

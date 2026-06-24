@@ -57,6 +57,65 @@ function getCompetencyTitle(cert: SerializableCertificate) {
   return cleanTitle(cert.trainingTitle || cert.title);
 }
 
+const VDI_MODULES: { level: string; matches: (code: string) => boolean }[] = [
+  { level: "A1", matches: (c) => c.startsWith("A1") },
+  { level: "A2", matches: (c) => c.startsWith("A2") },
+  { level: "B", matches: (c) => c.startsWith("B-") || c === "B" },
+  { level: "C", matches: (c) => c.startsWith("C-") || c === "C" },
+];
+
+/**
+ * Derives a small set of human-readable achievements from the user's record.
+ * Purely computed from existing data – no manual input needed.
+ */
+function getAchievements(
+  certificates: SerializableCertificate[],
+  creditsTotal: number,
+  rank: RankInfo,
+  memberSince: string
+): string[] {
+  const achievements: string[] = [];
+  const count = certificates.length;
+  const codes = certificates.map((c) => (c.code ?? "").toUpperCase());
+
+  // VDI modules
+  const presentLevels = VDI_MODULES.filter((m) =>
+    codes.some((code) => m.matches(code))
+  ).map((m) => m.level);
+
+  if (presentLevels.length === VDI_MODULES.length) {
+    achievements.push("Alle VDI-Module (A1–C) absolviert");
+  } else if (presentLevels.length > 0) {
+    achievements.push(`VDI-Module absolviert: ${presentLevels.join(", ")}`);
+  }
+
+  // Training count milestones
+  if (count >= 25) achievements.push("25+ Schulungen besucht");
+  else if (count >= 10) achievements.push("10+ Schulungen besucht");
+  else if (count >= 5) achievements.push("5+ Schulungen besucht");
+  else if (count >= 1) achievements.push(`${count} Schulung${count > 1 ? "en" : ""} besucht`);
+
+  // Rank (skip the entry rank to keep it meaningful)
+  if (rank.key !== "BRONZE") {
+    achievements.push(`${rank.label}-Status erreicht`);
+  }
+
+  // Credit milestones
+  if (creditsTotal >= 3000) achievements.push("Über 3.000 Credits gesammelt");
+  else if (creditsTotal >= 1000) achievements.push("Über 1.000 Credits gesammelt");
+
+  // Loyalty
+  const since = new Date(memberSince);
+  if (!Number.isNaN(since.getTime())) {
+    const years = (Date.now() - since.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    if (years >= 1) {
+      achievements.push(`Mitglied seit ${since.getFullYear()}`);
+    }
+  }
+
+  return achievements;
+}
+
 export default function KompetenzpassClient({
   displayName,
   company,
@@ -76,6 +135,7 @@ export default function KompetenzpassClient({
   const nextRank = getNextRank(creditsTotal);
   const remainingToNext = nextRank ? nextRank.min - creditsTotal : 0;
   const totalCertificateCredits = certificates.reduce((sum, c) => sum + c.credits, 0);
+  const achievements = getAchievements(certificates, creditsTotal, rank, memberSince);
 
   return (
     <main className="page-main kompetenzpass-page">
@@ -115,6 +175,8 @@ export default function KompetenzpassClient({
             borderRadius: 16,
             overflow: "hidden",
             boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* Branded header */}
@@ -194,8 +256,40 @@ export default function KompetenzpassClient({
             </div>
           )}
 
+          {/* Achievements / remarks */}
+          {achievements.length > 0 && (
+            <div style={{ padding: "20px 30px", borderBottom: "1px solid #F0F0F0" }}>
+              <h2 style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 900, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Auszeichnungen
+              </h2>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {achievements.map((text) => (
+                  <span
+                    key={text}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "7px 13px",
+                      borderRadius: 999,
+                      background: "rgba(0,120,115,0.07)",
+                      border: "1px solid rgba(0,120,115,0.22)",
+                      color: "#005f5b",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    <span style={{ color: "#C79A16" }}>★</span>
+                    {text}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Competencies list */}
-          <div style={{ padding: "24px 30px 30px" }}>
+          <div className="kp-body" style={{ padding: "24px 30px 30px" }}>
             <h2 style={{ margin: "0 0 16px", fontSize: 13, fontWeight: 900, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Absolvierte Kompetenzen
             </h2>

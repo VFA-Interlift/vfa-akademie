@@ -389,6 +389,11 @@ textarea {
 
 /* ── Kompetenzpass print ── */
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
   /* Hide everything chrome-like so only the pass document prints */
   .app-header,
   .bottom-nav,
@@ -410,10 +415,22 @@ textarea {
     min-height: 0 !important;
     background: #ffffff !important;
   }
+  .kompetenzpass-page > div {
+    max-width: none !important;
+  }
+  /* The document fills a full A4 page (297mm − 2×12mm margins ≈ 273mm) */
   .kp-document {
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    min-height: 271mm !important;
+    /* Force background colours / gradients to actually print */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Competency list grows so the footer is pushed to the bottom of the page */
+  .kp-document .kp-body {
+    flex: 1 1 auto !important;
   }
 }
 
