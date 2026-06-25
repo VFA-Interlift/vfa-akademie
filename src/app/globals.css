@@ -458,7 +458,8 @@ textarea {
      (mobile Browser rendern den Druck sonst in Geräte-Breite → großer Rand rechts) */
   .kp-document {
     width: 210mm !important;
-    min-height: 297mm !important;
+    /* knapp unter A4-Höhe (297mm), damit kein Rundungs-Überlauf eine 2. Seite erzeugt */
+    min-height: 296mm !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
