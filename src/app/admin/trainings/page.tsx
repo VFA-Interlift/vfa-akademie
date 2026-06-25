@@ -5,6 +5,7 @@ import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { formatCertificateKind } from "@/lib/certificates/templates";
+import { formatInstructorName } from "@/lib/trainings/format";
 import type { CertificateKind } from "@prisma/client";
 
 type Training = {
@@ -42,7 +43,7 @@ export default function AdminTrainingsPage() {
     <main className="page-main">
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ marginBottom: 10 }}>
-          <a href="/admin/cobra" style={{ color: "#007873", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>← Cobra/WebConnect</a>
+          <a href="/admin" style={{ color: "#007873", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>← Adminbereich</a>
         </div>
         <PageHeader
           title="Schulungen in der App-DB"
@@ -70,7 +71,9 @@ export default function AdminTrainingsPage() {
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 800, fontSize: 16, color: "#1F1F1F", lineHeight: 1.2 }}>{t.title}</div>
                       {t.location && <div style={{ color: "#555555", fontSize: 13, marginTop: 3 }}>{t.location}</div>}
-                      {t.instructor && <div style={{ color: "#888888", fontSize: 12, marginTop: 2 }}>{t.instructor}</div>}
+                      {t.instructor && formatInstructorName(t.instructor) !== "Noch nicht hinterlegt" && (
+                        <div style={{ color: "#888888", fontSize: 12, marginTop: 2 }}>{formatInstructorName(t.instructor)}</div>
+                      )}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
                       {t.code ? <StatusBadge>{t.code}</StatusBadge> : <StatusBadge variant="warning">Kein Kürzel</StatusBadge>}

@@ -5,10 +5,11 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
-  const [userCount, certCount, enrollmentCount] = await Promise.all([
+  const [userCount, certCount, enrollmentCount, trainingCount] = await Promise.all([
     prisma.user.count(),
     prisma.certificate.count({ where: { status: "ISSUED" } }),
     prisma.enrollment.count({ where: { status: { in: ["CONFIRMED", "ATTENDED"] } } }),
+    prisma.training.count(),
   ]);
 
   return (
@@ -31,6 +32,7 @@ export default async function AdminMenuPage() {
         <AnimatedSection delayMs={60}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 28 }}>
             <StatCard label="Nutzer" value={userCount} />
+            <StatCard label="Schulungen" value={trainingCount} />
             <StatCard label="Anmeldungen" value={enrollmentCount} />
             <StatCard label="Zertifikate" value={certCount} />
           </div>
@@ -57,30 +59,23 @@ export default async function AdminMenuPage() {
           </div>
         </AnimatedSection>
 
-        {/* Section: Einschreibungen */}
+        {/* Section: Schulungen */}
         <AnimatedSection delayMs={140}>
-          <SectionLabel>Einschreibungen</SectionLabel>
+          <SectionLabel>Schulungen</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 28 }}>
-            <AdminTile
-              href="/admin/trainings/add"
-              abbr="TN"
-              title="Teilnehmer zuordnen"
-              description="User manuell einer Schulung zuordnen oder Zuordnung entfernen."
-              color="#007873"
-            />
-          </div>
-        </AnimatedSection>
-
-        {/* Section: System */}
-        <AnimatedSection delayMs={180}>
-          <SectionLabel>System</SectionLabel>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
             <AdminTile
               href="/admin/cobra"
               abbr="CB"
               title="Cobra/WebConnect"
-              description="Verbindungsstatus, Schulungen aus Cobra prüfen, Zertifikate manuell auslösen."
+              description="Verbindungsstatus, Schulungen aus Cobra prüfen, synchronisieren, Zertifikate auslösen."
               color="#5A6472"
+            />
+            <AdminTile
+              href="/admin/trainings"
+              abbr="DB"
+              title="Schulungen in der App"
+              description="Alle synchronisierten Schulungen mit Kürzel, Dozent, Credits und Cobra-ID einsehen."
+              color="#007873"
             />
           </div>
         </AnimatedSection>

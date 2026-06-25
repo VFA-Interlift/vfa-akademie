@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+
+export const dynamic = "force-dynamic";
+
+/** Stellt sicher, dass nur eingeloggte Admins Schulungen anlegen dürfen. */
+async function requireAdmin() {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
+
+  if (!email) {
+    return { ok: false as const, res: NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 }) };
+  }
+
+  const me = await prisma.user.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { role: true },
+  });
+
+  if (!me || me.role !== "ADMIN") {
+    return { ok: false as const, res: NextResponse.json({ error: "FORBIDDEN" }, { status: 403 }) };
+  }
+
+  return { ok: true as const };
+}
 
 function parseGermanDate(s: string): Date | null {
   const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s.trim());
@@ -18,6 +43,12 @@ function parseGermanDate(s: string): Date | null {
 }
 
 export async function POST(req: Request) {
+  const gate = await requireAdmin();
+
+  if (!gate.ok) {
+    return gate.res;
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const title = String(body.title ?? "").trim();
