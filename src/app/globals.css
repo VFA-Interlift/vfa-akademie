@@ -411,11 +411,20 @@ textarea {
   }
 }
 
-/* ── Kompetenzpass print ── */
+/* ── Kompetenzpass print (full-bleed A4) ── */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 0; /* kein Seitenrand → Dokument füllt das ganze Blatt */
+  }
+
+  /* Default-Margins von body/html nullen (verursachen sonst schiefe Ränder) */
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
   }
 
   /* Hide everything chrome-like so only the pass document prints */
@@ -427,27 +436,32 @@ textarea {
   .kp-actions {
     display: none !important;
   }
-  body,
-  html {
-    background: #ffffff !important;
-  }
   .page-content {
-    padding-top: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   .kompetenzpass-page.page-main {
     padding: 0 !important;
+    margin: 0 !important;
     min-height: 0 !important;
+    overflow: visible !important; /* 210mm-Dokument auf schmalem Handy-Viewport nicht abschneiden */
     background: #ffffff !important;
   }
   .kompetenzpass-page > div {
     max-width: none !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
   }
-  /* The document fills a full A4 page (297mm − 2×12mm margins ≈ 273mm) */
+  /* Dokument auf physische A4-Größe zwingen, damit es das Blatt randlos füllt
+     (mobile Browser rendern den Druck sonst in Geräte-Breite → großer Rand rechts) */
   .kp-document {
+    width: 210mm !important;
+    min-height: 297mm !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    min-height: 271mm !important;
     /* Force background colours / gradients to actually print */
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
