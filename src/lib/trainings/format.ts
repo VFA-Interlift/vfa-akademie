@@ -125,48 +125,36 @@ export function cleanTrainingTitle(value: string) {
   return value.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 /**
- * Übergangs-Heuristik bis das Cobra-Feld „inhouse/öffentlich" durchgereicht wird:
- * Öffentliche Schulungen heißen „Kürzel + Datum" (z.B. „A2-2704"), evtl. mit
- * generischer Beschreibung in Klammern. Inhouse-Schulungen haben zusätzlich den
- * Firmennamen im Titel (z.B. „A2-2704 Flughafen Stuttgart", „… Ritsche GmbH").
- * Solche werden aus dem öffentlichen Kalender ausgeblendet.
+ * Übergangs-Heuristik bis das Cobra-Feld „inhouse/öffentlich" durchgereicht wird
+ * (der `app-schulung`-Endpoint liefert dieses Feld aktuell nicht mit).
+ *
+ * Erkennung am Schulungscode, der die Daten sauber trennt:
+ * - Öffentliche Schulungen haben einen kompakten Einzel-Token-Code OHNE Leerzeichen:
+ *   entweder das Standardmuster „KÜRZEL-NNNN(.n)" (z.B. „A1-2701", „NuR-2702.1",
+ *   „IN/SER/TR-2701") oder einen generischen/Online-Kurs („EFK-ffT_Auffrischung_online").
+ * - Inhouse-Schulungen heißen dagegen „KÜRZEL Kundenname" MIT Leerzeichen
+ *   (z.B. „FPFW-Evonik I", „DGUV-Ritschel GmbH", „ARB-Uni Marburg und Innexis").
+ *
+ * Entscheidend ist also: enthält der Code ein Leerzeichen → Kundenname → Inhouse.
+ * Der Code ist verlässlicher als der Titel; nur wenn kein Code da ist, fällt die
+ * Prüfung auf den Titel zurück.
  */
 export function isLikelyInhouse(
   title: string | null | undefined,
   code: string | null | undefined
 ): boolean {
-  const raw = String(title ?? "").trim();
-  if (!raw) return false;
+  const signal = String(code ?? "").trim() || String(title ?? "").trim();
+  if (!signal) return false;
 
-  // Eindeutige Firmen-Rechtsformen (kommen in echten Schulungstiteln nie vor) → Inhouse
-  if (/\b(?:gmbh|mbh|ag|kg|ohg|ug|gbr|e\.?\s?v\.?|e\.?\s?k\.?)\b/i.test(raw)) {
-    return true;
-  }
+  // Standard-Code öffentlicher Schulungen (KÜRZEL-NNNN, evtl. „.n") → öffentlich.
+  if (/^[A-Za-zÄÖÜäöüß0-9/]+-\d{3,4}(?:\.\d+)?$/.test(signal)) return false;
 
-  // Generische Beschreibung in Klammern entfernen (kein Firmenname)
-  let rest = raw.replace(/\([^)]*\)/g, " ");
+  // Einzel-Token ohne Leerzeichen (generischer/Online-Kurs ohne Kundenname) → öffentlich.
+  if (!/\s/.test(signal)) return false;
 
-  // Bekannten Schulungscode entfernen (z.B. „A2-2704")
-  const codeStr = String(code ?? "").trim();
-  if (codeStr) {
-    rest = rest.replace(new RegExp(escapeRegExp(codeStr), "ig"), " ");
-  }
-
-  // Generisches Code-/Datums-Muster + reine Zahlen entfernen
-  rest = rest
-    .replace(/\b[A-Za-zÄÖÜäöüß/]{1,12}-\d{2,4}(?:\.\d+)?\b/g, " ") // A2-2704, NuR-2603.1
-    .replace(/\b\d{2,4}\b/g, " ")
-    .replace(/[.\-–—:,/|]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  // Bleibt ein echtes Wort übrig → vermutlich Firmenname → Inhouse
-  return /[A-Za-zÄÖÜäöüß]{3,}/.test(rest);
+  // „KÜRZEL Kundenname" mit Leerzeichen → Inhouse.
+  return true;
 }
 
 export function getDisplayTrainingTitle(training: { code?: string | null; title: string }) {
