@@ -387,6 +387,30 @@ textarea {
   }
 }
 
+/* ── Kompetenzpass: am Bildschirm die volle Seitenhöhe füllen ── */
+@media screen {
+  /* Wrapper füllt die sichtbare Höhe (page-main hat min-height:100vh + Padding) */
+  .kompetenzpass-page > div {
+    min-height: calc(100vh - 48px);
+    min-height: calc(100dvh - 48px);
+    grid-template-rows: auto 1fr;
+  }
+  /* Das Dokument streckt sich über den verbleibenden Platz (Aktionsleiste = Zeile 1) */
+  .kompetenzpass-page .kp-document {
+    align-self: stretch;
+  }
+  /* Die Kompetenzliste wächst, damit der Footer unten sitzt (wie im Druck) */
+  .kompetenzpass-page .kp-document .kp-body {
+    flex: 1 1 auto;
+  }
+}
+@media screen and (min-width: 600px) {
+  .kompetenzpass-page > div {
+    min-height: calc(100vh - 80px);
+    min-height: calc(100dvh - 80px);
+  }
+}
+
 /* ── Kompetenzpass print ── */
 @media print {
   @page {
