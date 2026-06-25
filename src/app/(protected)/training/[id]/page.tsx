@@ -4,6 +4,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { formatCertificateKind } from "@/lib/certificates/templates";
+import { formatInstructorName } from "@/lib/trainings/format";
 import QRCode from "qrcode";
 
 export const dynamic = "force-dynamic";
@@ -143,9 +144,11 @@ export default async function TrainingPage({
                 <Info label="Ort" value={training.location} />
               )}
 
-              {training.instructor && (
-                <Info label="Dozent" value={training.instructor} />
-              )}
+              {(() => {
+                const instructorName = formatInstructorName(training.instructor);
+                if (instructorName === "Noch nicht hinterlegt") return null;
+                return <Info label="Dozent" value={instructorName} />;
+              })()}
 
               <Info
                 label="Dokument nach Abschluss"
