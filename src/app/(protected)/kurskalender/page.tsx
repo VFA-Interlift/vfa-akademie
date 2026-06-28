@@ -54,16 +54,18 @@ type WeekTrainingBar = {
   gridColumn: string;
 };
 
-const VDI_BOOKING_URL = "https://www.vfa-interlift.de/vdi-schulungen";
-const EFK_BOOKING_URL = "https://www.vfa-interlift.de/efk-schulungen";
-const FOCUS_BOOKING_URL =
-  "https://www.vfa-interlift.de/schwerpunktschulungen#anchors-mfca58r8";
+const VDI_BOOKING_URL = "https://www.vfa-interlift.de/vdi-schulungen-anmeldung";
+const EFK_BOOKING_URL = "https://www.vfa-interlift.de/efk-schulungen-neu";
+const FOCUS_BOOKING_URL = "https://www.vfa-interlift.de/schwerpunkt-schulungen-neu";
+const PRAXIS_BOOKING_URL = "https://www.vfa-interlift.de/kopie-von-vdi-schulungen-neu";
 
 const VDI_CODES = ["A1", "A2", "B", "C"];
 const EFK_CODES = ["EFK1", "EFK2"];
 
+// Kompakte Praxisschulungen (Inbetriebnahme / Servicearbeiten / Troubleshooting)
+const PRAXIS_CODES = ["IN/SER/TR", "IN", "SER", "TR"];
+
 const FOCUS_CODES = [
-  "IN/SER/TR",
   "SCHALL",
   "AZUBI",
   "EINST",
@@ -79,14 +81,12 @@ const FOCUS_CODES = [
   "MVO",
   "NUR",
   "PLG",
-  "SER",
   "SICH",
   "SON",
   "YLD",
-  "IN",
 ];
 
-const ALL_COURSE_CODES = [...VDI_CODES, ...EFK_CODES, ...FOCUS_CODES];
+const ALL_COURSE_CODES = [...VDI_CODES, ...EFK_CODES, ...PRAXIS_CODES, ...FOCUS_CODES];
 
 export default function KurskalenderPage() {
   const today = new Date();
@@ -665,6 +665,12 @@ function TrainingDialog({
 
 function getBookingUrl(training: CalendarTraining) {
   const courseKey = getCourseKey(training);
+  const titleNorm = normalizeCourseText(training.title ?? "");
+
+  // Praxisschulungen: am Titel-Keyword oder am Praxis-Code erkennbar.
+  if (PRAXIS_CODES.includes(courseKey) || titleNorm.includes("PRAXISSCHULUNG")) {
+    return PRAXIS_BOOKING_URL;
+  }
 
   if (VDI_CODES.includes(courseKey)) {
     return VDI_BOOKING_URL;

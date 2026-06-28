@@ -73,13 +73,6 @@ export default async function AdminMenuPage() {
               color="#5A6472"
             />
             <AdminTile
-              href="/admin/trainings"
-              abbr="DB"
-              title="Schulungen in der App"
-              description="Alle synchronisierten Schulungen mit Kürzel, Dozent, Credits und Cobra-ID einsehen."
-              color="#007873"
-            />
-            <AdminTile
               href="/admin/feedback"
               abbr="FB"
               title="Feedback-Auswertung"

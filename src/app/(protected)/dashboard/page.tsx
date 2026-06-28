@@ -48,6 +48,7 @@ export default async function DashboardPage() {
       lastName: true,
       company: true,
       creditsTotal: true,
+      createdAt: true,
       enrollments: {
         where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED"] } },
         select: {
@@ -232,13 +233,9 @@ export default async function DashboardPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <StatBox label="Bevorstehende Schulungen" value={enrollmentCount} />
                   <StatBox label="Zertifikate" value={certCount} />
+                  <StatBox label="Mein Rang" value={rank.label} />
+                  <StatBox label="Mitglied seit" value={new Date(user.createdAt).getFullYear()} />
                 </div>
-
-                {user.company && (
-                  <div style={{ padding: "10px 12px", borderRadius: 8, background: "#FFFFFF", border: "1px solid #E6E6E6", fontSize: 13, color: "#555555", fontWeight: 600 }}>
-                    🏢 {user.company}
-                  </div>
-                )}
 
                 <Link href="/meine-schulungen" style={linkStyle}>
                   Alle Schulungen →

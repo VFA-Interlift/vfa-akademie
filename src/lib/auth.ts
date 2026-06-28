@@ -60,6 +60,12 @@ export const authOptions: NextAuthOptions = {
           user.name ||
           user.email;
 
+        // Zeitpunkt der letzten Anmeldung festhalten (für Admin „zuletzt online").
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+
         const authUser: AuthUser = {
           id: user.id,
           email: user.email.trim().toLowerCase(),

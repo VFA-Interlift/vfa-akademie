@@ -63,6 +63,7 @@ export async function GET() {
       isInstructor: true,
       creditsTotal: true,
       createdAt: true,
+      lastLoginAt: true,
       _count: {
         select: {
           enrollments: true,
@@ -88,6 +89,7 @@ export async function GET() {
       enrollmentsCount: user._count.enrollments,
       certificatesCount: user._count.certificates,
       createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
     })),
   });
 }

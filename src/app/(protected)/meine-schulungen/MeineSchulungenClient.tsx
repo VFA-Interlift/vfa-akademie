@@ -36,9 +36,6 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
           <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
             Aktuell sind dir keine Schulungen zugeordnet.
           </div>
-          <p style={{ marginTop: 10, marginBottom: 0, color: "#333333", lineHeight: 1.6 }}>
-            Sobald eine Schulung über die VFA-Akademie oder über Cobra/WebConnect zugeordnet wurde, erscheint sie hier.
-          </p>
         </AppCard>
       </AnimatedSection>
     );

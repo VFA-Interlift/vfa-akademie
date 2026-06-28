@@ -18,6 +18,7 @@ type AdminUser = {
   enrollmentsCount: number;
   certificatesCount: number;
   createdAt: string;
+  lastLoginAt: string | null;
 };
 
 type AdminEnrollment = {
@@ -72,7 +73,8 @@ type SortMode =
   | "name_desc"
   | "credits_desc"
   | "credits_asc"
-  | "role_asc";
+  | "role_asc"
+  | "lastlogin_desc";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -206,6 +208,12 @@ export default function AdminUsersPage() {
 
       if (sortMode === "role_asc") {
         return a.role.localeCompare(b.role, "de");
+      }
+
+      if (sortMode === "lastlogin_desc") {
+        const at = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0;
+        const bt = b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0;
+        return bt - at;
       }
 
       return 0;
@@ -557,6 +565,7 @@ export default function AdminUsersPage() {
                 <option value="name_desc">Name: Z-A</option>
                 <option value="credits_desc">Credits: höchste zuerst</option>
                 <option value="credits_asc">Credits: niedrigste zuerst</option>
+                <option value="lastlogin_desc">Zuletzt online: neueste zuerst</option>
                 <option value="role_asc">Rolle</option>
               </select>
             </div>
@@ -750,6 +759,10 @@ export default function AdminUsersPage() {
                           <MiniInfo
                             label="Registriert"
                             value={formatDate(user.createdAt)}
+                          />
+                          <MiniInfo
+                            label="Zuletzt online"
+                            value={formatLastLogin(user.lastLoginAt)}
                           />
                         </div>
                         </>
@@ -1039,6 +1052,27 @@ function formatDate(value: string) {
   if (Number.isNaN(date.getTime())) {
     return value;
   }
+
+  return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function formatLastLogin(value: string | null) {
+  if (!value) return "Noch nie";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Noch nie";
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Gerade eben";
+  if (diffMin < 60) return `vor ${diffMin} Min.`;
+
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `vor ${diffH} Std.`;
+
+  const diffD = Math.floor(diffH / 24);
+  if (diffD === 1) return "Gestern";
+  if (diffD < 7) return `vor ${diffD} Tagen`;
 
   return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }

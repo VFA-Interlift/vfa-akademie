@@ -93,6 +93,8 @@ model User {
 
   notifyBeforeTraining Boolean @default(true)
 
+  lastLoginAt DateTime?
+
   creditTxs          CreditTransaction[]
   enrollments        Enrollment[]
   certificates       Certificate[]

@@ -1,167 +1,183 @@
 "use client";
 
-type RankKey = "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
+const VFA_GREEN = "#007873";
+const VFA_YELLOW = "#FFC100";
 
-type RankDef = {
-  key: RankKey;
-  label: string;
+const STAR_PATH =
+  "M0,-30 L7,-9.7 L28.5,-9.3 L11.4,3.7 L17.6,24.3 L0,12 L-17.6,24.3 L-11.4,3.7 L-28.5,-9.3 L-7,-9.7 Z";
+
+type Center = { type: "star" } | { type: "text"; text: string };
+
+type BadgeConfig = {
+  key: string;
+  title: string;
   sublabel: string;
-  min: number;
-  max: number | null;
-  color: string;
-  bg: string;
-  accent: string;
+  footnote: string;
+  earned: boolean;
+  color: string; // Text/Kontur
+  accent: string; // Ring/Akzent
+  tint: string; // Innenfläche
+  center: Center;
 };
 
-const RANKS: RankDef[] = [
-  {
-    key: "BRONZE",
-    label: "Bronze",
-    sublabel: "Einsteiger",
-    min: 0,
-    max: 499,
-    color: "#7C4F2A",
-    bg: "#FDF6F0",
-    accent: "#C87941",
-  },
-  {
-    key: "SILBER",
-    label: "Silber",
-    sublabel: "Fortgeschritten",
-    min: 500,
-    max: 1499,
-    color: "#5A6472",
-    bg: "#F4F6F8",
-    accent: "#8E99A8",
-  },
-  {
-    key: "GOLD",
-    label: "Gold",
-    sublabel: "Experte",
-    min: 1500,
-    max: 3499,
-    color: "#7C5A0A",
-    bg: "#FFFBEE",
-    accent: "#C79A16",
-  },
-  {
-    key: "EXPERTE",
-    label: "VFA-Experte",
-    sublabel: "Elite",
-    min: 3500,
-    max: null,
-    color: "#1F1F1F",
-    bg: "#F4F4F2",
-    accent: "#007873",
-  },
+// ---------- Ränge (credit-basiert) ----------
+
+const RANKS = [
+  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0" },
+  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, color: "#5A6472", accent: "#8E99A8", tint: "#F4F6F8" },
+  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, color: "#7C5A0A", accent: "#C79A16", tint: "#FFFBEE" },
+  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, color: "#0B4F4B", accent: VFA_GREEN, tint: "#EAF4F3" },
 ];
 
-function getCurrentRank(credits: number): RankKey {
-  if (credits >= 3500) return "EXPERTE";
-  if (credits >= 1500) return "GOLD";
-  if (credits >= 500) return "SILBER";
-  return "BRONZE";
+function rankConfigs(credits: number): BadgeConfig[] {
+  return RANKS.map((rank) => ({
+    key: `rang-${rank.key.toLowerCase()}`,
+    title: rank.label,
+    sublabel: rank.sublabel,
+    footnote: credits >= rank.min ? `${credits.toLocaleString("de-DE")} Credits` : `ab ${rank.min.toLocaleString("de-DE")} Credits`,
+    earned: credits >= rank.min,
+    color: rank.color,
+    accent: rank.accent,
+    tint: rank.tint,
+    center: { type: "star" },
+  }));
 }
 
-function generateBadgeSVG(rank: RankDef, credits: number, isEarned: boolean): string {
-  const mainColor = isEarned ? rank.color : "#BBBBBB";
-  const accentColor = isEarned ? rank.accent : "#CCCCCC";
-  const bgColor = isEarned ? rank.bg : "#F5F5F5";
-  const creditsText = isEarned ? `${credits.toLocaleString("de-DE")} Credits` : `ab ${rank.min.toLocaleString("de-DE")} Credits`;
+// ---------- Auszeichnungen (leistungsbasiert) ----------
+
+function achievementConfigs(completedCount: number, vdiCompleted: string[]): BadgeConfig[] {
+  const vdiDone = vdiCompleted.length;
+
+  return [
+    {
+      key: "vdi-reihe",
+      title: "VDI-Reihe",
+      sublabel: "A1 · A2 · B · C",
+      footnote: vdiDone >= 4 ? "Komplett abgeschlossen" : `${vdiDone} / 4 Kursen`,
+      earned: vdiDone >= 4,
+      color: "#0B4F4B",
+      accent: VFA_GREEN,
+      tint: "#EAF4F3",
+      center: { type: "text", text: "VDI" },
+    },
+    {
+      key: "10-schulungen",
+      title: "10 Schulungen",
+      sublabel: "Viellerner",
+      footnote: completedCount >= 10 ? "Erreicht" : `${Math.min(completedCount, 10)} / 10`,
+      earned: completedCount >= 10,
+      color: "#7C5A0A",
+      accent: VFA_YELLOW,
+      tint: "#FFFBEE",
+      center: { type: "text", text: "10" },
+    },
+    {
+      key: "20-schulungen",
+      title: "20 Schulungen",
+      sublabel: "Profi",
+      footnote: completedCount >= 20 ? "Erreicht" : `${Math.min(completedCount, 20)} / 20`,
+      earned: completedCount >= 20,
+      color: "#0B4F4B",
+      accent: VFA_GREEN,
+      tint: "#EAF4F3",
+      center: { type: "text", text: "20" },
+    },
+  ];
+}
+
+// ---------- SVG-Siegel ----------
+
+function generateBadgeSVG(config: BadgeConfig): string {
+  const earned = config.earned;
+  const color = earned ? config.color : "#A6A6A6";
+  const accent = earned ? config.accent : "#C4C4C4";
+  const tint = earned ? config.tint : "#F4F4F2";
+
+  const centerMarkup =
+    config.center.type === "star"
+      ? `<path d="${STAR_PATH}" fill="${accent}" opacity="${earned ? 1 : 0.5}" />`
+      : `<text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-family="system-ui,-apple-system,sans-serif" font-size="${config.center.text.length > 2 ? 30 : 38}" font-weight="800" letter-spacing="0.5" fill="${color}">${config.center.text}</text>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="360" viewBox="0 0 320 360">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${bgColor}" />
-      <stop offset="100%" stop-color="${isEarned ? rank.bg : "#EEEEEE"}" />
-    </linearGradient>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="${mainColor}" flood-opacity="0.15"/>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="${accent}" flood-opacity="0.18"/>
     </filter>
   </defs>
-  <!-- Card background -->
-  <rect width="320" height="360" rx="20" fill="url(#bg)" />
-  <rect width="320" height="360" rx="20" fill="none" stroke="${accentColor}" stroke-width="1.5" stroke-opacity="0.4"/>
+  <rect x="1" y="1" width="318" height="358" rx="22" fill="#FFFFFF" stroke="${accent}" stroke-width="1.5" stroke-opacity="0.35"/>
+  <rect x="1" y="1" width="318" height="7" rx="3.5" fill="${accent}" fill-opacity="${earned ? 1 : 0.35}"/>
 
-  <!-- Top accent bar -->
-  <rect x="0" y="0" width="320" height="6" rx="3" fill="${accentColor}" fill-opacity="${isEarned ? 1 : 0.3}"/>
+  <text x="160" y="50" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="800" letter-spacing="3.5" fill="${color}" opacity="0.55">VFA-AKADEMIE</text>
 
-  <!-- Shield shape -->
-  <g transform="translate(160, 145)" filter="url(#shadow)">
-    <path d="M0,-78 L52,-40 L52,18 Q52,62 0,82 Q-52,62 -52,18 L-52,-40 Z"
-      fill="${isEarned ? accentColor : "#DDDDDD"}" opacity="0.2"/>
-    <path d="M0,-78 L52,-40 L52,18 Q52,62 0,82 Q-52,62 -52,18 L-52,-40 Z"
-      fill="none" stroke="${mainColor}" stroke-width="2.5" stroke-opacity="${isEarned ? 0.8 : 0.3}"/>
-    <!-- Star in shield -->
-    <text x="0" y="14" text-anchor="middle" font-size="36" fill="${mainColor}" opacity="${isEarned ? 1 : 0.4}">★</text>
+  <g transform="translate(160,150)" filter="url(#s)">
+    <circle r="76" fill="${accent}" fill-opacity="0.08"/>
+    <circle r="76" fill="none" stroke="${accent}" stroke-width="2" stroke-opacity="${earned ? 0.6 : 0.3}"/>
+    <circle r="64" fill="none" stroke="${accent}" stroke-width="2" stroke-dasharray="1.5 7" stroke-linecap="round" stroke-opacity="${earned ? 0.7 : 0.25}"/>
+    <circle r="54" fill="${tint}" stroke="${accent}" stroke-width="1" stroke-opacity="0.25"/>
+    ${centerMarkup}
   </g>
 
-  <!-- VFA Branding -->
-  <text x="160" y="56" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif"
-    font-size="11" font-weight="700" letter-spacing="3" fill="${mainColor}" opacity="0.6"
-    text-transform="uppercase">VFA-AKADEMIE</text>
-
-  <!-- Rank name -->
-  <text x="160" y="260" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif"
-    font-size="28" font-weight="800" letter-spacing="-0.5" fill="${mainColor}">${rank.label}</text>
-
-  <!-- Sublabel -->
-  <text x="160" y="285" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif"
-    font-size="13" font-weight="600" letter-spacing="1" fill="${mainColor}" opacity="0.55"
-    text-transform="uppercase">${rank.sublabel}</text>
-
-  <!-- Divider -->
-  <line x1="120" y1="305" x2="200" y2="305" stroke="${accentColor}" stroke-width="1.5" stroke-opacity="${isEarned ? 0.5 : 0.2}"/>
-
-  <!-- Credits text -->
-  <text x="160" y="328" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif"
-    font-size="12" font-weight="600" fill="${mainColor}" opacity="0.6">${creditsText}</text>
+  <text x="160" y="266" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="800" letter-spacing="-0.4" fill="${color}">${config.title}</text>
+  <text x="160" y="290" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="700" letter-spacing="1.5" fill="${color}" opacity="0.55">${config.sublabel.toUpperCase()}</text>
+  <line x1="124" y1="308" x2="196" y2="308" stroke="${accent}" stroke-width="1.5" stroke-opacity="${earned ? 0.5 : 0.2}"/>
+  <text x="160" y="330" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="${color}" opacity="0.7">${config.footnote}</text>
 </svg>`;
 }
 
-function downloadBadge(rank: RankDef, credits: number) {
-  const svg = generateBadgeSVG(rank, credits, true);
-  const blob = new Blob([svg], { type: "image/svg+xml" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `vfa-badge-${rank.key.toLowerCase()}.svg`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+function downloadBadge(config: BadgeConfig, format: "svg" | "png") {
+  const svg = generateBadgeSVG({ ...config, earned: true });
+  if (format === "svg") {
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    triggerDownload(URL.createObjectURL(blob), `vfa-badge-${config.key}.svg`);
+    return;
+  }
 
-function downloadBadgePng(rank: RankDef, credits: number) {
-  const svg = generateBadgeSVG(rank, credits, true);
   const canvas = document.createElement("canvas");
   canvas.width = 640;
   canvas.height = 720;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
   const img = new Image();
   img.onload = () => {
     ctx.drawImage(img, 0, 0, 640, 720);
     URL.revokeObjectURL(url);
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = `vfa-badge-${rank.key.toLowerCase()}.png`;
-    a.click();
+    triggerDownload(canvas.toDataURL("image/png"), `vfa-badge-${config.key}.png`);
   };
   img.src = url;
 }
 
-export default function BadgesClient({ credits }: { credits: number }) {
-  const currentRank = getCurrentRank(credits);
+function triggerDownload(href: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  a.click();
+}
+
+// ---------- UI ----------
+
+export default function BadgesClient({
+  credits,
+  completedCount,
+  vdiCompleted,
+}: {
+  credits: number;
+  completedCount: number;
+  vdiCompleted: string[];
+}) {
+  const ranks = rankConfigs(credits);
+  const achievements = achievementConfigs(completedCount, vdiCompleted);
+  const currentRank = [...ranks].reverse().find((r) => r.earned) ?? ranks[0];
+  const earnedAchievements = achievements.filter((a) => a.earned).length;
 
   return (
-    <div style={{ display: "grid", gap: 24 }}>
+    <div style={{ display: "grid", gap: 28 }}>
       <div
         style={{
-          padding: "20px 24px",
+          padding: "18px 22px",
           background: "#FFFFFF",
           border: "1px solid #E6E6E6",
-          borderRadius: 12,
+          borderRadius: 14,
           display: "flex",
           alignItems: "center",
           gap: 16,
@@ -170,77 +186,108 @@ export default function BadgesClient({ credits }: { credits: number }) {
       >
         <div
           style={{
-            width: 52,
-            height: 52,
+            width: 50,
+            height: 50,
             borderRadius: "50%",
-            background: "rgba(0,120,115,0.1)",
+            background: "rgba(0,120,115,0.10)",
+            border: "1px solid rgba(0,120,115,0.25)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 24,
+            fontSize: 22,
+            color: VFA_GREEN,
             flexShrink: 0,
           }}
         >
           ★
         </div>
-        <div>
-          <div style={{ fontSize: 13, color: "#888888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 12, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Dein aktueller Status
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#007873", marginTop: 2 }}>
-            {RANKS.find((r) => r.key === currentRank)?.label} · {credits.toLocaleString("de-DE")} Credits
+          <div style={{ fontSize: 19, fontWeight: 800, color: VFA_GREEN, marginTop: 2 }}>
+            {currentRank.title} · {credits.toLocaleString("de-DE")} Credits
+          </div>
+          <div style={{ fontSize: 13, color: "#888888", marginTop: 2 }}>
+            {earnedAchievements} von {achievements.length} Auszeichnungen freigeschaltet
           </div>
         </div>
       </div>
 
+      <BadgeSection title="Ränge" subtitle="Steigen mit deinen Credits" badges={ranks} highlightKey={currentRank.key} />
+
+      <BadgeSection title="Auszeichnungen" subtitle="Für absolvierte Schulungen" badges={achievements} />
+
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-          gap: 16,
+          padding: "14px 18px",
+          background: "#F7F7F4",
+          border: "1px solid #E6E6E6",
+          borderRadius: 10,
+          fontSize: 13,
+          color: "#666666",
+          lineHeight: 1.6,
         }}
       >
-        {RANKS.map((rank) => {
-          const isEarned = credits >= rank.min;
-          const isCurrent = rank.key === currentRank;
-          const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateBadgeSVG(rank, credits, isEarned))}`;
+        Freigeschaltete Badges lassen sich als SVG oder PNG herunterladen – z. B. für LinkedIn,
+        E-Mail-Signaturen oder die eigene Website.
+      </div>
+    </div>
+  );
+}
+
+function BadgeSection({
+  title,
+  subtitle,
+  badges,
+  highlightKey,
+}: {
+  title: string;
+  subtitle: string;
+  badges: BadgeConfig[];
+  highlightKey?: string;
+}) {
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 800, color: VFA_GREEN, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 13, color: "#999999", marginTop: 2 }}>{subtitle}</div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
+        {badges.map((badge) => {
+          const isCurrent = badge.key === highlightKey;
+          const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateBadgeSVG(badge))}`;
 
           return (
             <div
-              key={rank.key}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 10,
-                opacity: isEarned ? 1 : 0.45,
-              }}
+              key={badge.key}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: badge.earned ? 1 : 0.5 }}
             >
               <div
                 style={{
                   position: "relative",
                   width: "100%",
                   aspectRatio: "320 / 360",
-                  borderRadius: 12,
+                  borderRadius: 14,
                   overflow: "hidden",
                   boxShadow: isCurrent
-                    ? `0 8px 28px rgba(0,0,0,0.14), 0 0 0 2px ${rank.accent}`
-                    : "0 4px 12px rgba(0,0,0,0.08)",
+                    ? `0 8px 26px rgba(0,0,0,0.13), 0 0 0 2px ${badge.accent}`
+                    : "0 4px 12px rgba(0,0,0,0.07)",
                   transition: "box-shadow 200ms ease",
                 }}
               >
-                <img
-                  src={svgDataUrl}
-                  alt={`${rank.label} Badge`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={svgDataUrl} alt={`${badge.title} Badge`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 {isCurrent && (
                   <div
                     style={{
                       position: "absolute",
                       top: 8,
                       right: 8,
-                      background: "#007873",
+                      background: VFA_GREEN,
                       color: "#FFF",
                       fontSize: 10,
                       fontWeight: 800,
@@ -254,40 +301,12 @@ export default function BadgesClient({ credits }: { credits: number }) {
                 )}
               </div>
 
-              {isEarned && (
+              {badge.earned && (
                 <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                  <button
-                    type="button"
-                    onClick={() => downloadBadge(rank, credits)}
-                    style={{
-                      padding: "9px 0",
-                      borderRadius: 999,
-                      border: `1px solid ${rank.accent}`,
-                      background: "transparent",
-                      color: rank.color,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      letterSpacing: "0.02em",
-                    }}
-                  >
+                  <button type="button" onClick={() => downloadBadge(badge, "svg")} style={downloadButtonStyle(badge.accent, badge.color, false)}>
                     ↓ SVG
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => downloadBadgePng(rank, credits)}
-                    style={{
-                      padding: "9px 0",
-                      borderRadius: 999,
-                      border: `1px solid ${rank.accent}`,
-                      background: rank.accent,
-                      color: "#FFFFFF",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      letterSpacing: "0.02em",
-                    }}
-                  >
+                  <button type="button" onClick={() => downloadBadge(badge, "png")} style={downloadButtonStyle(badge.accent, "#FFFFFF", true)}>
                     ↓ PNG
                   </button>
                 </div>
@@ -296,21 +315,20 @@ export default function BadgesClient({ credits }: { credits: number }) {
           );
         })}
       </div>
-
-      <div
-        style={{
-          padding: "14px 18px",
-          background: "#F7F7F4",
-          border: "1px solid #E6E6E6",
-          borderRadius: 10,
-          fontSize: 13,
-          color: "#666666",
-          lineHeight: 1.6,
-        }}
-      >
-        Badges werden als SVG-Datei heruntergeladen und können auf LinkedIn, in E-Mail-Signaturen
-        oder auf der eigenen Website eingebunden werden.
-      </div>
     </div>
   );
+}
+
+function downloadButtonStyle(accent: string, color: string, filled: boolean): React.CSSProperties {
+  return {
+    padding: "9px 0",
+    borderRadius: 999,
+    border: `1px solid ${accent}`,
+    background: filled ? accent : "transparent",
+    color,
+    fontSize: 11,
+    fontWeight: 700,
+    cursor: "pointer",
+    letterSpacing: "0.02em",
+  };
 }
