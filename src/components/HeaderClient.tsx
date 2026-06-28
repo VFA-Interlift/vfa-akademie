@@ -12,6 +12,8 @@ const PAGE_LABELS: Record<string, string> = {
   "/kompetenzpass": "Kompetenzpass",
   "/meine-daten": "Meine Daten",
   "/kurskalender": "Kurskalender",
+  "/feedback": "Feedback",
+  "/admin/feedback": "Feedback-Auswertung",
   "/admin": "Administration",
 };
 

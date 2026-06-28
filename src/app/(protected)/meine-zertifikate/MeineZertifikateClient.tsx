@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CertificateDownloadButton from "@/components/CertificateDownloadButton";
@@ -14,6 +15,8 @@ import {
 
 type SerializableCertificate = {
   id: string;
+  enrollmentId: string;
+  feedbackGiven: boolean;
   title: string;
   issuedAt: string;
   credits: number;
@@ -384,6 +387,49 @@ export default function MeineZertifikateClient({
                             />
                           ) : (
                             <StatusBadge>Dokument wird vorbereitet</StatusBadge>
+                          )}
+
+                          {cert.feedbackGiven ? (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                minHeight: 42,
+                                padding: "10px 18px",
+                                borderRadius: 999,
+                                background: "#F0F0F0",
+                                color: "#888888",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                letterSpacing: "0.04em",
+                              }}
+                            >
+                              ★ Feedback abgegeben
+                            </span>
+                          ) : (
+                            <Link
+                              href={`/feedback/${cert.enrollmentId}`}
+                              className="vfa-btn"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 8,
+                                minHeight: 42,
+                                padding: "10px 22px",
+                                borderRadius: 999,
+                                background: "#FFC100",
+                                color: "#1F1F1F",
+                                border: "1px solid #FFC100",
+                                fontSize: 14,
+                                fontWeight: 800,
+                                letterSpacing: "0.05em",
+                                textTransform: "uppercase",
+                                textDecoration: "none",
+                              }}
+                            >
+                              ★ Feedback abgeben (+10)
+                            </Link>
                           )}
                         </div>
                       </div>

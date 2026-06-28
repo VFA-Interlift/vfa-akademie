@@ -22,6 +22,12 @@ enum CreditTxReason {
   TRAINING_CLAIM
   ADMIN_ADJUST
   CERTIFICATE_ISSUED
+  FEEDBACK_SUBMITTED
+}
+
+enum FeedbackFormType {
+  PUBLIC
+  INHOUSE
 }
 
 enum EnrollmentStatus {
@@ -90,6 +96,7 @@ model User {
   creditTxs          CreditTransaction[]
   enrollments        Enrollment[]
   certificates       Certificate[]
+  trainingFeedbacks  TrainingFeedback[]
   passwordResetTokens PasswordResetToken[]
 
   createdAt DateTime @default(now())
@@ -119,6 +126,7 @@ model Training {
   creditTxs         CreditTransaction[]
   enrollments       Enrollment[]
   certificates      Certificate[]
+  feedbacks         TrainingFeedback[]
   cobraParticipants CobraTrainingParticipant[]
 
   createdAt DateTime @default(now())
@@ -141,6 +149,7 @@ model Enrollment {
   passed   Boolean          @default(false)
 
   certificate Certificate?
+  feedback    TrainingFeedback?
 
   registeredAt DateTime @default(now())
   completedAt  DateTime?
@@ -210,13 +219,15 @@ model CreditTransaction {
   trainingId    String?
   certificateId String? @unique
   claimTokenId  String?
+  feedbackId    String? @unique
 
   meta Json?
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  training    Training?    @relation(fields: [trainingId], references: [id], onDelete: SetNull)
-  certificate Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
-  claimToken  ClaimToken?  @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training    Training?         @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  certificate Certificate?      @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+  claimToken  ClaimToken?       @relation(fields: [claimTokenId], references: [id], onDelete: SetNull)
+  feedback    TrainingFeedback? @relation(fields: [feedbackId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -224,6 +235,31 @@ model CreditTransaction {
   @@index([trainingId, createdAt])
   @@index([claimTokenId, createdAt])
   @@index([certificateId, createdAt])
+}
+
+model TrainingFeedback {
+  id           String @id @default(cuid())
+  userId       String
+  trainingId   String
+  enrollmentId String @unique
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training   @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  formType       FeedbackFormType
+  anonymous      Boolean          @default(false)
+  overallRating  Int?
+  answers        Json
+  creditsAwarded Int              @default(0)
+
+  creditTx CreditTransaction?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trainingId, createdAt])
+  @@index([userId])
 }
 
 model CobraTrainingParticipant {

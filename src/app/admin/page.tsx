@@ -5,11 +5,12 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
-  const [userCount, certCount, enrollmentCount, trainingCount] = await Promise.all([
+  const [userCount, certCount, enrollmentCount, trainingCount, feedbackCount] = await Promise.all([
     prisma.user.count(),
     prisma.certificate.count({ where: { status: "ISSUED" } }),
     prisma.enrollment.count({ where: { status: { in: ["CONFIRMED", "ATTENDED"] } } }),
     prisma.training.count(),
+    prisma.trainingFeedback.count(),
   ]);
 
   return (
@@ -35,6 +36,7 @@ export default async function AdminMenuPage() {
             <StatCard label="Schulungen" value={trainingCount} />
             <StatCard label="Anmeldungen" value={enrollmentCount} />
             <StatCard label="Zertifikate" value={certCount} />
+            <StatCard label="Feedback" value={feedbackCount} />
           </div>
         </AnimatedSection>
 
@@ -76,6 +78,13 @@ export default async function AdminMenuPage() {
               title="Schulungen in der App"
               description="Alle synchronisierten Schulungen mit Kürzel, Dozent, Credits und Cobra-ID einsehen."
               color="#007873"
+            />
+            <AdminTile
+              href="/admin/feedback"
+              abbr="FB"
+              title="Feedback-Auswertung"
+              description="Sterne-Durchschnitte je Frage und Schulung, Freitexte und Excel-Export."
+              color="#FFB000"
             />
           </div>
         </AnimatedSection>

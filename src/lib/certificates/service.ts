@@ -4,6 +4,7 @@ import { formatCertificateKind } from "@/lib/certificates/templates";
 
 export type MyCertificateItem = {
   id: string;
+  enrollmentId: string;
   title: string;
   issuedAt: Date;
   credits: number;
@@ -51,6 +52,7 @@ export async function getMyCertificates(
     ],
     select: {
       id: true,
+      enrollmentId: true,
       title: true,
       issuedAt: true,
       credits: true,
@@ -73,6 +75,7 @@ export async function getMyCertificates(
 
   return certificates.map((cert) => ({
     id: cert.id,
+    enrollmentId: cert.enrollmentId,
     title: cert.title,
     issuedAt: cert.issuedAt,
     credits: cert.credits,

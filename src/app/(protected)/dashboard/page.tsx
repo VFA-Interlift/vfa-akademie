@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
+import FeedbackReminder from "@/components/FeedbackReminder";
+import { getOpenFeedbackCount } from "@/lib/feedback/service";
 
 export const dynamic = "force-dynamic";
 
@@ -85,9 +87,13 @@ export default async function DashboardPage() {
   const enrollmentCount = user.enrollments.length;
   const certCount = user.certificates.length;
 
+  const openFeedbackCount = await getOpenFeedbackCount(user.id);
+
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 18 }}>
+
+        <FeedbackReminder openCount={openFeedbackCount} />
 
         {/* Greeting */}
         <AnimatedSection delayMs={0}>
