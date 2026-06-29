@@ -89,8 +89,8 @@ function getAchievements(
     achievements.push(`VDI-Module absolviert: ${presentLevels.join(", ")}`);
   }
 
-  // Training count milestones
-  if (count >= 25) achievements.push("25+ Schulungen besucht");
+  // Training count milestones — Stufen 5/10/20 synchron zu den Badges (BadgesClient).
+  if (count >= 20) achievements.push("20+ Schulungen besucht");
   else if (count >= 10) achievements.push("10+ Schulungen besucht");
   else if (count >= 5) achievements.push("5+ Schulungen besucht");
   else if (count >= 1) achievements.push(`${count} Schulung${count > 1 ? "en" : ""} besucht`);

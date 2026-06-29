@@ -48,6 +48,7 @@ function rankConfigs(credits: number): BadgeConfig[] {
 function achievementConfigs(completedCount: number, vdiCompleted: string[]): BadgeConfig[] {
   const vdiDone = vdiCompleted.length;
 
+  // Schulungs-Meilensteine 5/10/20 synchron zum Kompetenzpass (getAchievements).
   return [
     {
       key: "vdi-reihe",
@@ -59,6 +60,17 @@ function achievementConfigs(completedCount: number, vdiCompleted: string[]): Bad
       accent: VFA_GREEN,
       tint: "#EAF4F3",
       center: { type: "text", text: "VDI" },
+    },
+    {
+      key: "5-schulungen",
+      title: "5 Schulungen",
+      sublabel: "Aktiv",
+      footnote: completedCount >= 5 ? "Erreicht" : `${Math.min(completedCount, 5)} / 5`,
+      earned: completedCount >= 5,
+      color: "#0B4F4B",
+      accent: VFA_GREEN,
+      tint: "#EAF4F3",
+      center: { type: "text", text: "5" },
     },
     {
       key: "10-schulungen",
