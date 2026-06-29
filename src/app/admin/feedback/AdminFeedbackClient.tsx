@@ -38,7 +38,10 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <AnimatedSection>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 2 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 2, flexWrap: "wrap" }}>
+          <a href="/api/admin/feedback/export/pdf" style={pdfBtnStyle} download>
+            ⬇ Alles als PDF
+          </a>
           <a href="/api/admin/feedback/export" style={exportBtnStyle} download>
             ⬇ Alles als Excel
           </a>
@@ -90,7 +93,14 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
 
               {isOpen && (
                 <div style={{ borderTop: "1px solid #E6E6E6", padding: "16px 20px 18px", background: "#FFFFFF" }}>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                    <a
+                      href={`/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`}
+                      style={pdfBtnStyle}
+                      download
+                    >
+                      ⬇ Diese Schulung als PDF
+                    </a>
                     <a
                       href={`/api/admin/feedback/export?trainingId=${training.trainingId}`}
                       style={exportBtnStyle}
@@ -185,4 +195,9 @@ const exportBtnStyle: React.CSSProperties = {
   fontWeight: 800,
   letterSpacing: "0.03em",
   textDecoration: "none",
+};
+
+const pdfBtnStyle: React.CSSProperties = {
+  ...exportBtnStyle,
+  background: "#007873",
 };
