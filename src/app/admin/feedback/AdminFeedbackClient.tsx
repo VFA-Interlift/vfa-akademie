@@ -37,6 +37,7 @@ type TrainingEval = {
 export default function AdminFeedbackClient({ trainings }: { trainings: TrainingEval[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("recent");
+  const [pdf, setPdf] = useState<{ url: string; title: string; filename: string } | null>(null);
 
   const sortedTrainings = useMemo(() => {
     const latest = (t: TrainingEval) =>
@@ -105,9 +106,19 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
           </label>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <a href="/api/admin/feedback/export/pdf" style={pdfBtnStyle} target="_blank" rel="noopener noreferrer">
+            <button
+              type="button"
+              style={pdfBtnStyle}
+              onClick={() =>
+                setPdf({
+                  url: "/api/admin/feedback/export/pdf",
+                  title: "Alle Schulungen",
+                  filename: `feedback-gesamt-${todayStr()}.pdf`,
+                })
+              }
+            >
               📄 Alles als PDF
-            </a>
+            </button>
             <a href="/api/admin/feedback/export" style={exportBtnStyle} download>
               ⬇ Alles als Excel
             </a>
@@ -161,14 +172,19 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
               {isOpen && (
                 <div style={{ borderTop: "1px solid #E6E6E6", padding: "16px 20px 18px", background: "#FFFFFF" }}>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                    <a
-                      href={`/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`}
+                    <button
+                      type="button"
                       style={pdfBtnStyle}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      onClick={() =>
+                        setPdf({
+                          url: `/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`,
+                          title,
+                          filename: `feedback-${(training.trainingCode?.trim() || training.trainingTitle).replace(/[^\w-]+/g, "_")}-${todayStr()}.pdf`,
+                        })
+                      }
                     >
                       📄 Diese Schulung als PDF
-                    </a>
+                    </button>
                     <a
                       href={`/api/admin/feedback/export?trainingId=${training.trainingId}`}
                       style={exportBtnStyle}
@@ -189,6 +205,116 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
           </AnimatedSection>
         );
       })}
+
+      {pdf && <PdfViewerModal pdf={pdf} onClose={() => setPdf(null)} />}
+    </div>
+  );
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function PdfViewerModal({
+  pdf,
+  onClose,
+}: {
+  pdf: { url: string; title: string; filename: string };
+  onClose: () => void;
+}) {
+  const [downloading, setDownloading] = useState(false);
+
+  async function download() {
+    setDownloading(true);
+    try {
+      const res = await fetch(pdf.url);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = pdf.filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: "rgba(0,0,0,0.55)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 14px",
+          paddingTop: "max(10px, env(safe-area-inset-top))",
+          background: "#1F1F1F",
+          color: "#FFFFFF",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {pdf.title}
+        </div>
+        <button
+          type="button"
+          onClick={download}
+          disabled={downloading}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            minHeight: 38,
+            padding: "8px 16px",
+            borderRadius: 999,
+            border: "none",
+            background: "#007873",
+            color: "#FFFFFF",
+            fontSize: 13,
+            fontWeight: 800,
+            cursor: downloading ? "not-allowed" : "pointer",
+            opacity: downloading ? 0.6 : 1,
+          }}
+        >
+          {downloading ? "…" : "⬇ Download"}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Schließen"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 999,
+            border: "none",
+            background: "rgba(255,255,255,0.15)",
+            color: "#FFFFFF",
+            fontSize: 22,
+            lineHeight: 1,
+            cursor: "pointer",
+          }}
+        >
+          ×
+        </button>
+      </div>
+      <iframe
+        src={pdf.url}
+        title={pdf.title}
+        style={{ flex: 1, width: "100%", border: "none", background: "#FFFFFF" }}
+      />
     </div>
   );
 }
