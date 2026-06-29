@@ -36,8 +36,8 @@ export default function FeedbackReminder({ openCount }: { openCount: number }) {
       style={{
         position: "relative",
         marginBottom: 14,
-        padding: "16px 44px 16px 18px",
-        borderRadius: 14,
+        padding: "10px 40px 10px 14px",
+        borderRadius: 12,
         background: "linear-gradient(135deg, rgba(255,193,0,0.16), rgba(255,193,0,0.06))",
         border: "1px solid rgba(255,176,0,0.45)",
       }}
@@ -64,11 +64,11 @@ export default function FeedbackReminder({ openCount }: { openCount: number }) {
         ×
       </button>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 22, lineHeight: 1 }}>★</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 18, lineHeight: 1 }}>★</span>
         <div style={{ flex: "1 1 220px", minWidth: 0 }}>
-          <div style={{ fontWeight: 800, color: "#1F1F1F", fontSize: 15 }}>{label}</div>
-          <div style={{ color: "#5b4b00", fontSize: 13, marginTop: 2 }}>
+          <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 13 }}>{label}</div>
+          <div style={{ color: "#5b4b00", fontSize: 12, marginTop: 1 }}>
             Geben Sie Feedback und erhalten Sie je Schulung +10 Credits.
           </div>
         </div>
@@ -77,13 +77,13 @@ export default function FeedbackReminder({ openCount }: { openCount: number }) {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            minHeight: 38,
-            padding: "8px 18px",
+            minHeight: 30,
+            padding: "5px 14px",
             borderRadius: 999,
             background: "#007873",
             color: "#FFFFFF",
-            fontSize: 13,
-            fontWeight: 800,
+            fontSize: 12,
+            fontWeight: 700,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
             textDecoration: "none",
