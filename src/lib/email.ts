@@ -98,12 +98,13 @@ export async function sendTrainingReminderEmail(params: {
   trainingTitle: string;
   dateText: string;
   location?: string | null;
+  from?: string;
 }): Promise<void> {
   const resend = new Resend(process.env.RESEND_API_KEY);
   const greetingName = params.name?.trim() ? ` ${params.name.trim()}` : "";
 
   await resend.emails.send({
-    from: FROM,
+    from: params.from || FROM,
     to: params.to,
     replyTo: REPLY_TO,
     subject: `Erinnerung: ${params.trainingTitle} steht an`,
