@@ -66,8 +66,14 @@ const PDF_COORDS: Record<string, PdfTemplateCoords> = {
   "SCHALL_TN-Best App.pdf":                    LAYOUT_STANDARD,
   "SON-TN-Bestätigung App.pdf":                LAYOUT_STANDARD,
 
-  // Zertifikate mit Prüfungsanteil (gleicher Blank-Bereich wie Teilnahmebestätigung)
-  "DGUV-TN-Zert. App.pdf":    LAYOUT_STANDARD,
+  // Zertifikate mit Prüfungsanteil
+  "DGUV-TN-Zert. App.pdf": {
+    fields: {
+      participantName:      { y: 667, size: 13, bold: true, maxWidth: 400, centered: true },
+      participantBirthDate: { y: 647, size: 11,             maxWidth: 400, centered: true, prefix: "geb. " },
+      participationDetails: { y: 629, size: 11,             maxWidth: 400, centered: true },
+    },
+  },
   "EFK2-Zertifikat App.pdf":   LAYOUT_STANDARD,
   "GEF-TN-Zert._neu App.pdf": LAYOUT_STANDARD,
 };
