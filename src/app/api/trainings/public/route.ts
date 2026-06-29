@@ -20,7 +20,7 @@ function guessCategory(code: string | null, title: string) {
   if (
     normalizedCode.includes("SICH") ||
     normalizedCode.includes("DGUV") ||
-    normalizedCode.includes("FFPW")
+    normalizedCode.includes("FPFW")
   ) {
     return "Praxis";
   }

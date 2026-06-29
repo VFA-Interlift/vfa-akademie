@@ -118,12 +118,12 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     isVdiCertificate: false,
   },
 
-  FFPW: {
-    code: "FFPW",
+  FPFW: {
+    code: "FPFW",
     label: "Fachkundige Person fuer die Befreiung von Personen aus Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
-    templateFileName: "FFPW-Teilnahmebest.docx",
-    pdfTemplateFileName: "FFPW-Teilnahmebest. App.pdf",
+    templateFileName: "FPFW-Teilnahmebest.docx",
+    pdfTemplateFileName: "FPFW-Teilnahmebest. App.pdf",
     isVdiCertificate: false,
   },
 

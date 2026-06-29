@@ -58,7 +58,7 @@ const PDF_COORDS: Record<string, PdfTemplateCoords> = {
   "BRG_TN-Best App.pdf":                       LAYOUT_STANDARD,
   "DOK_TN-Zert App.pdf":                       LAYOUT_STANDARD,
   "EINST-Online_Teilnahmebestätigung App.pdf": LAYOUT_STANDARD,
-  "FFPW-Teilnahmebest. App.pdf":               LAYOUT_STANDARD,
+  "FPFW-Teilnahmebest. App.pdf":               LAYOUT_STANDARD,
   "MOD_Teilnahmebestätigung App.pdf":          LAYOUT_STANDARD,
   "NuR-1_Teilnahmebestätigung App.pdf":        LAYOUT_STANDARD,
   "NuR-2_Teilnahmebestätigung App.pdf":        LAYOUT_STANDARD,
