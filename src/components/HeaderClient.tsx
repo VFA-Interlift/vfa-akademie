@@ -32,6 +32,10 @@ const VFA_GREEN = "#007873";
 const VFA_YELLOW = "#FFC100";
 const VFA_GREY = "#C7C7C7";
 
+// Seiten mit eigenem Brand-Layout (Login/Registrierung etc.) – dort soll der
+// globale Header nicht erscheinen.
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+
 export default function HeaderClient() {
   const { status } = useSession();
   const pathname = usePathname();
@@ -161,6 +165,9 @@ export default function HeaderClient() {
   // only after the /api/me fetch resolves – otherwise the header flashes briefly
   // on top before the bottom nav takes over on app start.
   const hideMobileHeader = status === "authenticated" || status === "loading";
+
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  if (isAuthRoute) return null;
 
   return (
     <header

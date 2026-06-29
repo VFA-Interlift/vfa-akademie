@@ -81,7 +81,11 @@ textarea {
 .auth-split {
   display: grid;
   grid-template-columns: 1fr;
-  min-height: calc(100vh - 78px);
+  min-height: 100vh;
+}
+/* Auth-Seiten bringen ihr eigenes Brand-Layout mit – globalen Header-Offset entfernen. */
+.page-content:has(.auth-split) {
+  padding-top: 0 !important;
 }
 @media (min-width: 760px) {
   .auth-split {
