@@ -3,8 +3,10 @@ type AppInputProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: "text" | "email" | "tel" | "password" | "number";
+  type?: "text" | "email" | "tel" | "password" | "number" | "date";
   disabled?: boolean;
+  max?: string;
+  min?: string;
 };
 
 export default function AppInput({
@@ -14,6 +16,8 @@ export default function AppInput({
   placeholder,
   type = "text",
   disabled = false,
+  max,
+  min,
 }: AppInputProps) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
@@ -33,6 +37,8 @@ export default function AppInput({
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        max={max}
+        min={min}
         onChange={(event) => onChange(event.target.value)}
         className="vfa-input"
         style={{

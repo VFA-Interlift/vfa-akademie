@@ -11,15 +11,30 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setLoading(true);
     setMsg(null);
+
+    if (password.length < 8) {
+      setMsg("Das Passwort muss mindestens 8 Zeichen haben.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setMsg("Die Passwörter stimmen nicht überein.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/register", {
@@ -40,7 +55,8 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/login");
+      setDone(true);
+      setTimeout(() => router.push("/login"), 1800);
     } catch {
       setMsg("Serverfehler beim Registrieren.");
     } finally {
@@ -71,40 +87,70 @@ export default function RegisterPage() {
             Registriere dich für die VFA-Akademie.
           </p>
 
-          <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
-            <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
-              <AppInput label="Name" value={name} placeholder="Max Mustermann" onChange={setName} />
-              <AppInput label="Geburtsdatum (TT.MM.JJJJ)" value={birthDate} placeholder="31.01.1990" onChange={setBirthDate} />
-              <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" onChange={setEmail} />
-              <AppInput label="Passwort" value={password} placeholder="Mindestens 8 Zeichen" type="password" onChange={setPassword} />
-
-              <AppButton
-                type="submit"
-                disabled={loading || !email.trim() || !password.trim() || !name.trim()}
-                variant="primary"
-                fullWidth
+          {done ? (
+            <AppCard accent="none" style={{ padding: 28, borderRadius: 16, textAlign: "center" }}>
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "rgba(0,120,115,0.10)",
+                  border: "1px solid rgba(0,120,115,0.30)",
+                  color: "#007873",
+                  fontSize: 30,
+                  fontWeight: 900,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 14px",
+                }}
               >
-                {loading ? "Registrieren..." : "Konto erstellen"}
-              </AppButton>
+                ✓
+              </div>
+              <h2 style={{ margin: "0 0 6px", color: "#007873", fontSize: 22, fontWeight: 800 }}>
+                Konto erstellt!
+              </h2>
+              <p style={{ margin: 0, color: "#333333", fontSize: 15, lineHeight: 1.5 }}>
+                Du wirst gleich zur Anmeldung weitergeleitet …
+              </p>
+            </AppCard>
+          ) : (
+            <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
+              <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
+                <AppInput label="Name" value={name} placeholder="Max Mustermann" onChange={setName} />
+                <AppInput label="Geburtsdatum" value={birthDate} type="date" max={todayIso} onChange={setBirthDate} />
+                <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" onChange={setEmail} />
+                <AppInput label="Passwort" value={password} placeholder="Mindestens 8 Zeichen" type="password" onChange={setPassword} />
+                <AppInput label="Passwort bestätigen" value={confirmPassword} placeholder="Passwort wiederholen" type="password" onChange={setConfirmPassword} />
 
-              {msg && (
-                <div
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(176,0,32,0.2)",
-                    background: "rgba(176,0,32,0.05)",
-                    color: "#B00020",
-                    fontWeight: 600,
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                  }}
+                <AppButton
+                  type="submit"
+                  disabled={loading || !email.trim() || !password.trim() || !confirmPassword.trim() || !name.trim() || !birthDate.trim()}
+                  variant="primary"
+                  fullWidth
                 >
-                  {msg}
-                </div>
-              )}
-            </form>
-          </AppCard>
+                  {loading ? "Registrieren..." : "Konto erstellen"}
+                </AppButton>
+
+                {msg && (
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(176,0,32,0.2)",
+                      background: "rgba(176,0,32,0.05)",
+                      color: "#B00020",
+                      fontWeight: 600,
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {msg}
+                  </div>
+                )}
+              </form>
+            </AppCard>
+          )}
 
           <p style={{ marginTop: 20, textAlign: "center", color: "#888888", fontSize: 14 }}>
             Bereits ein Konto?{" "}

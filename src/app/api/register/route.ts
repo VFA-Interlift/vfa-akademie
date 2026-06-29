@@ -4,17 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-function parseGermanDate(value: string): Date | null {
-  const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(value.trim());
-
-  if (!match) {
-    return null;
-  }
-
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-
+function buildUtcDate(year: number, month: number, day: number): Date | null {
   const date = new Date(Date.UTC(year, month - 1, day));
 
   const isValid =
@@ -23,6 +13,26 @@ function parseGermanDate(value: string): Date | null {
     date.getUTCDate() === day;
 
   return isValid ? date : null;
+}
+
+/**
+ * Akzeptiert sowohl ISO `YYYY-MM-DD` (vom nativen Datumsfeld) als auch das
+ * deutsche `TT.MM.JJJJ` (für Abwärtskompatibilität / manuelle Eingabe).
+ */
+function parseBirthDate(value: string): Date | null {
+  const trimmed = value.trim();
+
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (isoMatch) {
+    return buildUtcDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
+  }
+
+  const deMatch = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(trimmed);
+  if (deMatch) {
+    return buildUtcDate(Number(deMatch[3]), Number(deMatch[2]), Number(deMatch[1]));
+  }
+
+  return null;
 }
 
 function splitName(fullName: string) {
@@ -91,13 +101,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const birthDate = parseGermanDate(birthDateStr);
+    const birthDate = parseBirthDate(birthDateStr);
 
     if (!birthDate) {
       return NextResponse.json(
         {
           ok: false,
-          error: "Geburtsdatum bitte als TT.MM.JJJJ eingeben.",
+          error: "Bitte ein gültiges Geburtsdatum angeben.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (birthDate.getTime() > Date.now()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Das Geburtsdatum darf nicht in der Zukunft liegen.",
         },
         { status: 400 }
       );
