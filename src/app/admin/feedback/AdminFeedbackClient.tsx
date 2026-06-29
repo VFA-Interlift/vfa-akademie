@@ -105,8 +105,8 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
           </label>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <a href="/api/admin/feedback/export/pdf" style={pdfBtnStyle} download>
-              ⬇ Alles als PDF
+            <a href="/api/admin/feedback/export/pdf" style={pdfBtnStyle} target="_blank" rel="noopener noreferrer">
+              📄 Alles als PDF
             </a>
             <a href="/api/admin/feedback/export" style={exportBtnStyle} download>
               ⬇ Alles als Excel
@@ -164,9 +164,10 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                     <a
                       href={`/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`}
                       style={pdfBtnStyle}
-                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      ⬇ Diese Schulung als PDF
+                      📄 Diese Schulung als PDF
                     </a>
                     <a
                       href={`/api/admin/feedback/export?trainingId=${training.trainingId}`}
