@@ -28,8 +28,8 @@ export default function FeedbackReminder({ openCount }: { openCount: number }) {
 
   const label =
     openCount === 1
-      ? "Für eine abgeschlossene Schulung steht noch Ihr Feedback aus."
-      : `Für ${openCount} abgeschlossene Schulungen steht noch Ihr Feedback aus.`;
+      ? "Für eine abgeschlossene Schulung steht noch dein Feedback aus."
+      : `Für ${openCount} abgeschlossene Schulungen steht noch dein Feedback aus.`;
 
   return (
     <div
@@ -69,7 +69,7 @@ export default function FeedbackReminder({ openCount }: { openCount: number }) {
         <div style={{ flex: "1 1 220px", minWidth: 0 }}>
           <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 13 }}>{label}</div>
           <div style={{ color: "#5b4b00", fontSize: 12, marginTop: 1 }}>
-            Geben Sie Feedback und erhalten Sie je Schulung +10 Credits.
+            Gib Feedback und erhalte je Schulung +10 Credits.
           </div>
         </div>
         <Link

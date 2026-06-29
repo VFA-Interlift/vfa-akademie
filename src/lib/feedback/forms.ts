@@ -87,10 +87,10 @@ export function getFeedbackForm(
   sections.push({
     title: "Gesamtbewertung der Schulung",
     questions: [
-      { key: OVERALL_RATING_KEY, label: "Ihre allgemeine Zufriedenheit mit der Schulung", type: "rating", required: true },
-      r("weiterempfehlung", "Wie wahrscheinlich ist es, dass Sie diese Schulung an Kollegen oder Freunde weiterempfehlen?"),
+      { key: OVERALL_RATING_KEY, label: "Deine allgemeine Zufriedenheit mit der Schulung", type: "rating", required: true },
+      r("weiterempfehlung", "Wie wahrscheinlich ist es, dass du diese Schulung an Kollegen oder Freunde weiterempfiehlst?"),
       r("zufriedenheitErgebnisse", "Zufriedenheit mit den Ergebnissen der Schulung"),
-      r("lernerfolg", "Lernerfolg für Sie persönlich"),
+      r("lernerfolg", "Lernerfolg für dich persönlich"),
       r("anwendbarkeitPraxis", "Anwendbarkeit in der Praxis"),
     ],
   });
@@ -129,7 +129,7 @@ export function getFeedbackForm(
       r("skriptBegleitung", "Das ausgedruckte Skript eignet sich gut zur Begleitung der Schulung."),
       {
         key: "skriptform",
-        label: "Welche Skriptformen zur Begleitung und Nachbereitung der Schulung wünschen Sie sich?",
+        label: "Welche Skriptformen zur Begleitung und Nachbereitung der Schulung wünschst du dir?",
         type: "single",
         options: SKRIPTFORM_OPTIONS,
       },
@@ -179,11 +179,11 @@ export function getFeedbackForm(
   }
 
   sections.push({
-    title: "Ihre Anmerkungen",
+    title: "Deine Anmerkungen",
     questions: [
       t("besondersGut", "Besonders gut gefallen hat mir"),
       t("wenigerGut", "Weniger gut gefallen hat mir"),
-      t("themenwuensche", "Welche Schulungsthemen wünschen Sie sich für die Zukunft?"),
+      t("themenwuensche", "Welche Schulungsthemen wünschst du dir für die Zukunft?"),
     ],
   });
 

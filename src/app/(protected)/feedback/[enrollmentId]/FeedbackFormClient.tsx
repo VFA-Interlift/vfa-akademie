@@ -45,7 +45,7 @@ export default function FeedbackFormClient({
 
     const overall = answers["allgemeineZufriedenheit"];
     if (typeof overall !== "number" || overall < 1) {
-      setError("Bitte bewerten Sie mindestens Ihre allgemeine Zufriedenheit (Pflichtfeld).");
+      setError("Bitte bewerte mindestens deine allgemeine Zufriedenheit (Pflichtfeld).");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -63,7 +63,7 @@ export default function FeedbackFormClient({
         if (data.error === "ALREADY_SUBMITTED") {
           setError("Für diese Schulung wurde bereits Feedback abgegeben.");
         } else if (data.error === "INVALID_ANSWERS") {
-          setError("Einige Angaben sind ungültig. Bitte prüfen Sie Ihre Eingaben.");
+          setError("Einige Angaben sind ungültig. Bitte prüfe deine Eingaben.");
         } else {
           setError("Das Feedback konnte nicht gespeichert werden. Bitte später erneut versuchen.");
         }
@@ -86,10 +86,10 @@ export default function FeedbackFormClient({
           <div style={{ textAlign: "center", padding: "20px 8px" }}>
             <div style={{ fontSize: 44, lineHeight: 1 }}>★</div>
             <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: 24, fontWeight: 800 }}>
-              Vielen Dank für Ihr Feedback!
+              Vielen Dank für dein Feedback!
             </h2>
             <p style={{ margin: 0, color: "#333333", fontSize: 16 }}>
-              Ihnen wurden <strong>+{FEEDBACK_CREDITS} Credits</strong> gutgeschrieben.
+              Dir wurden <strong>+{FEEDBACK_CREDITS} Credits</strong> gutgeschrieben.
             </p>
           </div>
         </AppCard>
@@ -102,7 +102,7 @@ export default function FeedbackFormClient({
       <AnimatedSection>
         <AppCard>
           <p style={{ margin: "0 0 14px", color: "#333333", lineHeight: 1.6 }}>
-            Ihre Rückmeldung zur Schulung <strong>{trainingTitle}</strong>. Bewerten Sie mit 1–5
+            Deine Rückmeldung zur Schulung <strong>{trainingTitle}</strong>. Bewerte mit 1–5
             Sternen. Nur die allgemeine Zufriedenheit ist Pflicht – alles andere ist freiwillig.
           </p>
 
@@ -114,7 +114,7 @@ export default function FeedbackFormClient({
               style={{ width: 18, height: 18, accentColor: "#007873" }}
             />
             <span style={{ fontSize: 15, color: "#1F1F1F", fontWeight: 600 }}>
-              Anonym ausfüllen (Ihr Name erscheint nicht in der Auswertung)
+              Anonym ausfüllen (dein Name erscheint nicht in der Auswertung)
             </span>
           </label>
         </AppCard>
