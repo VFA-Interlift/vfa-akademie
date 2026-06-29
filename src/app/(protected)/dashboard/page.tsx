@@ -100,8 +100,6 @@ export default async function DashboardPage() {
     <main className="page-main">
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 18 }}>
 
-        <FeedbackReminder openCount={openFeedbackCount} />
-
         {/* Greeting */}
         <AnimatedSection delayMs={0}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -118,6 +116,8 @@ export default async function DashboardPage() {
             </div>
           </div>
         </AnimatedSection>
+
+        <FeedbackReminder openCount={openFeedbackCount} />
 
         {/* Profile completeness hint */}
         {(!user.firstName || !user.lastName) && (
@@ -304,6 +304,36 @@ export default async function DashboardPage() {
           </AppCard>
         </AnimatedSection>
 
+        {/* Social media (dezent) */}
+        <AnimatedSection delayMs={320}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, padding: "4px 0 8px" }}>
+            <a
+              href="https://www.instagram.com/vfaakademie/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="VFA-Akademie auf Instagram"
+              style={socialLinkStyle}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2.5" y="2.5" width="19" height="19" rx="5" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" />
+              </svg>
+            </a>
+            <a
+              href="https://www.linkedin.com/company/vfa-interlift-e-v/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="VFA-Interlift e.V. auf LinkedIn"
+              style={socialLinkStyle}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0-.02-5ZM3 9.5h4v11H3v-11Zm6 0h3.8v1.5h.05c.53-.95 1.83-1.95 3.77-1.95C20.2 9.05 21 11 21 14v6.5h-4v-5.8c0-1.38-.02-3.16-1.93-3.16-1.93 0-2.22 1.5-2.22 3.06v5.9H9v-11Z" />
+              </svg>
+            </a>
+          </div>
+        </AnimatedSection>
+
       </div>
     </main>
   );
@@ -383,6 +413,17 @@ const secondaryLinkStyle: CSSProperties = {
   fontSize: 13,
   textDecoration: "none",
   border: "1px solid #007873",
+};
+
+const socialLinkStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 34,
+  height: 34,
+  borderRadius: 999,
+  color: "#B0B0B0",
+  textDecoration: "none",
 };
 
 const linkStyle: CSSProperties = {

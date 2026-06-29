@@ -28,7 +28,7 @@ export default async function FeedbackPage({
 
         <FeedbackFormClient
           enrollmentId={ctx.enrollmentId}
-          trainingTitle={ctx.trainingCode?.trim() || ctx.trainingTitle}
+          trainingTitle={ctx.displayTitle}
           sections={ctx.sections}
         />
       </div>

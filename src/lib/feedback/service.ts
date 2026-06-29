@@ -32,6 +32,8 @@ export function formTypeFor(training: { title: string; code: string | null }): F
 
 export type EnrollmentForFeedback = {
   enrollmentId: string;
+  /** Titel exakt wie auf der Zertifikatskarte (Zert-Code bevorzugt). */
+  displayTitle: string;
   trainingTitle: string;
   trainingCode: string | null;
   formType: FeedbackFormType;
@@ -39,6 +41,19 @@ export type EnrollmentForFeedback = {
   sections: FeedbackSection[];
   alreadySubmitted: boolean;
 };
+
+/**
+ * Liefert denselben Anzeigetitel wie die Zertifikatskarte
+ * (`MeineZertifikateClient#getDisplayCertificateTitle`): Zertifikats-Code
+ * bevorzugt, sonst der von Klammerzusätzen bereinigte Schulungstitel.
+ */
+function feedbackDisplayTitle(
+  certificateCode: string | null | undefined,
+  trainingTitle: string
+): string {
+  if (certificateCode?.trim()) return certificateCode.trim();
+  return trainingTitle.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+}
 
 /**
  * Lädt eine Anmeldung für die Feedback-Abgabe, prüft Eigentümerschaft und
@@ -56,6 +71,7 @@ export async function getEnrollmentForFeedback(
       status: true,
       user: { select: { email: true } },
       training: { select: { title: true, code: true, instructor: true } },
+      certificate: { select: { code: true } },
       feedback: { select: { id: true } },
     },
   });
@@ -69,6 +85,7 @@ export async function getEnrollmentForFeedback(
 
   return {
     enrollmentId: enrollment.id,
+    displayTitle: feedbackDisplayTitle(enrollment.certificate?.code, enrollment.training.title),
     trainingTitle: enrollment.training.title,
     trainingCode: enrollment.training.code,
     formType,
