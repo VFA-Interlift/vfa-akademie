@@ -67,9 +67,13 @@ export default async function DozentPage() {
   if (!user) redirect("/login");
   if (!user.isInstructor) redirect("/dashboard");
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const allTrainings = await prisma.training.findMany({
     where: {
       instructor: { not: null },
+      date: { gte: today },
     },
     orderBy: { date: "asc" },
     select: {
@@ -84,15 +88,9 @@ export default async function DozentPage() {
     },
   });
 
-  const myTrainings = allTrainings.filter((t) =>
+  const upcoming = allTrainings.filter((t) =>
     isInstructorMatch(t.instructor, user.firstName, user.lastName, user.name)
   );
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const upcoming = myTrainings.filter((t) => new Date(t.date) >= today);
-  const past = myTrainings.filter((t) => new Date(t.date) < today);
 
   const displayName =
     [user.firstName, user.lastName].filter(Boolean).join(" ") ||
@@ -106,46 +104,29 @@ export default async function DozentPage() {
           <PageHeader title="Dozenten" showTitle={true} />
         </AnimatedSection>
 
-        {myTrainings.length === 0 ? (
+        {upcoming.length === 0 ? (
           <AnimatedSection delayMs={80}>
             <AppCard>
               <div style={{ fontSize: 17, fontWeight: 700, color: "#007873", marginBottom: 8 }}>
-                Keine Schulungen gefunden
+                Keine bevorstehenden Schulungen
               </div>
               <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
-                Es wurden keine Schulungen gefunden, bei denen dein Name als Dozent hinterlegt ist.
+                Es wurden keine zukünftigen Schulungen gefunden, bei denen dein Name als Dozent hinterlegt ist.
                 Bitte prüfe dein Profil – Vor- und Nachname müssen mit den Cobra-Daten übereinstimmen.
               </p>
             </AppCard>
           </AnimatedSection>
         ) : (
-          <div style={{ display: "grid", gap: 24 }}>
-            {upcoming.length > 0 && (
-              <AnimatedSection delayMs={80}>
-                <div style={{ display: "grid", gap: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                    Bevorstehend ({upcoming.length})
-                  </div>
-                  {upcoming.map((t, i) => (
-                    <TrainingCard key={t.id} training={t} index={i} highlight />
-                  ))}
-                </div>
-              </AnimatedSection>
-            )}
-
-            {past.length > 0 && (
-              <AnimatedSection delayMs={160}>
-                <div style={{ display: "grid", gap: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#888888", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                    Vergangen ({past.length})
-                  </div>
-                  {past.map((t, i) => (
-                    <TrainingCard key={t.id} training={t} index={i} highlight={false} />
-                  ))}
-                </div>
-              </AnimatedSection>
-            )}
-          </div>
+          <AnimatedSection delayMs={80}>
+            <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                Bevorstehend ({upcoming.length})
+              </div>
+              {upcoming.map((t, i) => (
+                <TrainingCard key={t.id} training={t} index={i} highlight />
+              ))}
+            </div>
+          </AnimatedSection>
         )}
       </div>
     </main>
