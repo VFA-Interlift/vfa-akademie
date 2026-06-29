@@ -1,10 +1,13 @@
 import { Resend } from "resend";
 
 // Absender. Standard ist die Resend-Sandbox (funktioniert nur an verifizierte
-// Adressen). Sobald die Domain vfa-interlift.de in Resend verifiziert ist, in
-// Vercel die Env-Variable MAIL_FROM auf "VFA-Akademie <info@vfa-interlift.de>"
-// setzen – dann greift der echte Absender ohne Code-Deploy.
+// Adressen). Nach Verifikation der Domain vfa-akademie.de in Vercel die Env
+// MAIL_FROM auf "VFA-Akademie <info@vfa-akademie.de>" setzen – greift ohne Deploy.
 const FROM = process.env.MAIL_FROM || "VFA-Akademie <onboarding@resend.dev>";
+
+// Antworten sollen ins Firmenpostfach gehen, auch wenn von @vfa-akademie.de
+// gesendet wird. Per Env REPLY_TO überschreibbar.
+const REPLY_TO = process.env.REPLY_TO || "info@vfa-interlift.de";
 
 export async function sendPasswordResetEmail(
   to: string,
@@ -15,6 +18,7 @@ export async function sendPasswordResetEmail(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: REPLY_TO,
     subject: "Passwort zurücksetzen – VFA-Akademie",
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
@@ -101,6 +105,7 @@ export async function sendTrainingReminderEmail(params: {
   await resend.emails.send({
     from: FROM,
     to: params.to,
+    replyTo: REPLY_TO,
     subject: `Erinnerung: ${params.trainingTitle} steht an`,
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
