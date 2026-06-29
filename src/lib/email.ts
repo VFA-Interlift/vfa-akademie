@@ -222,7 +222,7 @@ function reminderHtml(p: {
           <tr><td style="padding:20px 32px;background:#FAFAF9;border-top:1px solid #ECECEC;font-family:Arial,Helvetica,sans-serif">
             <div style="font-size:13px;font-weight:700;color:#555555">VFA-Akademie</div>
             <div style="font-size:12px;color:#999999;margin-top:2px;line-height:1.5">
-              Verband Freier Aufzugsunternehmer e.V.<br>
+              Verband für Aufzugstechnik e.V.<br>
               Diese E-Mail wurde automatisch versendet. Antworten erreichen uns unter ${REPLY_TO}.
             </div>
           </td></tr>

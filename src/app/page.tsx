@@ -31,7 +31,7 @@ export default function HomePage() {
                   lineHeight: 1.4,
                 }}
               >
-                Verband Freier<br />Aufzugsunternehmer
+                Verband für<br />Aufzugstechnik
               </span>
             </div>
 

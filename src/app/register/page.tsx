@@ -187,7 +187,7 @@ function AuthBrandPanel() {
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em" }}>VFA-Akademie</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500, letterSpacing: "0.04em", marginTop: 2 }}>
-              VERBAND FREIER AUFZUGSUNTERNEHMER
+              VERBAND FÜR AUFZUGSTECHNIK
             </div>
           </div>
         </div>
