@@ -85,7 +85,13 @@ export default async function DashboardPage() {
     (e) => new Date(e.training.date) >= today && e.status !== "ATTENDED"
   );
 
-  const enrollmentCount = user.enrollments.length;
+  // Nur tatsächlich bevorstehende/laufende Schulungen zählen (gleiche Logik wie
+  // „Meine Schulungen": endDate bzw. date >= heute). Vergangene, noch nicht vom
+  // Cron in Zertifikate umgewandelte Anmeldungen sollen hier nicht mitzählen.
+  const upcomingEnrollments = user.enrollments.filter(
+    (e) => new Date(e.training.endDate ?? e.training.date) >= today
+  );
+  const enrollmentCount = upcomingEnrollments.length;
   const certCount = user.certificates.length;
 
   const openFeedbackCount = await getOpenFeedbackCount(user.id);
