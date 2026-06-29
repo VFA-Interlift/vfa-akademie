@@ -1,7 +1,10 @@
 import { Resend } from "resend";
 
-// TODO: Nach DNS-Verifikation durch IT auf "VFA-Akademie <info@vfa-akademie.de>" ändern
-const FROM = "VFA-Akademie <onboarding@resend.dev>";
+// Absender. Standard ist die Resend-Sandbox (funktioniert nur an verifizierte
+// Adressen). Sobald die Domain vfa-interlift.de in Resend verifiziert ist, in
+// Vercel die Env-Variable MAIL_FROM auf "VFA-Akademie <info@vfa-interlift.de>"
+// setzen – dann greift der echte Absender ohne Code-Deploy.
+const FROM = process.env.MAIL_FROM || "VFA-Akademie <onboarding@resend.dev>";
 
 export async function sendPasswordResetEmail(
   to: string,
