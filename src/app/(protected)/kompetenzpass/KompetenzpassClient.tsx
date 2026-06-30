@@ -25,13 +25,14 @@ type RankInfo = {
   min: number;
   max: number | null;
   color: string;
+  badge: string;
 };
 
 const RANKS: RankInfo[] = [
-  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, max: 499, color: "#A86C3D" },
-  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, max: 1499, color: "#8E99A8" },
-  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, max: 3499, color: "#C79A16" },
-  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, max: null, color: "#007873" },
+  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, max: 499, color: "#A86C3D", badge: "/badges/bronze-thumb.png" },
+  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, max: 1499, color: "#8E99A8", badge: "/badges/silber-thumb.png" },
+  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, max: 3499, color: "#C79A16", badge: "/badges/gold-thumb.png" },
+  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, max: null, color: "#007873", badge: "/badges/vfa-experte-thumb.png" },
 ];
 
 function getRankInfo(credits: number): RankInfo {
@@ -193,8 +194,12 @@ export default function KompetenzpassClient({
             }}
           >
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.7 }}>
-                VFA-Akademie
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/mark-light.png" alt="" width={22} height={22} style={{ display: "block", flexShrink: 0 }} />
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.7 }}>
+                  VFA-Akademie
+                </div>
               </div>
               <div style={{ fontSize: "clamp(22px, 6vw, 32px)", fontWeight: 800, lineHeight: 1.1, marginTop: 6, letterSpacing: "-0.02em" }}>
                 {displayName || "Mein Kompetenzpass"}
@@ -208,15 +213,21 @@ export default function KompetenzpassClient({
 
             <div
               style={{
-                display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 2,
+                display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 6,
                 padding: "12px 18px", borderRadius: 14,
                 background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.25)",
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: 22 }}>★</span>
-              <span style={{ fontSize: 16, fontWeight: 900, lineHeight: 1.1, whiteSpace: "nowrap" }}>{rank.label}</span>
-              <span style={{ fontSize: 11, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={rank.badge}
+                alt={`${rank.label} Badge`}
+                width={66}
+                height={66}
+                style={{ display: "block" }}
+              />
+              <span style={{ fontSize: 11, opacity: 0.85, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
             </div>
           </div>
 
