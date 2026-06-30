@@ -18,15 +18,17 @@ type BadgeConfig = {
   accent: string; // Ring/Akzent
   tint: string; // Innenfläche
   center: Center;
+  badgeImage?: string; // hochauflösendes Schild-PNG (Download)
+  badgeThumb?: string; // verkleinerte Variante (Anzeige)
 };
 
 // ---------- Ränge (credit-basiert) ----------
 
 const RANKS = [
-  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0" },
-  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, color: "#5A6472", accent: "#8E99A8", tint: "#F4F6F8" },
-  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, color: "#7C5A0A", accent: "#C79A16", tint: "#FFFBEE" },
-  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, color: "#0B4F4B", accent: VFA_GREEN, tint: "#EAF4F3" },
+  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0", file: "bronze" },
+  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, color: "#5A6472", accent: "#8E99A8", tint: "#F4F6F8", file: "silber" },
+  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, color: "#7C5A0A", accent: "#C79A16", tint: "#FFFBEE", file: "gold" },
+  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, color: "#0B4F4B", accent: VFA_GREEN, tint: "#EAF4F3", file: "vfa-experte" },
 ];
 
 function rankConfigs(credits: number): BadgeConfig[] {
@@ -40,6 +42,8 @@ function rankConfigs(credits: number): BadgeConfig[] {
     accent: rank.accent,
     tint: rank.tint,
     center: { type: "star" },
+    badgeImage: `/badges/${rank.file}.png`,
+    badgeThumb: `/badges/${rank.file}-thumb.png`,
   }));
 }
 
@@ -137,6 +141,12 @@ function generateBadgeSVG(config: BadgeConfig): string {
 }
 
 function downloadBadge(config: BadgeConfig, format: "svg" | "png") {
+  // Ränge: das echte hochauflösende Schild-PNG direkt ausliefern.
+  if (config.badgeImage) {
+    triggerDownload(config.badgeImage, `vfa-badge-${config.key}.png`);
+    return;
+  }
+
   const svg = generateBadgeSVG({ ...config, earned: true });
   if (format === "svg") {
     const blob = new Blob([svg], { type: "image/svg+xml" });
@@ -271,7 +281,10 @@ function BadgeSection({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
         {badges.map((badge) => {
           const isCurrent = badge.key === highlightKey;
-          const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateBadgeSVG(badge))}`;
+          const isImage = Boolean(badge.badgeThumb);
+          const imgSrc = isImage
+            ? (badge.badgeThumb as string)
+            : `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateBadgeSVG(badge))}`;
 
           return (
             <div
@@ -282,17 +295,29 @@ function BadgeSection({
                 style={{
                   position: "relative",
                   width: "100%",
-                  aspectRatio: "320 / 360",
+                  aspectRatio: isImage ? "1 / 1" : "320 / 360",
                   borderRadius: 14,
                   overflow: "hidden",
-                  boxShadow: isCurrent
-                    ? `0 8px 26px rgba(0,0,0,0.13), 0 0 0 2px ${badge.accent}`
-                    : "0 4px 12px rgba(0,0,0,0.07)",
+                  boxShadow: isImage
+                    ? (isCurrent ? `0 0 0 2px ${badge.accent}` : "none")
+                    : isCurrent
+                      ? `0 8px 26px rgba(0,0,0,0.13), 0 0 0 2px ${badge.accent}`
+                      : "0 4px 12px rgba(0,0,0,0.07)",
                   transition: "box-shadow 200ms ease",
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={svgDataUrl} alt={`${badge.title} Badge`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <img
+                  src={imgSrc}
+                  alt={`${badge.title} Badge`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: isImage ? "contain" : "cover",
+                    display: "block",
+                    filter: badge.earned ? "none" : "grayscale(1)",
+                  }}
+                />
                 {isCurrent && (
                   <div
                     style={{
@@ -313,15 +338,35 @@ function BadgeSection({
                 )}
               </div>
 
+              {/* Beim echten Schild stehen Credits/Status nicht im Bild → als Caption darunter. */}
+              {isImage && (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: badge.color, letterSpacing: "0.04em" }}>
+                    {badge.sublabel.toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#888888", marginTop: 2 }}>{badge.footnote}</div>
+                </div>
+              )}
+
               {badge.earned && (
-                <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                  <button type="button" onClick={() => downloadBadge(badge, "svg")} style={downloadButtonStyle(badge.accent, badge.color, false)}>
-                    ↓ SVG
-                  </button>
-                  <button type="button" onClick={() => downloadBadge(badge, "png")} style={downloadButtonStyle(badge.accent, "#FFFFFF", true)}>
+                isImage ? (
+                  <button
+                    type="button"
+                    onClick={() => downloadBadge(badge, "png")}
+                    style={{ ...downloadButtonStyle(badge.accent, "#FFFFFF", true), width: "100%" }}
+                  >
                     ↓ PNG
                   </button>
-                </div>
+                ) : (
+                  <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <button type="button" onClick={() => downloadBadge(badge, "svg")} style={downloadButtonStyle(badge.accent, badge.color, false)}>
+                      ↓ SVG
+                    </button>
+                    <button type="button" onClick={() => downloadBadge(badge, "png")} style={downloadButtonStyle(badge.accent, "#FFFFFF", true)}>
+                      ↓ PNG
+                    </button>
+                  </div>
+                )
               )}
             </div>
           );
