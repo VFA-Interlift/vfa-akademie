@@ -145,6 +145,27 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
                           {training.description && <Info label="Inhalte" value={training.description} />}
                           <AddressInfo lines={addressLines} />
                         </div>
+
+                        <a
+                          href={`/api/trainings/${training.id}/calendar`}
+                          style={{
+                            marginTop: 18,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "11px 18px",
+                            borderRadius: 10,
+                            background: "#007873",
+                            color: "#FFFFFF",
+                            fontSize: 14,
+                            fontWeight: 800,
+                            textDecoration: "none",
+                            border: "none",
+                          }}
+                        >
+                          <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>📅</span>
+                          Zum Kalender hinzufügen
+                        </a>
                       </div>
                     </AnimatedSection>
                   )}
