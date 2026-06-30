@@ -453,15 +453,16 @@ textarea {
   }
   .kompetenzpass-page > div {
     max-width: none !important;
-    width: 210mm !important;
+    width: 100% !important;
     margin: 0 !important;
     gap: 0 !important;
     overflow: visible !important;
   }
-  /* Dokument auf physische A4-Größe zwingen, damit es das Blatt randlos füllt
-     (mobile Browser rendern den Druck sonst in Geräte-Breite → großer Rand rechts) */
+  /* Dokument füllt die gesamte Druckfläche (width:100% statt fixer 210mm – sonst
+     skalieren mobile Browser / „Als PDF speichern" das feste Maß und es bleibt
+     rechts ein großer Rand). */
   .kp-document {
-    width: 210mm !important;
+    width: 100% !important;
     /* knapp unter A4-Höhe (297mm), damit kein Rundungs-Überlauf eine 2. Seite erzeugt */
     min-height: 296mm !important;
     border: none !important;
