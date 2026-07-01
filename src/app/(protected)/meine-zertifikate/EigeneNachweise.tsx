@@ -114,28 +114,28 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
               />
             </Field>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-              <Field label="Kategorie">
-                <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
-                  {DOC_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Aussteller (optional)">
-                <input
-                  type="text"
-                  value={issuer}
-                  onChange={(e) => setIssuer(e.target.value)}
-                  placeholder="z. B. TÜV Süd"
-                  maxLength={200}
-                  style={inputStyle}
-                />
-              </Field>
-              <Field label="Datum (optional)">
-                <input type="date" value={issuedDate} onChange={(e) => setIssuedDate(e.target.value)} style={inputStyle} />
-              </Field>
-            </div>
+            <Field label="Kategorie">
+              <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
+                {DOC_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Aussteller (optional)">
+              <input
+                type="text"
+                value={issuer}
+                onChange={(e) => setIssuer(e.target.value)}
+                placeholder="z. B. TÜV Süd"
+                maxLength={200}
+                style={inputStyle}
+              />
+            </Field>
+
+            <Field label="Datum (optional)">
+              <input type="date" value={issuedDate} onChange={(e) => setIssuedDate(e.target.value)} style={inputStyle} />
+            </Field>
 
             <Field label="Datei (PDF, JPG oder PNG · max. 4 MB)">
               <input ref={fileRef} type="file" accept="application/pdf,image/jpeg,image/png" style={{ fontSize: 14 }} />
