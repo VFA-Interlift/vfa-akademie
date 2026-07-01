@@ -100,6 +100,7 @@ model User {
   certificates       Certificate[]
   trainingFeedbacks  TrainingFeedback[]
   passwordResetTokens PasswordResetToken[]
+  documents          UserDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -262,6 +263,29 @@ model TrainingFeedback {
 
   @@index([trainingId, createdAt])
   @@index([userId])
+}
+
+// Selbst hochgeladene Nachweise (externe Weiterbildungen, Abschlüsse etc.).
+// Dateien liegen in Vercel Blob; hier nur Metadaten + URL.
+model UserDocument {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title      String
+  category   String?
+  issuer     String?
+  issuedDate DateTime?
+
+  fileUrl      String
+  filePathname String
+  fileType     String
+  fileSize     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
 }
 
 model CobraTrainingParticipant {

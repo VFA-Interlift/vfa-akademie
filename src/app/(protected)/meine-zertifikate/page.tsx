@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { getMyCertificates } from "@/lib/certificates/service";
 import { prisma } from "@/lib/prisma";
 import { getFeedbackGivenEnrollmentIds } from "@/lib/feedback/service";
+import { getMyDocuments } from "@/lib/documents/service";
 import MeineZertifikateClient from "./MeineZertifikateClient";
+import EigeneNachweise from "./EigeneNachweise";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,7 @@ export default async function MeineZertifikatePage() {
 
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   const feedbackGiven = user ? await getFeedbackGivenEnrollmentIds(user.id) : new Set<string>();
+  const documents = user ? await getMyDocuments(user.id) : [];
 
   const serializableCertificates = certificates.map((cert) => ({
     ...cert,
@@ -38,6 +41,8 @@ export default async function MeineZertifikatePage() {
         <PageHeader title="Meine Zertifikate" showTitle={true} />
 
         <MeineZertifikateClient certificates={serializableCertificates} />
+
+        <EigeneNachweise initialDocuments={documents} />
       </div>
     </main>
   );
