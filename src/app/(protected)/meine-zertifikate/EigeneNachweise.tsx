@@ -235,6 +235,8 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
   boxSizing: "border-box",
   padding: "10px 12px",
   borderRadius: 8,
