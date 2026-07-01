@@ -6,8 +6,7 @@ import { getMyCertificates } from "@/lib/certificates/service";
 import { prisma } from "@/lib/prisma";
 import { getFeedbackGivenEnrollmentIds } from "@/lib/feedback/service";
 import { getMyDocuments } from "@/lib/documents/service";
-import MeineZertifikateClient from "./MeineZertifikateClient";
-import EigeneNachweise from "./EigeneNachweise";
+import ZertifikateTabs from "./ZertifikateTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +39,7 @@ export default async function MeineZertifikatePage() {
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader title="Meine Zertifikate" showTitle={true} />
 
-        <MeineZertifikateClient certificates={serializableCertificates} />
-
-        <EigeneNachweise initialDocuments={documents} />
+        <ZertifikateTabs certificates={serializableCertificates} documents={documents} />
       </div>
     </main>
   );

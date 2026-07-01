@@ -90,7 +90,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
 
   return (
     <AnimatedSection delayMs={60}>
-      <div style={{ marginTop: 36 }}>
+      <div>
         <div style={{ marginBottom: 12 }}>
           <h2 style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 800, color: "#1F1F1F" }}>
             Meine Nachweise
