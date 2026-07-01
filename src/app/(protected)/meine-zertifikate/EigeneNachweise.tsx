@@ -134,7 +134,12 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
             </Field>
 
             <Field label="Datum (optional)">
-              <input type="date" value={issuedDate} onChange={(e) => setIssuedDate(e.target.value)} style={inputStyle} />
+              <input
+                type="date"
+                value={issuedDate}
+                onChange={(e) => setIssuedDate(e.target.value)}
+                style={{ ...inputStyle, WebkitAppearance: "none", appearance: "none", height: 42 }}
+              />
             </Field>
 
             <Field label="Datei (PDF, JPG oder PNG · max. 4 MB)">
