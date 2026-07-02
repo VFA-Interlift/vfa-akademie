@@ -1,6 +1,7 @@
 import { CertificateKind } from "@prisma/client";
 import { cobraEndpointGet } from "@/lib/cobra/client";
 import { prisma } from "@/lib/prisma";
+import { formatLocationLines } from "@/lib/trainings/format";
 
 export type CobraTraining = {
   Caption?: string;
@@ -354,11 +355,20 @@ function normalizeTraining(training: CobraTraining): NormalizedTraining | null {
 
   const date = parseDate(cleanString(training.Startdatum));
   const endDate = parseDate(cleanString(training.Enddatum));
-  const location = pickCobraLocation(training as Record<string, unknown>);
   const description = cleanString(training.Beschreibung);
 
   const instructors = getInstructors(training);
   const instructor = instructors.length > 0 ? instructors.join(" | ") : null;
+
+  // Cobra füllt das Feld "Ort" nicht – die Anschrift steckt im Dozent-/
+  // Gastgeber-Feld ("Firma, Ansprechpartner, Straße, PLZ Ort"). Fällt der Ort
+  // leer aus, den ersten Gastgeber übernehmen (Firma + Adresse, ohne Name),
+  // damit auch Kalender-Export, Erinnerungs-Mails und Zertifikate einen Ort haben.
+  let location = pickCobraLocation(training as Record<string, unknown>);
+  if (!location && instructors.length > 0) {
+    const venue = formatLocationLines(instructors[0]);
+    if (venue.length) location = venue.join(", ");
+  }
 
   const creditRule = deriveCredits(training);
 
