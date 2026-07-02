@@ -10,7 +10,7 @@ import {
   formatDate,
   formatDateRange,
   formatInstructorName,
-  formatAddressLines,
+  formatLocationLines,
 } from "@/lib/trainings/format";
 
 type SerializableCertificate = {
@@ -35,22 +35,12 @@ type SerializableCertificate = {
   pdfUrl: string | null;
 };
 
-type SortKey = "abschluss-neu" | "abschluss-alt" | "titel" | "credits";
-
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "abschluss-neu", label: "Abschluss (neueste zuerst)" },
-  { value: "abschluss-alt", label: "Abschluss (älteste zuerst)" },
-  { value: "titel", label: "Zertifikat (A–Z)" },
-  { value: "credits", label: "Credits (absteigend)" },
-];
-
 export default function MeineZertifikateClient({
   certificates,
 }: {
   certificates: SerializableCertificate[];
 }) {
   const [selectedYear, setSelectedYear] = useState("alle");
-  const [sortKey, setSortKey] = useState<SortKey>("abschluss-neu");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const years = useMemo(() => {
@@ -62,35 +52,14 @@ export default function MeineZertifikateClient({
   }, [certificates]);
 
   const filteredCertificates = useMemo(() => {
-    const byYear =
-      selectedYear === "alle"
-        ? certificates
-        : certificates.filter((cert) => getYear(cert.trainingDate) === selectedYear);
-
-    const sorted = [...byYear];
-    const time = (value: string | null) => {
-      const t = value ? new Date(value).getTime() : NaN;
-      return Number.isNaN(t) ? 0 : t;
-    };
-
-    switch (sortKey) {
-      case "abschluss-alt":
-        sorted.sort((a, b) => time(a.trainingDate) - time(b.trainingDate));
-        break;
-      case "titel":
-        sorted.sort((a, b) =>
-          getDisplayCertificateTitle(a).localeCompare(getDisplayCertificateTitle(b), "de")
-        );
-        break;
-      case "credits":
-        sorted.sort((a, b) => b.credits - a.credits);
-        break;
-      default:
-        sorted.sort((a, b) => time(b.trainingDate) - time(a.trainingDate));
+    if (selectedYear === "alle") {
+      return certificates;
     }
 
-    return sorted;
-  }, [certificates, selectedYear, sortKey]);
+    return certificates.filter((cert) => {
+      return getYear(cert.trainingDate) === selectedYear;
+    });
+  }, [certificates, selectedYear]);
 
   if (certificates.length === 0) {
     return (
@@ -148,70 +117,39 @@ export default function MeineZertifikateClient({
                 letterSpacing: "0.08em",
               }}
             >
-              Filter & Sortierung
+              Jahresfilter
             </div>
 
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <label style={{ display: "grid", gap: 6, minWidth: 150, flex: "1 1 150px" }}>
-                <span
-                  style={{
-                    color: "#333333",
-                    fontSize: 13,
-                    fontWeight: 850,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Jahr
-                </span>
+            <label style={{ display: "grid", gap: 6, minWidth: 180 }}>
+              <span
+                style={{
+                  color: "#333333",
+                  fontSize: 13,
+                  fontWeight: 850,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Jahr
+              </span>
 
-                <select
-                  value={selectedYear}
-                  onChange={(event) => {
-                    setSelectedYear(event.target.value);
-                    setOpenId(null);
-                  }}
-                  style={selectStyle}
-                >
-                  <option value="alle">Alle Jahre</option>
+              <select
+                value={selectedYear}
+                onChange={(event) => {
+                  setSelectedYear(event.target.value);
+                  setOpenId(null);
+                }}
+                style={selectStyle}
+              >
+                <option value="alle">Alle Jahre</option>
 
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label style={{ display: "grid", gap: 6, minWidth: 200, flex: "1 1 200px" }}>
-                <span
-                  style={{
-                    color: "#333333",
-                    fontSize: 13,
-                    fontWeight: 850,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Sortieren nach
-                </span>
-
-                <select
-                  value={sortKey}
-                  onChange={(event) => {
-                    setSortKey(event.target.value as SortKey);
-                    setOpenId(null);
-                  }}
-                  style={selectStyle}
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </AppCard>
       </AnimatedSection>
@@ -233,7 +171,7 @@ export default function MeineZertifikateClient({
               cert.trainingDate,
               cert.trainingEndDate
             );
-            const addressLines = formatAddressLines(cert.location);
+            const addressLines = formatLocationLines(cert.location);
             const instructorName = formatInstructorName(cert.instructor);
             const canDownload = isDownloadableCertificate(cert);
 

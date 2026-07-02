@@ -6,7 +6,7 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 import {
   formatDateRange,
   formatInstructorName,
-  formatAddressLines,
+  formatLocationLines,
   getDisplayTrainingTitle,
   formatEnrollmentStatus,
   enrollmentStatusColor,
@@ -76,7 +76,7 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
             const isOpen = openId === training.id;
             const dateText = formatDateRange(training.date, training.endDate);
             const displayTitle = getDisplayTrainingTitle(training);
-            const addressLines = formatAddressLines(training.location);
+            const addressLines = formatLocationLines(training.location);
             const instructorName = formatInstructorName(training.instructor);
             const statusLabel = formatEnrollmentStatus(training.status);
             const statusStyle = enrollmentStatusColor(training.status);
@@ -117,8 +117,9 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
                           {displayTitle}
                         </h2>
 
-                        <div style={{ marginTop: 12, fontSize: 13, color: "#666666", fontWeight: 600 }}>
-                          {dateText}
+                        <div style={{ marginTop: 12, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "#666666", fontWeight: 600 }}>
+                          <span>📅 {dateText}</span>
+                          {addressLines.length > 0 && <span>📍 {addressLines[0]}</span>}
                         </div>
                       </div>
 

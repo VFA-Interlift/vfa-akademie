@@ -9,7 +9,7 @@ import {
   formatDate,
   formatDateRange,
   formatInstructorName,
-  formatAddressLines,
+  formatLocationLines,
   getDisplayTrainingTitle,
   cleanTrainingTitle,
 } from "@/lib/trainings/format";
@@ -486,7 +486,7 @@ function TrainingDialog({
 }) {
   const displayTitle = getDisplayTrainingTitle(training);
   const instructorName = formatInstructorName(training.instructor);
-  const addressLines = formatAddressLines(training.location);
+  const addressLines = formatLocationLines(training.location);
 
   return (
     <div

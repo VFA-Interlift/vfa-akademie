@@ -1,12 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { DOC_CATEGORIES, MAX_DOC_BYTES, type SerializableDocument } from "@/lib/documents/service";
 import { formatDate } from "@/lib/trainings/format";
 
 const TEAL = "#007873";
+
+type SortKey = "datum-neu" | "datum-alt" | "titel" | "kategorie";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "datum-neu", label: "Datum (neueste zuerst)" },
+  { value: "datum-alt", label: "Datum (älteste zuerst)" },
+  { value: "titel", label: "Titel (A–Z)" },
+  { value: "kategorie", label: "Kategorie (A–Z)" },
+];
 
 const ERROR_TEXT: Record<string, string> = {
   NO_FILE: "Bitte eine Datei auswählen.",
@@ -38,7 +47,42 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState("alle");
+  const [sortKey, setSortKey] = useState<SortKey>("datum-neu");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const availableCategories = useMemo(() => {
+    const values = documents.map((d) => d.category).filter((c): c is string => Boolean(c));
+    return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "de"));
+  }, [documents]);
+
+  const visibleDocuments = useMemo(() => {
+    const filtered =
+      categoryFilter === "alle"
+        ? documents
+        : documents.filter((d) => (d.category ?? "") === categoryFilter);
+
+    const time = (value: string | null) => {
+      const t = value ? new Date(value).getTime() : NaN;
+      return Number.isNaN(t) ? 0 : t;
+    };
+
+    const sorted = [...filtered];
+    switch (sortKey) {
+      case "datum-alt":
+        sorted.sort((a, b) => time(a.issuedDate) - time(b.issuedDate));
+        break;
+      case "titel":
+        sorted.sort((a, b) => a.title.localeCompare(b.title, "de"));
+        break;
+      case "kategorie":
+        sorted.sort((a, b) => (a.category ?? "").localeCompare(b.category ?? "", "de"));
+        break;
+      default:
+        sorted.sort((a, b) => time(b.issuedDate) - time(a.issuedDate));
+    }
+    return sorted;
+  }, [documents, categoryFilter, sortKey]);
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -172,6 +216,40 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
           </form>
         </AppCard>
 
+        {/* Filter & Sortierung */}
+        {documents.length > 0 && (
+          <AppCard style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <label style={{ display: "grid", gap: 5, flex: "1 1 150px", minWidth: 150 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>Kategorie</span>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="alle">Alle Kategorien</option>
+                  {availableCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label style={{ display: "grid", gap: 5, flex: "1 1 180px", minWidth: 180 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>Sortieren nach</span>
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as SortKey)}
+                  style={inputStyle}
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </AppCard>
+        )}
+
         {/* Liste */}
         {documents.length === 0 ? (
           <AppCard>
@@ -179,9 +257,15 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
               Noch keine eigenen Nachweise hochgeladen.
             </div>
           </AppCard>
+        ) : visibleDocuments.length === 0 ? (
+          <AppCard>
+            <div style={{ color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+              Für diese Kategorie wurden keine Nachweise gefunden.
+            </div>
+          </AppCard>
         ) : (
           <div style={{ display: "grid", gap: 10 }}>
-            {documents.map((doc) => (
+            {visibleDocuments.map((doc) => (
               <AppCard key={doc.id} style={{ padding: "14px 18px" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 14, alignItems: "center" }}>
                   <div style={{ minWidth: 0 }}>

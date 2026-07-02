@@ -26,6 +26,25 @@ export function formatAddressLines(value: string | null) {
   return value.split(",").map((p) => p.trim()).filter(Boolean);
 }
 
+/**
+ * Der Cobra-„Gastgeber" kommt als „Firma, Ansprechpartner, Straße, PLZ Ort".
+ * Für die Ortsanzeige interessiert nur Firma + Adresse – der Personenname wird
+ * entfernt (Segmente, die weder Firma noch Adresse sind und wie ein
+ * „Vorname Nachname" aussehen).
+ */
+export function formatLocationLines(value: string | null) {
+  return formatAddressLines(value).filter((segment) => !looksLikePersonName(segment));
+}
+
+function looksLikePersonName(segment: string): boolean {
+  if (looksLikeCompany(segment) || looksLikeAddress(segment)) return false;
+  const words = segment.split(/\s+/).filter(Boolean);
+  // Genau 2–3 rein alphabetische Wörter (mit Umlauten/Bindestrich) → Personenname.
+  // Einzelne Wörter (z. B. Städtenamen) bleiben erhalten.
+  if (words.length < 2 || words.length > 3) return false;
+  return words.every((w) => /^[A-Za-zÄÖÜäöüß.\-]+$/.test(w));
+}
+
 function extractInstructorName(value: string | null | undefined) {
   if (!value?.trim()) return "";
   // Multiple instructors stored joined with " | "
@@ -140,21 +159,46 @@ export function cleanTrainingTitle(value: string) {
  * Der Code ist verlässlicher als der Titel; nur wenn kein Code da ist, fällt die
  * Prüfung auf den Titel zurück.
  */
+// Manuelle/Inhouse-Kürzel (synchron zu sync-trainings#isInhouseOrManual).
+const INHOUSE_CODE_PREFIXES = ["ARB", "DGUV", "FPFW", "SICH", "YLD"];
+
+// Bekannte öffentliche Fach-/VDI-Kürzel. Nur mehrbuchstabige, im Titel
+// eindeutige Kürzel – die einbuchstabigen „B"/„C" werden ausschließlich über
+// den Code (Muster „B-NNNN") erkannt, nicht über den Titel.
+const PUBLIC_COURSE_PREFIXES = [
+  "A1", "A2", "EFK", "NUR", "NUR", "DOK", "PLG", "SON", "BETR", "MVO", "MOD",
+  "BRG", "GEF", "FRQ", "SCHALL", "EINST", "AZUBI", "IN/SER/TR",
+];
+
 export function isLikelyInhouse(
   title: string | null | undefined,
   code: string | null | undefined
 ): boolean {
-  const signal = String(code ?? "").trim() || String(title ?? "").trim();
-  if (!signal) return false;
+  const codeSignal = String(code ?? "").trim();
 
-  // Standard-Code öffentlicher Schulungen (KÜRZEL-NNNN, evtl. „.n") → öffentlich.
-  if (/^[A-Za-zÄÖÜäöüß0-9/]+-\d{3,4}(?:\.\d+)?$/.test(signal)) return false;
+  if (codeSignal) {
+    const upper = codeSignal.toUpperCase();
+    // Manuelle/Inhouse-Kürzel → Inhouse.
+    if (INHOUSE_CODE_PREFIXES.some((p) => upper.startsWith(p))) return true;
+    // Standard-Code öffentlicher Schulungen (KÜRZEL-NNNN, evtl. „.n") → öffentlich.
+    if (/^[A-Za-zÄÖÜäöüß0-9/]+-\d{3,4}(?:\.\d+)?$/.test(codeSignal)) return false;
+    // Bekanntes öffentliches Kürzel → öffentlich.
+    if (PUBLIC_COURSE_PREFIXES.some((p) => upper.startsWith(p))) return false;
+    // Einzel-Token ohne Leerzeichen (generischer/Online-Kurs) → öffentlich.
+    if (!/\s/.test(codeSignal)) return false;
+    // „KÜRZEL Kundenname" mit Leerzeichen → Inhouse.
+    return true;
+  }
 
-  // Einzel-Token ohne Leerzeichen (generischer/Online-Kurs ohne Kundenname) → öffentlich.
-  if (!/\s/.test(signal)) return false;
-
-  // „KÜRZEL Kundenname" mit Leerzeichen → Inhouse.
-  return true;
+  // Kein Code hinterlegt → Rückfall auf den Titel.
+  const titleSignal = String(title ?? "").trim();
+  if (!titleSignal) return false;
+  const upper = titleSignal.toUpperCase();
+  if (INHOUSE_CODE_PREFIXES.some((p) => upper.startsWith(p))) return true;
+  // Bekanntes öffentliches Kürzel am Titelanfang (z. B. „A1 …") → öffentlich.
+  if (PUBLIC_COURSE_PREFIXES.some((p) => upper.startsWith(p))) return false;
+  // Sonst: Firmenname mit Leerzeichen → Inhouse.
+  return /\s/.test(titleSignal);
 }
 
 export function getDisplayTrainingTitle(training: { code?: string | null; title: string }) {
