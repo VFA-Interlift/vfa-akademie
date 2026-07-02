@@ -34,6 +34,12 @@ export type AdminFeedbackTraining = {
   trainingId: string;
   trainingTitle: string;
   trainingCode: string | null;
+  /**
+   * Titel exakt wie ihn die Teilnehmenden im Feedback-Formular / auf der
+   * Zertifikatskarte sehen (Zertifikats-Code bevorzugt). Verhindert, dass die
+   * Auswertung eine Schulung anders benennt als der Teilnehmer sie kennt.
+   */
+  displayTitle: string;
   formType: FeedbackFormType;
   responseCount: number;
   overallAverage: number | null;
@@ -78,6 +84,7 @@ export async function getAdminFeedbackEvaluation(
       formType: true,
       training: { select: { id: true, title: true, code: true, instructor: true } },
       user: { select: { name: true, firstName: true, lastName: true, email: true } },
+      enrollment: { select: { certificate: { select: { code: true } } } },
     },
   });
 
@@ -94,6 +101,15 @@ export async function getAdminFeedbackEvaluation(
   for (const [tId, list] of groups) {
     const training = list[0].training;
     const formType = formTypeFor(training);
+    // Teilnehmer-Sicht: bevorzugt der Zertifikats-Code (z. B. „A1"), sonst der
+    // Schulungs-Code, zuletzt der um Klammerzusätze bereinigte Titel.
+    const certCode = list
+      .map((fb) => fb.enrollment?.certificate?.code?.trim())
+      .find((code): code is string => Boolean(code));
+    const displayTitle =
+      certCode ||
+      training.code?.trim() ||
+      training.title.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
     const sections = getFeedbackForm(formType, instructorNamesFrom(training.instructor));
     const questions = flattenQuestions(sections);
 
@@ -151,6 +167,7 @@ export async function getAdminFeedbackEvaluation(
       trainingId: tId,
       trainingTitle: training.title,
       trainingCode: training.code,
+      displayTitle,
       formType,
       responseCount: list.length,
       overallAverage,

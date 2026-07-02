@@ -16,7 +16,7 @@ type SerializableCertificate = {
   instructor: string | null;
 };
 
-type RankKey = "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
+type RankKey = "STARTER" | "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
 
 type RankInfo = {
   key: RankKey;
@@ -28,21 +28,34 @@ type RankInfo = {
   badge: string;
 };
 
+// Bronze beginnt erst ab 100 Credits (= eine abgeschlossene Standardschulung).
 const RANKS: RankInfo[] = [
-  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, max: 499, color: "#A86C3D", badge: "/badges/bronze-thumb.png" },
+  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 100, max: 499, color: "#A86C3D", badge: "/badges/bronze-thumb.png" },
   { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, max: 1499, color: "#8E99A8", badge: "/badges/silber-thumb.png" },
   { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, max: 3499, color: "#C79A16", badge: "/badges/gold-thumb.png" },
   { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, max: null, color: "#007873", badge: "/badges/vfa-experte-thumb.png" },
 ];
 
+const STARTER_RANK: RankInfo = {
+  key: "STARTER",
+  label: "Kein Rang",
+  sublabel: "Starter",
+  min: 0,
+  max: 99,
+  color: "#9AA0A6",
+  badge: "/badges/bronze-thumb.png",
+};
+
 function getRankInfo(credits: number): RankInfo {
   if (credits >= 3500) return RANKS[3];
   if (credits >= 1500) return RANKS[2];
   if (credits >= 500) return RANKS[1];
-  return RANKS[0];
+  if (credits >= 100) return RANKS[0];
+  return STARTER_RANK;
 }
 
 function getNextRank(credits: number): RankInfo | null {
+  if (credits < 100) return RANKS[0];
   if (credits < 500) return RANKS[1];
   if (credits < 1500) return RANKS[2];
   if (credits < 3500) return RANKS[3];
@@ -97,7 +110,7 @@ function getAchievements(
   else if (count >= 1) achievements.push(`${count} Schulung${count > 1 ? "en" : ""} besucht`);
 
   // Rank (skip the entry rank to keep it meaningful)
-  if (rank.key !== "BRONZE") {
+  if (rank.key !== "BRONZE" && rank.key !== "STARTER") {
     achievements.push(`${rank.label}-Status erreicht`);
   }
 
@@ -225,7 +238,7 @@ export default function KompetenzpassClient({
                 alt={`${rank.label} Badge`}
                 width={66}
                 height={66}
-                style={{ display: "block" }}
+                style={{ display: "block", filter: rank.key === "STARTER" ? "grayscale(1)" : "none", opacity: rank.key === "STARTER" ? 0.55 : 1 }}
               />
               <span style={{ fontSize: 11, opacity: 0.85, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
             </div>
@@ -383,7 +396,7 @@ function StatCell({ label, value, highlight = false }: { label: string; value: s
 }
 
 function getProgressPercent(credits: number) {
-  const thresholds = [0, 500, 1500, 3500];
+  const thresholds = [0, 100, 500, 1500, 3500];
   for (let i = 0; i < thresholds.length - 1; i++) {
     if (credits < thresholds[i + 1]) {
       const range = thresholds[i + 1] - thresholds[i];

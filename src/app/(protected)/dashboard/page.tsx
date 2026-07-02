@@ -12,7 +12,7 @@ import { getOpenFeedbackCount } from "@/lib/feedback/service";
 
 export const dynamic = "force-dynamic";
 
-type RankKey = "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
+type RankKey = "STARTER" | "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
 type RankInfo = {
   key: RankKey;
   label: string;
@@ -23,12 +23,24 @@ type RankInfo = {
   softBorder: string;
 };
 
+// Bronze beginnt erst ab 100 Credits (= eine abgeschlossene Standardschulung).
+// Darunter hat man noch keinen Rang.
 const RANKS: RankInfo[] = [
-  { key: "BRONZE", label: "Bronze", min: 0, max: 499, color: "#A86C3D", softBackground: "rgba(168,108,61,0.10)", softBorder: "1px solid rgba(168,108,61,0.28)" },
+  { key: "BRONZE", label: "Bronze", min: 100, max: 499, color: "#A86C3D", softBackground: "rgba(168,108,61,0.10)", softBorder: "1px solid rgba(168,108,61,0.28)" },
   { key: "SILBER", label: "Silber", min: 500, max: 1499, color: "#8E99A8", softBackground: "rgba(142,153,168,0.12)", softBorder: "1px solid rgba(142,153,168,0.32)" },
   { key: "GOLD", label: "Gold", min: 1500, max: 3499, color: "#C79A16", softBackground: "rgba(199,154,22,0.12)", softBorder: "1px solid rgba(199,154,22,0.32)" },
   { key: "EXPERTE", label: "VFA-Experte", min: 3500, max: null, color: "#1F1F1F", softBackground: "rgba(31,31,31,0.08)", softBorder: "1px solid rgba(31,31,31,0.20)" },
 ];
+
+const STARTER_RANK: RankInfo = {
+  key: "STARTER",
+  label: "Kein Rang",
+  min: 0,
+  max: 99,
+  color: "#9AA0A6",
+  softBackground: "rgba(154,160,166,0.12)",
+  softBorder: "1px solid rgba(154,160,166,0.30)",
+};
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -380,10 +392,12 @@ function getRankInfo(credits: number) {
   if (credits >= 3500) return RANKS[3];
   if (credits >= 1500) return RANKS[2];
   if (credits >= 500) return RANKS[1];
-  return RANKS[0];
+  if (credits >= 100) return RANKS[0];
+  return STARTER_RANK;
 }
 
 function getNextRankInfo(credits: number) {
+  if (credits < 100) return RANKS[0];
   if (credits < 500) return RANKS[1];
   if (credits < 1500) return RANKS[2];
   if (credits < 3500) return RANKS[3];
@@ -391,7 +405,7 @@ function getNextRankInfo(credits: number) {
 }
 
 function getRankProgress(credits: number) {
-  const thresholds = [0, 500, 1500, 3500];
+  const thresholds = [0, 100, 500, 1500, 3500];
   for (let i = 0; i < thresholds.length - 1; i++) {
     if (credits < thresholds[i + 1]) {
       const range = thresholds[i + 1] - thresholds[i];

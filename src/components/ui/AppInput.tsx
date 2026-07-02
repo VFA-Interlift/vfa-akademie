@@ -43,6 +43,7 @@ export default function AppInput({
         className="vfa-input"
         style={{
           width: "100%",
+          boxSizing: "border-box",
           padding: "11px 14px",
           borderRadius: 8,
           border: "1px solid #D4D4D4",
@@ -51,6 +52,12 @@ export default function AppInput({
           fontSize: 15,
           opacity: disabled ? 0.7 : 1,
           transition: "border-color 120ms ease",
+          // iOS rendert input[type=date] als natives Control mit fester
+          // Eigenbreite, das width/max-width ignoriert und über den Kartenrand
+          // ragt. -webkit-appearance:none macht es zur normalen Box.
+          ...(type === "date"
+            ? { WebkitAppearance: "none", appearance: "none", minWidth: 0, height: 44 }
+            : {}),
         }}
       />
     </label>

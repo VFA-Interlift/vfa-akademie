@@ -25,7 +25,7 @@ type BadgeConfig = {
 // ---------- Ränge (credit-basiert) ----------
 
 const RANKS = [
-  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 0, color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0", file: "bronze" },
+  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 100, color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0", file: "bronze" },
   { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, color: "#5A6472", accent: "#8E99A8", tint: "#F4F6F8", file: "silber" },
   { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, color: "#7C5A0A", accent: "#C79A16", tint: "#FFFBEE", file: "gold" },
   { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, color: "#0B4F4B", accent: VFA_GREEN, tint: "#EAF4F3", file: "vfa-experte" },
@@ -189,7 +189,7 @@ export default function BadgesClient({
 }) {
   const ranks = rankConfigs(credits);
   const achievements = achievementConfigs(completedCount, vdiCompleted);
-  const currentRank = [...ranks].reverse().find((r) => r.earned) ?? ranks[0];
+  const earnedRank = [...ranks].reverse().find((r) => r.earned) ?? null;
   const earnedAchievements = achievements.filter((a) => a.earned).length;
 
   return (
@@ -228,7 +228,7 @@ export default function BadgesClient({
             Dein aktueller Status
           </div>
           <div style={{ fontSize: 19, fontWeight: 800, color: VFA_GREEN, marginTop: 2 }}>
-            {currentRank.title} · {credits.toLocaleString("de-DE")} Credits
+            {earnedRank ? earnedRank.title : "Kein Rang"} · {credits.toLocaleString("de-DE")} Credits
           </div>
           <div style={{ fontSize: 13, color: "#888888", marginTop: 2 }}>
             {earnedAchievements} von {achievements.length} Auszeichnungen freigeschaltet
@@ -236,7 +236,7 @@ export default function BadgesClient({
         </div>
       </div>
 
-      <BadgeSection title="Ränge" subtitle="Steigen mit deinen Credits" badges={ranks} highlightKey={currentRank.key} />
+      <BadgeSection title="Ränge" subtitle="Steigen mit deinen Credits" badges={ranks} highlightKey={earnedRank?.key} />
 
       <BadgeSection title="Auszeichnungen" subtitle="Für absolvierte Schulungen" badges={achievements} />
 

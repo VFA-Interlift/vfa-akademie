@@ -294,7 +294,7 @@ export async function renderFeedbackReportPdf(
   const single = trainings.length === 1;
   if (single) {
     const t = trainings[0];
-    const code = t.trainingCode?.trim() || t.trainingTitle;
+    const code = t.displayTitle;
     drawTitle(`Abschluss-Feedback — Schulung ${code}`, `Auswertung · ${t.responseCount} Teilnehmende · Skala 1 (niedrig) – 5 (hoch)`);
   } else {
     drawTitle("Abschluss-Feedback — Auswertung", `${trainings.length} Schulungen · Skala 1 (niedrig) – 5 (hoch)`);
@@ -308,7 +308,7 @@ export async function renderFeedbackReportPdf(
     if (!single) {
       ensure(30);
       if (ti > 0) y -= 2;
-      const title = t.trainingCode?.trim() || t.trainingTitle;
+      const title = t.displayTitle;
       text(title, M, y - 12, 13, { f: bold, color: DARK, maxW: contentW });
       const meta = `${t.responseCount} ${t.responseCount === 1 ? "Antwort" : "Antworten"} · ${t.formType === "INHOUSE" ? "Inhouse" : "Öffentlich"}`;
       text(meta, M, y - 24, 9, { color: MUTED });

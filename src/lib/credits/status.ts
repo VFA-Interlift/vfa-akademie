@@ -1,4 +1,4 @@
-export type CreditStatusKey = "bronze" | "silber" | "gold" | "vfa-experte";
+export type CreditStatusKey = "starter" | "bronze" | "silber" | "gold" | "vfa-experte";
 
 export type CreditStatus = {
   key: CreditStatusKey;
@@ -24,9 +24,22 @@ export type CreditStatusProgress = {
 
 export const CREDIT_STATUSES: CreditStatus[] = [
   {
+    key: "starter",
+    label: "Kein Rang",
+    minCredits: 0,
+    maxCredits: 99,
+    nextKey: "bronze",
+    nextLabel: "Bronze",
+    badgeSrc: "/badges/bronze.png",
+    description:
+      "Du bist gerade in der VFA-Akademie gestartet. Nach deiner ersten abgeschlossenen Standardschulung (100 Credits) erreichst du den Bronze-Status.",
+    benefit:
+      "Sammle Credits über Schulungen und Feedback, um deinen ersten Weiterbildungsrang freizuschalten.",
+  },
+  {
     key: "bronze",
     label: "Bronze",
-    minCredits: 0,
+    minCredits: 100,
     maxCredits: 499,
     nextKey: "silber",
     nextLabel: "Silber",

@@ -56,7 +56,7 @@ export async function GET(req: Request) {
 
   for (const training of evaluation) {
     overview.addRow({
-      title: training.trainingTitle,
+      title: training.displayTitle,
       code: training.trainingCode ?? "",
       type: training.formType === "INHOUSE" ? "Inhouse" : "Öffentlich",
       count: training.responseCount,
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
   // Pro Schulung ein Antwortenblatt (eine Zeile je Abgabe)
   const usedNames = new Set<string>(["Übersicht"]);
   evaluation.forEach((training, idx) => {
-    let baseName = sanitizeSheetName(training.trainingCode || training.trainingTitle, `Schulung ${idx + 1}`);
+    const baseName = sanitizeSheetName(training.displayTitle, `Schulung ${idx + 1}`);
     let name = baseName;
     let suffix = 2;
     while (usedNames.has(name)) {

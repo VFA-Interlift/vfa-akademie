@@ -27,6 +27,7 @@ type TrainingEval = {
   trainingId: string;
   trainingTitle: string;
   trainingCode: string | null;
+  displayTitle: string;
   formType: "PUBLIC" | "INHOUSE";
   responseCount: number;
   overallAverage: number | null;
@@ -54,12 +55,7 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
         arr.sort((a, b) => b.responseCount - a.responseCount);
         break;
       case "name":
-        arr.sort((a, b) =>
-          (a.trainingCode?.trim() || a.trainingTitle).localeCompare(
-            b.trainingCode?.trim() || b.trainingTitle,
-            "de"
-          )
-        );
+        arr.sort((a, b) => a.displayTitle.localeCompare(b.displayTitle, "de"));
         break;
       default:
         arr.sort((a, b) => latest(b) - latest(a));
@@ -128,7 +124,7 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
 
       {sortedTrainings.map((training, index) => {
         const isOpen = openId === training.trainingId;
-        const title = training.trainingCode?.trim() || training.trainingTitle;
+        const title = training.displayTitle;
 
         return (
           <AnimatedSection key={training.trainingId} delayMs={Math.min(60 + index * 40, 320)}>
@@ -179,7 +175,7 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                         setPdf({
                           url: `/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`,
                           title,
-                          filename: `feedback-${(training.trainingCode?.trim() || training.trainingTitle).replace(/[^\w-]+/g, "_")}-${todayStr()}.pdf`,
+                          filename: `feedback-${title.replace(/[^\w-]+/g, "_")}-${todayStr()}.pdf`,
                         })
                       }
                     >

@@ -7,22 +7,23 @@ const STORAGE_KEY = "vfa_feedback_reminder_dismissed_count";
 
 /**
  * Dismissbare Infobox ganz oben im Dashboard, wenn noch Feedback offen ist.
- * Der Dismiss-Status ist an die offene Anzahl gekoppelt: Wird später eine
- * weitere Schulung abgeschlossen (höhere Anzahl), erscheint die Box erneut.
+ * Der Dismiss-Status liegt in sessionStorage – nach jedem neuen Login (frische
+ * Session) erscheint der Hinweis daher erneut. Innerhalb einer Session wird er
+ * zusätzlich wieder eingeblendet, wenn eine weitere Schulung abgeschlossen wird.
  */
 export default function FeedbackReminder({ openCount }: { openCount: number }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (openCount <= 0) return;
-    const dismissed = Number(window.localStorage.getItem(STORAGE_KEY) ?? "0");
+    const dismissed = Number(window.sessionStorage.getItem(STORAGE_KEY) ?? "0");
     if (openCount > dismissed) setVisible(true);
   }, [openCount]);
 
   if (!visible || openCount <= 0) return null;
 
   function dismiss() {
-    window.localStorage.setItem(STORAGE_KEY, String(openCount));
+    window.sessionStorage.setItem(STORAGE_KEY, String(openCount));
     setVisible(false);
   }
 
