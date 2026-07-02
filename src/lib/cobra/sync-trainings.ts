@@ -99,6 +99,33 @@ function cleanString(value: unknown) {
   return cleaned || null;
 }
 
+/**
+ * Mögliche Cobra-Feldnamen für den Veranstaltungsort. Cobra liefert den Ort je
+ * nach Endpoint/Konfiguration unter unterschiedlichen Schlüsseln – wir nehmen
+ * den ersten nicht-leeren Treffer, damit der Ort zuverlässig ankommt.
+ */
+export const COBRA_LOCATION_KEYS = [
+  "Ort",
+  "Veranstaltungsort",
+  "Schulungsort",
+  "Veranstaltungsstätte",
+  "Veranstaltungsstaette",
+  "Standort",
+  "Adresse",
+  "Anschrift",
+  "Gastgeber",
+  "Location",
+  "Stadt",
+] as const;
+
+export function pickCobraLocation(training: Record<string, unknown>): string | null {
+  for (const key of COBRA_LOCATION_KEYS) {
+    const value = cleanString(training[key]);
+    if (value) return value;
+  }
+  return null;
+}
+
 function cleanNumber(value: unknown) {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
@@ -327,7 +354,7 @@ function normalizeTraining(training: CobraTraining): NormalizedTraining | null {
 
   const date = parseDate(cleanString(training.Startdatum));
   const endDate = parseDate(cleanString(training.Enddatum));
-  const location = cleanString(training.Ort);
+  const location = pickCobraLocation(training as Record<string, unknown>);
   const description = cleanString(training.Beschreibung);
 
   const instructors = getInstructors(training);

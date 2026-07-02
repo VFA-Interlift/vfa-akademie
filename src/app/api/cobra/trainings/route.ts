@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cobraEndpointGet } from "@/lib/cobra/client";
 import { CobraError } from "@/lib/cobra/types";
+import { pickCobraLocation } from "@/lib/cobra/sync-trainings";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ function normalizeTraining(training: CobraTraining) {
       null,
     date: training.Startdatum ?? null,
     endDate: training.Enddatum ?? null,
-    location: training.Ort ?? null,
+    location: pickCobraLocation(training as Record<string, unknown>),
     instructor: instructors.join(" | ") || null,
     instructors,
     description: training.Beschreibung ?? null,
