@@ -6,7 +6,7 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 import {
   formatDateRange,
   formatInstructorName,
-  formatLocationLines,
+  formatVenueLines,
   getDisplayTrainingTitle,
   formatEnrollmentStatus,
   enrollmentStatusColor,
@@ -76,7 +76,7 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
             const isOpen = openId === training.id;
             const dateText = formatDateRange(training.date, training.endDate);
             const displayTitle = getDisplayTrainingTitle(training);
-            const addressLines = formatLocationLines(training.location);
+            const addressLines = formatVenueLines(training.location, training.instructor);
             const instructorName = formatInstructorName(training.instructor);
             const statusLabel = formatEnrollmentStatus(training.status);
             const statusStyle = enrollmentStatusColor(training.status);

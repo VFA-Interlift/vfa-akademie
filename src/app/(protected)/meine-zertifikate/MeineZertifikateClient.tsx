@@ -10,7 +10,7 @@ import {
   formatDate,
   formatDateRange,
   formatInstructorName,
-  formatLocationLines,
+  formatVenueLines,
 } from "@/lib/trainings/format";
 
 type SerializableCertificate = {
@@ -171,7 +171,7 @@ export default function MeineZertifikateClient({
               cert.trainingDate,
               cert.trainingEndDate
             );
-            const addressLines = formatLocationLines(cert.location);
+            const addressLines = formatVenueLines(cert.location, cert.instructor);
             const instructorName = formatInstructorName(cert.instructor);
             const canDownload = isDownloadableCertificate(cert);
 

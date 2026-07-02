@@ -36,6 +36,23 @@ export function formatLocationLines(value: string | null) {
   return formatAddressLines(value).filter((segment) => !looksLikePersonName(segment));
 }
 
+/**
+ * Liefert die Orts-/Gastgeber-Zeilen (Firma + Adresse, ohne Personenname).
+ * Cobra füllt das eigentliche „Ort"-Feld nicht – die Anschrift steckt im
+ * „Dozent"/Gastgeber-Feld („Firma, Ansprechpartner, Straße, PLZ Ort", bei
+ * mehreren mit „ | " getrennt). Deshalb: erst das echte Ortsfeld nehmen, sonst
+ * den ersten Gastgeber-Eintrag aus dem Host-Feld.
+ */
+export function formatVenueLines(
+  location: string | null,
+  host: string | null
+): string[] {
+  const primary = formatLocationLines(location);
+  if (primary.length) return primary;
+  const firstHost = host ? host.split("|")[0] : null;
+  return formatLocationLines(firstHost);
+}
+
 function looksLikePersonName(segment: string): boolean {
   if (looksLikeCompany(segment) || looksLikeAddress(segment)) return false;
   const words = segment.split(/\s+/).filter(Boolean);
