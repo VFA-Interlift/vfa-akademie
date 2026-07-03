@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import { fetchWixKurse, kursDozentenOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
+import { fetchWixKurse, kursDozentenOf, kursHospitationOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
 import DozentKurseClient, { type DozentKurs } from "./DozentKurseClient";
 
 export const dynamic = "force-dynamic";
@@ -75,16 +75,25 @@ export default async function DozentPage() {
     websiteError = true;
   }
 
-  const meine = wixKurse.filter((kurs) => {
+  // Kurse, bei denen der Nutzer Dozent ODER Hospitant ist (Rolle merken).
+  const meine: { kurs: WixKurs; rolle: "DOZENT" | "HOSPITATION" }[] = [];
+  for (const kurs of wixKurse) {
     const blocks = parseKursBlocks(kurs.startdatum);
-    if (blocks.length === 0) return false;
+    if (blocks.length === 0) continue;
     const last = blocks[blocks.length - 1];
     const endOfKurs = last.endDate ?? last.date;
-    if (endOfKurs < today) return false;
-    return kursDozentenOf(kurs).some((d) =>
+    if (endOfKurs < today) continue;
+
+    const istDozent = kursDozentenOf(kurs).some((d) =>
       isInstructorMatch(d, user.firstName, user.lastName, user.name)
     );
-  });
+    const istHospitant = !istDozent && kursHospitationOf(kurs).some((d) =>
+      isInstructorMatch(d, user.firstName, user.lastName, user.name)
+    );
+
+    if (istDozent) meine.push({ kurs, rolle: "DOZENT" });
+    else if (istHospitant) meine.push({ kurs, rolle: "HOSPITATION" });
+  }
 
   // Website-Anmeldungen (Staging) den Kursen per Kurscode zuordnen.
   const websiteParticipants = meine.length
@@ -95,7 +104,7 @@ export default async function DozentPage() {
       })
     : [];
 
-  const kurse: DozentKurs[] = meine.map((kurs) => {
+  const kurse: DozentKurs[] = meine.map(({ kurs, rolle }) => {
     const code = kurs.kurscode.trim().toUpperCase();
     const participants = websiteParticipants
       .filter((p) => participantKurscode(p.raw) === code && code !== "")
@@ -111,6 +120,7 @@ export default async function DozentPage() {
       code: kurs.kurscodeAnzeige || kurs.kurscode,
       datumText: kurs.startdatum,
       ort: kursLocationOf(kurs),
+      rolle,
       participants,
     };
   });
@@ -141,8 +151,9 @@ export default async function DozentPage() {
               </div>
               <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
                 Es wurden keine zukünftigen Schulungen gefunden, bei denen dein Name als Dozent
-                hinterlegt ist. Die Dozenten werden auf der Website (Felder „Dozent 1–4" der
-                Schulung) gepflegt – Vor- und Nachname müssen mit deinem Profil übereinstimmen.
+                oder Hospitant hinterlegt ist. Die Dozenten werden auf der Website (Felder
+                „Dozent 1–4" bzw. „Hospitation" der Schulung) gepflegt – Vor- und Nachname
+                müssen mit deinem Profil übereinstimmen.
               </p>
             </AppCard>
           </AnimatedSection>

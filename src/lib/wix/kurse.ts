@@ -22,6 +22,8 @@ export type WixKurs = {
   dozent2?: string;
   dozent3?: string;
   dozent4?: string;
+  /** Hospitierende Dozenten (Freitext, mehrere mit Komma getrennt). */
+  hospitation?: string;
   preisVfaMitglied: number | null;
   preisVmaMitglied: number | null;
   preisNichtmitglied: number | null;
@@ -86,6 +88,14 @@ export function parseKursDates(startdatum: string): { date: Date | null; endDate
 export function kursDozentenOf(kurs: WixKurs): string[] {
   return [kurs.dozent1, kurs.dozent2, kurs.dozent3, kurs.dozent4]
     .map((d) => String(d ?? "").trim())
+    .filter(Boolean);
+}
+
+/** Hospitierende Dozenten als Liste (Komma-getrennt im Feld „Hospitation"). */
+export function kursHospitationOf(kurs: WixKurs): string[] {
+  return String(kurs.hospitation ?? "")
+    .split(",")
+    .map((d) => d.trim())
     .filter(Boolean);
 }
 

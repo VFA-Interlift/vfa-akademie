@@ -11,6 +11,8 @@ export type DozentKurs = {
   code: string;
   datumText: string;
   ort: string | null;
+  /** DOZENT = hält die Schulung, HOSPITATION = hospitiert. */
+  rolle: "DOZENT" | "HOSPITATION";
   participants: {
     id: string;
     name: string;
@@ -85,8 +87,27 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
             >
               <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "start" }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: TEAL, lineHeight: 1.25 }}>
-                    {kurs.code}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: TEAL, lineHeight: 1.25 }}>
+                      {kurs.code}
+                    </div>
+                    {kurs.rolle === "HOSPITATION" && (
+                      <span
+                        style={{
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "#7C5A0A",
+                          background: "rgba(255,193,0,0.15)",
+                          border: "1px solid rgba(255,176,0,0.45)",
+                          borderRadius: 999,
+                          padding: "3px 9px",
+                        }}
+                      >
+                        Hospitation
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontSize: 13, color: "#555555", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
                   <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "#666666", fontWeight: 600 }}>
