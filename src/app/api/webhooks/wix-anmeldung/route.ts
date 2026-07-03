@@ -54,12 +54,14 @@ export async function POST(req: Request) {
   if (!body || typeof body !== "object") return fail("INVALID_JSON");
 
   const kurscode = clean(body.kurscode) ?? clean(body.kurscodeAnzeige);
-  const email = clean(body.t1Email)?.toLowerCase() ?? null;
+  const rawEmail = clean(body.t1Email)?.toLowerCase() ?? null;
+  // E-Mail ist optional (manche Cobra-Altdaten haben keine): ohne E-Mail wird
+  // der Teilnehmer nur für die Anwesenheitsliste geführt, ohne App-Matching.
+  const email = rawEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) ? rawEmail : null;
   const firstName = clean(body.t1Vorname);
   const lastName = clean(body.t1Nachname);
 
   if (!kurscode) return fail("MISSING_KURSCODE");
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("INVALID_EMAIL");
   if (!firstName || !lastName) return fail("MISSING_PARTICIPANT_NAME");
 
   // 1) Schulung matchen (Code exakt, case-insensitiv).
@@ -68,10 +70,13 @@ export async function POST(req: Request) {
     select: { id: true, code: true, title: true },
   });
 
-  // 2) Staging-Eintrag (idempotent über die Wix-Anmeldungs-ID).
+  // 2) Staging-Eintrag (idempotent über die Wix-Anmeldungs-ID; ohne E-Mail
+  //    über den Namen).
+  const kurscodeSlug = kurscode.toLowerCase().replace(/[^a-z0-9]+/gi, "_");
+  const personKey = email ?? `${firstName} ${lastName}`.toLowerCase().replace(/[^a-zà-ÿ0-9]+/gi, "_");
   const stagingId = clean(body.anmeldungId)
     ? `wix-${clean(body.anmeldungId)}`
-    : `wix-${email}-${kurscode.toLowerCase().replace(/[^a-z0-9]+/gi, "_")}`;
+    : `wix-${personKey}-${kurscodeSlug}`;
 
   const participantText = `${firstName} ${lastName}`;
 
@@ -106,7 +111,7 @@ export async function POST(req: Request) {
 
   // 3) Hat der Teilnehmer schon einen App-Account → sofort einschreiben.
   let enrolled = false;
-  if (training) {
+  if (training && email) {
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
