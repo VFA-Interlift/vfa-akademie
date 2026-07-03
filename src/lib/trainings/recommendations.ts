@@ -89,20 +89,21 @@ export const COURSE_CATALOG: Record<string, { title: string; description: string
   },
 };
 
-/** Weiterführungs-Kette: abgeschlossenes Kürzel → nächster empfohlener Kurs. */
-const NEXT_STEP: Record<string, string> = {
-  EINST: "A1",
-  AZUBI: "A1",
-  A1: "A2",
-  A2: "B",
-  B: "C",
-  EFK1: "EFK2",
+/**
+ * VDI-Weiterbildungsleiter: Einsteiger/Azubi → A1 → A2 → B → C.
+ * Empfohlen wird immer nur die nächste Stufe nach dem höchsten
+ * gebuchten/abgeschlossenen Kurs.
+ */
+const VDI_STAGES: Record<string, number> = {
+  EINST: 0,
+  AZUBI: 0,
+  A1: 1,
+  A2: 2,
+  B: 3,
+  C: 4,
 };
 
-/** Schwerpunkt-Kürzel, die generell empfohlen werden dürfen (kein VDI-Kern). */
-const FOCUS_PREFIXES = [
-  "NUR", "DOK", "SCHALL", "SON", "BETR", "MVO", "MOD", "BRG", "GEF", "FRQ", "PLG", "IN/SER/TR",
-];
+const VDI_LADDER = ["A1", "A2", "B", "C"]; // Stufe 1–4
 
 export type TrainingRecommendation = {
   prefix: string;
@@ -128,11 +129,12 @@ export function coursePrefixOf(code: string | null | undefined): string | null {
 }
 
 /**
- * Empfehlungen für „Meine Schulungen": zuerst der nächste Schritt der
- * VDI-Reihe (A1 → A2 → B → C), danach Schwerpunktschulungen, die der Nutzer
- * noch nicht besucht hat. Bereits gebuchte/abgeschlossene Kurse werden nicht
- * empfohlen; angezeigt wird je Kürzel der nächste bevorstehende öffentliche
- * Termin aus der App-DB.
+ * Empfehlungen für „Meine Schulungen" — strikte Kette:
+ *  - Noch gar keine Schulung gebucht/abgeschlossen → nur A1 und Azubi-Kurs.
+ *  - Sonst genau die nächste Stufe der VDI-Reihe (A1 → A2 → B → C) nach dem
+ *    höchsten gebuchten/abgeschlossenen Kurs.
+ *  - Zusatz: EFK Teil 1 vorhanden, Teil 2 fehlt → EFK2 empfehlen.
+ * Bereits gebuchte/abgeschlossene Kurse werden nie empfohlen.
  */
 export async function getTrainingRecommendations(
   userEmail: string,
@@ -219,21 +221,35 @@ export async function getTrainingRecommendations(
     recommended.add(prefix);
   };
 
-  // 1) Nächster Schritt der Kursreihe(n), basierend auf Abschlüssen.
-  for (const prefix of done) {
-    const next = NEXT_STEP[prefix];
-    if (next) {
-      const sourceTitle = COURSE_CATALOG[prefix]?.title ?? prefix;
-      push(next, `Dein nächster Schritt nach „${shortTitle(sourceTitle)}"`);
-    }
-    if (recommendations.length >= maxItems) return recommendations.slice(0, maxItems);
+  // Noch gar nichts gebucht oder abgeschlossen → Einstieg empfehlen.
+  if (doneOrBooked.size === 0) {
+    push("A1", "Dein Einstieg in die VDI-Kursreihe");
+    push("AZUBI", "Der Einsteigerkurs für Auszubildende");
+    return recommendations.slice(0, maxItems);
   }
 
-  // 2) Schwerpunktschulungen, die noch fehlen (nur mit buchbarem Termin).
-  for (const prefix of FOCUS_PREFIXES) {
-    if (recommendations.length >= maxItems) break;
-    if (!nextByPrefix.has(prefix)) continue;
-    push(prefix, "Schwerpunktschulung passend zu deinem Profil");
+  // Höchste erreichte Stufe der VDI-Leiter (gebucht zählt wie abgeschlossen).
+  let maxStage = -1;
+  for (const prefix of doneOrBooked) {
+    const stage = VDI_STAGES[prefix];
+    if (stage !== undefined && stage > maxStage) maxStage = stage;
+  }
+
+  if (maxStage === -1) {
+    // Bisher nur Schwerpunkt-/Sonderkurse → Einstieg in die VDI-Reihe.
+    push("A1", "Dein Einstieg in die VDI-Kursreihe");
+  } else if (maxStage < 4) {
+    const next = VDI_LADDER[maxStage]; // Stufe maxStage+1 (Array ist 1-basiert versetzt)
+    const highest = [...doneOrBooked]
+      .filter((p) => VDI_STAGES[p] === maxStage)
+      .map((p) => COURSE_CATALOG[p]?.title ?? p)[0];
+    push(next, `Dein nächster Schritt nach „${shortTitle(highest ?? "deiner letzten Schulung")}"`);
+  }
+  // maxStage === 4 (C erreicht): VDI-Reihe komplett – keine Empfehlung.
+
+  // EFK-Reihe: Teil 1 vorhanden, Teil 2 fehlt.
+  if (doneOrBooked.has("EFK1") && !doneOrBooked.has("EFK2")) {
+    push("EFK2", "Vervollständige deine EFK-Ausbildung");
   }
 
   return recommendations.slice(0, maxItems);
