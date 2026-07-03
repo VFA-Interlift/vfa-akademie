@@ -309,6 +309,9 @@ model CobraTrainingParticipant {
   lastName  String?
   company   String?
 
+  // Anwesenheit, vom Dozenten gepflegt (ANWESEND | NICHT_DA | KRANK | null = offen).
+  attendanceStatus String?
+
   raw Json?
 
   createdAt DateTime @default(now())

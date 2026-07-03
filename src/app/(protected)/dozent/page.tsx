@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import { fetchWixKurse, kursDozentenOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
+import DozentKurseClient, { type DozentKurs } from "./DozentKurseClient";
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +19,15 @@ function normalize(s: string) {
     .trim();
 }
 
+/** Prüft, ob der eingeloggte Dozent in einem der Dozent-Felder des Kurses steht. */
 function isInstructorMatch(
-  instructorField: string | null,
+  dozentField: string,
   firstName: string | null,
   lastName: string | null,
   fullName: string | null
 ): boolean {
-  if (!instructorField) return false;
-  const field = normalize(instructorField);
+  const field = normalize(dozentField);
+  if (!field) return false;
 
   if (firstName && lastName) {
     const first = normalize(firstName);
@@ -41,18 +44,11 @@ function isInstructorMatch(
   return false;
 }
 
-function formatDate(value: string | Date | null) {
-  if (!value) return "";
-  const d = new Date(value as string);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-function formatDateRange(start: Date | string, end: Date | string | null) {
-  const s = formatDate(start);
-  const e = end ? formatDate(end) : null;
-  if (!e || e === s) return `am ${s}`;
-  return `${s} – ${e}`;
+function participantKurscode(raw: unknown): string {
+  if (raw && typeof raw === "object" && "kurscode" in raw) {
+    return String((raw as { kurscode?: unknown }).kurscode ?? "").trim().toUpperCase();
+  }
+  return "";
 }
 
 export default async function DozentPage() {
@@ -70,32 +66,54 @@ export default async function DozentPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const allTrainings = await prisma.training.findMany({
-    where: {
-      instructor: { not: null },
-      date: { gte: today },
-    },
-    orderBy: { date: "asc" },
-    select: {
-      id: true,
-      title: true,
-      code: true,
-      date: true,
-      endDate: true,
-      location: true,
-      instructor: true,
-      creditsAward: true,
-    },
+  // Kurse kommen von der Website (dort werden Dozent 1–4 gepflegt).
+  let wixKurse: WixKurs[] = [];
+  let websiteError = false;
+  try {
+    wixKurse = await fetchWixKurse();
+  } catch {
+    websiteError = true;
+  }
+
+  const meine = wixKurse.filter((kurs) => {
+    const blocks = parseKursBlocks(kurs.startdatum);
+    if (blocks.length === 0) return false;
+    const last = blocks[blocks.length - 1];
+    const endOfKurs = last.endDate ?? last.date;
+    if (endOfKurs < today) return false;
+    return kursDozentenOf(kurs).some((d) =>
+      isInstructorMatch(d, user.firstName, user.lastName, user.name)
+    );
   });
 
-  const upcoming = allTrainings.filter((t) =>
-    isInstructorMatch(t.instructor, user.firstName, user.lastName, user.name)
-  );
+  // Website-Anmeldungen (Staging) den Kursen per Kurscode zuordnen.
+  const websiteParticipants = meine.length
+    ? await prisma.cobraTrainingParticipant.findMany({
+        where: { participantType: "WIX_WEBSITE" },
+        select: { id: true, firstName: true, lastName: true, participantText: true, attendanceStatus: true, raw: true },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
 
-  const displayName =
-    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-    user.name ||
-    session.user.email;
+  const kurse: DozentKurs[] = meine.map((kurs) => {
+    const code = kurs.kurscode.trim().toUpperCase();
+    const participants = websiteParticipants
+      .filter((p) => participantKurscode(p.raw) === code && code !== "")
+      .map((p) => ({
+        id: p.id,
+        name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || p.participantText,
+        attendanceStatus: p.attendanceStatus,
+      }));
+
+    return {
+      id: kurs.id,
+      title: kurs.title || kurs.kurscodeAnzeige || kurs.kurscode,
+      code: kurs.kurscodeAnzeige || kurs.kurscode,
+      datumText: kurs.startdatum,
+      ort: kursLocationOf(kurs),
+      participants,
+    };
+  });
 
   return (
     <main className="page-main">
@@ -104,105 +122,36 @@ export default async function DozentPage() {
           <PageHeader title="Dozenten" showTitle={true} />
         </AnimatedSection>
 
-        {upcoming.length === 0 ? (
+        {websiteError ? (
+          <AnimatedSection delayMs={80}>
+            <AppCard>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#B00020", marginBottom: 8 }}>
+                Kurse konnten nicht geladen werden
+              </div>
+              <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
+                Die Website ist gerade nicht erreichbar. Bitte versuche es später erneut.
+              </p>
+            </AppCard>
+          </AnimatedSection>
+        ) : kurse.length === 0 ? (
           <AnimatedSection delayMs={80}>
             <AppCard>
               <div style={{ fontSize: 17, fontWeight: 700, color: "#007873", marginBottom: 8 }}>
                 Keine bevorstehenden Schulungen
               </div>
               <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
-                Es wurden keine zukünftigen Schulungen gefunden, bei denen dein Name als Dozent hinterlegt ist.
-                Bitte prüfe dein Profil – Vor- und Nachname müssen mit den Cobra-Daten übereinstimmen.
+                Es wurden keine zukünftigen Schulungen gefunden, bei denen dein Name als Dozent
+                hinterlegt ist. Die Dozenten werden auf der Website (Felder „Dozent 1–4" der
+                Schulung) gepflegt – Vor- und Nachname müssen mit deinem Profil übereinstimmen.
               </p>
             </AppCard>
           </AnimatedSection>
         ) : (
           <AnimatedSection delayMs={80}>
-            <div style={{ display: "grid", gap: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                Bevorstehend ({upcoming.length})
-              </div>
-              {upcoming.map((t, i) => (
-                <TrainingCard key={t.id} training={t} index={i} highlight />
-              ))}
-            </div>
+            <DozentKurseClient kurse={kurse} />
           </AnimatedSection>
         )}
       </div>
     </main>
-  );
-}
-
-function TrainingCard({
-  training,
-  highlight,
-}: {
-  training: {
-    id: string;
-    title: string;
-    code: string | null;
-    date: Date;
-    endDate: Date | null;
-    location: string | null;
-    creditsAward: number;
-  };
-  index: number;
-  highlight: boolean;
-}) {
-  const displayTitle = training.code?.trim() || training.title;
-  const dateText = formatDateRange(training.date, training.endDate);
-  const location = training.location?.split(",")[0]?.trim() ?? null;
-
-  return (
-    <AppCard
-      accent={highlight ? "green" : "none"}
-      style={{ opacity: highlight ? 1 : 0.7 }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0,1fr) auto",
-          gap: 14,
-          alignItems: "start",
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: "clamp(15px, 4vw, 18px)",
-              fontWeight: 750,
-              color: highlight ? "#007873" : "#444444",
-              lineHeight: 1.25,
-              marginBottom: 8,
-            }}
-          >
-            {displayTitle}
-          </div>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <InfoChip label="Datum" value={dateText} />
-            {location && <InfoChip label="Ort" value={location} />}
-          </div>
-        </div>
-        <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <div style={{ fontSize: 22, fontWeight: 900, color: highlight ? "#007873" : "#888888", lineHeight: 1 }}>
-            {training.creditsAward}
-          </div>
-          <div style={{ fontSize: 11, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Credits
-          </div>
-        </div>
-      </div>
-    </AppCard>
-  );
-}
-
-function InfoChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <span style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-        {label}:{" "}
-      </span>
-      <span style={{ fontSize: 13, color: "#444444" }}>{value}</span>
-    </div>
   );
 }

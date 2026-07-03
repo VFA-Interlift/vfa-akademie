@@ -18,6 +18,10 @@ export type WixKurs = {
   strasse: string;
   plz: string;
   ort: string;
+  dozent1?: string;
+  dozent2?: string;
+  dozent3?: string;
+  dozent4?: string;
   preisVfaMitglied: number | null;
   preisVmaMitglied: number | null;
   preisNichtmitglied: number | null;
@@ -43,22 +47,46 @@ export async function fetchWixKurse(): Promise<WixKurs[]> {
   return data.kurse;
 }
 
-/**
- * Zieht Start-/Enddatum aus dem Anzeige-Text („dd.MM.yyyy HH:mm bis …").
- * Erster Datums-Treffer = Start, letzter = Ende (deckt auch mehrteilige
- * Kurse wie EFK „… und 06.07.2027 …" ab).
- */
-export function parseKursDates(startdatum: string): { date: Date | null; endDate: Date | null } {
-  const matches = [...String(startdatum ?? "").matchAll(/(\d{2})\.(\d{2})\.(\d{4})/g)];
-  if (matches.length === 0) return { date: null, endDate: null };
+export type KursTerminBlock = { date: Date; endDate: Date | null };
 
+/**
+ * Zerlegt den Anzeige-Text in Termin-Blöcke. Mehrteilige Kurse (z. B. EFK:
+ * „02.02.2027 10:45 bis 05.02.2027 16:30 und 09.03.2027 … bis …") sind mit
+ * „und" getrennt → jeder Block wird ein eigener Kalendereintrag, damit die
+ * Zeit dazwischen nicht fälschlich als durchgehende Schulung erscheint.
+ * Innerhalb eines Blocks: erster Datums-Treffer = Start, letzter = Ende.
+ */
+export function parseKursBlocks(startdatum: string): KursTerminBlock[] {
   const toDate = (m: RegExpMatchArray) =>
     new Date(Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])));
 
-  const dates = matches.map(toDate).sort((a, b) => a.getTime() - b.getTime());
-  const date = dates[0];
-  const endDate = dates.length > 1 ? dates[dates.length - 1] : null;
-  return { date, endDate };
+  const blocks: KursTerminBlock[] = [];
+  for (const segment of String(startdatum ?? "").split(/\bund\b/i)) {
+    const matches = [...segment.matchAll(/(\d{2})\.(\d{2})\.(\d{4})/g)];
+    if (matches.length === 0) continue;
+    const dates = matches.map(toDate).sort((a, b) => a.getTime() - b.getTime());
+    blocks.push({
+      date: dates[0],
+      endDate: dates.length > 1 && dates[dates.length - 1].getTime() !== dates[0].getTime()
+        ? dates[dates.length - 1]
+        : null,
+    });
+  }
+  return blocks.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+/** Erster Termin-Block (Start/Ende) – für Listen, die nur einen Termin zeigen. */
+export function parseKursDates(startdatum: string): { date: Date | null; endDate: Date | null } {
+  const blocks = parseKursBlocks(startdatum);
+  if (blocks.length === 0) return { date: null, endDate: null };
+  return { date: blocks[0].date, endDate: blocks[0].endDate };
+}
+
+/** Dozenten-Namen (Felder Dozent 1–4) als Liste. */
+export function kursDozentenOf(kurs: WixKurs): string[] {
+  return [kurs.dozent1, kurs.dozent2, kurs.dozent3, kurs.dozent4]
+    .map((d) => String(d ?? "").trim())
+    .filter(Boolean);
 }
 
 /** Adresse „Firma, Straße, PLZ Ort" für die Ortsanzeige. */

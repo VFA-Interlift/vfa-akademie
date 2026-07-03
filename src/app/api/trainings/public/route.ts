@@ -6,7 +6,7 @@ import {
   normalizeCertificateCode,
 } from "@/lib/certificates/templates";
 import { isLikelyInhouse } from "@/lib/trainings/format";
-import { fetchWixKurse, kursCategoryOf, kursLocationOf, parseKursDates } from "@/lib/wix/kurse";
+import { fetchWixKurse, kursCategoryOf, kursDozentenOf, kursLocationOf, parseKursBlocks } from "@/lib/wix/kurse";
 
 export const dynamic = "force-dynamic";
 
@@ -101,31 +101,35 @@ async function loadWixTrainings() {
   }
 
   return kurse
-    .map((kurs) => {
-      const { date, endDate } = parseKursDates(kurs.startdatum);
-      if (!date) return null;
+    .flatMap((kurs) => {
+      // Mehrteilige Kurse (z. B. EFK Teil 1 + Teil 2) → ein Eintrag je Block,
+      // damit der Kalender nicht die Zeit dazwischen als Schulung anzeigt.
+      const blocks = parseKursBlocks(kurs.startdatum);
+      if (blocks.length === 0) return [];
 
       const code = kurs.kurscode.trim() || null;
       const normalizedCode = normalizeCertificateCode(code ?? "");
       const certificateKind = normalizedCode ? getCertificateKindByCode(normalizedCode) : null;
+      const baseTitle = kurs.title || kurs.kurscodeAnzeige || code || "Schulung";
+      const dozenten = kursDozentenOf(kurs);
+      const credits = creditsByCode.get(String(code ?? "").toUpperCase()) ?? defaultCreditsFor(code);
 
-      return {
-        id: `wix-${kurs.id}`,
-        title: kurs.title || kurs.kurscodeAnzeige || code || "Schulung",
+      return blocks.map((block, index) => ({
+        id: `wix-${kurs.id}-${index}`,
+        title: blocks.length > 1 ? `${baseTitle} – Teil ${index + 1}` : baseTitle,
         code,
         category: kursCategoryOf(kurs.bereich),
         certificateKind,
         certificateKindLabel: formatCertificateKind(certificateKind),
-        date: date.toISOString(),
-        endDate: endDate ? endDate.toISOString() : null,
+        date: block.date.toISOString(),
+        endDate: block.endDate ? block.endDate.toISOString() : null,
         location: kursLocationOf(kurs),
-        instructor: null as string | null,
+        instructor: dozenten.length ? dozenten.join(" | ") : null,
         description: null as string | null,
-        creditsAward: creditsByCode.get(String(code ?? "").toUpperCase()) ?? defaultCreditsFor(code),
+        creditsAward: credits,
         isPublic: true,
-      };
+      }));
     })
-    .filter((t): t is NonNullable<typeof t> => t !== null)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
