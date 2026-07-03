@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import {
@@ -11,6 +12,7 @@ import {
   formatEnrollmentStatus,
   enrollmentStatusColor,
 } from "@/lib/trainings/format";
+import type { TrainingRecommendation } from "@/lib/trainings/recommendations";
 
 type SerializableTraining = {
   id: string;
@@ -26,18 +28,27 @@ type SerializableTraining = {
   status: string;
 };
 
-export default function MeineSchulungenClient({ trainings }: { trainings: SerializableTraining[] }) {
+export default function MeineSchulungenClient({
+  trainings,
+  recommendations = [],
+}: {
+  trainings: SerializableTraining[];
+  recommendations?: TrainingRecommendation[];
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   if (trainings.length === 0) {
     return (
-      <AnimatedSection>
-        <AppCard>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
-            Aktuell sind dir keine Schulungen zugeordnet.
-          </div>
-        </AppCard>
-      </AnimatedSection>
+      <div style={{ display: "grid", gap: 16 }}>
+        <AnimatedSection>
+          <AppCard>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
+              Aktuell sind dir keine Schulungen zugeordnet.
+            </div>
+          </AppCard>
+        </AnimatedSection>
+        <RecommendationsSection recommendations={recommendations} />
+      </div>
     );
   }
 
@@ -176,7 +187,85 @@ export default function MeineSchulungenClient({ trainings }: { trainings: Serial
           })}
         </div>
       )}
+
+      <RecommendationsSection recommendations={recommendations} />
     </div>
+  );
+}
+
+function RecommendationsSection({ recommendations }: { recommendations: TrainingRecommendation[] }) {
+  if (recommendations.length === 0) return null;
+
+  return (
+    <AnimatedSection delayMs={120}>
+      <div style={{ display: "grid", gap: 10, marginTop: 8 }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            Empfohlen für dich
+          </div>
+          <div style={{ fontSize: 13, color: "#999999", marginTop: 2 }}>
+            Dein nächster Schritt in der VFA-Weiterbildung
+          </div>
+        </div>
+
+        {recommendations.map((rec) => (
+          <AppCard key={rec.prefix} accent="yellow">
+            <div style={{ display: "grid", gap: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#7C5A0A", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                ★ {rec.reason}
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#1F1F1F", lineHeight: 1.25 }}>
+                {rec.title}
+              </div>
+              <div style={{ fontSize: 13.5, color: "#555555", lineHeight: 1.55 }}>
+                {rec.description}
+              </div>
+
+              {rec.nextTraining ? (
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "#666666", fontWeight: 600, marginTop: 2 }}>
+                  <span>
+                    📅 Nächster Termin: {formatDateRange(rec.nextTraining.date, rec.nextTraining.endDate)}
+                    {rec.nextTraining.code ? ` (${rec.nextTraining.code})` : ""}
+                  </span>
+                  {(() => {
+                    const venue = formatVenueLines(rec.nextTraining.location, rec.nextTraining.instructor);
+                    return venue.length > 0 ? <span>📍 {venue[0]}</span> : null;
+                  })()}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: "#888888", fontStyle: "italic" }}>
+                  Termine folgen – schau im Kurskalender vorbei.
+                </div>
+              )}
+
+              <div style={{ marginTop: 4 }}>
+                <Link
+                  href="/kurskalender"
+                  className="vfa-btn"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    minHeight: 40,
+                    padding: "9px 18px",
+                    borderRadius: 999,
+                    background: "#007873",
+                    color: "#FFFFFF",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    textDecoration: "none",
+                  }}
+                >
+                  Zum Kurskalender →
+                </Link>
+              </div>
+            </div>
+          </AppCard>
+        ))}
+      </div>
+    </AnimatedSection>
   );
 }
 

@@ -81,12 +81,21 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const leaderboardTop = await prisma.user.findMany({
-    where: { leaderboardOptIn: true, leaderboardName: { not: null } },
+  // Anonymes Ranking: Platz 1 (ohne Namen), eigene Platzierung, Median.
+  const rankingParticipants = await prisma.user.findMany({
+    where: { creditsTotal: { gt: 0 } },
     orderBy: [{ creditsTotal: "desc" }, { updatedAt: "asc" }],
-    take: 3,
-    select: { id: true, leaderboardName: true, creditsTotal: true },
+    select: { id: true, creditsTotal: true },
   });
+  const rankingCredits = rankingParticipants.map((p) => p.creditsTotal);
+  const rankingFirst = rankingParticipants[0] ?? null;
+  const rankingMedian = rankingCredits.length === 0
+    ? 0
+    : rankingCredits.length % 2 === 1
+      ? rankingCredits[(rankingCredits.length - 1) / 2]
+      : Math.round((rankingCredits[rankingCredits.length / 2 - 1] + rankingCredits[rankingCredits.length / 2]) / 2);
+  const myRankIndex = rankingParticipants.findIndex((p) => p.id === user.id);
+  const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
 
   const displayName = getDisplayName(user);
   const rank = getRankInfo(user.creditsTotal);
@@ -249,7 +258,7 @@ export default async function DashboardPage() {
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <StatBox label="Bevorstehende Schulungen" value={enrollmentCount} />
+                  <StatBox label="Meine bevorstehenden Schulungen" value={enrollmentCount} />
                   <StatBox label="Zertifikate" value={certCount} />
                   <StatBox label="Mein Rang" value={rank.label} />
                   <StatBox label="Mitglied seit" value={new Date(user.createdAt).getFullYear()} />
@@ -263,54 +272,52 @@ export default async function DashboardPage() {
           </AnimatedSection>
         </div>
 
-        {/* Leaderboard */}
+        {/* Ranking (anonym: Platz 1, eigene Platzierung, Median) */}
         <AnimatedSection delayMs={260}>
           <AppCard>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
               <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                Top 3 im Credit-Ranking
+                Credit-Ranking
               </div>
               <Link href="/leaderboard" style={secondaryLinkStyle}>
                 Zum Ranking
               </Link>
             </div>
 
-            {leaderboardTop.length === 0 ? (
+            {!rankingFirst ? (
               <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
-                Noch keine Teilnehmer im Ranking sichtbar.
+                Noch keine Teilnehmer im Ranking – sammle die ersten Credits!
               </div>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
-                {leaderboardTop.map((entry, index) => {
-                  const medalColors = ["#C79A16", "#8E99A8", "#A86C3D"];
-                  return (
-                    <div
-                      key={entry.id}
-                      style={{
-                        border: "1px solid #EFEFEF",
-                        background: index === 0 ? "rgba(199,154,22,0.04)" : "#FFFFFF",
-                        padding: "12px 14px",
-                        borderRadius: 10,
-                        display: "grid",
-                        gridTemplateColumns: "36px minmax(0, 1fr)",
-                        gap: 12,
-                        alignItems: "center",
-                      }}
-                    >
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: medalColors[index], color: "#FFFFFF", fontWeight: 900, fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {index + 1}
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-                        <div style={{ color: "#1F1F1F", fontSize: 16, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
-                          {entry.leaderboardName}
-                        </div>
-                        <div style={{ color: "#007873", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap" }}>
-                          {entry.creditsTotal.toLocaleString("de-DE")} Cr.
-                        </div>
-                      </div>
+                <RankingRow
+                  rankLabel="1"
+                  rankColor="#C79A16"
+                  name={rankingFirst.id === user.id ? "Du 🎉" : "🏆 Anonym"}
+                  credits={rankingFirst.creditsTotal}
+                  highlight={rankingFirst.id === user.id}
+                />
+                {rankingFirst.id !== user.id && (
+                  myRank !== null ? (
+                    <RankingRow
+                      rankLabel={String(myRank)}
+                      rankColor="#007873"
+                      name={`Du · Platz ${myRank} von ${rankingParticipants.length}`}
+                      credits={user.creditsTotal}
+                      highlight
+                    />
+                  ) : (
+                    <div style={{ color: "#888888", fontSize: 13, lineHeight: 1.5, padding: "10px 12px", background: "#F7F7F4", borderRadius: 10, border: "1px solid #EFEFEF" }}>
+                      Du bist noch nicht im Ranking – sammle deine ersten Credits.
                     </div>
-                  );
-                })}
+                  )
+                )}
+                <div style={{ fontSize: 13, color: "#666666", padding: "8px 12px", background: "rgba(0,120,115,0.05)", borderRadius: 10, border: "1px solid rgba(0,120,115,0.15)" }}>
+                  Median aller Teilnehmer: <strong style={{ color: "#007873" }}>{rankingMedian.toLocaleString("de-DE")} Cr.</strong>
+                  {user.creditsTotal > 0 && user.creditsTotal !== rankingMedian && (
+                    <> · du liegst {Math.abs(user.creditsTotal - rankingMedian).toLocaleString("de-DE")} Cr. {user.creditsTotal > rankingMedian ? "darüber" : "darunter"}</>
+                  )}
+                </div>
               </div>
             )}
           </AppCard>
@@ -351,6 +358,47 @@ export default async function DashboardPage() {
   );
 }
 
+
+function RankingRow({
+  rankLabel,
+  rankColor,
+  name,
+  credits,
+  highlight = false,
+}: {
+  rankLabel: string;
+  rankColor: string;
+  name: string;
+  credits: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        border: highlight ? "1px solid rgba(0,120,115,0.3)" : "1px solid #EFEFEF",
+        background: highlight ? "rgba(0,120,115,0.05)" : "#FFFFFF",
+        padding: "12px 14px",
+        borderRadius: 10,
+        display: "grid",
+        gridTemplateColumns: "36px minmax(0, 1fr)",
+        gap: 12,
+        alignItems: "center",
+      }}
+    >
+      <div style={{ width: 36, height: 36, borderRadius: "50%", background: rankColor, color: "#FFFFFF", fontWeight: 900, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {rankLabel}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
+        <div style={{ color: "#1F1F1F", fontSize: 15, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
+          {name}
+        </div>
+        <div style={{ color: "#007873", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap" }}>
+          {credits.toLocaleString("de-DE")} Cr.
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatBox({ label, value, wide }: { label: string; value: string | number; wide?: boolean }) {
   return (

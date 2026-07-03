@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getMyTrainings } from "@/lib/trainings/service";
+import { getTrainingRecommendations } from "@/lib/trainings/recommendations";
 import MeineSchulungenClient from "./MeineSchulungenClient";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,10 @@ export default async function MeineSchulungenPage() {
     redirect("/login");
   }
 
-  const trainings = await getMyTrainings(session.user.email);
+  const [trainings, recommendations] = await Promise.all([
+    getMyTrainings(session.user.email),
+    getTrainingRecommendations(session.user.email),
+  ]);
 
   const serializableTrainings = trainings.map((training) => ({
     ...training,
@@ -27,7 +31,7 @@ export default async function MeineSchulungenPage() {
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader title="Meine Schulungen" showTitle={true} />
 
-        <MeineSchulungenClient trainings={serializableTrainings} />
+        <MeineSchulungenClient trainings={serializableTrainings} recommendations={recommendations} />
       </div>
     </main>
   );
