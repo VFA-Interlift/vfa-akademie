@@ -1,17 +1,27 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import { fetchWixKurse } from "@/lib/wix/kurse";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
-  const [userCount, certCount, enrollmentCount, trainingCount, feedbackCount] = await Promise.all([
+  const [userCount, certCount, enrollmentCount, dbTrainingCount, feedbackCount, websiteAnmeldungen] = await Promise.all([
     prisma.user.count(),
     prisma.certificate.count({ where: { status: "ISSUED" } }),
-    prisma.enrollment.count({ where: { status: { in: ["CONFIRMED", "ATTENDED"] } } }),
+    prisma.enrollment.count({ where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED"] } } }),
     prisma.training.count(),
     prisma.trainingFeedback.count(),
+    prisma.cobraTrainingParticipant.count({ where: { participantType: "WIX_WEBSITE" } }),
   ]);
+
+  // „Schulungen" = Kurse der Website (führende Quelle); DB-Zahl nur als Fallback.
+  let trainingCount = dbTrainingCount;
+  try {
+    trainingCount = (await fetchWixKurse()).length;
+  } catch {
+    // Website nicht erreichbar → DB-Zahl anzeigen.
+  }
 
   return (
     <main className="page-main">
@@ -33,8 +43,9 @@ export default async function AdminMenuPage() {
         <AnimatedSection delayMs={60}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 28 }}>
             <StatCard label="Nutzer" value={userCount} />
-            <StatCard label="Schulungen" value={trainingCount} />
-            <StatCard label="Anmeldungen" value={enrollmentCount} />
+            <StatCard label="Schulungen (Website)" value={trainingCount} />
+            <StatCard label="Website-Anmeldungen" value={websiteAnmeldungen} />
+            <StatCard label="App-Anmeldungen" value={enrollmentCount} />
             <StatCard label="Zertifikate" value={certCount} />
             <StatCard label="Feedback" value={feedbackCount} />
           </div>
@@ -59,11 +70,18 @@ export default async function AdminMenuPage() {
           <SectionLabel>Schulungen</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 28 }}>
             <AdminTile
+              href="/admin/schulungen"
+              abbr="ST"
+              title="Schulungen & Teilnehmer"
+              description="Alle Website-Kurse mit Anmeldungen, Teilnehmern und Anwesenheitsstatus."
+              color="#007873"
+            />
+            <AdminTile
               href="/admin/website"
               abbr="WS"
               title="Website-Synchronisation"
               description="Kurse der Website (Wix-CMS) in die App übernehmen – ersetzt den Cobra-Sync."
-              color="#007873"
+              color="#5A6472"
             />
             <AdminTile
               href="/admin/feedback"
