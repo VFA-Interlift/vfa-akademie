@@ -13,6 +13,8 @@ export type DozentKurs = {
   ort: string | null;
   /** DOZENT = hält die Schulung, HOSPITATION = hospitiert. */
   rolle: "DOZENT" | "HOSPITATION";
+  /** Feedback-Auswertung (PDF-Download), wenn Abgaben vorliegen. */
+  feedback: { trainingId: string; count: number } | null;
   participants: {
     id: string;
     name: string;
@@ -129,6 +131,31 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
             {isOpen && (
               <div style={{ borderTop: "1px solid #E6E6E6", padding: "14px 18px 16px", background: "#FFFFFF" }}>
+                {kurs.feedback && (
+                  <div style={{ marginBottom: 14 }}>
+                    <a
+                      href={`/api/dozent/feedback/pdf?trainingId=${kurs.feedback.trainingId}`}
+                      download
+                      className="vfa-btn"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        minHeight: 40,
+                        padding: "9px 18px",
+                        borderRadius: 999,
+                        background: TEAL,
+                        color: "#FFFFFF",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        letterSpacing: "0.04em",
+                        textDecoration: "none",
+                      }}
+                    >
+                      📄 Feedback-Auswertung herunterladen ({kurs.feedback.count})
+                    </a>
+                  </div>
+                )}
                 {kurs.participants.length === 0 ? (
                   <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
                     Noch keine Website-Anmeldungen für diese Schulung.

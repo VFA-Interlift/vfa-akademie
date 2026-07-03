@@ -104,6 +104,18 @@ export default async function DozentPage() {
       })
     : [];
 
+  // Feedback je Kurs: DB-Training per Kurscode matchen und Abgaben zählen.
+  const codes = meine.map(({ kurs }) => kurs.kurscode.trim()).filter(Boolean);
+  const dbTrainings = codes.length
+    ? await prisma.training.findMany({
+        where: { code: { in: codes, mode: "insensitive" } },
+        select: { id: true, code: true, _count: { select: { feedbacks: true } } },
+      })
+    : [];
+  const feedbackByCode = new Map(
+    dbTrainings.map((t) => [String(t.code ?? "").toUpperCase(), { trainingId: t.id, count: t._count.feedbacks }])
+  );
+
   const kurse: DozentKurs[] = meine.map(({ kurs, rolle }) => {
     const code = kurs.kurscode.trim().toUpperCase();
     const participants = websiteParticipants
@@ -114,6 +126,8 @@ export default async function DozentPage() {
         attendanceStatus: p.attendanceStatus,
       }));
 
+    const feedback = feedbackByCode.get(code) ?? null;
+
     return {
       id: kurs.id,
       title: kurs.title || kurs.kurscodeAnzeige || kurs.kurscode,
@@ -121,6 +135,7 @@ export default async function DozentPage() {
       datumText: kurs.startdatum,
       ort: kursLocationOf(kurs),
       rolle,
+      feedback: feedback && feedback.count > 0 ? feedback : null,
       participants,
     };
   });

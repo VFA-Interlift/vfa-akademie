@@ -42,20 +42,13 @@ export default async function AdminMenuPage() {
 
         {/* Section: Nutzer */}
         <AnimatedSection delayMs={100}>
-          <SectionLabel>Nutzer & Credits</SectionLabel>
+          <SectionLabel>Nutzer</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 28 }}>
             <AdminTile
               href="/admin/users"
               abbr="NZ"
               title="Nutzer verwalten"
               description="Profile prüfen, Credits bearbeiten, Rollen vergeben, Nutzer löschen."
-              color="#007873"
-            />
-            <AdminTile
-              href="/admin/credits"
-              abbr="CR"
-              title="Credits manuell"
-              description="Credits schnell per E-Mail-Adresse anpassen ohne Nutzerliste zu öffnen."
               color="#007873"
             />
           </div>
@@ -66,11 +59,11 @@ export default async function AdminMenuPage() {
           <SectionLabel>Schulungen</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 28 }}>
             <AdminTile
-              href="/admin/cobra"
-              abbr="CB"
-              title="Cobra/WebConnect"
-              description="Verbindungsstatus, Schulungen aus Cobra prüfen, synchronisieren, Zertifikate auslösen."
-              color="#5A6472"
+              href="/admin/website"
+              abbr="WS"
+              title="Website-Synchronisation"
+              description="Kurse der Website (Wix-CMS) in die App übernehmen – ersetzt den Cobra-Sync."
+              color="#007873"
             />
             <AdminTile
               href="/admin/feedback"
