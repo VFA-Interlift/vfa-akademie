@@ -113,6 +113,52 @@ Antworten geht direkt per „Antworten" an ${params.fromUserEmail}.`,
   });
 }
 
+export async function sendNewRegistrationNotificationEmail(params: {
+  name: string;
+  email: string;
+}): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const to = process.env.REGISTRATION_NOTIFY_EMAIL || "info@vfa-interlift.de";
+
+  const name = params.name.trim() || "—";
+  const registeredAt = new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Berlin",
+  }).format(new Date());
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: params.email,
+    subject: `Neue Registrierung: ${name} – VFA-Akademie App`,
+    text: `Neue Registrierung – VFA-Akademie App
+
+Name: ${name}
+E-Mail: ${params.email}
+Registriert am: ${registeredAt} Uhr
+
+Diese E-Mail wurde automatisch generiert.`,
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
+        <div style="height:5px;background:#FFC100;margin-bottom:24px"></div>
+        <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#007873">Neue Registrierung</h1>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333333">
+          Soeben hat sich ein neuer Nutzer in der VFA-Akademie App registriert.
+        </p>
+        <div style="padding:16px;background:#F6F6F4;border:1px solid #E6E6E6;border-radius:8px;font-size:15px;line-height:1.8;color:#1F1F1F">
+          <div><strong>Name:</strong> ${escapeHtml(name)}</div>
+          <div><strong>E-Mail:</strong> ${escapeHtml(params.email)}</div>
+          <div><strong>Registriert am:</strong> ${escapeHtml(registeredAt)} Uhr</div>
+        </div>
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid #E6E6E6;font-size:13px;color:#888888">
+          VFA-Akademie &nbsp;·&nbsp; Diese E-Mail wurde automatisch generiert.
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendTrainingReminderEmail(params: {
   to: string;
   name?: string | null;

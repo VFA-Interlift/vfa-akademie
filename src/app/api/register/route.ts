@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { sendNewRegistrationNotificationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -173,6 +174,14 @@ export async function POST(req: Request) {
       }
     } catch {
       // Auto-enrollment failure does not block registration
+    }
+
+    // Interne Benachrichtigung über die neue Registrierung.
+    // Ein Mailfehler darf die Registrierung nicht blockieren.
+    try {
+      await sendNewRegistrationNotificationEmail({ name, email });
+    } catch (mailError) {
+      console.error("REGISTER_NOTIFY_MAIL_ERROR", mailError);
     }
 
     return NextResponse.json({
