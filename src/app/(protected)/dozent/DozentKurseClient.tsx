@@ -28,6 +28,18 @@ const STATUS_OPTIONS: { value: string; label: string; color: string; bg: string 
   { value: "KRANK", label: "🤒 Krank", color: "#7C5A0A", bg: "rgba(255,193,0,0.15)" },
 ];
 
+// Organisations-/Logistik-Felder. Werden künftig automatisch aus der
+// Bestätigungs-/Orga-Mail befüllt (CC an die Akademie-Adresse). Bis dahin
+// Platzhalter, damit die Dozenten sehen, dass der Bereich kommt.
+const INFO_FELDER: { icon: string; label: string }[] = [
+  { icon: "🏨", label: "Hotel / Übernachtung" },
+  { icon: "🚗", label: "Anreise & Parken" },
+  { icon: "👤", label: "Ansprechpartner vor Ort" },
+  { icon: "🕐", label: "Ablauf & Zeiten" },
+  { icon: "🍽", label: "Verpflegung" },
+  { icon: "🖥", label: "Technik & Raum" },
+];
+
 export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   const [openId, setOpenId] = useState<string | null>(kurse.length === 1 ? kurse[0].id : null);
   const [status, setStatus] = useState<Record<string, string | null>>(() => {
@@ -131,6 +143,22 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
             {isOpen && (
               <div style={{ borderTop: "1px solid #E6E6E6", padding: "14px 18px 16px", background: "#FFFFFF" }}>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                    Organisation & Logistik
+                  </div>
+                  <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+                    {INFO_FELDER.map((f) => (
+                      <div key={f.label} style={{ padding: "10px 12px", border: "1px dashed #D9D9D9", borderRadius: 10, background: "#FBFBF9" }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: "#555555" }}>{f.icon} {f.label}</div>
+                        <div style={{ fontSize: 12.5, color: "#AAAAAA", fontStyle: "italic", marginTop: 3 }}>Inhalt folgt</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#999999", marginTop: 8, lineHeight: 1.5 }}>
+                    Diese Infos werden künftig automatisch aus der Organisations-/Bestätigungsmail übernommen.
+                  </div>
+                </div>
                 {kurs.feedback && (
                   <div style={{ marginBottom: 14 }}>
                     <a
