@@ -5,12 +5,8 @@
       "schedule": "5 0 * * *"
     },
     {
-      "path": "/api/cron/cobra/trainings",
-      "schedule": "10 0 * * *"
-    },
-    {
-      "path": "/api/cron/cobra/participants",
-      "schedule": "15 0 * * *"
+      "path": "/api/cron/wix/trainings",
+      "schedule": "20 0 * * *"
     },
     {
       "path": "/api/cron/reminders",
