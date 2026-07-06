@@ -144,7 +144,7 @@ export default async function DozentPage() {
     <main className="page-main">
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
         <AnimatedSection delayMs={0}>
-          <PageHeader title="Dozenten" showTitle={true} />
+          <PageHeader title="Dozentenbereich" showTitle={true} />
         </AnimatedSection>
 
         {websiteError ? (

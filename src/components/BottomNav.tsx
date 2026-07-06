@@ -112,7 +112,7 @@ export default function BottomNav() {
 
               {isInstructor && (
                 <SheetLink href="/dozent" active={pathname.startsWith("/dozent")} onClick={() => setSheetOpen(false)}>
-                  <IconChalk /> Dozenten
+                  <IconChalk /> Dozentenbereich
                 </SheetLink>
               )}
 

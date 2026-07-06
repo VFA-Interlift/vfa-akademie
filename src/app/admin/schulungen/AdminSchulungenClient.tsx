@@ -140,9 +140,14 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
                   {kurs.dozenten.length > 0 && <> · 👤 {kurs.dozenten.join(", ")}</>}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 <CountPill label="Teilnehmer" value={kurs.teilnehmer.length} strong />
                 <CountPill label="App" value={kurs.enrollments.length} />
+                {kurs.teilnehmer.some((t) => t.attendanceStatus) && (
+                  <div style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(0,120,115,0.08)", border: "1px solid rgba(0,120,115,0.25)", fontSize: 12, fontWeight: 800, color: "#005f5b", whiteSpace: "nowrap" }}>
+                    {kurs.teilnehmer.filter((t) => t.attendanceStatus === "ANWESEND").length}/{kurs.teilnehmer.length} anwesend
+                  </div>
+                )}
               </div>
             </summary>
 

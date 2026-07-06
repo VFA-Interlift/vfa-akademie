@@ -90,6 +90,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
       {kurse.map((kurs) => {
         const isOpen = openId === kurs.id;
         const done = kurs.participants.filter((p) => status[p.id]).length;
+        const anwesend = kurs.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
 
         return (
           <AppCard key={kurs.id} accent="green" style={{ padding: 0, overflow: "hidden" }}>
@@ -136,6 +137,11 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                   <div style={{ fontSize: 10.5, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Teilnehmer
                   </div>
+                  {kurs.participants.length > 0 && (
+                    <div style={{ fontSize: 11, color: "#005f5b", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                      {anwesend} anwesend
+                    </div>
+                  )}
                   <div style={{ marginTop: 6, color: TEAL, fontSize: 20, fontWeight: 900 }}>{isOpen ? "−" : "+"}</div>
                 </div>
               </div>
@@ -159,40 +165,18 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                     Diese Infos werden künftig automatisch aus der Organisations-/Bestätigungsmail übernommen.
                   </div>
                 </div>
-                {kurs.feedback && (
-                  <div style={{ marginBottom: 14 }}>
-                    <a
-                      href={`/api/dozent/feedback/pdf?trainingId=${kurs.feedback.trainingId}`}
-                      download
-                      className="vfa-btn"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        minHeight: 40,
-                        padding: "9px 18px",
-                        borderRadius: 999,
-                        background: TEAL,
-                        color: "#FFFFFF",
-                        fontSize: 13,
-                        fontWeight: 800,
-                        letterSpacing: "0.04em",
-                        textDecoration: "none",
-                      }}
-                    >
-                      📄 Feedback-Auswertung herunterladen ({kurs.feedback.count})
-                    </a>
-                  </div>
-                )}
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Teilnehmer & Anwesenheit
+                </div>
                 {kurs.participants.length === 0 ? (
                   <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
                     Noch keine Website-Anmeldungen für diese Schulung.
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, fontWeight: 800, color: "#888888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
-                      <span>Angemeldete Teilnehmer</span>
-                      <span>{done}/{kurs.participants.length} erfasst</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "#999999", marginBottom: 4, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
+                      <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{kurs.participants.length} erfasst</span>
                     </div>
 
                     {kurs.participants.map((p) => {
@@ -204,15 +188,15 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            gap: 10,
-                            padding: "9px 12px",
+                            gap: 8,
+                            padding: "7px 11px",
                             borderRadius: 10,
                             border: "1px solid #EFEFEF",
                             background: "#FAFAF8",
                             flexWrap: "wrap",
                           }}
                         >
-                          <div style={{ fontWeight: 700, fontSize: 14.5, color: "#1F1F1F", minWidth: 120 }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", minWidth: 100 }}>
                             {p.name}
                           </div>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -225,12 +209,12 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                                   disabled={savingId === p.id}
                                   onClick={() => setAttendance(p.id, opt.value)}
                                   style={{
-                                    padding: "6px 11px",
+                                    padding: "5px 10px",
                                     borderRadius: 999,
                                     border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9",
                                     background: active ? opt.bg : "#FFFFFF",
                                     color: active ? opt.color : "#777777",
-                                    fontSize: 12.5,
+                                    fontSize: 12,
                                     fontWeight: 800,
                                     cursor: savingId === p.id ? "wait" : "pointer",
                                     opacity: savingId === p.id ? 0.6 : 1,
@@ -244,6 +228,22 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {kurs.feedback && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                      Feedback
+                    </div>
+                    <a
+                      href={`/api/dozent/feedback/pdf?trainingId=${kurs.feedback.trainingId}`}
+                      download
+                      className="vfa-btn"
+                      style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 40, padding: "9px 18px", borderRadius: 999, background: TEAL, color: "#FFFFFF", fontSize: 13, fontWeight: 800, letterSpacing: "0.04em", textDecoration: "none" }}
+                    >
+                      📄 Feedback-Auswertung herunterladen ({kurs.feedback.count})
+                    </a>
                   </div>
                 )}
               </div>
