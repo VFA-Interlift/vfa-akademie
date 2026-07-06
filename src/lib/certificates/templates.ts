@@ -127,6 +127,15 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     isVdiCertificate: false,
   },
 
+  "IN/SER/TR": {
+    code: "IN/SER/TR",
+    label: "Aufzugsanlagen: Inbetriebnahme, Servicearbeiten und Troubleshooting",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "IN-SER-TR_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "IN-SER-TR_Teilnahmebestätigung App.pdf",
+    isVdiCertificate: false,
+  },
+
   GEF: {
     code: "GEF",
     label: "Fachkundige Person fuer die Erstellung von Gefaehrdungsbeurteilungen",
