@@ -13,18 +13,31 @@ export type AdminKurs = {
   vergangen: boolean;
   ort: string | null;
   dozenten: string[];
-  teilnehmer: { name: string; firma: string | null; email: string | null; attendanceStatus: string | null }[];
+  teilnehmer: { name: string; firma: string | null; email: string | null; attendanceStatus: string | null; angemeldetAm: string | null }[];
   enrollments: { name: string; status: string }[];
 };
 
-type SortKey = "termin" | "code" | "teilnehmer" | "app";
+type SortKey = "neueste" | "termin" | "code" | "teilnehmer" | "app";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "neueste", label: "Neueste Anmeldung zuerst" },
   { value: "termin", label: "Termin (nächste zuerst)" },
   { value: "code", label: "Kurscode (A–Z)" },
   { value: "teilnehmer", label: "Meiste Website-Anmeldungen" },
   { value: "app", label: "Meiste App-Anmeldungen" },
 ];
+
+/** Neueste Website-Anmeldung eines Kurses (ISO) – für Sortierung „neueste zuerst". */
+function letzteAnmeldung(kurs: AdminKurs): string {
+  return kurs.teilnehmer.reduce((max, t) => (t.angemeldetAm && t.angemeldetAm > max ? t.angemeldetAm : max), "");
+}
+
+function formatAnmeldung(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
 function attendanceLabel(status: string | null): { text: string; color: string } {
   if (status === "ANWESEND") return { text: "✓ Da", color: "#005f5b" };
@@ -34,7 +47,7 @@ function attendanceLabel(status: string | null): { text: string; color: string }
 }
 
 export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] }) {
-  const [sortKey, setSortKey] = useState<SortKey>("termin");
+  const [sortKey, setSortKey] = useState<SortKey>("neueste");
   const [suche, setSuche] = useState("");
 
   const sichtbar = useMemo(() => {
@@ -51,6 +64,10 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
 
     const arr = [...gefiltert];
     switch (sortKey) {
+      case "neueste":
+        // Kurse mit der jüngsten Website-Anmeldung zuerst; Kurse ohne Anmeldung ans Ende.
+        arr.sort((a, b) => letzteAnmeldung(b).localeCompare(letzteAnmeldung(a)));
+        break;
       case "code":
         arr.sort((a, b) => a.code.localeCompare(b.code, "de"));
         break;
@@ -138,19 +155,29 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
                   <div style={{ color: "#999999", fontSize: 13.5 }}>Noch keine Anmeldungen.</div>
                 ) : (
                   <div style={{ display: "grid", gap: 4 }}>
-                    {kurs.teilnehmer.map((p, i) => {
-                      const att = attendanceLabel(p.attendanceStatus);
-                      return (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 10px", background: "#FAFAF8", border: "1px solid #F0F0F0", borderRadius: 8, fontSize: 13.5, flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: 700, color: "#1F1F1F" }}>
-                            {p.name}
-                            {p.firma && <span style={{ color: "#999999", fontWeight: 500 }}> · {p.firma}</span>}
-                            {p.email && <span style={{ color: "#B0B0B0", fontWeight: 500 }}> · {p.email}</span>}
-                          </span>
-                          <span style={{ fontWeight: 800, color: att.color, fontSize: 12.5 }}>{att.text}</span>
-                        </div>
-                      );
-                    })}
+                    {[...kurs.teilnehmer]
+                      .sort((a, b) => (b.angemeldetAm ?? "").localeCompare(a.angemeldetAm ?? ""))
+                      .map((p, i) => {
+                        const att = attendanceLabel(p.attendanceStatus);
+                        const angemeldet = formatAnmeldung(p.angemeldetAm);
+                        return (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 10px", background: "#FAFAF8", border: "1px solid #F0F0F0", borderRadius: 8, fontSize: 13.5, flexWrap: "wrap" }}>
+                            <span style={{ minWidth: 0 }}>
+                              <span style={{ fontWeight: 700, color: "#1F1F1F" }}>
+                                {p.name}
+                                {p.firma && <span style={{ color: "#999999", fontWeight: 500 }}> · {p.firma}</span>}
+                                {p.email && <span style={{ color: "#B0B0B0", fontWeight: 500 }}> · {p.email}</span>}
+                              </span>
+                              {angemeldet && (
+                                <span style={{ display: "block", color: "#AAAAAA", fontWeight: 600, fontSize: 12, marginTop: 2 }}>
+                                  🗓 angemeldet am {angemeldet}
+                                </span>
+                              )}
+                            </span>
+                            <span style={{ fontWeight: 800, color: att.color, fontSize: 12.5, whiteSpace: "nowrap" }}>{att.text}</span>
+                          </div>
+                        );
+                      })}
                   </div>
                 )}
               </div>

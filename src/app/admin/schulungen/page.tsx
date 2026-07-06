@@ -40,7 +40,7 @@ export default async function AdminSchulungenPage() {
   const [participants, dbTrainings] = await Promise.all([
     prisma.cobraTrainingParticipant.findMany({
       where: { participantType: "WIX_WEBSITE" },
-      select: { firstName: true, lastName: true, participantText: true, company: true, email: true, attendanceStatus: true, raw: true },
+      select: { firstName: true, lastName: true, participantText: true, company: true, email: true, attendanceStatus: true, raw: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.training.findMany({
@@ -99,6 +99,7 @@ export default async function AdminSchulungenPage() {
           firma: p.company,
           email: p.email,
           attendanceStatus: p.attendanceStatus,
+          angemeldetAm: p.createdAt.toISOString(),
         })),
       enrollments: enrollmentsByCode.get(code) ?? [],
     };
