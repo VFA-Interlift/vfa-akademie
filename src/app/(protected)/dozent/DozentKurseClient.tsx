@@ -58,7 +58,7 @@ const labelHead: React.CSSProperties = {
 
 export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(kurse.length === 1 ? kurse[0].id : null);
-  const [tab, setTab] = useState<TabKey>("teilnehmer");
+  const [tab, setTab] = useState<TabKey>("infos");
   const [status, setStatus] = useState<Record<string, string | null>>(() => {
     const initial: Record<string, string | null> = {};
     for (const k of kurse) for (const p of k.participants) initial[p.id] = p.attendanceStatus;
@@ -69,7 +69,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
   function openKurs(id: string) {
     setSelectedId(id);
-    setTab("teilnehmer");
+    setTab("infos");
   }
 
   async function setAttendance(participantId: string, newStatus: string | null) {
