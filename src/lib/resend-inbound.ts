@@ -10,6 +10,13 @@ export type OrgaAttachment = {
   isImage: boolean;
 };
 
+/**
+ * Bilder unter dieser Größe gelten als Signatur-Grafiken (Logo/Social-Icons)
+ * und werden ausgeblendet – beim Import (nicht in Blob speichern) und in der
+ * Anzeige (bereits gespeicherte Mails).
+ */
+export const SIGNATURE_IMAGE_MAX_BYTES = 50_000;
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -95,14 +102,12 @@ export async function uploadInboundAttachments(
   const stored: OrgaAttachment[] = [];
   const kurscodeSlug = kurscode.toLowerCase().replace(/[^a-z0-9]+/gi, "_");
 
-  // Kleine Inline-Bilder = i. d. R. Signatur-Grafiken (Logo, Social-Icons).
-  const SIGNATURE_IMAGE_MAX = 50_000; // Bytes
-
   for (const att of attachments) {
     const contentType = att.content_type || "application/octet-stream";
     const isImage = contentType.toLowerCase().startsWith("image/");
     const inline = (att.content_disposition ?? "").toLowerCase() === "inline";
-    if (isImage && inline && att.size < SIGNATURE_IMAGE_MAX) continue;
+    // Kleine Inline-Bilder = i. d. R. Signatur-Grafiken (Logo, Social-Icons).
+    if (isImage && inline && att.size < SIGNATURE_IMAGE_MAX_BYTES) continue;
 
     try {
       const res = await fetch(att.download_url);

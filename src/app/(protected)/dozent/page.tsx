@@ -6,7 +6,7 @@ import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { fetchWixKurse, kursDozentenOf, kursHospitationOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
-import { cleanOrgaText } from "@/lib/resend-inbound";
+import { cleanOrgaText, SIGNATURE_IMAGE_MAX_BYTES } from "@/lib/resend-inbound";
 import DozentKurseClient, { type DozentKurs } from "./DozentKurseClient";
 
 export const dynamic = "force-dynamic";
@@ -137,7 +137,13 @@ export default async function DozentPage() {
       .map((a) => (a && typeof a === "object" ? (a as Record<string, unknown>) : null))
       .filter((a): a is Record<string, unknown> => !!a && typeof a.url === "string");
     const images = atts
-      .filter((a) => a.isImage === true)
+      .filter((a) => {
+        if (a.isImage !== true) return false;
+        // Kleine Bilder = i. d. R. Signatur-Grafiken → auch bei bereits
+        // gespeicherten Mails ausblenden.
+        const size = typeof a.size === "number" ? a.size : Number(a.size);
+        return !(Number.isFinite(size) && size < SIGNATURE_IMAGE_MAX_BYTES);
+      })
       .map((a) => ({ url: String(a.url), filename: String(a.filename ?? "Bild") }));
     const files = atts
       .filter((a) => a.isImage !== true)
