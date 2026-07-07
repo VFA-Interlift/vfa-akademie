@@ -73,6 +73,25 @@ export default async function AdminSchulungenPage() {
     );
   }
 
+  // Unterschriebene Teilnehmerlisten (Dozenten-Uploads) je Kurscode.
+  const signatureRows = await prisma.signedParticipantList.findMany({
+    orderBy: { createdAt: "desc" },
+    select: { id: true, kurscode: true, fileUrl: true, uploadedByName: true, pageCount: true, createdAt: true },
+  });
+  const sigFmt = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Berlin" });
+  const signaturesByCode = new Map<string, AdminKurs["signatureLists"]>();
+  for (const row of signatureRows) {
+    const list = signaturesByCode.get(row.kurscode) ?? [];
+    list.push({
+      id: row.id,
+      url: row.fileUrl,
+      uploadedByName: row.uploadedByName,
+      uploadedText: sigFmt.format(row.createdAt),
+      pageCount: row.pageCount,
+    });
+    signaturesByCode.set(row.kurscode, list);
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -102,6 +121,7 @@ export default async function AdminSchulungenPage() {
           angemeldetAm: p.createdAt.toISOString(),
         })),
       enrollments: enrollmentsByCode.get(code) ?? [],
+      signatureLists: signaturesByCode.get(code) ?? [],
     };
   });
 

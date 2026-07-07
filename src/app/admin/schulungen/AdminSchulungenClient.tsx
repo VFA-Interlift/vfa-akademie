@@ -15,6 +15,7 @@ export type AdminKurs = {
   dozenten: string[];
   teilnehmer: { name: string; firma: string | null; email: string | null; attendanceStatus: string | null; angemeldetAm: string | null }[];
   enrollments: { name: string; status: string }[];
+  signatureLists: { id: string; url: string; uploadedByName: string; uploadedText: string; pageCount: number }[];
 };
 
 type SortKey = "neueste" | "termin" | "code" | "teilnehmer" | "app";
@@ -204,6 +205,24 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
                   </div>
                 )}
               </div>
+
+              {kurs.signatureLists.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                    Unterschriebene Liste{kurs.signatureLists.length > 1 ? "n" : ""} ({kurs.signatureLists.length})
+                  </div>
+                  <div style={{ display: "grid", gap: 4 }}>
+                    {kurs.signatureLists.map((sh) => (
+                      <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "7px 10px", background: "#F3F6F5", border: "1px solid #D6E0DF", borderRadius: 8, fontSize: 13.5, flexWrap: "wrap" }}>
+                        <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: TEAL, fontWeight: 700, textDecoration: "none" }}>
+                          📄 Liste · {sh.pageCount} {sh.pageCount === 1 ? "Seite" : "Seiten"}
+                        </a>
+                        <span style={{ fontSize: 12, color: "#888888" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </details>
         ))

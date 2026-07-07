@@ -132,6 +132,7 @@ model Training {
   feedbacks         TrainingFeedback[]
   cobraParticipants CobraTrainingParticipant[]
   orgaMails         KursOrgaMail[]
+  signedLists       SignedParticipantList[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -357,4 +358,33 @@ model KursOrgaMail {
 
   @@index([kurscode])
   @@index([trainingId])
+}
+
+/// Vom Dozenten vor Ort abfotografierte, unterschriebene Teilnehmerliste.
+/// Mehrere Fotos werden zu einem PDF (in Vercel Blob) zusammengefasst und der
+/// Schulung über den Kurscode zugeordnet. Sichtbar für den Dozenten (eigene
+/// Uploads) und im Admin-Bereich.
+model SignedParticipantList {
+  id String @id @default(cuid())
+
+  /// Kurscode UPPERCASE (== Wix kurscode == Training.code).
+  kurscode String
+
+  /// Optionaler Link zum DB-Training, per Code aufgelöst.
+  trainingId String?
+  training   Training? @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+
+  /// Hochladender Dozent (User.id als Plain-Feld) + Anzeigename.
+  uploadedById   String
+  uploadedByName String
+
+  fileUrl      String
+  filePathname String
+  pageCount    Int
+
+  createdAt DateTime @default(now())
+
+  @@index([kurscode])
+  @@index([trainingId])
+  @@index([uploadedById])
 }

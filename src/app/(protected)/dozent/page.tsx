@@ -58,7 +58,7 @@ export default async function DozentPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email.toLowerCase() },
-    select: { firstName: true, lastName: true, name: true, isInstructor: true },
+    select: { id: true, firstName: true, lastName: true, name: true, isInstructor: true },
   });
 
   if (!user) redirect("/login");
@@ -176,6 +176,27 @@ export default async function DozentPage() {
     orgaByCode.set(row.kurscode, list);
   }
 
+  // Unterschriebene Teilnehmerlisten (Dozenten-Uploads) je Kurscode.
+  const signatureRows = codesUpper.length
+    ? await prisma.signedParticipantList.findMany({
+        where: { kurscode: { in: codesUpper } },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+  const signaturesByCode = new Map<string, DozentKurs["signatureLists"]>();
+  for (const row of signatureRows) {
+    const list = signaturesByCode.get(row.kurscode) ?? [];
+    list.push({
+      id: row.id,
+      url: row.fileUrl,
+      uploadedByName: row.uploadedByName,
+      uploadedText: orgaFmt.format(row.createdAt),
+      pageCount: row.pageCount,
+      mine: row.uploadedById === user.id,
+    });
+    signaturesByCode.set(row.kurscode, list);
+  }
+
   const kurse: DozentKurs[] = meine.map(({ kurs, rolle, vergangen }) => {
     const code = kurs.kurscode.trim().toUpperCase();
     const participants = websiteParticipants
@@ -196,8 +217,10 @@ export default async function DozentPage() {
       ort: kursLocationOf(kurs),
       rolle,
       vergangen,
+      matchCode: code,
       feedback: feedback && feedback.count > 0 ? feedback : null,
       orga: orgaByCode.get(code) ?? [],
+      signatureLists: signaturesByCode.get(code) ?? [],
       participants,
     };
   });
