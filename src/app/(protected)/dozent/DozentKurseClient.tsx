@@ -381,49 +381,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
           {tab === "teilnehmer" && (
             <div style={{ display: "grid", gap: 18 }}>
-              {selected.participants.length === 0 ? (
-                <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
-                  Noch keine Website-Anmeldungen für diese Schulung.
-                </div>
-              ) : (
-                <div style={{ display: "grid", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "#999999", marginBottom: 4, flexWrap: "wrap" }}>
-                    <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
-                    <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
-                  </div>
-
-                  {selected.participants.map((p) => {
-                    const current = status[p.id] ?? null;
-                    return (
-                      <div
-                        key={p.id}
-                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}
-                      >
-                        <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", minWidth: 100 }}>{p.name}</div>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          {STATUS_OPTIONS.map((opt) => {
-                            const active = current === opt.value;
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                disabled={savingId === p.id}
-                                onClick={() => setAttendance(p.id, opt.value)}
-                                style={{ padding: "5px 10px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 12, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
-                              >
-                                {opt.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Unterschriebene Teilnehmerliste (Foto-Upload → PDF) */}
-              <div style={{ display: "grid", gap: 8, borderTop: "1px solid #EFEFEF", paddingTop: 14 }}>
+              {/* Unterschriebene Teilnehmerliste (Foto-Upload → PDF) — oben */}
+              <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <div style={labelHead}>Unterschriebene Liste</div>
                   <label style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 34, padding: "7px 14px", borderRadius: 999, background: uploading ? "#8FBDBA" : TEAL, color: "#FFFFFF", fontSize: 12.5, fontWeight: 800, cursor: uploading ? "wait" : "pointer" }}>
@@ -464,6 +423,50 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Website-Anmeldungen / Anwesenheit — darunter */}
+              <div style={{ borderTop: "1px solid #EFEFEF", paddingTop: 14 }}>
+                {selected.participants.length === 0 ? (
+                  <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+                    Noch keine Website-Anmeldungen für diese Schulung.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "#999999", marginBottom: 4, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
+                      <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
+                    </div>
+
+                    {selected.participants.map((p) => {
+                      const current = status[p.id] ?? null;
+                      return (
+                        <div
+                          key={p.id}
+                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}
+                        >
+                          <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", minWidth: 100 }}>{p.name}</div>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {STATUS_OPTIONS.map((opt) => {
+                              const active = current === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  disabled={savingId === p.id}
+                                  onClick={() => setAttendance(p.id, opt.value)}
+                                  style={{ padding: "5px 10px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 12, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
