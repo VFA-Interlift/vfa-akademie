@@ -6,6 +6,7 @@ import AppCard from "@/components/ui/AppCard";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { fetchWixKurse, kursDozentenOf, kursHospitationOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
+import { cleanOrgaText } from "@/lib/resend-inbound";
 import DozentKurseClient, { type DozentKurs } from "./DozentKurseClient";
 
 export const dynamic = "force-dynamic";
@@ -148,7 +149,7 @@ export default async function DozentPage() {
       subject: row.subject,
       fromAddress: row.fromAddress,
       receivedText: orgaFmt.format(row.receivedAt),
-      text: row.text,
+      text: cleanOrgaText(row.text),
       images,
       files,
     });

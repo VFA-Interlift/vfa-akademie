@@ -59,6 +59,29 @@ export function extractKurscode(subject: string, body: string, knownCodes: strin
 }
 
 /**
+ * Bereitet den Mailtext für die Anzeige auf:
+ *  - schneidet die Signatur ab (ab dem ersten eingebetteten Bild `[cid:…]`,
+ *    danach folgt bei Outlook nur noch Absender-Block + Disclaimer),
+ *  - macht Outlooks Link-Annotationen lesbar: `Text<https://url>` → `Text url`
+ *    (URL bleibt klickbar), redundante `<mailto:…>` fliegen raus,
+ *  - fasst überzählige Leerzeilen zusammen.
+ */
+export function cleanOrgaText(text: string | null): string | null {
+  if (!text) return text;
+  let t = text.replace(/\r\n/g, "\n");
+
+  const cidIdx = t.search(/\[cid:/i);
+  if (cidIdx !== -1) t = t.slice(0, cidIdx);
+
+  t = t.replace(/<(https?:\/\/[^>\s]+)>/gi, " $1"); // Link sichtbar/klickbar
+  t = t.replace(/<mailto:[^>\s]*>/gi, ""); // redundante Mail-Annotation weg
+  t = t.replace(/[ \t]+\n/g, "\n"); // Leerzeichen am Zeilenende
+  t = t.replace(/\n{3,}/g, "\n\n"); // max. eine Leerzeile
+
+  return t.trim();
+}
+
+/**
  * Lädt die pre-signed Anhänge herunter und legt sie in Vercel Blob ab.
  * Bilder werden inline anzeigbar, andere Dateien (v. a. PDFs wie Teilnehmerliste
  * & Ablaufplan) als Download bereitgestellt. Fehlerhafte einzelne Anhänge werden
@@ -67,13 +90,20 @@ export function extractKurscode(subject: string, body: string, knownCodes: strin
 export async function uploadInboundAttachments(
   emailId: string,
   kurscode: string,
-  attachments: { download_url: string; filename?: string; content_type: string; size: number }[]
+  attachments: { download_url: string; filename?: string; content_type: string; size: number; content_disposition?: string }[]
 ): Promise<OrgaAttachment[]> {
   const stored: OrgaAttachment[] = [];
   const kurscodeSlug = kurscode.toLowerCase().replace(/[^a-z0-9]+/gi, "_");
 
+  // Kleine Inline-Bilder = i. d. R. Signatur-Grafiken (Logo, Social-Icons).
+  const SIGNATURE_IMAGE_MAX = 50_000; // Bytes
+
   for (const att of attachments) {
     const contentType = att.content_type || "application/octet-stream";
+    const isImage = contentType.toLowerCase().startsWith("image/");
+    const inline = (att.content_disposition ?? "").toLowerCase() === "inline";
+    if (isImage && inline && att.size < SIGNATURE_IMAGE_MAX) continue;
+
     try {
       const res = await fetch(att.download_url);
       if (!res.ok) continue;
@@ -94,7 +124,7 @@ export async function uploadInboundAttachments(
         filename: rawName,
         contentType,
         size: att.size,
-        isImage: contentType.toLowerCase().startsWith("image/"),
+        isImage,
       });
     } catch {
       // Einzelnen Anhang überspringen.
