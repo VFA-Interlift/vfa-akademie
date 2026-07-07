@@ -13,6 +13,8 @@ export type DozentKurs = {
   ort: string | null;
   /** DOZENT = hält die Schulung, HOSPITATION = hospitiert. */
   rolle: "DOZENT" | "HOSPITATION";
+  /** true, wenn die Schulung bereits vorbei ist (Feedback bleibt einsehbar). */
+  vergangen: boolean;
   /** Feedback-Auswertung (PDF-Download), wenn Abgaben vorliegen. */
   feedback: { trainingId: string; count: number } | null;
   /** Orga-/Bestätigungsmails (per CC an die Akademie-Inbound-Adresse), neueste zuerst. */
@@ -168,6 +170,11 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
             {selected.rolle === "HOSPITATION" && (
               <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
                 Hospitation
+              </span>
+            )}
+            {selected.vergangen && (
+              <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#5B6B69", background: "#EDEFEE", border: "1px solid #D6DAD9", borderRadius: 999, padding: "3px 9px" }}>
+                Vergangen
               </span>
             )}
           </div>
@@ -337,63 +344,95 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   }
 
   // ─────────────────────────── Listen-Ansicht ───────────────────────────
-  return (
-    <div style={{ display: "grid", gap: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-        Bevorstehend ({kurse.length})
-      </div>
+  const upcoming = kurse.filter((k) => !k.vergangen);
+  const past = kurse.filter((k) => k.vergangen);
 
+  const sectionHead: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 800,
+    color: TEAL,
+    textTransform: "uppercase",
+    letterSpacing: "0.07em",
+  };
+
+  const renderKursCard = (kurs: DozentKurs) => {
+    const anwesend = kurs.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
+    const istVergangen = kurs.vergangen;
+    const codeColor = istVergangen ? "#5B6B69" : TEAL;
+
+    return (
+      <AppCard key={kurs.id} accent={istVergangen ? "none" : "green"} style={{ padding: 0, overflow: "hidden", opacity: istVergangen ? 0.9 : 1 }}>
+        <button
+          type="button"
+          onClick={() => openKurs(kurs.id)}
+          style={{ width: "100%", border: "none", background: "transparent", padding: "16px 18px", cursor: "pointer", textAlign: "left", color: "inherit" }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "center" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: codeColor, lineHeight: 1.25 }}>
+                  {kurs.code}
+                </div>
+                {kurs.rolle === "HOSPITATION" && (
+                  <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
+                    Hospitation
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 13, color: "#555555", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "#666666", fontWeight: 600 }}>
+                <span>📅 {kurs.datumText}</span>
+                {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: codeColor, lineHeight: 1 }}>
+                  {kurs.participants.length}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Teilnehmer
+                </div>
+                {!istVergangen && kurs.participants.length > 0 && (
+                  <div style={{ fontSize: 11, color: "#005f5b", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                    {anwesend} anwesend
+                  </div>
+                )}
+                {istVergangen && kurs.feedback && (
+                  <div style={{ fontSize: 11, color: "#5B6B69", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                    {kurs.feedback.count} Feedback
+                  </div>
+                )}
+              </div>
+              <div style={{ color: istVergangen ? "#9AA6A4" : TEAL, fontSize: 24, fontWeight: 900, lineHeight: 1 }}>›</div>
+            </div>
+          </div>
+        </button>
+      </AppCard>
+    );
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 18 }}>
       {errorBanner}
 
-      {kurse.map((kurs) => {
-        const anwesend = kurs.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
+      <div style={{ display: "grid", gap: 10 }}>
+        <div style={sectionHead}>Bevorstehend ({upcoming.length})</div>
+        {upcoming.length === 0 ? (
+          <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+            Aktuell keine bevorstehenden Schulungen.
+          </div>
+        ) : (
+          upcoming.map(renderKursCard)
+        )}
+      </div>
 
-        return (
-          <AppCard key={kurs.id} accent="green" style={{ padding: 0, overflow: "hidden" }}>
-            <button
-              type="button"
-              onClick={() => openKurs(kurs.id)}
-              style={{ width: "100%", border: "none", background: "transparent", padding: "16px 18px", cursor: "pointer", textAlign: "left", color: "inherit" }}
-            >
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "center" }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: TEAL, lineHeight: 1.25 }}>
-                      {kurs.code}
-                    </div>
-                    {kurs.rolle === "HOSPITATION" && (
-                      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
-                        Hospitation
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 13, color: "#555555", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "#666666", fontWeight: 600 }}>
-                    <span>📅 {kurs.datumText}</span>
-                    {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: TEAL, lineHeight: 1 }}>
-                      {kurs.participants.length}
-                    </div>
-                    <div style={{ fontSize: 10.5, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Teilnehmer
-                    </div>
-                    {kurs.participants.length > 0 && (
-                      <div style={{ fontSize: 11, color: "#005f5b", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
-                        {anwesend} anwesend
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ color: TEAL, fontSize: 24, fontWeight: 900, lineHeight: 1 }}>›</div>
-                </div>
-              </div>
-            </button>
-          </AppCard>
-        );
-      })}
+      {past.length > 0 && (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ ...sectionHead, color: "#8A8A8A" }}>Vergangen ({past.length})</div>
+          {past.map(renderKursCard)}
+        </div>
+      )}
     </div>
   );
 }

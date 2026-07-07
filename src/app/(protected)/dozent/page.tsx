@@ -77,13 +77,19 @@ export default async function DozentPage() {
   }
 
   // Kurse, bei denen der Nutzer Dozent ODER Hospitant ist (Rolle merken).
-  const meine: { kurs: WixKurs; rolle: "DOZENT" | "HOSPITATION" }[] = [];
+  // Vergangene Kurse bleiben drin, damit Dozenten weiterhin ihr Feedback sehen.
+  const meine: {
+    kurs: WixKurs;
+    rolle: "DOZENT" | "HOSPITATION";
+    vergangen: boolean;
+    sortDate: Date;
+  }[] = [];
   for (const kurs of wixKurse) {
     const blocks = parseKursBlocks(kurs.startdatum);
     if (blocks.length === 0) continue;
     const last = blocks[blocks.length - 1];
     const endOfKurs = last.endDate ?? last.date;
-    if (endOfKurs < today) continue;
+    const vergangen = endOfKurs < today;
 
     const istDozent = kursDozentenOf(kurs).some((d) =>
       isInstructorMatch(d, user.firstName, user.lastName, user.name)
@@ -92,9 +98,17 @@ export default async function DozentPage() {
       isInstructorMatch(d, user.firstName, user.lastName, user.name)
     );
 
-    if (istDozent) meine.push({ kurs, rolle: "DOZENT" });
-    else if (istHospitant) meine.push({ kurs, rolle: "HOSPITATION" });
+    if (istDozent) meine.push({ kurs, rolle: "DOZENT", vergangen, sortDate: blocks[0].date });
+    else if (istHospitant) meine.push({ kurs, rolle: "HOSPITATION", vergangen, sortDate: blocks[0].date });
   }
+
+  // Bevorstehende zuerst (nächster Termin oben), danach vergangene (neueste oben).
+  meine.sort((a, b) => {
+    if (a.vergangen !== b.vergangen) return a.vergangen ? 1 : -1;
+    return a.vergangen
+      ? b.sortDate.getTime() - a.sortDate.getTime()
+      : a.sortDate.getTime() - b.sortDate.getTime();
+  });
 
   // Website-Anmeldungen (Staging) den Kursen per Kurscode zuordnen.
   const websiteParticipants = meine.length
@@ -162,7 +176,7 @@ export default async function DozentPage() {
     orgaByCode.set(row.kurscode, list);
   }
 
-  const kurse: DozentKurs[] = meine.map(({ kurs, rolle }) => {
+  const kurse: DozentKurs[] = meine.map(({ kurs, rolle, vergangen }) => {
     const code = kurs.kurscode.trim().toUpperCase();
     const participants = websiteParticipants
       .filter((p) => participantKurscode(p.raw) === code && code !== "")
@@ -181,6 +195,7 @@ export default async function DozentPage() {
       datumText: kurs.startdatum,
       ort: kursLocationOf(kurs),
       rolle,
+      vergangen,
       feedback: feedback && feedback.count > 0 ? feedback : null,
       orga: orgaByCode.get(code) ?? [],
       participants,
@@ -209,10 +224,10 @@ export default async function DozentPage() {
           <AnimatedSection delayMs={80}>
             <AppCard>
               <div style={{ fontSize: 17, fontWeight: 700, color: "#007873", marginBottom: 8 }}>
-                Keine bevorstehenden Schulungen
+                Keine Schulungen gefunden
               </div>
               <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
-                Es wurden keine zukünftigen Schulungen gefunden, bei denen dein Name als Dozent
+                Es wurden keine Schulungen gefunden, bei denen dein Name als Dozent
                 oder Hospitant hinterlegt ist. Die Dozenten werden auf der Website (Felder
                 „Dozent 1–4" bzw. „Hospitation" der Schulung) gepflegt – Vor- und Nachname
                 müssen mit deinem Profil übereinstimmen.
