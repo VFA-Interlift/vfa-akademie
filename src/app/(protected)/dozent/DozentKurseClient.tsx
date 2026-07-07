@@ -13,6 +13,10 @@ export type DozentKurs = {
   ort: string | null;
   /** DOZENT = hält die Schulung, HOSPITATION = hospitiert. */
   rolle: "DOZENT" | "HOSPITATION";
+  /** true, wenn die Schulung bereits vorbei ist (Feedback bleibt einsehbar). */
+  vergangen: boolean;
+  /** Kurscode (UPPERCASE) für Uploads/Zuordnung. */
+  matchCode: string;
   /** Feedback-Auswertung (PDF-Download), wenn Abgaben vorliegen. */
   feedback: { trainingId: string; count: number } | null;
   /** Orga-/Bestätigungsmails (per CC an die Akademie-Inbound-Adresse), neueste zuerst. */
@@ -24,6 +28,15 @@ export type DozentKurs = {
     text: string | null;
     images: { url: string; filename: string }[];
     files: { url: string; filename: string }[];
+  }[];
+  /** Hochgeladene, unterschriebene Teilnehmerlisten (PDF), neueste zuerst. */
+  signatureLists: {
+    id: string;
+    url: string;
+    uploadedByName: string;
+    uploadedText: string;
+    pageCount: number;
+    mine: boolean;
   }[];
   participants: {
     id: string;
@@ -89,6 +102,46 @@ function renderTextWithLinks(text: string): React.ReactNode {
   return out;
 }
 
+// Fotos vor dem Upload auf JPEG re-encoden (fängt iPhone-HEIC ab) und
+// verkleinern (max. Kante 1600px) – der Browser dekodiert, was er anzeigen kann.
+async function normalizeToJpeg(file: File): Promise<Blob> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error("DECODE_FAILED"));
+      im.src = url;
+    });
+    let width = img.naturalWidth;
+    let height = img.naturalHeight;
+    const longest = Math.max(width, height);
+    const MAX_EDGE = 1600;
+    if (longest > MAX_EDGE) {
+      const scale = MAX_EDGE / longest;
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("NO_CANVAS");
+    ctx.drawImage(img, 0, 0, width, height);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("ENCODE_FAILED"))), "image/jpeg", 0.85)
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function formatUploadDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(d);
+}
+
 const labelHead: React.CSSProperties = {
   fontSize: 11.5,
   fontWeight: 800,
@@ -108,10 +161,63 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   });
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [sheets, setSheets] = useState<Record<string, DozentKurs["signatureLists"]>>(() => {
+    const initial: Record<string, DozentKurs["signatureLists"]> = {};
+    for (const k of kurse) initial[k.id] = k.signatureLists;
+    return initial;
+  });
+  const [uploadingKursId, setUploadingKursId] = useState<string | null>(null);
 
   function openKurs(id: string) {
     setSelectedId(id);
     setTab("infos");
+  }
+
+  async function uploadSignatureList(kurs: DozentKurs, fileList: FileList) {
+    setError("");
+    setUploadingKursId(kurs.id);
+    try {
+      const jpegs: Blob[] = [];
+      for (const file of Array.from(fileList)) jpegs.push(await normalizeToJpeg(file));
+
+      const fd = new FormData();
+      fd.append("kurscode", kurs.matchCode);
+      jpegs.forEach((b, i) => fd.append("files", b, `seite-${i + 1}.jpg`));
+
+      const res = await fetch("/api/dozent/signature-list", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "UPLOAD_FAILED");
+
+      const sheet = {
+        id: data.sheet.id as string,
+        url: data.sheet.fileUrl as string,
+        uploadedByName: data.sheet.uploadedByName as string,
+        uploadedText: formatUploadDate(data.sheet.createdAt),
+        pageCount: data.sheet.pageCount as number,
+        mine: true,
+      };
+      setSheets((s) => ({ ...s, [kurs.id]: [sheet, ...(s[kurs.id] ?? [])] }));
+    } catch {
+      setError("Hochladen fehlgeschlagen – bitte erneut versuchen (Foto der Liste).");
+    } finally {
+      setUploadingKursId(null);
+    }
+  }
+
+  async function deleteSignatureList(kursId: string, id: string) {
+    setError("");
+    try {
+      const res = await fetch("/api/dozent/signature-list", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error();
+      setSheets((s) => ({ ...s, [kursId]: (s[kursId] ?? []).filter((x) => x.id !== id) }));
+    } catch {
+      setError("Löschen fehlgeschlagen – bitte erneut versuchen.");
+    }
   }
 
   async function setAttendance(participantId: string, newStatus: string | null) {
@@ -151,6 +257,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   if (selected) {
     const done = selected.participants.filter((p) => status[p.id]).length;
     const anwesend = selected.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
+    const sheetList = sheets[selected.id] ?? [];
+    const uploading = uploadingKursId === selected.id;
 
     return (
       <div style={{ display: "grid", gap: 14 }}>
@@ -168,6 +276,11 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
             {selected.rolle === "HOSPITATION" && (
               <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
                 Hospitation
+              </span>
+            )}
+            {selected.vergangen && (
+              <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#5B6B69", background: "#EDEFEE", border: "1px solid #D6DAD9", borderRadius: 999, padding: "3px 9px" }}>
+                Vergangen
               </span>
             )}
           </div>
@@ -267,46 +380,94 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
           )}
 
           {tab === "teilnehmer" && (
-            selected.participants.length === 0 ? (
-              <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
-                Noch keine Website-Anmeldungen für diese Schulung.
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "#999999", marginBottom: 4, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
-                  <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
+            <div style={{ display: "grid", gap: 18 }}>
+              {selected.participants.length === 0 ? (
+                <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+                  Noch keine Website-Anmeldungen für diese Schulung.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "#999999", marginBottom: 4, flexWrap: "wrap" }}>
+                    <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
+                    <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
+                  </div>
+
+                  {selected.participants.map((p) => {
+                    const current = status[p.id] ?? null;
+                    return (
+                      <div
+                        key={p.id}
+                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", minWidth: 100 }}>{p.name}</div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {STATUS_OPTIONS.map((opt) => {
+                            const active = current === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                disabled={savingId === p.id}
+                                onClick={() => setAttendance(p.id, opt.value)}
+                                style={{ padding: "5px 10px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 12, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Unterschriebene Teilnehmerliste (Foto-Upload → PDF) */}
+              <div style={{ display: "grid", gap: 8, borderTop: "1px solid #EFEFEF", paddingTop: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div style={labelHead}>Unterschriebene Liste</div>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 34, padding: "7px 14px", borderRadius: 999, background: uploading ? "#8FBDBA" : TEAL, color: "#FFFFFF", fontSize: 12.5, fontWeight: 800, cursor: uploading ? "wait" : "pointer" }}>
+                    {uploading ? "Lädt hoch …" : "📷 Liste hochladen"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={uploading}
+                      onChange={(e) => {
+                        const f = e.target.files;
+                        if (f && f.length) uploadSignatureList(selected, f);
+                        e.currentTarget.value = "";
+                      }}
+                      style={{ display: "none" }}
+                    />
+                  </label>
                 </div>
 
-                {selected.participants.map((p) => {
-                  const current = status[p.id] ?? null;
-                  return (
-                    <div
-                      key={p.id}
-                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", minWidth: 100 }}>{p.name}</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {STATUS_OPTIONS.map((opt) => {
-                          const active = current === opt.value;
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              disabled={savingId === p.id}
-                              onClick={() => setAttendance(p.id, opt.value)}
-                              style={{ padding: "5px 10px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 12, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
-                            >
-                              {opt.label}
+                {sheetList.length === 0 ? (
+                  <div style={{ fontSize: 12.5, color: "#999999", lineHeight: 1.5 }}>
+                    Noch keine Liste hochgeladen. Fotografiere die unterschriebene Teilnehmerliste – mehrere Seiten möglich, sie werden zu einem PDF zusammengefasst.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    {sheetList.map((sh) => (
+                      <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}>
+                        <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: TEAL, fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
+                          📄 Liste · {sh.pageCount} {sh.pageCount === 1 ? "Seite" : "Seiten"}
+                        </a>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 11, color: "#999999" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
+                          {sh.mine && (
+                            <button type="button" onClick={() => deleteSignatureList(selected.id, sh.id)} style={{ background: "none", border: "none", color: "#B00020", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}>
+                              Entfernen
                             </button>
-                          );
-                        })}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    ))}
+                  </div>
+                )}
               </div>
-            )
+            </div>
           )}
 
           {tab === "feedback" && (
@@ -337,63 +498,95 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   }
 
   // ─────────────────────────── Listen-Ansicht ───────────────────────────
-  return (
-    <div style={{ display: "grid", gap: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-        Bevorstehend ({kurse.length})
-      </div>
+  const upcoming = kurse.filter((k) => !k.vergangen);
+  const past = kurse.filter((k) => k.vergangen);
 
+  const sectionHead: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 800,
+    color: TEAL,
+    textTransform: "uppercase",
+    letterSpacing: "0.07em",
+  };
+
+  const renderKursCard = (kurs: DozentKurs) => {
+    const anwesend = kurs.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
+    const istVergangen = kurs.vergangen;
+    const codeColor = istVergangen ? "#5B6B69" : TEAL;
+
+    return (
+      <AppCard key={kurs.id} accent={istVergangen ? "none" : "green"} style={{ padding: 0, overflow: "hidden", opacity: istVergangen ? 0.9 : 1 }}>
+        <button
+          type="button"
+          onClick={() => openKurs(kurs.id)}
+          style={{ width: "100%", border: "none", background: "transparent", padding: "16px 18px", cursor: "pointer", textAlign: "left", color: "inherit" }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "center" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: codeColor, lineHeight: 1.25 }}>
+                  {kurs.code}
+                </div>
+                {kurs.rolle === "HOSPITATION" && (
+                  <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
+                    Hospitation
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 13, color: "#555555", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "#666666", fontWeight: 600 }}>
+                <span>📅 {kurs.datumText}</span>
+                {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: codeColor, lineHeight: 1 }}>
+                  {kurs.participants.length}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Teilnehmer
+                </div>
+                {!istVergangen && kurs.participants.length > 0 && (
+                  <div style={{ fontSize: 11, color: "#005f5b", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                    {anwesend} anwesend
+                  </div>
+                )}
+                {istVergangen && kurs.feedback && (
+                  <div style={{ fontSize: 11, color: "#5B6B69", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                    {kurs.feedback.count} Feedback
+                  </div>
+                )}
+              </div>
+              <div style={{ color: istVergangen ? "#9AA6A4" : TEAL, fontSize: 24, fontWeight: 900, lineHeight: 1 }}>›</div>
+            </div>
+          </div>
+        </button>
+      </AppCard>
+    );
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 18 }}>
       {errorBanner}
 
-      {kurse.map((kurs) => {
-        const anwesend = kurs.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
+      <div style={{ display: "grid", gap: 10 }}>
+        <div style={sectionHead}>Bevorstehend ({upcoming.length})</div>
+        {upcoming.length === 0 ? (
+          <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+            Aktuell keine bevorstehenden Schulungen.
+          </div>
+        ) : (
+          upcoming.map(renderKursCard)
+        )}
+      </div>
 
-        return (
-          <AppCard key={kurs.id} accent="green" style={{ padding: 0, overflow: "hidden" }}>
-            <button
-              type="button"
-              onClick={() => openKurs(kurs.id)}
-              style={{ width: "100%", border: "none", background: "transparent", padding: "16px 18px", cursor: "pointer", textAlign: "left", color: "inherit" }}
-            >
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "center" }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: TEAL, lineHeight: 1.25 }}>
-                      {kurs.code}
-                    </div>
-                    {kurs.rolle === "HOSPITATION" && (
-                      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
-                        Hospitation
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 13, color: "#555555", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "#666666", fontWeight: 600 }}>
-                    <span>📅 {kurs.datumText}</span>
-                    {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: TEAL, lineHeight: 1 }}>
-                      {kurs.participants.length}
-                    </div>
-                    <div style={{ fontSize: 10.5, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Teilnehmer
-                    </div>
-                    {kurs.participants.length > 0 && (
-                      <div style={{ fontSize: 11, color: "#005f5b", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
-                        {anwesend} anwesend
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ color: TEAL, fontSize: 24, fontWeight: 900, lineHeight: 1 }}>›</div>
-                </div>
-              </div>
-            </button>
-          </AppCard>
-        );
-      })}
+      {past.length > 0 && (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ ...sectionHead, color: "#8A8A8A" }}>Vergangen ({past.length})</div>
+          {past.map(renderKursCard)}
+        </div>
+      )}
     </div>
   );
 }
