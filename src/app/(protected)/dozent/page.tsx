@@ -116,6 +116,45 @@ export default async function DozentPage() {
     dbTrainings.map((t) => [String(t.code ?? "").toUpperCase(), { trainingId: t.id, count: t._count.feedbacks }])
   );
 
+  // Orga-/Bestätigungsmails je Kurscode (kommen per Resend-Inbound rein).
+  const codesUpper = codes.map((c) => c.toUpperCase());
+  const orgaRows = codesUpper.length
+    ? await prisma.kursOrgaMail.findMany({
+        where: { kurscode: { in: codesUpper } },
+        orderBy: { receivedAt: "desc" },
+      })
+    : [];
+  const orgaFmt = new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Berlin",
+  });
+  const orgaByCode = new Map<string, DozentKurs["orga"]>();
+  for (const row of orgaRows) {
+    const rawAtts = Array.isArray(row.attachments) ? row.attachments : [];
+    const atts = rawAtts
+      .map((a) => (a && typeof a === "object" ? (a as Record<string, unknown>) : null))
+      .filter((a): a is Record<string, unknown> => !!a && typeof a.url === "string");
+    const images = atts
+      .filter((a) => a.isImage === true)
+      .map((a) => ({ url: String(a.url), filename: String(a.filename ?? "Bild") }));
+    const files = atts
+      .filter((a) => a.isImage !== true)
+      .map((a) => ({ url: String(a.url), filename: String(a.filename ?? "Datei") }));
+
+    const list = orgaByCode.get(row.kurscode) ?? [];
+    list.push({
+      id: row.id,
+      subject: row.subject,
+      fromAddress: row.fromAddress,
+      receivedText: orgaFmt.format(row.receivedAt),
+      text: row.text,
+      images,
+      files,
+    });
+    orgaByCode.set(row.kurscode, list);
+  }
+
   const kurse: DozentKurs[] = meine.map(({ kurs, rolle }) => {
     const code = kurs.kurscode.trim().toUpperCase();
     const participants = websiteParticipants
@@ -136,6 +175,7 @@ export default async function DozentPage() {
       ort: kursLocationOf(kurs),
       rolle,
       feedback: feedback && feedback.count > 0 ? feedback : null,
+      orga: orgaByCode.get(code) ?? [],
       participants,
     };
   });
