@@ -15,6 +15,16 @@ export type DozentKurs = {
   rolle: "DOZENT" | "HOSPITATION";
   /** Feedback-Auswertung (PDF-Download), wenn Abgaben vorliegen. */
   feedback: { trainingId: string; count: number } | null;
+  /** Orga-/Bestätigungsmails (per CC an die Akademie-Inbound-Adresse), neueste zuerst. */
+  orga: {
+    id: string;
+    subject: string | null;
+    fromAddress: string | null;
+    receivedText: string;
+    text: string | null;
+    images: { url: string; filename: string }[];
+    files: { url: string; filename: string }[];
+  }[];
   participants: {
     id: string;
     name: string;
@@ -46,6 +56,22 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "teilnehmer", label: "Teilnehmer" },
   { key: "feedback", label: "Feedback" },
 ];
+
+// Rendert Fließtext und macht enthaltene URLs (Hotel, Swisstransfer …) klickbar.
+function renderTextWithLinks(text: string): React.ReactNode {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+    if (!/^https?:\/\//.test(part)) return <span key={i}>{part}</span>;
+    // Anhängende Satzzeichen nicht mit in den Link ziehen.
+    const trail = part.match(/[.,;:)\]]+$/)?.[0] ?? "";
+    const url = trail ? part.slice(0, -trail.length) : part;
+    return (
+      <span key={i}>
+        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: TEAL, fontWeight: 700, wordBreak: "break-all" }}>{url}</a>
+        {trail}
+      </span>
+    );
+  });
+}
 
 const labelHead: React.CSSProperties = {
   fontSize: 11.5,
@@ -152,6 +178,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               >
                 {t.label}
                 {t.key === "teilnehmer" && selected.participants.length > 0 ? ` (${selected.participants.length})` : ""}
+                {t.key === "feedback" && selected.feedback ? ` (${selected.feedback.count})` : ""}
               </button>
             );
           })}
@@ -159,20 +186,68 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
         <AppCard>
           {tab === "infos" && (
-            <div>
-              <div style={labelHead}>Organisation & Logistik</div>
-              <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-                {INFO_FELDER.map((f) => (
-                  <div key={f.label} style={{ padding: "10px 12px", border: "1px dashed #D9D9D9", borderRadius: 10, background: "#FBFBF9" }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#555555" }}>{f.icon} {f.label}</div>
-                    <div style={{ fontSize: 12.5, color: "#AAAAAA", fontStyle: "italic", marginTop: 3 }}>Inhalt folgt</div>
-                  </div>
-                ))}
+            selected.orga.length > 0 ? (
+              <div style={{ display: "grid", gap: 14 }}>
+                <div style={labelHead}>Organisation & Logistik</div>
+                {selected.orga.map((o) => {
+                  const text = o.text?.trim() || "";
+                  return (
+                    <div key={o.id} style={{ border: "1px solid #EFEFEF", borderRadius: 12, background: "#FAFAF8", overflow: "hidden" }}>
+                      <div style={{ padding: "10px 14px", borderBottom: "1px solid #EFEFEF", background: "#F1F6F5" }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 800, color: "#1F1F1F", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
+                        <div style={{ fontSize: 11.5, color: "#888888", marginTop: 3 }}>
+                          {o.fromAddress ? `${o.fromAddress} · ` : ""}{o.receivedText}
+                        </div>
+                      </div>
+                      <div style={{ padding: "12px 14px" }}>
+                        {text && (
+                          <div style={{ fontSize: 13.5, color: "#333333", lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {renderTextWithLinks(text)}
+                          </div>
+                        )}
+                        {o.images.length > 0 && (
+                          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", marginTop: text ? 12 : 0 }}>
+                            {o.images.map((img) => (
+                              <a key={img.url} href={img.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid #E6E6E6", borderRadius: 8, overflow: "hidden" }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={img.url} alt={img.filename} style={{ display: "block", width: "100%", height: "auto" }} />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        {o.files.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: text || o.images.length > 0 ? 12 : 0 }}>
+                            {o.files.map((f) => (
+                              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid #E6E6E6", background: "#FFFFFF", color: "#1F1F1F", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+                                📄 {f.filename}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        {!text && o.images.length === 0 && o.files.length === 0 && (
+                          <div style={{ fontSize: 12.5, color: "#AAAAAA", fontStyle: "italic" }}>Kein Inhalt in dieser Mail.</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div style={{ fontSize: 11.5, color: "#999999", marginTop: 8, lineHeight: 1.5 }}>
-                Diese Infos werden künftig automatisch aus der Organisations-/Bestätigungsmail übernommen.
+            ) : (
+              <div>
+                <div style={labelHead}>Organisation & Logistik</div>
+                <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+                  {INFO_FELDER.map((f) => (
+                    <div key={f.label} style={{ padding: "10px 12px", border: "1px dashed #D9D9D9", borderRadius: 10, background: "#FBFBF9" }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: "#555555" }}>{f.icon} {f.label}</div>
+                      <div style={{ fontSize: 12.5, color: "#AAAAAA", fontStyle: "italic", marginTop: 3 }}>Inhalt folgt</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 11.5, color: "#999999", marginTop: 8, lineHeight: 1.5 }}>
+                  Diese Infos werden künftig automatisch aus der Organisations-/Bestätigungsmail übernommen.
+                </div>
               </div>
-            </div>
+            )
           )}
 
           {tab === "teilnehmer" && (

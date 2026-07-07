@@ -131,6 +131,7 @@ model Training {
   certificates      Certificate[]
   feedbacks         TrainingFeedback[]
   cobraParticipants CobraTrainingParticipant[]
+  orgaMails         KursOrgaMail[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -322,4 +323,38 @@ model CobraTrainingParticipant {
   @@index([email])
   @@index([participantType])
   @@index([status])
+}
+
+/// Organisations-/Orga-Mail zu einer Schulung (Hotel, Anreise, Ansprechpartner …).
+/// Kommt per CC an die Resend-Inbound-Adresse rein und wird im Dozentenbereich
+/// (Tab „Infos") angezeigt. Zuordnung zum Kurs über den Kurscode im Betreff.
+model KursOrgaMail {
+  id String @id @default(cuid())
+
+  /// Resend `email.received` email_id – sorgt für Idempotenz bei Webhook-Retries.
+  resendEmailId String @unique
+
+  /// Aus dem Betreff gematchter Kurscode (UPPERCASE, == Wix kurscode == Training.code).
+  kurscode String
+
+  /// Optionaler Link zum DB-Training, falls per Code gefunden.
+  trainingId String?
+  training   Training? @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+
+  subject     String?
+  fromAddress String?
+
+  text String? @db.Text
+  html String? @db.Text // gespeichert, aber nicht roh gerendert
+
+  /// [{ url, pathname, filename, contentType, size }] – Bilder liegen in Vercel Blob.
+  attachments Json?
+
+  receivedAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kurscode])
+  @@index([trainingId])
 }
