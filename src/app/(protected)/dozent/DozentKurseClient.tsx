@@ -57,20 +57,36 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "feedback", label: "Feedback" },
 ];
 
-// Rendert Fließtext und macht enthaltene URLs (Hotel, Swisstransfer …) klickbar.
+const linkStyle: React.CSSProperties = { color: TEAL, fontWeight: 700, wordBreak: "break-all" };
+
+// Rendert Fließtext und macht URLs, E-Mail-Adressen (mailto:) und Telefonnummern
+// (tel:) klickbar – praktisch für den Ansprechpartner-Block am Handy.
 function renderTextWithLinks(text: string): React.ReactNode {
-  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
-    if (!/^https?:\/\//.test(part)) return <span key={i}>{part}</span>;
-    // Anhängende Satzzeichen nicht mit in den Link ziehen.
-    const trail = part.match(/[.,;:)\]]+$/)?.[0] ?? "";
-    const url = trail ? part.slice(0, -trail.length) : part;
-    return (
-      <span key={i}>
-        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: TEAL, fontWeight: 700, wordBreak: "break-all" }}>{url}</a>
-        {trail}
-      </span>
-    );
-  });
+  const re =
+    /(https?:\/\/[^\s<>]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\+\d[\d \t/().-]{5,}\d)/g;
+  const out: React.ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(<span key={key++}>{text.slice(last, m.index)}</span>);
+    const tok = m[0];
+
+    if (/^https?:/i.test(tok)) {
+      const trail = tok.match(/[.,;:)\]]+$/)?.[0] ?? "";
+      const url = trail ? tok.slice(0, -trail.length) : tok;
+      out.push(<a key={key++} href={url} target="_blank" rel="noopener noreferrer" style={linkStyle}>{url}</a>);
+      if (trail) out.push(<span key={key++}>{trail}</span>);
+    } else if (tok.includes("@")) {
+      out.push(<a key={key++} href={`mailto:${tok}`} style={linkStyle}>{tok}</a>);
+    } else {
+      out.push(<a key={key++} href={`tel:${tok.replace(/[^\d+]/g, "")}`} style={linkStyle}>{tok.trim()}</a>);
+    }
+    last = m.index + tok.length;
+  }
+  if (last < text.length) out.push(<span key={key++}>{text.slice(last)}</span>);
+  return out;
 }
 
 const labelHead: React.CSSProperties = {
