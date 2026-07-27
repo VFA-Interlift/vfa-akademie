@@ -7,50 +7,11 @@ import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { fetchWixKurse, kursDozentenOf, kursHospitationOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
 import { cleanOrgaText, SIGNATURE_IMAGE_MAX_BYTES } from "@/lib/resend-inbound";
+import { isInstructorMatch, participantKurscode } from "@/lib/dozent/zuordnung";
 import DozentKurseClient, { type DozentKurs } from "./DozentKurseClient";
 
 export const dynamic = "force-dynamic";
 
-function normalize(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** Prüft, ob der eingeloggte Dozent in einem der Dozent-Felder des Kurses steht. */
-function isInstructorMatch(
-  dozentField: string,
-  firstName: string | null,
-  lastName: string | null,
-  fullName: string | null
-): boolean {
-  const field = normalize(dozentField);
-  if (!field) return false;
-
-  if (firstName && lastName) {
-    const first = normalize(firstName);
-    const last = normalize(lastName);
-    if (field.includes(first) && field.includes(last)) return true;
-  }
-
-  if (fullName) {
-    const full = normalize(fullName);
-    const parts = full.split(" ").filter(Boolean);
-    if (parts.length >= 2 && parts.every((p) => field.includes(p))) return true;
-  }
-
-  return false;
-}
-
-function participantKurscode(raw: unknown): string {
-  if (raw && typeof raw === "object" && "kurscode" in raw) {
-    return String((raw as { kurscode?: unknown }).kurscode ?? "").trim().toUpperCase();
-  }
-  return "";
-}
 
 export default async function DozentPage() {
   const session = await getServerSession(authOptions);
@@ -91,12 +52,9 @@ export default async function DozentPage() {
     const endOfKurs = last.endDate ?? last.date;
     const vergangen = endOfKurs < today;
 
-    const istDozent = kursDozentenOf(kurs).some((d) =>
-      isInstructorMatch(d, user.firstName, user.lastName, user.name)
-    );
-    const istHospitant = !istDozent && kursHospitationOf(kurs).some((d) =>
-      isInstructorMatch(d, user.firstName, user.lastName, user.name)
-    );
+    const istDozent = kursDozentenOf(kurs).some((d) => isInstructorMatch(d, user));
+    const istHospitant =
+      !istDozent && kursHospitationOf(kurs).some((d) => isInstructorMatch(d, user));
 
     if (istDozent) meine.push({ kurs, rolle: "DOZENT", vergangen, sortDate: blocks[0].date });
     else if (istHospitant) meine.push({ kurs, rolle: "HOSPITATION", vergangen, sortDate: blocks[0].date });

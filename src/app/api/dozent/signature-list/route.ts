@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildPdfFromJpegs } from "@/lib/signature-list";
+import { getInstructorKurscodes } from "@/lib/dozent/zuordnung";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -46,6 +47,16 @@ export async function POST(req: Request) {
 
   const kurscode = String(form.get("kurscode") ?? "").trim().toUpperCase();
   if (!kurscode) return fail("MISSING_KURSCODE");
+
+  // Nur für eigene Kurse hochladen — sonst könnte jeder Dozent unter einem
+  // beliebigen Kurscode Teilnehmerlisten mit fremden Unterschriften ablegen.
+  let meineKurscodes: Set<string>;
+  try {
+    meineKurscodes = await getInstructorKurscodes(me);
+  } catch {
+    return fail("WEBSITE_UNAVAILABLE", 503);
+  }
+  if (!meineKurscodes.has(kurscode)) return fail("FORBIDDEN", 403);
 
   const files = form.getAll("files").filter((f): f is File => f instanceof File);
   if (files.length === 0) return fail("NO_FILES");

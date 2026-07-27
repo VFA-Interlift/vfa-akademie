@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getInstructorKurscodes, participantKurscode } from "@/lib/dozent/zuordnung";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,10 @@ const ALLOWED_STATUS = ["ANWESEND", "NICHT_DA", "KRANK"] as const;
 /**
  * Dozenten pflegen die Anwesenheit der Website-Teilnehmer ihrer Schulung.
  * status null = zurück auf „offen".
+ *
+ * Die Anwesenheit steuert seit dem Zertifikatslauf, ob jemand ein Zertifikat
+ * und Credits bekommt — deshalb wird geprüft, ob der Teilnehmer zu einem Kurs
+ * dieses Dozenten gehört, nicht nur ob der Nutzer überhaupt Dozent ist.
  */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -18,9 +23,11 @@ export async function POST(req: Request) {
 
   const me = await prisma.user.findUnique({
     where: { email },
-    select: { isInstructor: true },
+    select: { isInstructor: true, role: true, firstName: true, lastName: true, name: true },
   });
-  if (!me?.isInstructor) return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  if (!me?.isInstructor && me?.role !== "ADMIN") {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  }
 
   const body = (await req.json().catch(() => null)) as { participantId?: unknown; status?: unknown } | null;
   const participantId = typeof body?.participantId === "string" ? body.participantId : null;
@@ -31,14 +38,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "INVALID_STATUS" }, { status: 400 });
   }
 
-  try {
-    const updated = await prisma.cobraTrainingParticipant.update({
-      where: { id: participantId },
-      data: { attendanceStatus: status },
-      select: { id: true, attendanceStatus: true },
-    });
-    return NextResponse.json({ ok: true, participant: updated });
-  } catch {
+  const participant = await prisma.cobraTrainingParticipant.findUnique({
+    where: { id: participantId },
+    select: { id: true, raw: true },
+  });
+  if (!participant) {
     return NextResponse.json({ ok: false, error: "PARTICIPANT_NOT_FOUND" }, { status: 404 });
   }
+
+  if (me.role !== "ADMIN") {
+    const kurscode = participantKurscode(participant.raw);
+
+    let meineKurscodes: Set<string>;
+    try {
+      meineKurscodes = await getInstructorKurscodes(me);
+    } catch {
+      // Ohne Website-Daten lässt sich die Zuordnung nicht belegen → ablehnen.
+      return NextResponse.json({ ok: false, error: "WEBSITE_UNAVAILABLE" }, { status: 503 });
+    }
+
+    if (!kurscode || !meineKurscodes.has(kurscode)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+  }
+
+  const updated = await prisma.cobraTrainingParticipant.update({
+    where: { id: participant.id },
+    data: { attendanceStatus: status },
+    select: { id: true, attendanceStatus: true },
+  });
+
+  return NextResponse.json({ ok: true, participant: updated });
 }

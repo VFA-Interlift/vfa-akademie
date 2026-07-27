@@ -4,19 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAdminFeedbackEvaluation } from "@/lib/feedback/evaluation";
 import { renderFeedbackReportPdf } from "@/lib/feedback/report-pdf";
-import { instructorNamesFrom } from "@/lib/feedback/service";
+import { getInstructorKurscodes } from "@/lib/dozent/zuordnung";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-function normalize(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 /**
  * Feedback-Auswertung als PDF für den Dozenten der Schulung.
@@ -45,23 +36,24 @@ export async function GET(req: Request) {
   });
   if (!training) return NextResponse.json({ ok: false, error: "TRAINING_NOT_FOUND" }, { status: 404 });
 
-  // Namens-Match: nur der eigene Dozent (oder Admin) darf die Auswertung laden.
+  // Nur der eigene Dozent (oder Admin) darf die Auswertung laden. Grundlage ist
+  // die Dozentenzuordnung der Website, nicht das Freitextfeld `instructor` der
+  // Schulung: dort standen mehrere Namen in einem Feld, wodurch ein Vorname der
+  // einen und ein Nachname einer anderen Person gemeinsam einen Treffer
+  // erzeugen konnten — und damit fremde Auswertungen freigaben.
   if (me.role !== "ADMIN") {
-    const dozentNames = instructorNamesFrom(training.instructor).map(normalize);
-    const profileNames = [
-      [me.firstName, me.lastName].filter(Boolean).join(" "),
-      me.name ?? "",
-    ]
-      .map(normalize)
-      .filter(Boolean);
+    const code = String(training.code ?? "").trim().toUpperCase();
 
-    const isMatch = dozentNames.some((d) =>
-      profileNames.some((p) => {
-        const parts = p.split(" ").filter(Boolean);
-        return parts.length >= 2 && parts.every((part) => d.includes(part));
-      })
-    );
-    if (!isMatch) return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    let meineKurscodes: Set<string>;
+    try {
+      meineKurscodes = await getInstructorKurscodes(me);
+    } catch {
+      return NextResponse.json({ ok: false, error: "WEBSITE_UNAVAILABLE" }, { status: 503 });
+    }
+
+    if (!code || !meineKurscodes.has(code)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
   }
 
   const evaluation = await getAdminFeedbackEvaluation(trainingId);
