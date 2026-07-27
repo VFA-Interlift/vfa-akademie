@@ -129,6 +129,13 @@ export default async function AdminMenuPage() {
               color="#5A6472"
             />
             <AdminTile
+              href="/admin/import"
+              abbr="HI"
+              title="Historie importieren"
+              description="Vergangene Schulungen und Teilnehmer aus den Cobra-Exporten einlesen."
+              color="#5A6472"
+            />
+            <AdminTile
               href="/admin/feedback"
               abbr="FB"
               title="Feedback-Auswertung"
