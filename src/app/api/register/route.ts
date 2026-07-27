@@ -172,8 +172,11 @@ export async function POST(req: Request) {
           update: {},
         });
       }
-    } catch {
-      // Auto-enrollment failure does not block registration
+    } catch (enrollError) {
+      // Das Nachziehen bestehender Anmeldungen darf die Registrierung nicht
+      // blockieren – stillschweigend verschwinden darf der Fehler aber auch
+      // nicht, sonst fehlen dem Nutzer Schulungen ohne erkennbaren Grund.
+      console.error("REGISTER_AUTO_ENROLL_ERROR", enrollError);
     }
 
     // Interne Benachrichtigung über die neue Registrierung.

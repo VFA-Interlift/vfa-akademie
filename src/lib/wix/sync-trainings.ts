@@ -91,6 +91,16 @@ export async function syncWixTrainings(): Promise<WixSyncResult> {
     }
   }
 
+  // Übersprungene Kurse tauchen sonst nur in der HTTP-Antwort auf, die beim
+  // nächtlichen Cron-Lauf niemand liest — sie würden also lautlos in der App
+  // fehlen. Als Fehler geloggt, damit sie in den Vercel-Logs auffindbar sind.
+  if (skipped.length > 0) {
+    console.error("WIX_SYNC_UEBERSPRUNGEN", {
+      count: skipped.length,
+      items: skipped,
+    });
+  }
+
   return {
     received: kurse.length,
     created,

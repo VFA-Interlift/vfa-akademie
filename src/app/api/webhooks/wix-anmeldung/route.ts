@@ -70,6 +70,14 @@ export async function POST(req: Request) {
     select: { id: true, code: true, title: true },
   });
 
+  if (!training) {
+    // Ohne Treffer wird der Teilnehmer zwar gespeichert, hängt aber an keiner
+    // Schulung: keine Einschreibung, kein Zertifikat, keine Credits. Die
+    // Antwort bleibt bewusst ok (die Anmeldung ist ja angekommen), deshalb
+    // muss das hier auffindbar protokolliert werden.
+    console.error("WIX_ANMELDUNG_OHNE_SCHULUNG", { kurscode });
+  }
+
   // 2) Staging-Eintrag (idempotent über die Wix-Anmeldungs-ID; ohne E-Mail
   //    über den Namen).
   const kurscodeSlug = kurscode.toLowerCase().replace(/[^a-z0-9]+/gi, "_");

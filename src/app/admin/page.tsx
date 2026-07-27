@@ -6,13 +6,26 @@ import { fetchWixKurse } from "@/lib/wix/kurse";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
-  const [userCount, certCount, enrollmentCount, dbTrainingCount, feedbackCount, websiteAnmeldungen] = await Promise.all([
+  const [
+    userCount,
+    certCount,
+    enrollmentCount,
+    dbTrainingCount,
+    feedbackCount,
+    websiteAnmeldungen,
+    ohneSchulung,
+  ] = await Promise.all([
     prisma.user.count(),
     prisma.certificate.count({ where: { status: "ISSUED" } }),
     prisma.enrollment.count({ where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED"] } } }),
     prisma.training.count(),
     prisma.trainingFeedback.count(),
     prisma.cobraTrainingParticipant.count({ where: { participantType: "WIX_WEBSITE" } }),
+    // Anmeldungen, deren Kurscode zu keiner Schulung passte. Diese Teilnehmer
+    // bekommen weder Einschreibung noch Zertifikat — bisher fiel das niemandem auf.
+    prisma.cobraTrainingParticipant.count({
+      where: { participantType: "WIX_WEBSITE", trainingId: null },
+    }),
   ]);
 
   // „Schulungen" = Kurse der Website (führende Quelle); DB-Zahl nur als Fallback.
@@ -50,6 +63,38 @@ export default async function AdminMenuPage() {
             <StatCard label="Feedback" value={feedbackCount} />
           </div>
         </AnimatedSection>
+
+        {ohneSchulung > 0 ? (
+          <AnimatedSection delayMs={80}>
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                alignItems: "flex-start",
+                padding: "14px 16px",
+                marginBottom: 28,
+                borderRadius: 12,
+                background: "#FFF6E0",
+                border: "1px solid #FFC100",
+              }}
+            >
+              <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden>
+                ⚠
+              </span>
+              <div>
+                <strong style={{ display: "block", color: "#1F1F1F", fontSize: 15 }}>
+                  {ohneSchulung} Website-{ohneSchulung === 1 ? "Anmeldung" : "Anmeldungen"} ohne
+                  Schulungszuordnung
+                </strong>
+                <span style={{ color: "#6B6B6B", fontSize: 14 }}>
+                  Der Kurscode der Anmeldung passt zu keiner Schulung in der App. Diese
+                  Teilnehmenden erhalten keine Einschreibung, kein Zertifikat und keine Credits.
+                  Meist ein abweichender Kurscode auf der Website — unter „Schulungen" nachsehen.
+                </span>
+              </div>
+            </div>
+          </AnimatedSection>
+        ) : null}
 
         {/* Section: Nutzer */}
         <AnimatedSection delayMs={100}>
