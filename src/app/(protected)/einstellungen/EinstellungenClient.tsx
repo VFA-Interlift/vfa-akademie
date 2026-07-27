@@ -54,8 +54,152 @@ export default function EinstellungenClient({
     <div style={{ display: "grid", gap: 18 }}>
       <NotificationsCard initial={notifyBeforeTraining} />
       <FeedbackCard />
+      <DatenschutzCard />
       <AppInfoCard />
     </div>
+  );
+}
+
+/**
+ * Auskunft und Löschung nach DSGVO. Ohne diese Möglichkeiten wäre das
+ * Versprechen „DSGVO konform" auf der Startseite nur ein Wort.
+ */
+function DatenschutzCard() {
+  const [passwort, setPasswort] = useState("");
+  const [zeigeLoeschen, setZeigeLoeschen] = useState(false);
+  const [laeuft, setLaeuft] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function konventLoeschen() {
+    setLaeuft(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/me/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passwort }),
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        const texte: Record<string, string> = {
+          PASSWORT_FALSCH: "Das Passwort stimmt nicht.",
+          PASSWORT_FEHLT: "Bitte gib dein Passwort ein.",
+          ADMIN_KONTO: "Adminkonten können nur über einen anderen Admin gelöscht werden.",
+        };
+        setMsg(texte[data.error] ?? "Löschen fehlgeschlagen.");
+        return;
+      }
+
+      await signOut({ callbackUrl: "/login" });
+    } catch {
+      setMsg("Löschen fehlgeschlagen.");
+    } finally {
+      setLaeuft(false);
+    }
+  }
+
+  return (
+    <AppCard accent="none">
+      <SectionHeader title="Meine Daten" badge="Datenschutz" />
+
+      <div style={{ fontSize: 14, color: "#333333", lineHeight: 1.6 }}>
+        Du kannst jederzeit alle zu deinem Konto gespeicherten Daten herunterladen —
+        Profil, Anmeldungen, Zertifikate, Credits und Feedback.
+      </div>
+
+      <a
+        href="/api/me/export"
+        style={{
+          display: "inline-block",
+          marginTop: 12,
+          padding: "10px 18px",
+          borderRadius: 999,
+          border: "1px solid #007873",
+          color: "#007873",
+          fontWeight: 800,
+          fontSize: 14,
+          textDecoration: "none",
+        }}
+      >
+        Daten herunterladen
+      </a>
+
+      <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #E6E6E6" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#1F1F1F" }}>Konto löschen</div>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: "#666666", lineHeight: 1.6 }}>
+          Dein Konto und alles daran Hängende wird endgültig entfernt: Anmeldungen,
+          Zertifikate, Credits, Feedback und hochgeladene Nachweise. Die Teilnahmeunterlagen
+          der Akademie zu besuchten Schulungen bleiben davon unberührt.
+        </p>
+
+        {!zeigeLoeschen ? (
+          <button
+            type="button"
+            onClick={() => setZeigeLoeschen(true)}
+            style={{
+              marginTop: 12,
+              padding: "10px 18px",
+              borderRadius: 999,
+              border: "1px solid #B00020",
+              background: "#FFFFFF",
+              color: "#B00020",
+              fontWeight: 800,
+              fontSize: 14,
+              cursor: "pointer",
+            }}
+          >
+            Konto löschen …
+          </button>
+        ) : (
+          <div style={{ marginTop: 12, display: "grid", gap: 10, maxWidth: 360 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: "#333333" }}>
+              Zur Bestätigung dein Passwort
+              <input
+                type="password"
+                value={passwort}
+                onChange={(e) => setPasswort(e.target.value)}
+                autoComplete="current-password"
+                style={{
+                  width: "100%", marginTop: 4, padding: "10px 12px",
+                  border: "1px solid #D4D4D4", borderRadius: 8, fontSize: 14,
+                }}
+              />
+            </label>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={konventLoeschen}
+                disabled={laeuft || !passwort}
+                style={{
+                  padding: "10px 18px", borderRadius: 999, border: "none",
+                  background: passwort ? "#B00020" : "#DDDDDD",
+                  color: "#FFFFFF", fontWeight: 800, fontSize: 14,
+                  cursor: laeuft || !passwort ? "default" : "pointer",
+                }}
+              >
+                {laeuft ? "Wird gelöscht …" : "Endgültig löschen"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setZeigeLoeschen(false); setPasswort(""); setMsg(null); }}
+                style={{
+                  padding: "10px 18px", borderRadius: 999,
+                  border: "1px solid #D4D4D4", background: "#FFFFFF",
+                  color: "#666666", fontWeight: 700, fontSize: 14, cursor: "pointer",
+                }}
+              >
+                Abbrechen
+              </button>
+            </div>
+
+            {msg ? <div style={{ color: "#B00020", fontSize: 13, fontWeight: 700 }}>{msg}</div> : null}
+          </div>
+        )}
+      </div>
+    </AppCard>
   );
 }
 

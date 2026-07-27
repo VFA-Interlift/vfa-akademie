@@ -87,6 +87,11 @@ async function loadWixTrainings() {
         instructor: dozenten.length ? dozenten.join(" | ") : null,
         description: null as string | null,
         creditsAward: credits,
+        // Die Website pflegt drei Preisstufen — bislang kamen sie zwar in der
+        // App an, wurden aber nirgends angezeigt.
+        preisVfaMitglied: kurs.preisVfaMitglied,
+        preisVmaMitglied: kurs.preisVmaMitglied,
+        preisNichtmitglied: kurs.preisNichtmitglied,
         isPublic: true,
       }));
     })
@@ -126,6 +131,9 @@ async function loadDbTrainings() {
       instructor: training.instructor,
       description: training.description,
       creditsAward: training.creditsAward,
+      preisVfaMitglied: null as number | null,
+      preisVmaMitglied: null as number | null,
+      preisNichtmitglied: null as number | null,
       isPublic: true,
     }));
 }

@@ -54,15 +54,6 @@ const STATUS_OPTIONS: { value: string; label: string; color: string; bg: string 
 // Organisations-/Logistik-Felder. Werden künftig automatisch aus der
 // Bestätigungs-/Orga-Mail befüllt (CC an die Akademie-Adresse). Bis dahin
 // Platzhalter, damit die Dozenten sehen, dass der Bereich kommt.
-const INFO_FELDER: { icon: string; label: string }[] = [
-  { icon: "🏨", label: "Hotel / Übernachtung" },
-  { icon: "🚗", label: "Anreise & Parken" },
-  { icon: "👤", label: "Ansprechpartner vor Ort" },
-  { icon: "🕐", label: "Ablauf & Zeiten" },
-  { icon: "🍽", label: "Verpflegung" },
-  { icon: "🖥", label: "Technik & Raum" },
-];
-
 type TabKey = "infos" | "teilnehmer" | "feedback";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "infos", label: "Infos" },
@@ -364,16 +355,23 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
             ) : (
               <div>
                 <div style={labelHead}>Organisation & Logistik</div>
-                <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-                  {INFO_FELDER.map((f) => (
-                    <div key={f.label} style={{ padding: "10px 12px", border: "1px dashed #D9D9D9", borderRadius: 10, background: "#FBFBF9" }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: "#555555" }}>{f.icon} {f.label}</div>
-                      <div style={{ fontSize: 12.5, color: "#AAAAAA", fontStyle: "italic", marginTop: 3 }}>Inhalt folgt</div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ fontSize: 11.5, color: "#999999", marginTop: 8, lineHeight: 1.5 }}>
-                  Diese Infos werden künftig automatisch aus der Organisations-/Bestätigungsmail übernommen.
+                <div
+                  style={{
+                    padding: "16px 18px",
+                    border: "1px dashed #D9D9D9",
+                    borderRadius: 12,
+                    background: "#FBFBF9",
+                  }}
+                >
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#555555" }}>
+                    Für diesen Kurs liegen noch keine Orga-Infos vor.
+                  </div>
+                  <div style={{ fontSize: 13, color: "#888888", marginTop: 6, lineHeight: 1.6 }}>
+                    Sobald die Organisations- oder Bestätigungsmail zur Schulung eintrifft,
+                    erscheinen hier Hotel, Anreise, Ansprechpartner vor Ort, Ablauf,
+                    Verpflegung und Technik. Bis dahin gelten die Angaben aus deiner
+                    E-Mail-Korrespondenz.
+                  </div>
                 </div>
               </div>
             )

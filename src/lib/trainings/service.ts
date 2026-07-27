@@ -15,7 +15,72 @@ export type MyTrainingItem = {
   description: string | null;
   creditsAward: number;
   status: string;
+  /** Nur bei vergangenen Teilnahmen gesetzt, wenn ein Zertifikat ausgestellt ist. */
+  certificateId?: string | null;
 };
+
+function heuteBeginn() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Vergangene Teilnahmen — auch die aus dem einmaligen Cobra-Import. Ohne diese
+ * Liste wäre die Historie nur über „Meine Zertifikate" sichtbar, und Kurse ohne
+ * Zertifikat (etwa YLD) gar nicht.
+ */
+export async function getMyPastTrainings(email: string): Promise<MyTrainingItem[]> {
+  const user = await prisma.user.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { id: true },
+  });
+
+  if (!user) return [];
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: {
+      userId: user.id,
+      status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      training: { date: { lt: heuteBeginn() } },
+    },
+    orderBy: { training: { date: "desc" } },
+    select: {
+      status: true,
+      certificate: { select: { id: true, status: true } },
+      training: {
+        select: {
+          id: true,
+          title: true,
+          code: true,
+          certificateKind: true,
+          date: true,
+          endDate: true,
+          location: true,
+          instructor: true,
+          description: true,
+          creditsAward: true,
+        },
+      },
+    },
+  });
+
+  return enrollments.map((e) => ({
+    id: e.training.id,
+    title: e.training.title,
+    code: e.training.code,
+    certificateKind: e.training.certificateKind,
+    certificateKindLabel: formatCertificateKind(e.training.certificateKind),
+    date: e.training.date,
+    endDate: e.training.endDate,
+    location: e.training.location,
+    instructor: e.training.instructor,
+    description: e.training.description,
+    creditsAward: e.training.creditsAward,
+    status: e.status,
+    certificateId: e.certificate && e.certificate.status === "ISSUED" ? e.certificate.id : null,
+  }));
+}
 
 export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
   const user = await prisma.user.findUnique({
@@ -35,6 +100,7 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
       status: {
         in: ["PENDING", "CONFIRMED", "ATTENDED", "COMPLETED"],
       },
+      training: { date: { gte: heuteBeginn() } },
     },
     orderBy: {
       training: {

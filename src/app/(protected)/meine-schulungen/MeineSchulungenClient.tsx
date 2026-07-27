@@ -26,13 +26,16 @@ type SerializableTraining = {
   description: string | null;
   creditsAward: number;
   status: string;
+  certificateId?: string | null;
 };
 
 export default function MeineSchulungenClient({
   trainings,
+  past = [],
   recommendations = [],
 }: {
   trainings: SerializableTraining[];
+  past?: SerializableTraining[];
   recommendations?: TrainingRecommendation[];
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -45,9 +48,17 @@ export default function MeineSchulungenClient({
             <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
               Aktuell sind dir keine Schulungen zugeordnet.
             </div>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+              Im{" "}
+              <Link href="/kurskalender" style={{ color: "#007873", fontWeight: 700 }}>
+                Kurskalender
+              </Link>{" "}
+              findest du alle kommenden Termine.
+            </p>
           </AppCard>
         </AnimatedSection>
         <RecommendationsSection recommendations={recommendations} />
+        <VergangeneSection trainings={past} />
       </div>
     );
   }
@@ -189,7 +200,87 @@ export default function MeineSchulungenClient({
       )}
 
       <RecommendationsSection recommendations={recommendations} />
+      <VergangeneSection trainings={past} />
     </div>
+  );
+}
+
+/**
+ * Bisherige Teilnahmen — auch die aus dem Cobra-Import. Bewusst kompakt
+ * gehalten: Es können viele Jahre sein, und der Nutzer sucht hier einen
+ * Nachweis, nicht die Kursdetails.
+ */
+function VergangeneSection({ trainings }: { trainings: SerializableTraining[] }) {
+  const [alleZeigen, setAlleZeigen] = useState(false);
+
+  if (trainings.length === 0) return null;
+
+  const sichtbar = alleZeigen ? trainings : trainings.slice(0, 5);
+  const credits = trainings.reduce((s, t) => s + t.creditsAward, 0);
+
+  return (
+    <AnimatedSection delayMs={120}>
+      <div style={{ marginTop: 8 }}>
+        <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          Bisherige Teilnahmen
+        </div>
+        <div style={{ color: "#888888", fontSize: 13, marginTop: 2, marginBottom: 10 }}>
+          {trainings.length} {trainings.length === 1 ? "Schulung" : "Schulungen"} · {credits} Credits gesammelt
+        </div>
+
+        <AppCard style={{ padding: 0, overflow: "hidden" }}>
+          {sichtbar.map((t, i) => (
+            <div
+              key={`${t.id}-${t.date}`}
+              style={{
+                display: "flex", gap: 12, alignItems: "baseline", justifyContent: "space-between",
+                padding: "12px 16px",
+                borderTop: i === 0 ? "none" : "1px solid #EFEFEF",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 14 }}>
+                  {getDisplayTrainingTitle(t)}
+                </div>
+                <div style={{ color: "#888888", fontSize: 12, marginTop: 2 }}>
+                  {formatDateRange(t.date, t.endDate)}
+                  {t.code ? ` · ${t.code}` : ""}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
+                {t.certificateId ? (
+                  <a
+                    href={`/api/certificates/${t.certificateId}/download`}
+                    style={{ color: "#007873", fontSize: 12, fontWeight: 800, textDecoration: "none", whiteSpace: "nowrap" }}
+                  >
+                    Nachweis ↓
+                  </a>
+                ) : null}
+                {t.creditsAward > 0 ? (
+                  <span style={{ color: "#007873", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
+                    +{t.creditsAward}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+
+          {trainings.length > 5 ? (
+            <button
+              type="button"
+              onClick={() => setAlleZeigen(!alleZeigen)}
+              style={{
+                width: "100%", padding: "11px 16px", border: "none", borderTop: "1px solid #EFEFEF",
+                background: "#FAFAFA", color: "#007873", fontWeight: 800, fontSize: 13, cursor: "pointer",
+              }}
+            >
+              {alleZeigen ? "Weniger anzeigen" : `Alle ${trainings.length} anzeigen`}
+            </button>
+          ) : null}
+        </AppCard>
+      </div>
+    </AnimatedSection>
   );
 }
 

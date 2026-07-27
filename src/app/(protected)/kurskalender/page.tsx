@@ -26,11 +26,16 @@ type CalendarTraining = {
   instructor: string | null;
   description: string | null;
   creditsAward: number;
+  category?: string | null;
+  preisVfaMitglied?: number | null;
+  preisVmaMitglied?: number | null;
+  preisNichtmitglied?: number | null;
 };
 
 type TrainingsResponse =
   | {
       ok: true;
+      source?: string;
       trainings: CalendarTraining[];
     }
   | {
@@ -54,6 +59,7 @@ type WeekTrainingBar = {
   gridColumn: string;
 };
 
+const ANMELDUNG_URL = "https://www.vfa-interlift.de/schulungsanmeldung";
 const VDI_BOOKING_URL = "https://www.vfa-interlift.de/vdi-schulungen-anmeldung";
 const EFK_BOOKING_URL = "https://www.vfa-interlift.de/efk-schulungen-neu";
 const FOCUS_BOOKING_URL = "https://www.vfa-interlift.de/schwerpunkt-schulungen-neu";
@@ -100,6 +106,8 @@ export default function KurskalenderPage() {
   const [overflowWeek, setOverflowWeek] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
+  const [ansicht, setAnsicht] = useState<"liste" | "monat">("liste");
+  const [bereich, setBereich] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,6 +153,19 @@ export default function KurskalenderPage() {
 
   const weeks = useMemo(() => buildCalendarWeeks(monthDate), [monthDate]);
 
+  // Bereiche aus den geladenen Kursen ableiten — so taucht eine neue Kursart
+  // automatisch als Filter auf, ohne dass hier eine Liste gepflegt werden muss.
+  const bereiche = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of trainings) if (t.category) set.add(t.category);
+    return [...set].sort();
+  }, [trainings]);
+
+  const gefilterte = useMemo(
+    () => (bereich ? trainings.filter((t) => t.category === bereich) : trainings),
+    [trainings, bereich]
+  );
+
   function previousMonth() {
     setSelectedTraining(null);
     setOverflowWeek(null);
@@ -187,6 +208,66 @@ export default function KurskalenderPage() {
         )}
 
         <div style={{ display: "grid", gap: 16 }}>
+          <AnimatedSection delayMs={70}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ display: "inline-flex", border: "1px solid #007873", borderRadius: 999, overflow: "hidden" }}>
+                {(["liste", "monat"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setAnsicht(v)}
+                    style={{
+                      padding: "7px 16px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      background: ansicht === v ? "#007873" : "#FFFFFF",
+                      color: ansicht === v ? "#FFFFFF" : "#007873",
+                    }}
+                  >
+                    {v === "liste" ? "Liste" : "Monat"}
+                  </button>
+                ))}
+              </div>
+
+              {bereiche.length > 1 ? (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {bereiche.map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      onClick={() => setBereich(bereich === b ? null : b)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 999,
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        border: bereich === b ? "1px solid #FFC100" : "1px solid #DDDDDD",
+                        background: bereich === b ? "#FFF6E0" : "#FFFFFF",
+                        color: "#1F1F1F",
+                      }}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </AnimatedSection>
+
+          {ansicht === "liste" ? (
+            <AnimatedSection delayMs={120}>
+              <ListenAnsicht
+                trainings={gefilterte}
+                loading={loading}
+                onSelect={(t) => setSelectedTraining(t)}
+              />
+            </AnimatedSection>
+          ) : null}
+
+          <div style={{ display: ansicht === "monat" ? "grid" : "none", gap: 16 }}>
           <AnimatedSection delayMs={90}>
             <AppCard accent="green">
               <div
@@ -422,6 +503,7 @@ export default function KurskalenderPage() {
               )}
             </AppCard>
           </AnimatedSection>
+          </div>
         </div>
       </div>
 
@@ -585,6 +667,8 @@ function TrainingDialog({
           <AddressInfo lines={addressLines} />
         </div>
 
+        <PreisBlock training={training} />
+
         {training.description && (
           <div
             style={{
@@ -616,17 +700,28 @@ function TrainingDialog({
               lineHeight: 1.5,
             }}
           >
-            Buchung und weitere Details laufen über die VFA-Website.
+            Die Anmeldung läuft über die VFA-Website.
           </div>
 
-          <a
-            href={getBookingUrl(training)}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={bookingButtonStyle}
-          >
-            Zur Buchung
-          </a>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <a
+              href={getBookingUrl(training)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...bookingButtonStyle, background: "#FFFFFF", color: "#007873", border: "1px solid #007873" }}
+            >
+              Kursdetails
+            </a>
+
+            <a
+              href={getAnmeldungUrl(training)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={bookingButtonStyle}
+            >
+              Jetzt anmelden
+            </a>
+          </div>
         </div>
       </div>
 
@@ -661,6 +756,190 @@ function TrainingDialog({
       `}</style>
     </div>
   );
+}
+
+/**
+ * Listenansicht der kommenden Kurse. Bei rund drei Terminen pro Monat ist ein
+ * Monatsraster viel Fläche für wenig Inhalt — besonders auf dem Handy.
+ */
+function ListenAnsicht({
+  trainings,
+  loading,
+  onSelect,
+}: {
+  trainings: CalendarTraining[];
+  loading: boolean;
+  onSelect: (t: CalendarTraining) => void;
+}) {
+  const heute = new Date();
+  heute.setHours(0, 0, 0, 0);
+
+  const kommende = trainings
+    .filter((t) => new Date(t.endDate ?? t.date) >= heute)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (loading) {
+    return (
+      <AppCard>
+        <div style={{ color: "#333333", lineHeight: 1.6 }}>Kurse werden geladen...</div>
+      </AppCard>
+    );
+  }
+
+  if (kommende.length === 0) {
+    return (
+      <AppCard>
+        <div style={{ fontWeight: 800, color: "#007873" }}>Keine kommenden Kurse gefunden.</div>
+        <p style={{ margin: "6px 0 0", color: "#666666", fontSize: 14 }}>
+          Falls ein Bereichsfilter aktiv ist, hebe ihn auf.
+        </p>
+      </AppCard>
+    );
+  }
+
+  let letzterMonat = "";
+
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {kommende.map((t) => {
+        const d = new Date(t.date);
+        const monat = d.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+        const neuerMonat = monat !== letzterMonat;
+        letzterMonat = monat;
+        const adresse = formatVenueLines(t.location, t.instructor);
+
+        return (
+          <div key={t.id}>
+            {neuerMonat ? (
+              <div
+                style={{
+                  color: "#007873",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  margin: "12px 0 6px",
+                }}
+              >
+                {monat}
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => onSelect(t)}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                cursor: "pointer",
+                background: "#FFFFFF",
+                border: "1px solid #E6E6E6",
+                borderRadius: 12,
+                padding: "14px 16px",
+                display: "flex",
+                gap: 14,
+                alignItems: "center",
+              }}
+            >
+              <div style={{ textAlign: "center", minWidth: 46 }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: "#1F1F1F", lineHeight: 1 }}>
+                  {d.getDate()}
+                </div>
+                <div style={{ fontSize: 11, color: "#888888", fontWeight: 700, textTransform: "uppercase" }}>
+                  {d.toLocaleDateString("de-DE", { month: "short" })}
+                </div>
+              </div>
+
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 750, color: "#007873", fontSize: 15, lineHeight: 1.25 }}>
+                  {cleanTrainingTitle(t.title)}
+                </div>
+                <div style={{ color: "#888888", fontSize: 12, marginTop: 3 }}>
+                  {formatDateRange(t.date, t.endDate)}
+                  {t.code ? ` · ${t.code}` : ""}
+                  {adresse.length > 0 ? ` · ${adresse[0]}` : ""}
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <div style={{ color: "#007873", fontWeight: 900, fontSize: 16, lineHeight: 1 }}>
+                  {t.creditsAward}
+                </div>
+                <div style={{ fontSize: 10, color: "#888888", fontWeight: 800, textTransform: "uppercase" }}>
+                  Credits
+                </div>
+              </div>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatPreis(wert: number | null | undefined) {
+  if (wert === null || wert === undefined || Number.isNaN(Number(wert))) return null;
+  const n = Number(wert);
+  if (n <= 0) return null;
+  return `${n.toLocaleString("de-DE", { maximumFractionDigits: 0 })} €`;
+}
+
+/** Preisstufen der Website. Fehlen sie, bleibt der Block ganz weg. */
+function PreisBlock({ training }: { training: CalendarTraining }) {
+  const stufen = [
+    { label: "VFA-Mitglied", wert: formatPreis(training.preisVfaMitglied) },
+    { label: "VmA-Mitglied", wert: formatPreis(training.preisVmaMitglied) },
+    { label: "Nichtmitglied", wert: formatPreis(training.preisNichtmitglied) },
+  ].filter((s) => s.wert);
+
+  if (stufen.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #E6E6E6" }}>
+      <div
+        style={{
+          color: "#888888",
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
+        Teilnahmegebühr
+      </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        {stufen.map((s) => (
+          <div
+            key={s.label}
+            style={{
+              padding: "8px 12px",
+              background: "#F7F7F7",
+              borderRadius: 8,
+              minWidth: 110,
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#1F1F1F" }}>{s.wert}</div>
+            <div style={{ fontSize: 11, color: "#888888", fontWeight: 700 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 8, fontSize: 12, color: "#999999" }}>
+        Angaben ohne Gewähr — verbindliche Preise auf der VFA-Website.
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Direkter Sprung ins Anmeldeformular der Website mit vorausgewähltem Kurs.
+ * Die Seite liest den Kurscode aus dem Parameter `kurs` und lädt den Termin
+ * daraus — ohne ihn landet man auf „Kein Kurs ausgewählt".
+ */
+function getAnmeldungUrl(training: CalendarTraining) {
+  const code = String(training.code ?? "").trim();
+  if (!code) return ANMELDUNG_URL;
+  return `${ANMELDUNG_URL}?kurs=${encodeURIComponent(code)}`;
 }
 
 function getBookingUrl(training: CalendarTraining) {

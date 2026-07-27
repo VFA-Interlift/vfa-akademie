@@ -264,6 +264,40 @@ export default async function DashboardPage() {
                   <StatBox label="Mitglied seit" value={new Date(user.createdAt).getFullYear()} />
                 </div>
 
+                {enrollmentCount === 0 ? (
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      background: "#FFF6E0",
+                      border: "1px solid #FFC100",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 14 }}>
+                      Noch keine Schulung geplant
+                    </div>
+                    <div style={{ color: "#666666", fontSize: 13, marginTop: 3, lineHeight: 1.5 }}>
+                      Im Kurskalender findest du alle kommenden Termine samt Preisen.
+                    </div>
+                    <Link
+                      href="/kurskalender"
+                      style={{
+                        display: "inline-block",
+                        marginTop: 10,
+                        padding: "8px 16px",
+                        borderRadius: 999,
+                        background: "#007873",
+                        color: "#FFFFFF",
+                        fontWeight: 800,
+                        fontSize: 13,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Kurse entdecken →
+                    </Link>
+                  </div>
+                ) : null}
+
                 <Link href="/meine-schulungen" style={linkStyle}>
                   Alle Schulungen →
                 </Link>

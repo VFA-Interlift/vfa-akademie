@@ -136,6 +136,20 @@ export default async function AdminMenuPage() {
               color="#5A6472"
             />
             <AdminTile
+              href="/admin/trainings"
+              abbr="DB"
+              title="Schulungen in der Datenbank"
+              description="Alle gespeicherten Schulungen mit Datum, Credits und Herkunft."
+              color="#5A6472"
+            />
+            <AdminTile
+              href="/admin/credits"
+              abbr="CR"
+              title="Credits buchen"
+              description="Credits manuell gutschreiben oder abziehen, mit Notiz."
+              color="#5A6472"
+            />
+            <AdminTile
               href="/admin/feedback"
               abbr="FB"
               title="Feedback-Auswertung"
