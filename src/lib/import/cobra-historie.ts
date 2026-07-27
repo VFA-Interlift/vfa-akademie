@@ -226,6 +226,35 @@ export async function importiereHistorie(
   const nachId = new Map(schulungen.map((s) => [s.cobraId, s]));
   const relevante = [...proSchulung.keys()];
 
+  // Bestand in zwei Abfragen laden statt pro Zeile einzeln — bei 1300+
+  // Teilnehmern wären Einzelabfragen sonst der Flaschenhals und würden die
+  // Route in den Timeout laufen lassen.
+  const bestandSchulungen = new Map(
+    (
+      await prisma.training.findMany({
+        where: { cobraId: { in: relevante } },
+        select: { id: true, cobraId: true },
+      })
+    ).map((t) => [t.cobraId as string, t.id])
+  );
+
+  const alleTeilnehmerIds: string[] = [];
+  for (const [cobraId, liste] of proSchulung) {
+    for (const t of liste) {
+      const kennung = t.email ? slug(t.email) : slug(`${t.vorname} ${t.nachname}`);
+      alleTeilnehmerIds.push(`cobra-hist-${cobraId}-${kennung}`);
+    }
+  }
+
+  const bestandTeilnehmer = new Set(
+    (
+      await prisma.cobraTrainingParticipant.findMany({
+        where: { cobraParticipantId: { in: alleTeilnehmerIds } },
+        select: { cobraParticipantId: true },
+      })
+    ).map((p) => p.cobraParticipantId)
+  );
+
   const ohneSchulungsdaten = relevante.filter((id) => !nachId.has(id));
   if (ohneSchulungsdaten.length > 0) {
     warnungen.push(
@@ -273,19 +302,15 @@ export async function importiereHistorie(
       creditsAward: defaultCreditsFor(s.code),
     };
 
-    const vorhanden = await prisma.training.findUnique({
-      where: { cobraId: s.cobraId },
-      select: { id: true },
-    });
+    const vorhandeneId = bestandSchulungen.get(s.cobraId) ?? null;
+    let trainingId = vorhandeneId;
 
-    let trainingId = vorhanden?.id ?? null;
-
-    if (vorhanden) {
+    if (vorhandeneId) {
       schulungenAktualisiert += 1;
       if (opts.schreiben) {
         // Credits einer bereits gepflegten Schulung nicht überschreiben.
         await prisma.training.update({
-          where: { id: vorhanden.id },
+          where: { id: vorhandeneId },
           data: { title: daten.title, date: daten.date, endDate: daten.endDate, location: daten.location },
         });
       }
@@ -300,17 +325,14 @@ export async function importiereHistorie(
       }
     }
 
+    const schreibvorgaenge: Promise<unknown>[] = [];
+
     for (const t of liste) {
       const kennung = t.email ? slug(t.email) : slug(`${t.vorname} ${t.nachname}`);
       const teilnehmerId = `cobra-hist-${s.cobraId}-${kennung}`;
       personen.add(t.email ?? `${slug(t.vorname)}_${slug(t.nachname)}`);
 
-      const vorhandenerTn = await prisma.cobraTrainingParticipant.findUnique({
-        where: { cobraParticipantId: teilnehmerId },
-        select: { id: true },
-      });
-
-      if (vorhandenerTn) teilnehmerAktualisiert += 1;
+      if (bestandTeilnehmer.has(teilnehmerId)) teilnehmerAktualisiert += 1;
       else teilnehmerNeu += 1;
 
       if (opts.schreiben && trainingId) {
@@ -328,13 +350,19 @@ export async function importiereHistorie(
           company: t.firma,
         };
 
-        await prisma.cobraTrainingParticipant.upsert({
-          where: { cobraParticipantId: teilnehmerId },
-          create: { cobraParticipantId: teilnehmerId, ...feld },
-          update: feld,
-        });
+        schreibvorgaenge.push(
+          prisma.cobraTrainingParticipant.upsert({
+            where: { cobraParticipantId: teilnehmerId },
+            create: { cobraParticipantId: teilnehmerId, ...feld },
+            update: feld,
+          })
+        );
       }
     }
+
+    // Je Schulung gebündelt schreiben: schnell genug, ohne die Verbindung
+    // mit über tausend gleichzeitigen Abfragen zu überlasten.
+    if (schreibvorgaenge.length > 0) await Promise.all(schreibvorgaenge);
   }
 
   return {
