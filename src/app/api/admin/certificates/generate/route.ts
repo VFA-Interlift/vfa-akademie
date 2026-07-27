@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,7 @@ export async function POST() {
           id: true,
           userId: true,
           trainingId: true,
+          user: { select: { email: true } },
           training: {
             select: {
               id: true,
@@ -93,10 +95,16 @@ export async function POST() {
         },
       });
 
+      const absentEnrollmentIds = await findAbsentEnrollmentIds(tx, enrollments);
+
       let createdCertificates = 0;
       let awardedCredits = 0;
 
       for (const enrollment of enrollments) {
+        if (absentEnrollmentIds.has(enrollment.id)) {
+          continue;
+        }
+
         const credits = enrollment.training.creditsAward;
 
         const certificate = await tx.certificate.create({
@@ -165,6 +173,7 @@ export async function POST() {
 
       return {
         checkedEnrollments: enrollments.length,
+        skippedAbsent: absentEnrollmentIds.size,
         createdCertificates,
         awardedCredits,
       };

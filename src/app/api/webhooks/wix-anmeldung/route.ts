@@ -118,9 +118,15 @@ export async function POST(req: Request) {
     });
 
     if (user) {
+      // CONFIRMED, nicht PENDING: Eine abgeschickte Website-Anmeldung ist eine
+      // verbindliche Anmeldung — genauso wie beim Nachziehen während der
+      // Registrierung (api/register) und beim Admin-Abgleich. Mit PENDING
+      // übersieht der Zertifikats-Cron diese Anmeldung dauerhaft, weil er nur
+      // CONFIRMED/ATTENDED/COMPLETED verarbeitet: kein Zertifikat, keine
+      // Credits, kein Feedback.
       await prisma.enrollment.upsert({
         where: { userId_trainingId: { userId: user.id, trainingId: training.id } },
-        create: { userId: user.id, trainingId: training.id, status: "PENDING" },
+        create: { userId: user.id, trainingId: training.id, status: "CONFIRMED" },
         update: {},
       });
       enrolled = true;

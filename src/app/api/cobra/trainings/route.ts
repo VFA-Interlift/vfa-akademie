@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cobraEndpointGet } from "@/lib/cobra/client";
 import { CobraError } from "@/lib/cobra/types";
 import { pickCobraLocation } from "@/lib/cobra/sync-trainings";
+import { requireAdmin } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,9 @@ function normalizeTraining(training: CobraTraining) {
 }
 
 export async function GET() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.response;
+
   try {
     const data = await cobraEndpointGet<CobraTraining[]>("app-schulung");
 

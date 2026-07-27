@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cobraEndpointGet } from "@/lib/cobra/client";
 import { CobraError } from "@/lib/cobra/types";
+import { requireAdmin } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,9 @@ function getErrorMessage(error: unknown) {
 }
 
 export async function GET() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.response;
+
   const endpointName = getEnv("COBRA_HEALTH_ENDPOINT");
 
   if (!endpointName) {

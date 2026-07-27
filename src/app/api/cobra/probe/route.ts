@@ -1,5 +1,6 @@
 // src/app/api/cobra/probe/route.ts
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,10 @@ async function hit(url: string, opts?: RequestInit) {
 }
 
 export async function GET() {
+  // Diese Route gibt rohe Cobra-Antworten inklusive Token zurück – nur für Admins.
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.response;
+
   const base = mustEnv("COBRA_BASE_URL").replace(/\/+$/, "");
   const apiKey = mustEnv("COBRA_API_KEY");
   const userName = mustEnv("COBRA_USERNAME");

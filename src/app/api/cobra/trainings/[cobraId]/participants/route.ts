@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cobraRequest } from "@/lib/cobra/client";
 import { CobraError } from "@/lib/cobra/types";
+import { requireAdmin } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,10 @@ function normalizeParticipant(participant: CobraParticipant) {
 }
 
 export async function GET(_req: Request, context: Ctx) {
+  // Liefert personenbezogene Teilnehmerdaten – nur für Admins.
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.response;
+
   const { cobraId } = await context.params;
   const cleanCobraId = String(cobraId ?? "").trim();
 

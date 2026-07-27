@@ -1,5 +1,6 @@
 // src/app/api/cobra/methods/route.ts
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,11 @@ async function hit(
 }
 
 export async function GET(req: Request) {
+  // Der ?endpoint=-Parameter wird ungeprüft an die Cobra-Basis-URL gehängt –
+  // nur für Admins.
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.response;
+
   const base = mustEnv("COBRA_BASE_URL").replace(/\/+$/, "");
   const apiKey = mustEnv("COBRA_API_KEY");
 

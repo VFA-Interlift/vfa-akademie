@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export async function GET(req: Request) {
           id: true,
           userId: true,
           trainingId: true,
+          user: { select: { email: true } },
           training: {
             select: {
               title: true,
@@ -67,10 +69,16 @@ export async function GET(req: Request) {
         },
       });
 
+      const absentEnrollmentIds = await findAbsentEnrollmentIds(tx, enrollments);
+
       let createdCertificates = 0;
       let awardedCredits = 0;
 
       for (const enrollment of enrollments) {
+        if (absentEnrollmentIds.has(enrollment.id)) {
+          continue;
+        }
+
         const credits = enrollment.training.creditsAward;
 
         const certificate = await tx.certificate.create({
@@ -128,6 +136,7 @@ export async function GET(req: Request) {
 
       return {
         checkedEnrollments: enrollments.length,
+        skippedAbsent: absentEnrollmentIds.size,
         createdCertificates,
         awardedCredits,
       };
