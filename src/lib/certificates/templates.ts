@@ -145,12 +145,30 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     isVdiCertificate: false,
   },
 
+  FRQ: {
+    code: "FRQ",
+    label: "Frequenzumrichter im Aufzugbau",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "FRQ_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "FRQ_Teilnahmebestätigung App.pdf",
+    isVdiCertificate: false,
+  },
+
   MOD: {
     code: "MOD",
     label: "Grundlagen der Modernisierung im Aufzugbau",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "MOD_Teilnahmebestaetigung-aktuell.docx",
     pdfTemplateFileName: "MOD_Teilnahmebestätigung App.pdf",
+    isVdiCertificate: false,
+  },
+
+  MVO: {
+    code: "MVO",
+    label: "Aufzüge nach Maschinenverordnung",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "MVO_Teilnahmebestaetigung.docx",
+    pdfTemplateFileName: "MVO_Teilnahmebestätigung App.pdf",
     isVdiCertificate: false,
   },
 
