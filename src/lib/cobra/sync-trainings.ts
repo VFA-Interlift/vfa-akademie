@@ -427,8 +427,13 @@ async function syncTraining(training: NormalizedTraining) {
     return { action: "UPDATED_BY_COBRA_ID" as const, training: updated };
   }
 
+  // Fallback nur für manuell angelegte Zeilen OHNE cobraId. Niemals eine Zeile
+  // umhängen, die bereits zu einer anderen Cobra-Schulung gehört: Schulungscodes
+  // (z. B. "A2") sind pro Kursart identisch, mehrere Termine teilen sich also
+  // denselben Code – sonst überschreibt jeder Termin den vorherigen und es
+  // überlebt nur eine Schulung pro Code (A1/A2-2026-Bug).
   const existingByCode = await prisma.training.findFirst({
-    where: { code: training.code },
+    where: { code: training.code, cobraId: null },
     select: { id: true, code: true },
   });
 
