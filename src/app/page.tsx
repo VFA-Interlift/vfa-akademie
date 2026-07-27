@@ -181,8 +181,8 @@ export default function HomePage() {
                   dot: "#007873",
                 },
                 {
-                  title: "Cobra vorbereitet",
-                  text: "Struktur für Synchronisation mit Cobra/WebConnect vorhanden.",
+                  title: "Schulungshistorie",
+                  text: "Vergangene Teilnahmen und Nachweise an einem Ort.",
                   dot: "#FFC100",
                 },
               ].map((f, i) => (

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
+import { getCertificateTemplateByCode } from "@/lib/certificates/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -99,9 +100,16 @@ export async function POST() {
 
       let createdCertificates = 0;
       let awardedCredits = 0;
+      let skippedNoTemplate = 0;
 
       for (const enrollment of enrollments) {
         if (absentEnrollmentIds.has(enrollment.id)) {
+          continue;
+        }
+
+        // Ohne hinterlegte Vorlage ließe sich das Zertifikat nicht herunterladen.
+        if (!getCertificateTemplateByCode(enrollment.training.code)) {
+          skippedNoTemplate += 1;
           continue;
         }
 
@@ -174,6 +182,7 @@ export async function POST() {
       return {
         checkedEnrollments: enrollments.length,
         skippedAbsent: absentEnrollmentIds.size,
+        skippedNoTemplate,
         createdCertificates,
         awardedCredits,
       };

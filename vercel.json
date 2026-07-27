@@ -1,11 +1,11 @@
 {
   "crons": [
     {
-      "path": "/api/cron/certificates",
+      "path": "/api/cron/wix/trainings",
       "schedule": "5 0 * * *"
     },
     {
-      "path": "/api/cron/wix/trainings",
+      "path": "/api/cron/certificates",
       "schedule": "20 0 * * *"
     },
     {

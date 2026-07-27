@@ -47,7 +47,7 @@ export default function AdminTrainingsPage() {
         </div>
         <PageHeader
           title="Schulungen in der App-DB"
-          description="Alle Schulungen, die per Cobra-Sync in die App importiert wurden. Neue Schulungen kommen täglich automatisch aus Cobra."
+          description="Alle Schulungen in der App-Datenbank. Neue kommen täglich automatisch von der Website; ältere stammen aus dem einmaligen Cobra-Import."
         />
 
         {error && (
@@ -62,7 +62,7 @@ export default function AdminTrainingsPage() {
           <div style={{ display: "grid", gap: 10 }}>
             {trainings.length === 0 ? (
               <AppCard>
-                <div style={{ color: "#555555" }}>Noch keine Schulungen in der DB. Cobra-Sync hat noch nicht gelaufen oder Cobra liefert noch nichts.</div>
+                <div style={{ color: "#555555" }}>Noch keine Schulungen in der Datenbank. Die Website-Synchronisation ist noch nicht gelaufen.</div>
               </AppCard>
             ) : (
               trainings.map((t) => (
