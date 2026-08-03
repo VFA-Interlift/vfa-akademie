@@ -6,6 +6,41 @@ import { sendNewRegistrationNotificationEmail } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 /**
+ * Zeigt vor dem Bestätigen, welche Anforderung an diesem Link hängt.
+ *
+ * Der Grund: Wer eine Bestätigungsmail anklickt, die er nie angefordert hat,
+ * bekäme sonst unbemerkt ein Konto mit fremdem Passwort. Stehen Name und
+ * Uhrzeit auf der Seite, fällt ein fremder Vorgang sofort auf.
+ *
+ * Preisgegeben wird nur, was ohnehin in der Mail an genau diese Adresse steht.
+ */
+export async function GET(req: NextRequest) {
+  const token = new URL(req.url).searchParams.get("token")?.trim();
+
+  if (!token) {
+    return NextResponse.json({ ok: false, error: "UNGUELTIG" }, { status: 400 });
+  }
+
+  const offen = await prisma.offeneRegistrierung.findUnique({
+    where: { token },
+    select: { name: true, email: true, createdAt: true, expiresAt: true },
+  });
+
+  if (!offen || offen.expiresAt < new Date()) {
+    // Altkonten aus der Übergangszeit haben keine Anforderungsdaten — dort
+    // führt der Weg unverändert direkt über POST.
+    return NextResponse.json({ ok: false, error: "UNBEKANNT" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    name: offen.name,
+    email: offen.email,
+    angefordertAm: offen.createdAt.toISOString(),
+  });
+}
+
+/**
  * Löst den Bestätigungslink aus der Registrierungsmail ein.
  *
  * Zwei Fälle:
