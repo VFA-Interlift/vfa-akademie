@@ -171,8 +171,28 @@ export async function POST(req: Request) {
     // Konto existiert, ist aber unbestätigt: Bestätigungsmail neu schicken,
     // statt mit 409 abzuweisen. Sonst hinge fest, wessen erste Mail nicht
     // ankam — anmelden geht ohne Bestätigung nicht, und eine zweite
-    // Registrierung würde abgelehnt. Das Passwort bleibt das alte.
+    // Registrierung würde abgelehnt.
+    //
+    // Dabei werden Passwort und Angaben auf die JETZT eingegebenen gesetzt.
+    // Das ist der entscheidende Punkt: Sonst könnte jemand ein Konto auf eine
+    // fremde Adresse anlegen, und der echte Adressinhaber würde beim
+    // Bestätigen ein Konto freischalten, dessen Passwort dem anderen gehört.
+    // Gefährlich ist das nicht, denn aktivieren kann nur, wer die Mail bekommt.
     if (existingUser) {
+      const neuerHash = await bcrypt.hash(password, 12);
+      const { firstName: neuVorname, lastName: neuNachname } = splitName(name);
+
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          passwordHash: neuerHash,
+          name,
+          firstName: neuVorname,
+          lastName: neuNachname,
+          birthDate,
+        },
+      });
+
       await prisma.emailVerificationToken.deleteMany({
         where: { userId: existingUser.id, usedAt: null },
       });
