@@ -1,7 +1,10 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import AppCard from "@/components/ui/AppCard";
 import AppButton from "@/components/ui/AppButton";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatCertificateKind } from "@/lib/certificates/templates";
 import { formatInstructorName } from "@/lib/trainings/format";
@@ -15,6 +18,27 @@ export default async function TrainingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Diese Seite prüfte bisher nur, dass jemand angemeldet ist — jeder konnte
+  // jede Schulung samt Einlöse-Token aufrufen. Jetzt nur die eigenen, Admins
+  // ausgenommen.
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email?.trim().toLowerCase();
+  if (!email) redirect("/login");
+
+  const me = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, role: true },
+  });
+  if (!me) redirect("/login");
+
+  if (me.role !== "ADMIN") {
+    const eigeneAnmeldung = await prisma.enrollment.findUnique({
+      where: { userId_trainingId: { userId: me.id, trainingId: id } },
+      select: { id: true },
+    });
+    if (!eigeneAnmeldung) redirect("/meine-schulungen");
+  }
 
   const training = await prisma.training.findUnique({
     where: { id },

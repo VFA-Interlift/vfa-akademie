@@ -2,6 +2,21 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/**
+ * Sicherung gegen einen Lauf auf der echten Datenbank: Das Skript löscht
+ * Credits, Zertifikate und Anmeldungen zweier fest eingetragener Konten,
+ * darunter das Admin-Konto.
+ */
+if (process.env.DEMO_DATEN_OK !== 'ja') {
+  console.error(
+    'Abgebrochen. Dieses Skript LOESCHT Credits, Zertifikate und Anmeldungen\n' +
+      'von tobias.doehring@vfa-interlift.de und tobias-doehring99@web.de.\n\n' +
+      'Wenn das gewollt ist:  DEMO_DATEN_OK=ja node scripts/setup-demo-data.mjs\n' +
+      'Vorher pruefen, auf welche Datenbank DATABASE_URL zeigt.'
+  );
+  process.exit(1);
+}
+
 async function main() {
   // ── 1. Admin-User: alle Credits entfernen ──────────────────────────────────
   const admin = await prisma.user.findUnique({

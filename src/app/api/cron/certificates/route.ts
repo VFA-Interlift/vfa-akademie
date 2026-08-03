@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
 import { istZertifikatErzeugbar } from "@/lib/certificates/pdf";
+import { formatCertificateKind } from "@/lib/certificates/templates";
+import { sendCertificateReadyEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +60,9 @@ export async function GET(req: Request) {
           id: true,
           userId: true,
           trainingId: true,
-          user: { select: { email: true } },
+          user: {
+            select: { email: true, firstName: true, lastName: true, name: true },
+          },
           training: {
             select: {
               title: true,
@@ -75,6 +79,16 @@ export async function GET(req: Request) {
       let createdCertificates = 0;
       let awardedCredits = 0;
       let skippedNoTemplate = 0;
+
+      // Empfänger sammeln und erst nach der Transaktion anschreiben: Mailversand
+      // in der Transaktion würde sie unnötig lange offen halten.
+      const zuBenachrichtigen: {
+        to: string;
+        name: string | null;
+        trainingTitle: string;
+        artLabel: string;
+        credits: number;
+      }[] = [];
 
       for (const enrollment of enrollments) {
         if (absentEnrollmentIds.has(enrollment.id)) {
@@ -145,6 +159,22 @@ export async function GET(req: Request) {
         });
 
         createdCertificates += 1;
+
+        if (enrollment.user.email) {
+          zuBenachrichtigen.push({
+            to: enrollment.user.email,
+            name:
+              [enrollment.user.firstName, enrollment.user.lastName]
+                .filter(Boolean)
+                .join(" ")
+                .trim() ||
+              enrollment.user.name ||
+              null,
+            trainingTitle: enrollment.training.code?.trim() || enrollment.training.title,
+            artLabel: formatCertificateKind(enrollment.training.certificateKind),
+            credits,
+          });
+        }
       }
 
       return {
@@ -153,10 +183,34 @@ export async function GET(req: Request) {
         skippedNoTemplate,
         createdCertificates,
         awardedCredits,
+        zuBenachrichtigen,
       };
     });
 
-    return NextResponse.json({ ok: true, ...result, triggeredAt: now.toISOString() });
+    // Benachrichtigungen nach der Transaktion. Ein Mailfehler darf die bereits
+    // ausgestellten Zertifikate nicht zurückrollen.
+    let benachrichtigt = 0;
+    let benachrichtigungFehler = 0;
+
+    for (const empfaenger of result.zuBenachrichtigen) {
+      try {
+        await sendCertificateReadyEmail(empfaenger);
+        benachrichtigt += 1;
+      } catch (mailError) {
+        benachrichtigungFehler += 1;
+        console.error("CERTIFICATE_READY_MAIL_ERROR", empfaenger.to, mailError);
+      }
+    }
+
+    const { zuBenachrichtigen: _unbenutzt, ...zahlen } = result;
+
+    return NextResponse.json({
+      ok: true,
+      ...zahlen,
+      benachrichtigt,
+      benachrichtigungFehler,
+      triggeredAt: now.toISOString(),
+    });
   } catch (error: unknown) {
     return NextResponse.json(
       { ok: false, error: "CERTIFICATE_GENERATION_FAILED", details: getErrorMessage(error) },

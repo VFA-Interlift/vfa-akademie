@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { passwortFehler } from "@/lib/passwort";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +26,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Bitte alle Felder ausfüllen." }, { status: 400 });
   }
 
-  if (newPassword.length < 8) {
-    return NextResponse.json({ error: "Neues Passwort muss mindestens 8 Zeichen haben." }, { status: 400 });
-  }
-
   const user = await prisma.user.findUnique({
     where: { email: session.user.email.toLowerCase() },
-    select: { id: true, passwordHash: true },
+    select: { id: true, passwordHash: true, email: true, name: true },
   });
+
+  const passwortProblem = passwortFehler(newPassword, {
+    email: user?.email,
+    name: user?.name,
+  });
+
+  if (passwortProblem) {
+    return NextResponse.json({ error: passwortProblem }, { status: 400 });
+  }
 
   if (!user?.passwordHash) {
     return NextResponse.json({ error: "Kein Passwort hinterlegt." }, { status: 400 });

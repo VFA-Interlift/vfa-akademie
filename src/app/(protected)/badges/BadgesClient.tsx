@@ -251,8 +251,9 @@ export default function BadgesClient({
           lineHeight: 1.6,
         }}
       >
-        Freigeschaltete Badges lassen sich als SVG oder PNG herunterladen – z. B. für LinkedIn,
-        E-Mail-Signaturen oder die eigene Website.
+        Freigeschaltete Badges lassen sich herunterladen – z. B. für LinkedIn,
+        E-Mail-Signaturen oder die eigene Website. Ränge kommen als PNG, die
+        übrigen Auszeichnungen als SVG.
       </div>
     </div>
   );

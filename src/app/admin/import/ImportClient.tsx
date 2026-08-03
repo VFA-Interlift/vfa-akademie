@@ -183,9 +183,10 @@ export default function ImportClient() {
 
           {geschrieben ? (
             <p style={{ marginTop: 16, marginBottom: 0, fontSize: 14, color: "#555", lineHeight: 1.7 }}>
-              Die Teilnehmer liegen jetzt in der App. Anmeldungen entstehen automatisch, sobald sich
-              jemand mit der passenden E-Mail-Adresse registriert. Für bereits registrierte Nutzer
-              kannst du den Abgleich manuell anstoßen.
+              Die Teilnehmer liegen jetzt in der App. Anmeldungen entstehen automatisch, sobald
+              jemand mit der passenden E-Mail-Adresse seine Registrierung bestätigt. Für bereits
+              registrierte Nutzer geschieht das nicht rückwirkend — dort hilft nur, die
+              Anmeldung im Nutzerbereich von Hand zu setzen.
             </p>
           ) : null}
         </AppCard>

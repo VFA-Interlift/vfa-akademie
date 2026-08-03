@@ -254,6 +254,65 @@ VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
   });
 }
 
+/**
+ * Meldung, sobald ein Zertifikat oder eine Teilnahmebestätigung bereitliegt.
+ * Vorher erfuhr das niemand — der Teilnehmer musste von selbst nachsehen.
+ */
+export async function sendCertificateReadyEmail(params: {
+  to: string;
+  name?: string | null;
+  trainingTitle: string;
+  artLabel: string;
+  credits: number;
+}): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const anrede = params.name?.trim() ? ` ${params.name.trim()}` : "";
+  const creditsSatz =
+    params.credits > 0
+      ? ` Dir wurden ${params.credits} Credits gutgeschrieben.`
+      : "";
+
+  await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    replyTo: REPLY_TO,
+    subject: `${params.artLabel} bereit: ${params.trainingTitle}`,
+    text: `Deine ${params.artLabel} liegt bereit
+
+Hallo${anrede}, für "${params.trainingTitle}" ist deine ${params.artLabel} fertig.${creditsSatz}
+
+Du findest sie in der App unter "Meine Zertifikate":
+${APP_URL}/meine-zertifikate
+
+VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
+        <div style="height:5px;background:#FFC100;margin-bottom:28px"></div>
+
+        <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#1F1F1F;letter-spacing:-0.01em">
+          Deine ${escapeHtml(params.artLabel)} liegt bereit
+        </h1>
+
+        <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#444444">
+          Hallo${escapeHtml(anrede)}, für <strong>${escapeHtml(params.trainingTitle)}</strong>
+          ist deine ${escapeHtml(params.artLabel)} fertig.${escapeHtml(creditsSatz)}
+        </p>
+
+        <a
+          href="${APP_URL}/meine-zertifikate"
+          style="display:inline-block;padding:13px 30px;background:#007873;color:#ffffff;font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none;border-radius:999px"
+        >
+          Jetzt herunterladen
+        </a>
+
+        <div style="margin-top:32px;padding-top:18px;border-top:1px solid #E6E6E6;font-size:13px;color:#555555">
+          VFA-Akademie &nbsp;·&nbsp; Diese E-Mail wurde automatisch generiert.
+        </div>
+      </div>
+    `,
+  });
+}
+
 /** Hübsches, e-mail-client-sicheres (tabellenbasiertes) Reminder-Template. */
 function reminderHtml(p: {
   greetingName: string;

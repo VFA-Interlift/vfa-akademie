@@ -370,7 +370,7 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
             <AppInput
               label="Neues Passwort"
               value={pwNew}
-              placeholder="Mindestens 8 Zeichen"
+              placeholder="Mindestens 10 Zeichen"
               type="password"
               onChange={setPwNew}
             />

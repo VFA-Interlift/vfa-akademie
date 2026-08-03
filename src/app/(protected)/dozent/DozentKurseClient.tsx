@@ -375,9 +375,9 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                   </div>
                   <div style={{ fontSize: 13, color: "#888888", marginTop: 6, lineHeight: 1.6 }}>
                     Sobald die Organisations- oder Bestätigungsmail zur Schulung eintrifft,
-                    erscheinen hier Hotel, Anreise, Ansprechpartner vor Ort, Ablauf,
-                    Verpflegung und Technik. Bis dahin gelten die Angaben aus deiner
-                    E-Mail-Korrespondenz.
+                    steht sie hier im Wortlaut — mit allem, was darin zu Hotel, Anreise,
+                    Ansprechpartner und Ablauf steht. Bis dahin gelten die Angaben aus
+                    deiner E-Mail-Korrespondenz.
                   </div>
                 </div>
               </div>

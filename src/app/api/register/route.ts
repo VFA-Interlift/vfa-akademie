@@ -7,6 +7,7 @@ import {
   sendNewRegistrationNotificationEmail,
 } from "@/lib/email";
 import { absender, bremsePruefen } from "@/lib/bremse";
+import { passwortFehler } from "@/lib/passwort";
 
 export const dynamic = "force-dynamic";
 
@@ -120,14 +121,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Passwort muss mindestens 8 Zeichen haben.",
-        },
-        { status: 400 }
-      );
+    const passwortProblem = passwortFehler(password, { email, name });
+    if (passwortProblem) {
+      return NextResponse.json({ ok: false, error: passwortProblem }, { status: 400 });
     }
 
     const birthDate = parseBirthDate(birthDateStr);

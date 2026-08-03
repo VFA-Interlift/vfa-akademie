@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,8 +22,8 @@ export default function RegisterPage() {
     event.preventDefault();
     setMsg(null);
 
-    if (password.length < 8) {
-      setMsg("Das Passwort muss mindestens 8 Zeichen haben.");
+    if (password.length < 10) {
+      setMsg("Das Passwort muss mindestens 10 Zeichen haben.");
       return;
     }
 
@@ -127,7 +125,7 @@ export default function RegisterPage() {
                 <AppInput label="Name" value={name} placeholder="Max Mustermann" onChange={setName} />
                 <AppInput label="Geburtsdatum" value={birthDate} type="date" max={todayIso} onChange={setBirthDate} />
                 <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" onChange={setEmail} />
-                <AppInput label="Passwort" value={password} placeholder="Mindestens 8 Zeichen" type="password" onChange={setPassword} />
+                <AppInput label="Passwort" value={password} placeholder="Mindestens 10 Zeichen" type="password" onChange={setPassword} />
                 <AppInput label="Passwort bestätigen" value={confirmPassword} placeholder="Passwort wiederholen" type="password" onChange={setConfirmPassword} />
 
                 {/* Informationspflicht nach Art. 13 DSGVO: Vor der Registrierung

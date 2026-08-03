@@ -105,7 +105,7 @@ function ResetPasswordForm() {
   return (
     <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
-        <AppInput label="Neues Passwort" value={password} placeholder="Mindestens 8 Zeichen" type="password" onChange={setPassword} />
+        <AppInput label="Neues Passwort" value={password} placeholder="Mindestens 10 Zeichen" type="password" onChange={setPassword} />
         <AppInput label="Passwort bestätigen" value={passwordConfirm} placeholder="Passwort wiederholen" type="password" onChange={setPasswordConfirm} />
         <AppButton type="submit" disabled={loading || !password.trim() || !passwordConfirm.trim()} variant="primary" fullWidth>
           {loading ? "Wird gespeichert..." : "Passwort speichern"}
