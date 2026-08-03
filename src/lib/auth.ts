@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "E-Mail", type: "text" },
         password: { label: "Passwort", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         const email = credentials?.email?.trim().toLowerCase();
         const password = credentials?.password ?? "";
 
@@ -31,10 +31,19 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Zehn Fehlversuche je Adresse in fünf Minuten, dann fünfzehn Minuten
-        // Pause. Ohne diese Bremse ließen sich Passwörter ungebremst
-        // durchprobieren.
-        const bremse = bremsePruefen(`login:${email}`, {
+        // Zehn Fehlversuche in fünf Minuten, dann eine Viertelstunde Pause.
+        //
+        // Der Schlüssel enthält Adresse UND Absender: Zählte er nur die
+        // Adresse, könnte jemand ein fremdes Konto durch absichtlich falsche
+        // Eingaben aussperren. So bremst er nur den, der es versucht.
+        const absender =
+          (req?.headers?.["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ||
+          (req?.headers?.["x-real-ip"] as string | undefined)?.trim() ||
+          "unbekannt";
+
+        const bremsSchluessel = `login:${email}:${absender}`;
+
+        const bremse = bremsePruefen(bremsSchluessel, {
           versuche: 10,
           fensterSekunden: 300,
           sperreSekunden: 900,
@@ -77,7 +86,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("EMAIL_NICHT_BESTAETIGT");
         }
 
-        bremseZuruecksetzen(`login:${email}`);
+        bremseZuruecksetzen(bremsSchluessel);
 
         const displayName =
           [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||

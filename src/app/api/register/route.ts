@@ -68,6 +68,14 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function bestaetigungsLink(token: string) {
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://vfa-akademie.vercel.app"
+  ).replace(/\/$/, "");
+
+  return `${appUrl}/e-mail-bestaetigen?token=${token}`;
+}
+
 export async function POST(req: Request) {
   // Fünf Registrierungen je Absender in zehn Minuten. Sonst ließen sich Konten
   // reihenweise anlegen und damit Bestätigungsmails verschicken.
@@ -150,10 +158,11 @@ export async function POST(req: Request) {
       },
       select: {
         id: true,
+        emailVerifiedAt: true,
       },
     });
 
-    if (existingUser) {
+    if (existingUser?.emailVerifiedAt) {
       return NextResponse.json(
         {
           ok: false,
@@ -161,6 +170,34 @@ export async function POST(req: Request) {
         },
         { status: 409 }
       );
+    }
+
+    // Konto existiert, ist aber unbestätigt: Bestätigungsmail neu schicken,
+    // statt mit 409 abzuweisen. Sonst hinge fest, wessen erste Mail nicht
+    // ankam — anmelden geht ohne Bestätigung nicht, und eine zweite
+    // Registrierung würde abgelehnt. Das Passwort bleibt das alte.
+    if (existingUser) {
+      await prisma.emailVerificationToken.deleteMany({
+        where: { userId: existingUser.id, usedAt: null },
+      });
+
+      const neuerToken = randomBytes(32).toString("hex");
+
+      await prisma.emailVerificationToken.create({
+        data: {
+          token: neuerToken,
+          userId: existingUser.id,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      try {
+        await sendEmailVerificationEmail(email, bestaetigungsLink(neuerToken));
+      } catch (mailError) {
+        console.error("REGISTER_VERIFY_MAIL_RESEND_ERROR", mailError);
+      }
+
+      return NextResponse.json({ ok: true, bestaetigungNoetig: true, erneutGesendet: true });
     }
 
     // Kostenfaktor 12 wie bei Passwort-Reset und Passwortwechsel. Vorher stand
@@ -191,12 +228,8 @@ export async function POST(req: Request) {
       data: { token, userId: newUser.id, expiresAt },
     });
 
-    const appUrl = (
-      process.env.NEXT_PUBLIC_APP_URL ?? "https://vfa-akademie.vercel.app"
-    ).replace(/\/$/, "");
-
     try {
-      await sendEmailVerificationEmail(email, `${appUrl}/e-mail-bestaetigen?token=${token}`);
+      await sendEmailVerificationEmail(email, bestaetigungsLink(token));
     } catch (mailError) {
       // Ohne Mail kommt der Nutzer nicht weiter — deshalb auffindbar
       // protokollieren, aber die Registrierung nicht zurückrollen: er kann sich
