@@ -100,7 +100,7 @@ export async function GET(req: Request) {
         // Geprüft wird nicht nur, OB eine Vorlage eingetragen ist, sondern ob
         // sie sich auch füllen lässt: SER-SWB und SICH haben keine Datei,
         // FRQ und MVO hatten keine Schreibpositionen.
-        // Betrifft außerdem bewusst YLD und EFK1 (dort zertifiziert erst EFK2).
+        // Übrig bleibt damit bewusst nur YLD.
         if (!istZertifikatErzeugbar(enrollment.training.code)) {
           skippedNoTemplate += 1;
           continue;

@@ -109,6 +109,31 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     isVdiCertificate: false,
   },
 
+  /**
+   * Die EFK-Ausbildung ist eine Schulung in zwei Teilen, und die Website führt
+   * beide unter demselben Kurscode „EFK1-JJMM" — einen Code „EFK2" gibt es dort
+   * nicht. Beide Teile stehen als ein Kurs mit zwei Terminblöcken; in der
+   * Datenbank wird daraus ein Training, dessen Ende auf dem letzten Tag von
+   * Teil 2 liegt.
+   *
+   * Der Zertifikatslauf greift erst nach diesem Enddatum — also genau nach
+   * Teil 2, und dort sollen Zertifikat und Credits kommen (Tobi, 03.08.2026).
+   * Deshalb dieselbe Vorlage wie EFK2: Sie bescheinigt 80 Unterrichtseinheiten
+   * und die bestandene Prüfung, also die gesamte Ausbildung.
+   *
+   * Ohne diesen Eintrag lief die Strecke ins Leere: Die App wartete auf einen
+   * Kurs „EFK2", den es auf der Website nicht gibt, und kein EFK-Teilnehmer
+   * hätte je ein Zertifikat oder seine 250 Credits bekommen.
+   */
+  EFK1: {
+    code: "EFK1",
+    label: "Elektrofachkraft fuer festgelegte Taetigkeiten im Aufzugbau",
+    kind: "CERTIFICATE",
+    templateFileName: "EFK2-Zertifikat_neu.docx",
+    pdfTemplateFileName: "EFK2-Zertifikat App.pdf",
+    isVdiCertificate: false,
+  },
+
   EINST: {
     code: "EINST",
     label: "Aufzuege fuer Einsteiger",
