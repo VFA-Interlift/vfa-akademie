@@ -150,10 +150,10 @@ export async function POST(req: Request) {
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, emailVerifiedAt: true },
     });
 
-    if (existingUser) {
+    if (existingUser?.emailVerifiedAt) {
       return NextResponse.json(
         {
           ok: false,
@@ -161,6 +161,14 @@ export async function POST(req: Request) {
         },
         { status: 409 }
       );
+    }
+
+    // Unbestätigtes Konto aus der Übergangszeit: Es gehört niemandem — die
+    // Adresse wurde nie belegt, Anmeldungen wurden nie verbunden. Statt den
+    // Anfragenden mit 409 auszusperren (anmelden geht ohne Bestätigung nicht),
+    // wird es entfernt und die Registrierung läuft den normalen Weg.
+    if (existingUser) {
+      await prisma.user.delete({ where: { id: existingUser.id } });
     }
 
     // Das Konto entsteht NICHT hier, sondern erst beim Anklicken des
