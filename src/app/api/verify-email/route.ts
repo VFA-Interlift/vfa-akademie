@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { anmeldungenNachziehen } from "@/lib/anmeldungen-nachziehen";
+import { sendNewRegistrationNotificationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -47,27 +48,51 @@ export async function POST(req: NextRequest) {
     });
 
     if (schonDa) {
-      await prisma.offeneRegistrierung.delete({ where: { id: offen.id } });
+      await prisma.offeneRegistrierung.deleteMany({ where: { email: offen.email } });
       return NextResponse.json(
         { ok: false, error: "Für diese Adresse gibt es bereits ein Konto. Bitte melde dich an." },
         { status: 409 }
       );
     }
 
-    const user = await prisma.user.create({
-      data: {
-        email: offen.email,
-        passwordHash: offen.passwordHash,
-        name: offen.name,
-        firstName: offen.firstName,
-        lastName: offen.lastName,
-        birthDate: offen.birthDate,
-        emailVerifiedAt: jetzt,
-      },
-      select: { id: true, email: true },
-    });
+    let user: { id: string; email: string };
 
-    await prisma.offeneRegistrierung.delete({ where: { id: offen.id } });
+    try {
+      user = await prisma.user.create({
+        data: {
+          email: offen.email,
+          passwordHash: offen.passwordHash,
+          name: offen.name,
+          firstName: offen.firstName,
+          lastName: offen.lastName,
+          birthDate: offen.birthDate,
+          emailVerifiedAt: jetzt,
+        },
+        select: { id: true, email: true },
+      });
+    } catch (fehler) {
+      // Zwei Bestätigungen zur selben Zeit: Der Unique-Index auf der Adresse
+      // greift, das darf aber keinen Serverfehler geben.
+      const code =
+        typeof fehler === "object" && fehler && "code" in fehler
+          ? String((fehler as { code?: unknown }).code)
+          : "";
+
+      if (code === "P2002") {
+        await prisma.offeneRegistrierung.deleteMany({ where: { email: offen.email } });
+        return NextResponse.json(
+          { ok: false, error: "Für diese Adresse gibt es bereits ein Konto. Bitte melde dich an." },
+          { status: 409 }
+        );
+      }
+
+      throw fehler;
+    }
+
+    // Alle offenen Anforderungen für diese Adresse aufräumen, nicht nur die
+    // eingelöste: Sonst bliebe ein zweiter Link gültig, der ein anderes
+    // Passwort trägt.
+    await prisma.offeneRegistrierung.deleteMany({ where: { email: offen.email } });
 
     let uebernommen = 0;
     try {
@@ -76,6 +101,14 @@ export async function POST(req: NextRequest) {
       // Das Konto steht und darf daran nicht scheitern — ohne Protokoll fehlten
       // dem Nutzer aber Schulungen ohne erkennbaren Grund.
       console.error("VERIFY_EMAIL_ENROLL_ERROR", fehler);
+    }
+
+    // Erst jetzt die Geschäftsstelle benachrichtigen: Vorher stand nur eine
+    // Absichtserklärung im Raum, jetzt gibt es das Konto wirklich.
+    try {
+      await sendNewRegistrationNotificationEmail({ name: offen.name, email: offen.email });
+    } catch (mailError) {
+      console.error("VERIFY_EMAIL_NOTIFY_ERROR", mailError);
     }
 
     return NextResponse.json({ ok: true, uebernommeneSchulungen: uebernommen });

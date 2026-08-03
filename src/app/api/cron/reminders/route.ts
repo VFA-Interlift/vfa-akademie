@@ -109,6 +109,19 @@ export async function GET(req: Request) {
       }
     }
 
+    // Abgelaufene Registrierungsanforderungen wegräumen. Sie tragen
+    // Passwort-Prüfwert, Name und Geburtsdatum von Leuten, aus denen nie ein
+    // Konto wurde — die haben nach Ablauf des Links nichts mehr zu suchen.
+    let aufgeraeumteRegistrierungen = 0;
+    try {
+      const geloescht = await prisma.offeneRegistrierung.deleteMany({
+        where: { expiresAt: { lt: now } },
+      });
+      aufgeraeumteRegistrierungen = geloescht.count;
+    } catch (fehler) {
+      console.error("REGISTRIERUNGEN_AUFRAEUMEN_FEHLER", fehler);
+    }
+
     return NextResponse.json({
       ok: true,
       daysBefore: DAYS_BEFORE,
@@ -116,11 +129,14 @@ export async function GET(req: Request) {
       candidates: enrollments.length,
       sent,
       failed,
+      aufgeraeumteRegistrierungen,
       triggeredAt: now.toISOString(),
     });
   } catch (error: unknown) {
+    console.error("REMINDERS_FAILED", getErrorMessage(error));
+
     return NextResponse.json(
-      { ok: false, error: "REMINDERS_FAILED", details: getErrorMessage(error) },
+      { ok: false, error: "REMINDERS_FAILED" },
       { status: 500 }
     );
   }

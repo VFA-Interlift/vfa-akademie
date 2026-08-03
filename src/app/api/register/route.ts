@@ -150,10 +150,25 @@ export async function POST(req: Request) {
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, emailVerifiedAt: true },
+      select: { id: true },
     });
 
-    if (existingUser?.emailVerifiedAt) {
+    // Vorhandenes Konto wird immer abgewiesen — auch ein unbestätigtes.
+    //
+    // Hier stand kurzzeitig eine Löschung unbestätigter Konten, um deren
+    // Inhaber nicht auszusperren. Das war falsch: Dieser Endpunkt braucht weder
+    // Anmeldung noch Passwort noch Token, ein POST mit fremder Adresse hätte
+    // also gereicht — und über die Kaskaden hätte es Anmeldungen, Zertifikate,
+    // Credits und hochgeladene Nachweise mitgerissen. Dass „unbestätigt"
+    // gleich „gehört niemandem" bedeutet, gilt nur für einen Entstehungsweg;
+    // die Demo-Skripte etwa legen Konten ohne dieses Feld an.
+    //
+    // Der Fall, den die Löschung abfangen sollte, kann praktisch nicht
+    // eintreten: Die Migration hat alle Bestandskonten auf bestätigt gesetzt,
+    // und neue entstehen nur noch über den Bestätigungslink. Sollte doch eines
+    // auftauchen, gehört die Entscheidung nach /api/verify-email — dort ist
+    // durch den angeklickten Link belegt, dass die Mail angekommen ist.
+    if (existingUser) {
       return NextResponse.json(
         {
           ok: false,
@@ -163,27 +178,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // Unbestätigtes Konto aus der Übergangszeit: Es gehört niemandem — die
-    // Adresse wurde nie belegt, Anmeldungen wurden nie verbunden. Statt den
-    // Anfragenden mit 409 auszusperren (anmelden geht ohne Bestätigung nicht),
-    // wird es entfernt und die Registrierung läuft den normalen Weg.
-    if (existingUser) {
-      await prisma.user.delete({ where: { id: existingUser.id } });
-    }
-
     // Das Konto entsteht NICHT hier, sondern erst beim Anklicken des
     // Bestätigungslinks (/api/verify-email). Der Grund: Sonst könnte jemand ein
     // Konto auf eine fremde Adresse anlegen, und der echte Adressinhaber würde
     // es beim Bestätigen freischalten — mit dem Passwort des anderen darin.
     //
-    // Bis zur Bestätigung hängen die Angaben am Token. Eine neue Anforderung
-    // für dieselbe Adresse ersetzt die vorherige, es gibt also immer nur einen
-    // gültigen Link, und der trägt die zuletzt eingegebenen Daten.
+    // Bis zur Bestätigung hängen die Angaben am Token.
+    //
+    // Mehrere offene Anforderungen für dieselbe Adresse bleiben nebeneinander
+    // bestehen; aufgeräumt wird erst beim Einlösen. Das ist wichtig: Würde eine
+    // neue Anforderung die vorherige löschen, könnte jemand nach dem echten
+    // Inhaber registrieren — dessen eigener Link liefe ins Leere, und der
+    // einzige noch funktionierende trüge das Passwort des anderen. Genau die
+    // Fehlermeldung hätte ihn dann zur falschen Mail getrieben.
     const passwordHash = await bcrypt.hash(password, 12);
     const { firstName, lastName } = splitName(name);
     const token = randomBytes(32).toString("hex");
-
-    await prisma.offeneRegistrierung.deleteMany({ where: { email } });
 
     await prisma.offeneRegistrierung.create({
       data: {
@@ -207,12 +217,10 @@ export async function POST(req: Request) {
       console.error("REGISTER_VERIFY_MAIL_ERROR", mailError);
     }
 
-    // Interne Benachrichtigung. Ein Mailfehler darf nichts blockieren.
-    try {
-      await sendNewRegistrationNotificationEmail({ name, email });
-    } catch (mailError) {
-      console.error("REGISTER_NOTIFY_MAIL_ERROR", mailError);
-    }
+    // Die interne Benachrichtigung geht erst nach der Bestätigung raus (siehe
+    // /api/verify-email). Sonst bekäme die Geschäftsstelle auch Meldungen über
+    // Registrierungen, aus denen nie ein Konto wird — und jeder könnte ihr über
+    // fremde Adressen Post schicken.
 
     return NextResponse.json({
       ok: true,
