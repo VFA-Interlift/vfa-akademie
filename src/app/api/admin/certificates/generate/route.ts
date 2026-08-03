@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
-import { getCertificateTemplateByCode } from "@/lib/certificates/templates";
+import { istZertifikatErzeugbar } from "@/lib/certificates/pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -107,8 +107,11 @@ export async function POST() {
           continue;
         }
 
-        // Ohne hinterlegte Vorlage ließe sich das Zertifikat nicht herunterladen.
-        if (!getCertificateTemplateByCode(enrollment.training.code)) {
+        // Derselbe Maßstab wie im nächtlichen Lauf: Es genügt nicht, dass eine
+        // Vorlage eingetragen ist — sie muss sich auch füllen lassen. Sonst
+        // entsteht ein Zertifikat, dessen Download mit Serverfehler abbricht
+        // (betraf SER-SWB und SICH).
+        if (!istZertifikatErzeugbar(enrollment.training.code)) {
           skippedNoTemplate += 1;
           continue;
         }

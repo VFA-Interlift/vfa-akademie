@@ -29,11 +29,15 @@ export async function POST(req: Request) {
   for (const p of cobraParticipants) {
     if (!p.email || !p.trainingId) continue;
 
+    // Nur bestätigte Konten: Sonst wäre dies der zweite Weg, an fremde
+    // Anmeldungen zu kommen — jemand legt ein Konto auf eine fremde Adresse an
+    // und bekommt deren Schulungen beim nächsten Abgleich zugespielt, ohne den
+    // Bestätigungslink je geöffnet zu haben.
     const user = await prisma.user.findUnique({
       where: { email: p.email },
-      select: { id: true },
+      select: { id: true, emailVerifiedAt: true },
     });
-    if (!user) { skipped++; continue; }
+    if (!user?.emailVerifiedAt) { skipped++; continue; }
 
     const existing = await prisma.enrollment.findUnique({
       where: { userId_trainingId: { userId: user.id, trainingId: p.trainingId } },

@@ -64,11 +64,10 @@ model PasswordResetToken {
   @@index([userId])
 }
 
-/// Bestätigung der E-Mail-Adresse nach der Registrierung.
+/// Bestätigung der E-Mail-Adresse für ein bereits bestehendes Konto.
 ///
-/// Ohne sie erbte jeder, der die Adresse eines echten Kursteilnehmers kannte,
-/// dessen Anmeldungen — samt Zertifikat und Credits. Das Nachziehen fremder
-/// Anmeldungen passiert deshalb erst nach bestätigter Adresse.
+/// Wird für Neuregistrierungen nicht mehr benutzt (dafür OffeneRegistrierung),
+/// bleibt aber für Konten aus der Übergangszeit bestehen.
 model EmailVerificationToken {
   id        String    @id @default(cuid())
   token     String    @unique
@@ -80,6 +79,32 @@ model EmailVerificationToken {
 
   @@index([token])
   @@index([userId])
+}
+
+/// Angefangene Registrierung, die noch nicht bestätigt wurde.
+///
+/// Das Konto entsteht erst beim Anklicken des Bestätigungslinks — vorher gibt
+/// es nur diesen Datensatz. Der Grund: Legte die Registrierung sofort ein Konto
+/// an, konnte jemand eines auf eine fremde Adresse eröffnen; der echte
+/// Adressinhaber schaltete es beim Bestätigen frei, und das hinterlegte
+/// Passwort war das des anderen.
+///
+/// So trägt der Link genau die Daten dessen, der ihn angefordert hat. Eine
+/// neue Anforderung für dieselbe Adresse löscht die vorherige.
+model OffeneRegistrierung {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  email        String
+  passwordHash String
+  name         String
+  firstName    String?
+  lastName     String?
+  birthDate    DateTime
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
 }
 
 model User {

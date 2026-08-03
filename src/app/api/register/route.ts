@@ -149,16 +149,11 @@ export async function POST(req: Request) {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-      select: {
-        id: true,
-        emailVerifiedAt: true,
-      },
+      where: { email },
+      select: { id: true },
     });
 
-    if (existingUser?.emailVerifiedAt) {
+    if (existingUser) {
       return NextResponse.json(
         {
           ok: false,
@@ -168,94 +163,43 @@ export async function POST(req: Request) {
       );
     }
 
-    // Konto existiert, ist aber unbestätigt: Bestätigungsmail neu schicken,
-    // statt mit 409 abzuweisen. Sonst hinge fest, wessen erste Mail nicht
-    // ankam — anmelden geht ohne Bestätigung nicht, und eine zweite
-    // Registrierung würde abgelehnt.
+    // Das Konto entsteht NICHT hier, sondern erst beim Anklicken des
+    // Bestätigungslinks (/api/verify-email). Der Grund: Sonst könnte jemand ein
+    // Konto auf eine fremde Adresse anlegen, und der echte Adressinhaber würde
+    // es beim Bestätigen freischalten — mit dem Passwort des anderen darin.
     //
-    // Dabei werden Passwort und Angaben auf die JETZT eingegebenen gesetzt.
-    // Das ist der entscheidende Punkt: Sonst könnte jemand ein Konto auf eine
-    // fremde Adresse anlegen, und der echte Adressinhaber würde beim
-    // Bestätigen ein Konto freischalten, dessen Passwort dem anderen gehört.
-    // Gefährlich ist das nicht, denn aktivieren kann nur, wer die Mail bekommt.
-    if (existingUser) {
-      const neuerHash = await bcrypt.hash(password, 12);
-      const { firstName: neuVorname, lastName: neuNachname } = splitName(name);
-
-      await prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          passwordHash: neuerHash,
-          name,
-          firstName: neuVorname,
-          lastName: neuNachname,
-          birthDate,
-        },
-      });
-
-      await prisma.emailVerificationToken.deleteMany({
-        where: { userId: existingUser.id, usedAt: null },
-      });
-
-      const neuerToken = randomBytes(32).toString("hex");
-
-      await prisma.emailVerificationToken.create({
-        data: {
-          token: neuerToken,
-          userId: existingUser.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        },
-      });
-
-      try {
-        await sendEmailVerificationEmail(email, bestaetigungsLink(neuerToken));
-      } catch (mailError) {
-        console.error("REGISTER_VERIFY_MAIL_RESEND_ERROR", mailError);
-      }
-
-      return NextResponse.json({ ok: true, bestaetigungNoetig: true, erneutGesendet: true });
-    }
-
-    // Kostenfaktor 12 wie bei Passwort-Reset und Passwortwechsel. Vorher stand
-    // hier 10 — damit galt für jedes über die Registrierung angelegte Konto der
-    // schwächste Wert im System.
+    // Bis zur Bestätigung hängen die Angaben am Token. Eine neue Anforderung
+    // für dieselbe Adresse ersetzt die vorherige, es gibt also immer nur einen
+    // gültigen Link, und der trägt die zuletzt eingegebenen Daten.
     const passwordHash = await bcrypt.hash(password, 12);
     const { firstName, lastName } = splitName(name);
+    const token = randomBytes(32).toString("hex");
 
-    const newUser = await prisma.user.create({
+    await prisma.offeneRegistrierung.deleteMany({ where: { email } });
+
+    await prisma.offeneRegistrierung.create({
       data: {
+        token,
         email,
         passwordHash,
         name,
         firstName,
         lastName,
         birthDate,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
-      select: { id: true },
-    });
-
-    // Fremde Kursanmeldungen werden NICHT mehr hier übernommen, sondern erst
-    // nach bestätigter Adresse (siehe /api/verify-email). Vorher genügte die
-    // Kenntnis einer fremden E-Mail, um deren Zertifikate und Credits zu erben.
-    const token = randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    await prisma.emailVerificationToken.create({
-      data: { token, userId: newUser.id, expiresAt },
     });
 
     try {
       await sendEmailVerificationEmail(email, bestaetigungsLink(token));
     } catch (mailError) {
-      // Ohne Mail kommt der Nutzer nicht weiter — deshalb auffindbar
-      // protokollieren, aber die Registrierung nicht zurückrollen: er kann sich
-      // den Link über „Passwort vergessen" nicht holen, wohl aber über eine
-      // erneute Registrierung melden.
+      // Ohne Mail kommt niemand weiter — auffindbar protokollieren. Die
+      // Registrierung lässt sich einfach wiederholen, ein Konto ist ja noch
+      // nicht entstanden.
       console.error("REGISTER_VERIFY_MAIL_ERROR", mailError);
     }
 
-    // Interne Benachrichtigung über die neue Registrierung.
-    // Ein Mailfehler darf die Registrierung nicht blockieren.
+    // Interne Benachrichtigung. Ein Mailfehler darf nichts blockieren.
     try {
       await sendNewRegistrationNotificationEmail({ name, email });
     } catch (mailError) {

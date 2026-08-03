@@ -13,7 +13,10 @@ import type { NextConfig } from "next";
  */
 const SICHERHEITS_HEADER = [
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
+  // SAMEORIGIN statt DENY: Die Feedback-Auswertung im Adminbereich zeigt das
+  // erzeugte PDF in einem eigenen iframe. DENY verbietet auch die Einbettung in
+  // die eigene Seite, die Vorschau bliebe leer.
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
@@ -30,7 +33,7 @@ const SICHERHEITS_HEADER = [
       "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
       "font-src 'self' data:",
       "connect-src 'self' https://*.public.blob.vercel-storage.com",
-      "frame-ancestors 'none'",
+      "frame-ancestors 'self'",
       "form-action 'self'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -44,7 +47,13 @@ const nextConfig: NextConfig = {
   // müssen sie hier ausdrücklich benannt werden — sonst findet der
   // Zertifikatsdownload im Betrieb keine Datei.
   outputFileTracingIncludes: {
-    "/api/certificates/**": ["./src/lib/certificates/pdf-vorlagen/**"],
+    // Beide Vorlagenordner: pdf-vorlagen/ für den PDF-Weg, templates/ für die
+    // zwei verbliebenen Word-Vorlagen. Fehlte der zweite, liefe der Word-Weg
+    // lokal und scheiterte auf Vercel.
+    "/api/certificates/**": [
+      "./src/lib/certificates/pdf-vorlagen/**",
+      "./src/lib/certificates/templates/**",
+    ],
   },
 
   async headers() {
