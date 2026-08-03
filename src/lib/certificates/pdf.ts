@@ -7,6 +7,7 @@ import {
   type PDFFont,
   type PDFPage,
 } from "pdf-lib";
+import { getCertificateTemplateByCode } from "@/lib/certificates/templates";
 
 type CertificatePdfData = Record<string, string>;
 
@@ -59,8 +60,10 @@ const PDF_COORDS: Record<string, PdfTemplateCoords> = {
   "DOK_TN-Zert App.pdf":                       LAYOUT_STANDARD,
   "EINST-Online_Teilnahmebestätigung App.pdf": LAYOUT_STANDARD,
   "FPFW-Teilnahmebest. App.pdf":               LAYOUT_STANDARD,
+  "FRQ_Teilnahmebestätigung App.pdf":          LAYOUT_STANDARD,
   "IN-SER-TR_Teilnahmebestätigung App.pdf":    LAYOUT_STANDARD,
   "MOD_Teilnahmebestätigung App.pdf":          LAYOUT_STANDARD,
+  "MVO_Teilnahmebestätigung App.pdf":          LAYOUT_STANDARD,
   "NuR-1_Teilnahmebestätigung App.pdf":        LAYOUT_STANDARD,
   "NuR-2_Teilnahmebestätigung App.pdf":        LAYOUT_STANDARD,
   "PLG TN-Best App.pdf":                       LAYOUT_STANDARD,
@@ -79,6 +82,26 @@ const PDF_COORDS: Record<string, PdfTemplateCoords> = {
   "GEF-TN-Zert._neu App.pdf": LAYOUT_STANDARD,
 };
 
+/**
+ * Lässt sich für diesen Kurscode wirklich ein Zertifikat erzeugen?
+ *
+ * Nicht dasselbe wie „eine Vorlage ist eingetragen": SER-SWB und SICH sind
+ * eingetragen, ihre Word-Vorlagen existieren aber nirgends, und bei FRQ und MVO
+ * fehlten die Schreibpositionen. In beiden Fällen legte der Zertifikatslauf
+ * trotzdem eines an, das sich nicht öffnen ließ.
+ *
+ * Die zwei vorhandenen Word-Vorlagen (VDI A1 und A2) haben ohnehin eine
+ * PDF-Fassung. Als Maßstab genügen deshalb die Schreibpositionen.
+ *
+ * Steht hier, nicht in templates.ts: templates.ts wird auch im Browser geladen,
+ * diese Datei braucht Node-Module.
+ */
+export function istZertifikatErzeugbar(code: string | null | undefined): boolean {
+  const template = getCertificateTemplateByCode(code);
+  if (!template?.pdfTemplateFileName) return false;
+  return Boolean(PDF_COORDS[template.pdfTemplateFileName]);
+}
+
 type RenderCertificatePdfOptions = {
   templateFileName: string;
   data: CertificatePdfData;
@@ -94,7 +117,7 @@ export async function renderCertificatePdf({
     throw new Error(`PDF_COORDS_NOT_CONFIGURED: ${templateFileName}`);
   }
 
-  const templateBytes = await loadPdfTemplate(templateFileName);
+  const templateBytes = loadPdfTemplate(templateFileName);
   const pdfDoc = await PDFDocument.load(templateBytes);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -188,62 +211,33 @@ function wrapText({ text, font, size, maxWidth }: { text: string; font: PDFFont;
   return lines;
 }
 
-async function loadPdfTemplate(templateFileName: string) {
-  const local = loadTemplateFromFileSystem(templateFileName);
-  if (local) return local;
+/**
+ * Die Blanko-Vorlagen lagen bis August 2026 unter `public/` und waren damit für
+ * jeden im Netz herunterladbar — Blanko-Urkunden eines Verbands, der
+ * Qualifikationen bescheinigt. Sie liegen jetzt in `src/lib/certificates/
+ * pdf-vorlagen/`, das Next.js über `outputFileTracingIncludes` (next.config.ts)
+ * mit ausliefert, ohne es zu veröffentlichen.
+ *
+ * Der frühere Rückfall über eine HTTP-Abfrage der eigenen Adresse ist damit
+ * ersatzlos entfallen: Er würde die Vorlagen wieder öffentlich voraussetzen.
+ */
+function loadPdfTemplate(templateFileName: string) {
+  const datei = path.join(VORLAGEN_ORDNER, templateFileName);
 
-  const remote = await loadTemplateFromRemote(templateFileName);
-  if (remote) return remote;
-
-  throw new Error(`PDF_TEMPLATE_NOT_FOUND: ${templateFileName}`);
-}
-
-function loadTemplateFromFileSystem(templateFileName: string) {
-  const candidates = [
-    path.join(process.cwd(), "public", "certificate-templates", templateFileName),
-    path.join(process.cwd(), "src", "lib", "certificates", "templates", templateFileName),
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return fs.readFileSync(candidate);
-    }
+  if (!fs.existsSync(datei)) {
+    throw new Error(`PDF_TEMPLATE_NOT_FOUND: ${templateFileName}`);
   }
 
-  return null;
+  return fs.readFileSync(datei);
 }
 
-async function loadTemplateFromRemote(templateFileName: string) {
-  const urls = buildTemplateUrls(templateFileName);
-
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) continue;
-      return Buffer.from(await res.arrayBuffer());
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
-function buildTemplateUrls(templateFileName: string) {
-  const bases = [
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "",
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
-    "https://vfa-akademie.vercel.app",
-  ]
-    .map((v) => String(v ?? "").trim())
-    .filter(Boolean)
-    .map((v) => v.replace(/\/$/, ""));
-
-  return Array.from(new Set(bases)).map(
-    (base) => `${base}/certificate-templates/${encodeURIComponent(templateFileName)}`
-  );
-}
+const VORLAGEN_ORDNER = path.join(
+  process.cwd(),
+  "src",
+  "lib",
+  "certificates",
+  "pdf-vorlagen"
+);
 
 function normalizePdfText(value: string) {
   return String(value ?? "")

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { sendNewRegistrationNotificationEmail } from "@/lib/email";
+import {
+  sendEmailVerificationEmail,
+  sendNewRegistrationNotificationEmail,
+} from "@/lib/email";
+import { absender, bremsePruefen } from "@/lib/bremse";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +69,21 @@ function isValidEmail(email: string) {
 }
 
 export async function POST(req: Request) {
+  // Fünf Registrierungen je Absender in zehn Minuten. Sonst ließen sich Konten
+  // reihenweise anlegen und damit Bestätigungsmails verschicken.
+  const bremse = bremsePruefen(`register:${absender(req)}`, {
+    versuche: 5,
+    fensterSekunden: 600,
+    sperreSekunden: 900,
+  });
+
+  if (!bremse.erlaubt) {
+    return NextResponse.json(
+      { ok: false, error: "Zu viele Versuche. Bitte versuch es später noch einmal." },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await req.json();
 
@@ -143,7 +163,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Kostenfaktor 12 wie bei Passwort-Reset und Passwortwechsel. Vorher stand
+    // hier 10 — damit galt für jedes über die Registrierung angelegte Konto der
+    // schwächste Wert im System.
+    const passwordHash = await bcrypt.hash(password, 12);
     const { firstName, lastName } = splitName(name);
 
     const newUser = await prisma.user.create({
@@ -158,25 +181,28 @@ export async function POST(req: Request) {
       select: { id: true },
     });
 
-    // Auto-enroll from matching Cobra participant records (email sync)
+    // Fremde Kursanmeldungen werden NICHT mehr hier übernommen, sondern erst
+    // nach bestätigter Adresse (siehe /api/verify-email). Vorher genügte die
+    // Kenntnis einer fremden E-Mail, um deren Zertifikate und Credits zu erben.
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await prisma.emailVerificationToken.create({
+      data: { token, userId: newUser.id, expiresAt },
+    });
+
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ?? "https://vfa-akademie.vercel.app"
+    ).replace(/\/$/, "");
+
     try {
-      const cobraMatches = await prisma.cobraTrainingParticipant.findMany({
-        where: { email, trainingId: { not: null } },
-        select: { trainingId: true },
-      });
-      for (const match of cobraMatches) {
-        if (!match.trainingId) continue;
-        await prisma.enrollment.upsert({
-          where: { userId_trainingId: { userId: newUser.id, trainingId: match.trainingId } },
-          create: { userId: newUser.id, trainingId: match.trainingId, status: "CONFIRMED" },
-          update: {},
-        });
-      }
-    } catch (enrollError) {
-      // Das Nachziehen bestehender Anmeldungen darf die Registrierung nicht
-      // blockieren – stillschweigend verschwinden darf der Fehler aber auch
-      // nicht, sonst fehlen dem Nutzer Schulungen ohne erkennbaren Grund.
-      console.error("REGISTER_AUTO_ENROLL_ERROR", enrollError);
+      await sendEmailVerificationEmail(email, `${appUrl}/e-mail-bestaetigen?token=${token}`);
+    } catch (mailError) {
+      // Ohne Mail kommt der Nutzer nicht weiter — deshalb auffindbar
+      // protokollieren, aber die Registrierung nicht zurückrollen: er kann sich
+      // den Link über „Passwort vergessen" nicht holen, wohl aber über eine
+      // erneute Registrierung melden.
+      console.error("REGISTER_VERIFY_MAIL_ERROR", mailError);
     }
 
     // Interne Benachrichtigung über die neue Registrierung.
@@ -189,6 +215,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
+      bestaetigungNoetig: true,
     });
   } catch (error) {
     console.error("REGISTER_ERROR", error);

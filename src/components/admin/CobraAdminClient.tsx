@@ -268,6 +268,13 @@ export default function CobraAdminClient() {
   }, [loadTrainings]);
 
   async function syncTrainings() {
+    // Rückfrage: Der Abgleich legt nicht nur an, er räumt auch auf — Schulungen
+    // ohne Entsprechung in Cobra werden gelöscht.
+    const sicher = window.confirm(
+      "Abgleich mit Cobra starten? Dabei werden Schulungen angelegt, aktualisiert und solche ohne Entsprechung in Cobra gelöscht."
+    );
+    if (!sicher) return;
+
     setSyncLoading(true);
     setSyncMsg("");
     setSyncOk(false);

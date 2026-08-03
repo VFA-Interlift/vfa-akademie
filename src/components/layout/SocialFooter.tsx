@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function SocialFooter() {
   return (
     <footer
@@ -48,6 +50,18 @@ export default function SocialFooter() {
         >
           Instagram
         </a>
+
+        <span aria-hidden="true">·</span>
+
+        <Link href="/impressum" style={{ color: "#555555", fontWeight: 700, textDecoration: "none" }}>
+          Impressum
+        </Link>
+
+        <span aria-hidden="true">·</span>
+
+        <Link href="/datenschutz" style={{ color: "#555555", fontWeight: 700, textDecoration: "none" }}>
+          Datenschutz
+        </Link>
       </div>
     </footer>
   );

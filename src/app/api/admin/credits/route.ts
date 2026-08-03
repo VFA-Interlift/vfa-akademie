@@ -120,6 +120,9 @@ export async function POST(req: Request) {
       return deny(404, "USER_NOT_FOUND");
     }
 
-    return deny(500, message);
+    // Rohe Ausnahmetexte gehören ins Protokoll, nicht in die Antwort.
+    console.error("ADMIN_CREDITS_FAILED", message);
+
+    return deny(500, "INTERNAL_ERROR");
   }
 }

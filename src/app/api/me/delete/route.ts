@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { bremsePruefen, bremseZuruecksetzen } from "@/lib/bremse";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,21 @@ export async function POST(req: Request) {
 
   if (!email) {
     return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  // Diese Route antwortet unterschiedlich, je nachdem ob das Passwort stimmt —
+  // ungebremst wäre sie damit ein Passwort-Orakel.
+  const bremse = bremsePruefen(`konto-loeschen:${email}`, {
+    versuche: 5,
+    fensterSekunden: 300,
+    sperreSekunden: 900,
+  });
+
+  if (!bremse.erlaubt) {
+    return NextResponse.json(
+      { ok: false, error: "ZU_VIELE_VERSUCHE" },
+      { status: 429 }
+    );
   }
 
   const body = (await req.json().catch(() => null)) as { passwort?: unknown } | null;
@@ -53,6 +69,8 @@ export async function POST(req: Request) {
   if (!stimmt) {
     return NextResponse.json({ ok: false, error: "PASSWORT_FALSCH" }, { status: 403 });
   }
+
+  bremseZuruecksetzen(`konto-loeschen:${email}`);
 
   await prisma.user.delete({ where: { id: user.id } });
 

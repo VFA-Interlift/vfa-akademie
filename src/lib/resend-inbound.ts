@@ -117,8 +117,10 @@ export async function uploadInboundAttachments(
       const rawName = att.filename?.trim() || "anhang";
       const safeName = rawName.replace(/[^A-Za-z0-9._-]+/g, "_").slice(-120) || "anhang";
 
+      // Privat: Orga-Mails enthalten Hotelbuchungen, Ansprechpartner und
+      // Teilnehmerunterlagen. Ausgeliefert über /api/dozent/orga-anhang.
       const blob = await put(`orga-mails/${kurscodeSlug}/${emailId}/${safeName}`, blobData, {
-        access: "public",
+        access: "private",
         addRandomSuffix: true,
         contentType,
       });

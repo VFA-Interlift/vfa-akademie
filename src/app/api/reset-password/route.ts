@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { absender, bremsePruefen } from "@/lib/bremse";
 
 export async function POST(req: NextRequest) {
+  // Zwanzig Versuche je Absender in zehn Minuten: der Token hat 32 Byte Zufall,
+  // die Bremse hält nur das Durchprobieren in Grenzen.
+  const bremse = bremsePruefen(`reset:${absender(req)}`, {
+    versuche: 20,
+    fensterSekunden: 600,
+    sperreSekunden: 900,
+  });
+
+  if (!bremse.erlaubt) {
+    return NextResponse.json(
+      { error: "Zu viele Versuche. Bitte versuch es später noch einmal." },
+      { status: 429 }
+    );
+  }
+
   const { token, password } = await req.json();
 
   if (!token || !password || typeof token !== "string" || typeof password !== "string") {

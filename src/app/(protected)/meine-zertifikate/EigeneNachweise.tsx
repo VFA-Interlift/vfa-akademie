@@ -124,9 +124,18 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
   async function handleDelete(id: string) {
     if (!window.confirm("Diesen Nachweis wirklich löschen?")) return;
     setDeletingId(id);
+    setError("");
     try {
       const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
-      if (res.ok) setDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (res.ok) {
+        setDocuments((prev) => prev.filter((d) => d.id !== id));
+      } else {
+        // Vorher wurde der Fehlschlag verschluckt: Der Nachweis blieb stehen,
+        // ohne dass jemand erfuhr, warum.
+        setError("Der Nachweis ließ sich nicht löschen. Bitte erneut versuchen.");
+      }
+    } catch {
+      setError("Netzwerkfehler beim Löschen. Bitte erneut versuchen.");
     } finally {
       setDeletingId(null);
     }
@@ -289,7 +298,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                     <a
-                      href={doc.fileUrl}
+                      href={`/api/documents/${doc.id}/datei`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

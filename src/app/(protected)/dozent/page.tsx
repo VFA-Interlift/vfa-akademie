@@ -105,21 +105,35 @@ export default async function DozentPage() {
   const orgaByCode = new Map<string, DozentKurs["orga"]>();
   for (const row of orgaRows) {
     const rawAtts = Array.isArray(row.attachments) ? row.attachments : [];
+    // Position im ursprünglichen Feld mitführen: die Ausliefer-Route spricht die
+    // Anhänge über genau diesen Index an, Filtern darf ihn nicht verschieben.
     const atts = rawAtts
-      .map((a) => (a && typeof a === "object" ? (a as Record<string, unknown>) : null))
-      .filter((a): a is Record<string, unknown> => !!a && typeof a.url === "string");
+      .map((a, index) => ({
+        a: a && typeof a === "object" ? (a as Record<string, unknown>) : null,
+        index,
+      }))
+      .filter((e): e is { a: Record<string, unknown>; index: number } =>
+        !!e.a && typeof e.a.url === "string"
+      );
+    // Nicht die Blob-Adresse ausgeben: die Anhänge liegen privat und werden
+    // über die geschützte Route geliefert. Angesprochen wird über die Position
+    // in der Liste, weil Anhänge keinen eigenen Datensatz haben — deshalb der
+    // ursprüngliche Index, vor jedem Filtern.
+    const anhangUrl = (index: number) =>
+      `/api/dozent/orga-anhang?mail=${encodeURIComponent(row.id)}&nr=${index}`;
+
     const images = atts
-      .filter((a) => {
+      .filter(({ a }) => {
         if (a.isImage !== true) return false;
         // Kleine Bilder = i. d. R. Signatur-Grafiken → auch bei bereits
         // gespeicherten Mails ausblenden.
         const size = typeof a.size === "number" ? a.size : Number(a.size);
         return !(Number.isFinite(size) && size < SIGNATURE_IMAGE_MAX_BYTES);
       })
-      .map((a) => ({ url: String(a.url), filename: String(a.filename ?? "Bild") }));
+      .map(({ a, index }) => ({ url: anhangUrl(index), filename: String(a.filename ?? "Bild") }));
     const files = atts
-      .filter((a) => a.isImage !== true)
-      .map((a) => ({ url: String(a.url), filename: String(a.filename ?? "Datei") }));
+      .filter(({ a }) => a.isImage !== true)
+      .map(({ a, index }) => ({ url: anhangUrl(index), filename: String(a.filename ?? "Datei") }));
 
     const list = orgaByCode.get(row.kurscode) ?? [];
     list.push({
@@ -146,7 +160,9 @@ export default async function DozentPage() {
     const list = signaturesByCode.get(row.kurscode) ?? [];
     list.push({
       id: row.id,
-      url: row.fileUrl,
+      // Nicht die Blob-Adresse: die Datei liegt privat und wird über die
+      // geschützte Route ausgeliefert.
+      url: `/api/dozent/signature-list/${row.id}/datei`,
       uploadedByName: row.uploadedByName,
       uploadedText: orgaFmt.format(row.createdAt),
       pageCount: row.pageCount,

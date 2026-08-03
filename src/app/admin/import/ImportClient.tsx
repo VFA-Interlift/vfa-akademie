@@ -32,6 +32,15 @@ export default function ImportClient() {
       setFehler("Bitte beide Dateien auswählen.");
       return;
     }
+
+    // Rückfrage nur beim echten Schreiben — die Vorschau ändert nichts.
+    if (modus === "import") {
+      const sicher = window.confirm(
+        "Import jetzt in die Datenbank schreiben? Die Vorschau zeigt, was angelegt wird. Rückgängig machen lässt sich der Schritt nicht."
+      );
+      if (!sicher) return;
+    }
+
     setLaeuft(true);
     setFehler(null);
 

@@ -162,6 +162,15 @@ export function cleanTrainingTitle(value: string) {
 }
 
 /**
+ * Die Website kennzeichnet volle Kurse, indem sie den Hinweis in den Titel
+ * schreibt („Grundkurs A1 (Ausgebucht)"). Ein eigenes Feld gibt es dafür nicht.
+ * Ohne diese Prüfung stand der Knopf „Jetzt anmelden" auch bei vollen Kursen.
+ */
+export function istAusgebucht(title: string | null | undefined): boolean {
+  return /\((?:\s*)(ausgebucht|voll|warteliste)(?:\s*)\)/i.test(String(title ?? ""));
+}
+
+/**
  * Übergangs-Heuristik bis das Cobra-Feld „inhouse/öffentlich" durchgereicht wird
  * (der `app-schulung`-Endpoint liefert dieses Feld aktuell nicht mit).
  *

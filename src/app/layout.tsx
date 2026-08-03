@@ -26,8 +26,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#007873",
-  userScalable: false,
-  maximumScale: 1,
+  // Zoom bleibt erlaubt: Wer schlecht sieht, muss vergrößern können. Das
+  // Sperren war gegen das versehentliche Aufziehen gedacht, nimmt aber allen
+  // die Lupe — und die App wird überwiegend am Handy benutzt.
+  userScalable: true,
+  maximumScale: 5,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

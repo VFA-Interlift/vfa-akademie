@@ -181,7 +181,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
       const sheet = {
         id: data.sheet.id as string,
-        url: data.sheet.fileUrl as string,
+        url: `/api/dozent/signature-list/${data.sheet.id}/datei`,
         uploadedByName: data.sheet.uploadedByName as string,
         uploadedText: formatUploadDate(data.sheet.createdAt),
         pageCount: data.sheet.pageCount as number,
@@ -196,6 +196,13 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   }
 
   async function deleteSignatureList(kursId: string, id: string) {
+    // Rückfrage: Die unterschriebene Liste ist der Nachweis der Anwesenheit und
+    // liegt sonst nirgends. Ein Fehlgriff wäre nicht rückgängig zu machen.
+    const sicher = window.confirm(
+      "Unterschriebene Teilnehmerliste wirklich löschen? Die Datei wird dabei endgültig entfernt."
+    );
+    if (!sicher) return;
+
     setError("");
     try {
       const res = await fetch("/api/dozent/signature-list", {

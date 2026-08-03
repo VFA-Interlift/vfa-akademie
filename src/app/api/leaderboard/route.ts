@@ -56,12 +56,11 @@ export async function GET() {
       median,
     });
   } catch (error: unknown) {
+    // Interna gehören ins Protokoll, nicht in die Antwort.
+    console.error("LEADERBOARD_LOAD_FAILED", error);
+
     return NextResponse.json(
-      {
-        ok: false,
-        error: "LEADERBOARD_LOAD_FAILED",
-        details: error instanceof Error ? error.message : "Unbekannter Fehler beim Laden des Rankings.",
-      },
+      { ok: false, error: "LEADERBOARD_LOAD_FAILED" },
       { status: 500 }
     );
   }

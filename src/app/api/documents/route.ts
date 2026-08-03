@@ -59,12 +59,15 @@ export async function POST(req: Request) {
     if (!Number.isNaN(d.getTime())) issuedDate = d;
   }
 
-  // In Vercel Blob ablegen (öffentlich, aber mit unrätselbarem Zufalls-Suffix).
+  // Privat ablegen: Nachweise sind persönliche Dokumente. Vorher lagen sie
+  // öffentlich, geschützt allein durch ein Zufalls-Suffix in der Adresse — das
+  // ist Verschleierung, keine Berechtigung. Ausgeliefert werden sie über
+  // /api/documents/[id]/datei, das den Eigentümer prüft.
   const safeName = file.name.replace(/[^A-Za-z0-9._-]+/g, "_").slice(-120) || "nachweis";
   let blob;
   try {
     blob = await put(`documents/${me.id}/${safeName}`, file, {
-      access: "public",
+      access: "private",
       addRandomSuffix: true,
       contentType: file.type,
     });

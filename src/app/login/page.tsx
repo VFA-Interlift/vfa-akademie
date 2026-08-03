@@ -29,7 +29,15 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!res || res.error) {
-      setMsg("Login fehlgeschlagen. Bitte E-Mail und Passwort prüfen.");
+      // NextAuth reicht die Meldung aus authorize() im Fehlertext durch.
+      const fehler = res?.error ?? "";
+      setMsg(
+        fehler.includes("EMAIL_NICHT_BESTAETIGT")
+          ? "Bitte bestätige zuerst deine E-Mail-Adresse. Den Link haben wir dir nach der Registrierung geschickt."
+          : fehler.includes("ZU_VIELE_VERSUCHE")
+            ? "Zu viele Anmeldeversuche. Bitte versuch es in einer Viertelstunde noch einmal."
+            : "Login fehlgeschlagen. Bitte E-Mail und Passwort prüfen."
+      );
       return;
     }
 
@@ -83,6 +91,16 @@ export default function LoginPage() {
             Noch kein Konto?{" "}
             <Link href="/register" style={{ color: "#007873", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>
               Jetzt registrieren
+            </Link>
+          </p>
+
+          <p style={{ marginTop: 10, textAlign: "center", color: "#AAAAAA", fontSize: 13 }}>
+            <Link href="/impressum" style={{ color: "#888888" }}>
+              Impressum
+            </Link>
+            {" · "}
+            <Link href="/datenschutz" style={{ color: "#888888" }}>
+              Datenschutz
             </Link>
           </p>
         </div>

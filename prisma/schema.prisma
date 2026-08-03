@@ -64,6 +64,24 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+/// Bestätigung der E-Mail-Adresse nach der Registrierung.
+///
+/// Ohne sie erbte jeder, der die Adresse eines echten Kursteilnehmers kannte,
+/// dessen Anmeldungen — samt Zertifikat und Credits. Das Nachziehen fremder
+/// Anmeldungen passiert deshalb erst nach bestätigter Adresse.
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
 model User {
   id           String @id @default(cuid())
   email        String @unique
@@ -93,6 +111,11 @@ model User {
 
   notifyBeforeTraining Boolean @default(true)
 
+  /// Gesetzt, sobald die Adresse über den Bestätigungslink belegt wurde.
+  /// Bestandskonten gelten als bestätigt (siehe Migration), damit niemand
+  /// ausgesperrt wird.
+  emailVerifiedAt DateTime?
+
   lastLoginAt DateTime?
 
   creditTxs          CreditTransaction[]
@@ -100,6 +123,7 @@ model User {
   certificates       Certificate[]
   trainingFeedbacks  TrainingFeedback[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   documents          UserDocument[]
 
   createdAt DateTime @default(now())

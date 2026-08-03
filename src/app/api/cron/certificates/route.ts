@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
-import { getCertificateTemplateByCode } from "@/lib/certificates/templates";
+import { istZertifikatErzeugbar } from "@/lib/certificates/pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -81,11 +81,13 @@ export async function GET(req: Request) {
           continue;
         }
 
-        // Ohne hinterlegte Vorlage entstünde ein Zertifikat, das sich nicht
+        // Ohne erzeugbares Zertifikat entstünde eines, das sich nicht
         // herunterladen lässt — der Teilnehmer klickt und bekommt einen Fehler.
-        // Betrifft bewusst YLD und EFK1 (dort zertifiziert erst EFK2) und
-        // schützt zugleich vor jeder künftigen Kursart ohne Vorlage.
-        if (!getCertificateTemplateByCode(enrollment.training.code)) {
+        // Geprüft wird nicht nur, OB eine Vorlage eingetragen ist, sondern ob
+        // sie sich auch füllen lässt: SER-SWB und SICH haben keine Datei,
+        // FRQ und MVO hatten keine Schreibpositionen.
+        // Betrifft außerdem bewusst YLD und EFK1 (dort zertifiziert erst EFK2).
+        if (!istZertifikatErzeugbar(enrollment.training.code)) {
           skippedNoTemplate += 1;
           continue;
         }

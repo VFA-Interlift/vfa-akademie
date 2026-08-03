@@ -124,6 +124,33 @@ export default function BottomNav() {
 
               <div className="mehr-divider" />
 
+              {/* Auf dem Handy blendet globals.css den Fußbereich aus. Ohne
+                  diese beiden Einträge wären Impressum und Datenschutz mobil
+                  nicht erreichbar — und getestet wird nur mobil. */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 16,
+                  padding: "4px 6px 10px",
+                  fontSize: 13,
+                }}
+              >
+                <Link
+                  href="/impressum"
+                  onClick={() => setSheetOpen(false)}
+                  style={{ color: "#888888", textDecoration: "none", fontWeight: 600 }}
+                >
+                  Impressum
+                </Link>
+                <Link
+                  href="/datenschutz"
+                  onClick={() => setSheetOpen(false)}
+                  style={{ color: "#888888", textDecoration: "none", fontWeight: 600 }}
+                >
+                  Datenschutz
+                </Link>
+              </div>
+
               <button
                 type="button"
                 className="mehr-logout"

@@ -66,6 +66,62 @@ VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
   });
 }
 
+export async function sendEmailVerificationEmail(
+  to: string,
+  verifyUrl: string
+): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: REPLY_TO,
+    subject: "Bitte bestätige deine E-Mail-Adresse – VFA-Akademie",
+    text: `Willkommen bei der VFA-Akademie
+
+Bitte bestätige deine E-Mail-Adresse, damit wir dein Konto mit deinen
+Schulungsanmeldungen verbinden können. Öffne dazu diesen Link (24 Stunden gültig):
+
+${verifyUrl}
+
+Hast du dich nicht registriert, kannst du diese E-Mail ignorieren. Ohne
+Bestätigung passiert nichts.
+
+VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
+        <div style="height:5px;background:#FFC100;margin-bottom:32px"></div>
+
+        <h1 style="margin:0 0 8px;font-size:28px;font-weight:400;color:#007873;text-transform:uppercase;letter-spacing:0.02em">
+          E-Mail bestätigen
+        </h1>
+
+        <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#333333">
+          Willkommen bei der VFA-Akademie. Bitte bestätige deine E-Mail-Adresse,
+          damit wir dein Konto mit deinen Schulungsanmeldungen verbinden können.
+        </p>
+
+        <a
+          href="${verifyUrl}"
+          style="display:inline-block;padding:12px 28px;background:#007873;color:#ffffff;font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-radius:999px"
+        >
+          E-Mail bestätigen
+        </a>
+
+        <p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#555555">
+          Der Link ist <strong>24 Stunden</strong> gültig. Hast du dich nicht
+          registriert, ignoriere diese E-Mail einfach — ohne Bestätigung passiert
+          nichts.
+        </p>
+
+        <div style="margin-top:32px;padding-top:18px;border-top:1px solid #E6E6E6;font-size:13px;color:#555555">
+          VFA-Akademie &nbsp;·&nbsp; Diese E-Mail wurde automatisch generiert.
+        </div>
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")

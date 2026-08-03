@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { bremsePruefen, bremseZuruecksetzen } from "@/lib/bremse";
 
 type AuthUser = {
   id: string;
@@ -30,6 +31,19 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Zehn Fehlversuche je Adresse in fünf Minuten, dann fünfzehn Minuten
+        // Pause. Ohne diese Bremse ließen sich Passwörter ungebremst
+        // durchprobieren.
+        const bremse = bremsePruefen(`login:${email}`, {
+          versuche: 10,
+          fensterSekunden: 300,
+          sperreSekunden: 900,
+        });
+
+        if (!bremse.erlaubt) {
+          throw new Error("ZU_VIELE_VERSUCHE");
+        }
+
         const user = await prisma.user.findUnique({
           where: {
             email,
@@ -42,6 +56,7 @@ export const authOptions: NextAuthOptions = {
             name: true,
             firstName: true,
             lastName: true,
+            emailVerifiedAt: true,
           },
         });
 
@@ -54,6 +69,15 @@ export const authOptions: NextAuthOptions = {
         if (!passwordIsValid) {
           return null;
         }
+
+        // Unbestätigte Adressen kommen nicht hinein. Die Prüfung sitzt bewusst
+        // NACH dem Passwortvergleich: sonst verriete die Fehlermeldung, welche
+        // Adressen registriert sind.
+        if (!user.emailVerifiedAt) {
+          throw new Error("EMAIL_NICHT_BESTAETIGT");
+        }
+
+        bremseZuruecksetzen(`login:${email}`);
 
         const displayName =
           [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||

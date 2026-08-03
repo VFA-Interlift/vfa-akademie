@@ -102,9 +102,20 @@ export default function AdminUsersPage() {
     try {
       const res = await fetch(`/api/admin/users/${userId}/enrollments`, { cache: "no-store" });
       const data = await res.json();
-      if (data.ok) setEnrollmentsByUser((prev) => ({ ...prev, [userId]: data.enrollments }));
-    } catch { /* ignore */ }
-    finally { setEnrollmentsLoadingId(null); }
+      if (data.ok) {
+        setEnrollmentsByUser((prev) => ({ ...prev, [userId]: data.enrollments }));
+      } else {
+        throw new Error(data.error ?? "LADEN_FEHLGESCHLAGEN");
+      }
+    } catch (fehler) {
+      // Vorher wurde der Fehler verschluckt: Die Oberfläche zeigte dann
+      // „Keine Schulungen zugeordnet" — ein Ladefehler sah aus wie ein leeres
+      // Ergebnis und wurde entsprechend falsch gemeldet.
+      console.error("ADMIN_ENROLLMENTS_LOAD_ERROR", fehler);
+      showMessage("Die Schulungen dieses Nutzers ließen sich nicht laden.", false);
+    } finally {
+      setEnrollmentsLoadingId(null);
+    }
   }
 
   async function changeEnrollmentStatus(enrollmentId: string, userId: string, newStatus: string) {
@@ -225,6 +236,13 @@ export default function AdminUsersPage() {
       showMessage("Dieser Nutzer ist bereits Admin.", true);
       return;
     }
+
+    // Rückfrage: Admin-Rechte umfassen alle Nutzerdaten, Zertifikate und
+    // Credits — und lassen sich in dieser Oberfläche nicht wieder entziehen.
+    const sicher = window.confirm(
+      `${user.email} zum Admin machen? Damit bekommt die Person Zugriff auf alle Nutzerdaten, Zertifikate und Credits. Zurücknehmen lässt sich das hier nicht.`
+    );
+    if (!sicher) return;
 
     setActionLoadingId(user.id);
     showMessage("Admin-Vergabe wird gestartet...", true);

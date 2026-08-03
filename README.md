@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VFA-Akademie App
 
-## Getting Started
+Schulungsverwaltung der VFA-Akademie: Kurskalender, Anmeldungen, Anwesenheit,
+Zertifikate und Credits. Next.js (App Router) mit Prisma und PostgreSQL, betrieben
+auf Vercel, als installierbare Handy-App ausgelegt.
 
-First, run the development server:
+Live: https://vfa-akademie.vercel.app
+
+## Woher die Daten kommen
+
+Es gibt drei Quellen, und sie haben klare Zuständigkeiten:
+
+| Quelle | Liefert | Wie |
+|---|---|---|
+| **Website vfa-interlift.de** (Wix) | Kurse mit Terminen, Orten, Preisen, Dozenten | `_functions/appKurse`, abgefragt in `src/lib/wix/kurse.ts` |
+| **Website, Anmeldeformular** | einzelne Anmeldungen, sofort beim Absenden | Webhook auf `/api/webhooks/wix-anmeldung` |
+| **Cobra** (Verbandsverwaltung) | Altbestand an Schulungen und Teilnehmern | nur von Hand über den Adminbereich |
+
+Der Kurskalender liest direkt von der Website. Fällt sie aus, fällt er auf die
+eigene Datenbank zurück.
+
+## Wie ein Zertifikat entsteht
+
+1. Der Teilnehmer ist über Website-Anmeldung oder Cobra-Abgleich eingeschrieben.
+2. Der Dozent pflegt im Dozentenbereich die Anwesenheit.
+3. Nachts prüft `/api/cron/certificates` alle abgelaufenen Schulungen und stellt
+   für Anwesende ein Zertifikat aus, bucht die Credits und setzt den Status.
+4. Der Teilnehmer lädt es herunter; das PDF wird bei jedem Abruf frisch aus der
+   Vorlage erzeugt und nicht gespeichert.
+
+**Ohne erzeugbare Vorlage entsteht kein Zertifikat** — geprüft über
+`istZertifikatErzeugbar` in `src/lib/certificates/pdf.ts`. Das betrifft
+absichtlich EFK1 und YLD (dort zertifiziert erst EFK2). Ohne diese Prüfung
+entstünden Zertifikate, die sich nicht öffnen lassen.
+
+Die Blanko-Vorlagen liegen in `src/lib/certificates/pdf-vorlagen/` — **nicht**
+unter `public/`, dort wären sie öffentlich herunterladbar. Damit Vercel sie
+mitliefert, sind sie in `next.config.ts` unter `outputFileTracingIncludes`
+eingetragen.
+
+Neue Kursart aufnehmen: Eintrag in `CERTIFICATE_TEMPLATES` (`templates.ts`), PDF
+in `pdf-vorlagen/` legen, Schreibpositionen in `PDF_COORDS` (`pdf.ts`) ergänzen,
+danach `node scripts/pruefe-zertifikatsvorlagen.mjs`.
+
+## Rollen
+
+- **Teilnehmer** sehen ihre Schulungen, Zertifikate, Credits und geben Feedback.
+- **Dozenten** (`isInstructor`) sehen die Teilnehmer *ihrer* Kurse, pflegen die
+  Anwesenheit und laden die unterschriebene Teilnehmerliste hoch. Die Zuordnung
+  läuft über das Dozentenfeld der Website, nicht über eine Datenbankrelation
+  (`src/lib/dozent/zuordnung.ts`).
+- **Admins** verwalten Nutzer, Schulungen, Credits und den Datenabgleich. Die
+  Rolle wird bei jeder Prüfung frisch aus der Datenbank gelesen, nie aus dem
+  Anmeldetoken — ein Entzug wirkt sofort.
+
+## Entwickeln
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma generate
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Prüfen vor jedem Commit:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx tsc --noEmit
+npx next build
+npm run lint
+node scripts/pruefe-zertifikatsvorlagen.mjs
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`npm run build` führt zuerst `prisma migrate deploy` aus und verändert damit die
+Datenbank — für eine reine Bauprüfung `npx next build` verwenden.
 
-## Learn More
+## Umgebungsvariablen
 
-To learn more about Next.js, take a look at the following resources:
+Pflicht, sonst startet die jeweilige Funktion nicht:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Wofür |
+|---|---|
+| `DATABASE_URL`, `DIRECT_URL` | PostgreSQL |
+| `NEXTAUTH_SECRET`, `NEXTAUTH_URL` | Anmeldung |
+| `RESEND_API_KEY` | Mailversand |
+| `MAIL_FROM` | Absender. **Fehlt sie, versendet Resend über die Sandbox und stellt nur an freigegebene Empfänger zu — ohne Fehlermeldung.** |
+| `CRON_SECRET` | Nachtläufe |
+| `WIX_WEBHOOK_SECRET` | Kursabfrage und Anmelde-Webhook |
+| `RESEND_INBOUND_WEBHOOK_SECRET` | Orga-Mail-Webhook |
+| `BLOB_READ_WRITE_TOKEN` | Dateiablage |
+| `COBRA_BASE_URL`, `COBRA_API_KEY`, `COBRA_USERNAME`, `COBRA_PASSWORD` | Cobra-Abgleich |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Mit Rückfallwert: `NEXT_PUBLIC_APP_URL`, `WIX_SITE_BASE_URL`, `REPLY_TO`,
+`FEEDBACK_EMAIL`, `REGISTRATION_NOTIFY_EMAIL`.
 
-## Deploy on Vercel
+## Nachtläufe (`vercel.json`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Zeit (UTC) | Lauf | Zweck |
+|---|---|---|
+| 00:05 | `/api/cron/wix/trainings` | Kurse von der Website holen |
+| 00:20 | `/api/cron/certificates` | Zertifikate für abgelaufene Schulungen |
+| 07:00 | `/api/cron/reminders` | Erinnerung drei Tage vor der Schulung |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Die Reihenfolge ist wichtig: Erst die Kurse holen, dann Zertifikate ausstellen —
+sonst arbeitet der Zertifikatslauf mit veralteten Enddaten.
+
+Die Routen unter `/api/cron/cobra/` stehen nicht im Zeitplan und laufen nie. Sie
+stammen aus der Zeit vor der Website-Anbindung.
+
+## Was bewusst so ist
+
+- **E-Mail-Bestätigung ist Pflicht.** Erst danach werden vorhandene
+  Kursanmeldungen mit dem Konto verbunden. Vorher konnte sich jemand mit einer
+  fremden Adresse registrieren und erbte deren Zertifikate und Credits.
+- **Hochgeladene Dateien liegen privat** und werden nur über geprüfte Routen
+  ausgeliefert (`src/lib/blob-auslieferung.ts`). Vor August 2026 waren sie
+  öffentlich abrufbar; Dateien aus dieser Zeit sind es weiterhin.
+- **Das Ranking ist anonym** — nur Platz 1 ohne Namen, die eigene Platzierung und
+  der Mittelwert. Deshalb gibt es keine Opt-in-Einstellung mehr.
+- **Der QR-Code auf der Schulungsseite führt ins Leere.** Einlösen ist nie
+  gebaut worden, die Seite `/scan` gibt es nicht.

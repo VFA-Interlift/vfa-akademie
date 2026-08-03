@@ -80,8 +80,11 @@ export async function POST(req: Request) {
   const kurscodeSlug = kurscode.toLowerCase().replace(/[^a-z0-9]+/gi, "_");
   let blob;
   try {
+    // Privat: auf diesen Listen stehen eingescannte Unterschriften und
+    // Klarnamen. Öffentlich abgelegt kam jeder mit der Adresse heran.
+    // Ausgeliefert über /api/dozent/signature-list/[id]/datei.
     blob = await put(`signature-lists/${kurscodeSlug}/${Date.now()}.pdf`, Buffer.from(pdfBytes), {
-      access: "public",
+      access: "private",
       addRandomSuffix: true,
       contentType: "application/pdf",
     });

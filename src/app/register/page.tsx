@@ -55,8 +55,9 @@ export default function RegisterPage() {
         return;
       }
 
+      // Keine Weiterleitung zur Anmeldung mehr: ohne bestätigte Adresse käme
+      // der Nutzer dort nicht hinein und stünde ratlos vor der Fehlermeldung.
       setDone(true);
-      setTimeout(() => router.push("/login"), 1800);
     } catch {
       setMsg("Serverfehler beim Registrieren.");
     } finally {
@@ -108,10 +109,16 @@ export default function RegisterPage() {
                 ✓
               </div>
               <h2 style={{ margin: "0 0 6px", color: "#007873", fontSize: 22, fontWeight: 800 }}>
-                Konto erstellt!
+                Fast geschafft
               </h2>
-              <p style={{ margin: 0, color: "#333333", fontSize: 15, lineHeight: 1.5 }}>
-                Du wirst gleich zur Anmeldung weitergeleitet …
+              <p style={{ margin: 0, color: "#333333", fontSize: 15, lineHeight: 1.6 }}>
+                Wir haben dir eine E-Mail an <strong>{email.trim().toLowerCase()}</strong>{" "}
+                geschickt. Öffne darin den Bestätigungslink, dann kannst du dich
+                anmelden.
+              </p>
+              <p style={{ margin: "12px 0 0", color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+                Nichts angekommen? Sieh bitte im Spam-Ordner nach. Der Link gilt 24
+                Stunden.
               </p>
             </AppCard>
           ) : (
@@ -122,6 +129,29 @@ export default function RegisterPage() {
                 <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" onChange={setEmail} />
                 <AppInput label="Passwort" value={password} placeholder="Mindestens 8 Zeichen" type="password" onChange={setPassword} />
                 <AppInput label="Passwort bestätigen" value={confirmPassword} placeholder="Passwort wiederholen" type="password" onChange={setConfirmPassword} />
+
+                {/* Informationspflicht nach Art. 13 DSGVO: Vor der Registrierung
+                    muss erkennbar sein, was mit den Daten geschieht. Das
+                    Geburtsdatum ist Pflichtfeld, deshalb steht hier auch, wofür. */}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    color: "#777777",
+                  }}
+                >
+                  Mit dem Anlegen des Kontos bestätigst du, die{" "}
+                  <Link
+                    href="/datenschutz"
+                    target="_blank"
+                    style={{ color: "#007873", fontWeight: 600 }}
+                  >
+                    Datenschutzerklärung
+                  </Link>{" "}
+                  gelesen zu haben. Dein Geburtsdatum brauchen wir, weil es auf
+                  Teilnahmebestätigungen und Zertifikaten steht.
+                </p>
 
                 <AppButton
                   type="submit"
@@ -156,6 +186,16 @@ export default function RegisterPage() {
             Bereits ein Konto?{" "}
             <Link href="/login" style={{ color: "#007873", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>
               Zur Anmeldung
+            </Link>
+          </p>
+
+          <p style={{ marginTop: 10, textAlign: "center", color: "#AAAAAA", fontSize: 13 }}>
+            <Link href="/impressum" style={{ color: "#888888" }}>
+              Impressum
+            </Link>
+            {" · "}
+            <Link href="/datenschutz" style={{ color: "#888888" }}>
+              Datenschutz
             </Link>
           </p>
         </div>

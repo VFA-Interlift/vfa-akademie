@@ -271,10 +271,10 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       return fail("TRAINING_NOT_FOUND", 404);
     }
 
-    return fail("INTERNAL_ERROR", 500, {
-      code,
-      message: getErrorMessage(error),
-    });
+    // Datenbankcode und Ausnahmetext gehören ins Protokoll, nicht in die Antwort.
+    console.error("ADMIN_TRAINING_FAILED", code, getErrorMessage(error));
+
+    return fail("INTERNAL_ERROR", 500);
   }
 }
 
@@ -317,9 +317,9 @@ export async function DELETE(req: NextRequest, context: Ctx) {
       return fail("TRAINING_NOT_FOUND", 404);
     }
 
-    return fail("INTERNAL_ERROR", 500, {
-      code,
-      message: getErrorMessage(error),
-    });
+    // Datenbankcode und Ausnahmetext gehören ins Protokoll, nicht in die Antwort.
+    console.error("ADMIN_TRAINING_FAILED", code, getErrorMessage(error));
+
+    return fail("INTERNAL_ERROR", 500);
   }
 }

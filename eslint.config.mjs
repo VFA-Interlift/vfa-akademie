@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Werkzeug-Hilfsdateien, kein Anwendungscode — sie stellten 20 der
+    // 28 gemeldeten Fehler (require statt import).
+    ".claude/**",
   ]),
 ]);
 

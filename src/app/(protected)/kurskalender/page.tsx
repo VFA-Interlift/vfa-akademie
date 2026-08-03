@@ -12,6 +12,7 @@ import {
   formatVenueLines,
   getDisplayTrainingTitle,
   cleanTrainingTitle,
+  istAusgebucht,
 } from "@/lib/trainings/format";
 
 type CalendarTraining = {
@@ -351,7 +352,7 @@ export default function KurskalenderPage() {
 
                   <div style={{ display: "grid", gap: 6 }}>
                     {weeks.map((week) => {
-                      const bars = buildWeekTrainingBars(trainings, week.days);
+                      const bars = buildWeekTrainingBars(gefilterte, week.days);
 
                       return (
                         <div
@@ -511,7 +512,7 @@ export default function KurskalenderPage() {
       {overflowWeek && (() => {
         const week = weeks.find((w) => w.key === overflowWeek);
         if (!week) return null;
-        const bars = buildWeekTrainingBars(trainings, week.days);
+        const bars = buildWeekTrainingBars(gefilterte, week.days);
         const start = week.days[0].date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
         const end = week.days[6].date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
         return (
@@ -713,14 +714,27 @@ function TrainingDialog({
               Kursdetails
             </a>
 
-            <a
-              href={getAnmeldungUrl(training)}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={bookingButtonStyle}
-            >
-              Jetzt anmelden
-            </a>
+            {istAusgebucht(training.title) ? (
+              <span
+                style={{
+                  ...bookingButtonStyle,
+                  background: "#EFEFEF",
+                  color: "#777777",
+                  cursor: "default",
+                }}
+              >
+                Ausgebucht
+              </span>
+            ) : (
+              <a
+                href={getAnmeldungUrl(training)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={bookingButtonStyle}
+              >
+                Jetzt anmelden
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -797,15 +811,19 @@ function ListenAnsicht({
     );
   }
 
-  let letzterMonat = "";
+  // Monat je Eintrag vorab bestimmen, statt während der Darstellung eine
+  // Variable fortzuschreiben: React darf jederzeit neu rendern, dann fehlte
+  // die erste Monatsüberschrift.
+  const monate = kommende.map((t) =>
+    new Date(t.date).toLocaleDateString("de-DE", { month: "long", year: "numeric" })
+  );
 
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      {kommende.map((t) => {
+      {kommende.map((t, index) => {
         const d = new Date(t.date);
-        const monat = d.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
-        const neuerMonat = monat !== letzterMonat;
-        letzterMonat = monat;
+        const monat = monate[index];
+        const neuerMonat = index === 0 || monate[index - 1] !== monat;
         const adresse = formatVenueLines(t.location, t.instructor);
 
         return (

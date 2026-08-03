@@ -110,8 +110,27 @@ export async function GET(req: Request) {
   const base = mustEnv("COBRA_BASE_URL").replace(/\/+$/, "");
   const apiKey = mustEnv("COBRA_API_KEY");
 
-  const endpoint =
+  // Der Parameter wurde bisher ungeprüft angehängt: ein „../" oder eine
+  // vollständige Adresse hätte den Aufruf samt Cobra-Schlüssel woanders hin
+  // geschickt. Jetzt nur noch bekannte Endpunkte.
+  const ERLAUBTE_ENDPUNKTE = [
+    "Teilnehmermanagement",
+    "Schulungen",
+    "Veranstaltungen",
+    "Adressen",
+  ] as const;
+
+  const gewuenscht =
     new URL(req.url).searchParams.get("endpoint") ?? "Teilnehmermanagement";
+
+  if (!ERLAUBTE_ENDPUNKTE.includes(gewuenscht as (typeof ERLAUBTE_ENDPUNKTE)[number])) {
+    return NextResponse.json(
+      { ok: false, error: "UNBEKANNTER_ENDPUNKT", erlaubt: ERLAUBTE_ENDPUNKTE },
+      { status: 400 }
+    );
+  }
+
+  const endpoint = gewuenscht;
   const url = `${base}/api/${endpoint}`;
 
   const tokenInfo = await getToken();
@@ -128,18 +147,11 @@ export async function GET(req: Request) {
         Accept: "application/json",
       };
 
+  // Der POST-Test mit leerem JSON ist entfernt: er schrieb versuchsweise gegen
+  // ein fremdes System, und der Kommentar im Code hielt selbst fest, dass er
+  // wegsollte. OPTIONS und HEAD genügen, um zu sehen, was ein Endpunkt kann.
   const optionsRes = await hit(url, "OPTIONS", authHeaders);
   const headRes = await hit(url, "HEAD", authHeaders);
-
-  const postRes = await hit(
-    url,
-    "POST",
-    {
-      ...authHeaders,
-      "Content-Type": "application/json",
-    },
-    {}
-  );
 
   return NextResponse.json({
     endpoint,
@@ -147,8 +159,6 @@ export async function GET(req: Request) {
       ok: tokenInfo.ok,
       status: tokenInfo.status,
     },
-    results: [optionsRes, headRes, postRes],
-    note:
-      "POST wurde mit leerem JSON getestet. Falls dieser Test nicht mehr benötigt wird, sollte er entfernt werden.",
+    results: [optionsRes, headRes],
   });
 }

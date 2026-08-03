@@ -26,6 +26,7 @@ type MeResponse =
       name: string | null;
       creditsTotal: number;
       role: "USER" | "ADMIN";
+      isInstructor: boolean;
     };
 
 const VFA_GREEN = "#007873";
@@ -48,6 +49,7 @@ export default function HeaderClient() {
   const [name, setName] = useState<string | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
+  const [isInstructor, setIsInstructor] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export default function HeaderClient() {
           setName(null);
           setCredits(null);
           setRole("USER");
+          setIsInstructor(false);
           return;
         }
 
@@ -78,6 +81,7 @@ export default function HeaderClient() {
         setName(data.name);
         setCredits(data.creditsTotal);
         setRole(data.role);
+        setIsInstructor(data.isInstructor);
       })
       .catch(() => {
         // Header darf die App nicht blockieren.
@@ -98,6 +102,7 @@ export default function HeaderClient() {
       setName(null);
       setCredits(null);
       setRole("USER");
+      setIsInstructor(false);
       setMenuOpen(false);
     }, 0);
 
@@ -408,6 +413,31 @@ export default function HeaderClient() {
               <MenuLink href="/kurskalender" onClick={() => setMenuOpen(false)}>
                 Kurskalender
               </MenuLink>
+
+              <MenuLink href="/meine-credits" onClick={() => setMenuOpen(false)}>
+                Meine Credits
+              </MenuLink>
+
+              <MenuLink href="/badges" onClick={() => setMenuOpen(false)}>
+                Auszeichnungen
+              </MenuLink>
+
+              <MenuLink href="/leaderboard" onClick={() => setMenuOpen(false)}>
+                Ranking
+              </MenuLink>
+
+              {/* Einstellungen hängen sonst allein an der unteren Leiste, die ab
+                  760px ausgeblendet wird — Datenauskunft, Kontolöschung und der
+                  Weg, Fehler zu melden, wären am Rechner nicht erreichbar. */}
+              <MenuLink href="/einstellungen" onClick={() => setMenuOpen(false)}>
+                Einstellungen
+              </MenuLink>
+
+              {isInstructor && (
+                <MenuLink href="/dozent" onClick={() => setMenuOpen(false)}>
+                  Dozentenbereich
+                </MenuLink>
+              )}
 
               {role === "ADMIN" && (
                 <MenuLink

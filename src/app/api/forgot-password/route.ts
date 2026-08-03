@@ -2,8 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { absender, bremsePruefen } from "@/lib/bremse";
 
 export async function POST(req: NextRequest) {
+  // Fünf Anforderungen je Absender in zehn Minuten. Ohne Bremse ließe sich das
+  // Postfach eines Nutzers mit Reset-Mails fluten.
+  const bremse = bremsePruefen(`forgot:${absender(req)}`, {
+    versuche: 5,
+    fensterSekunden: 600,
+    sperreSekunden: 900,
+  });
+
+  if (!bremse.erlaubt) {
+    return NextResponse.json(
+      { error: "Zu viele Anfragen. Bitte versuch es später noch einmal." },
+      { status: 429 }
+    );
+  }
+
   const { email } = await req.json();
 
   if (!email || typeof email !== "string") {

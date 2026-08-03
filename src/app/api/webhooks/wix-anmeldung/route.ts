@@ -117,15 +117,18 @@ export async function POST(req: Request) {
     },
   });
 
-  // 3) Hat der Teilnehmer schon einen App-Account → sofort einschreiben.
+  // 3) Hat der Teilnehmer schon ein bestätigtes Konto → sofort einschreiben.
+  //    Unbestätigte Konten bleiben außen vor: sonst könnte sich jemand mit einer
+  //    fremden Adresse anmelden und bekäme deren Schulungen zugespielt, ohne den
+  //    Bestätigungslink je geöffnet zu haben.
   let enrolled = false;
   if (training && email) {
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, emailVerifiedAt: true },
     });
 
-    if (user) {
+    if (user?.emailVerifiedAt) {
       // CONFIRMED, nicht PENDING: Eine abgeschickte Website-Anmeldung ist eine
       // verbindliche Anmeldung — genauso wie beim Nachziehen während der
       // Registrierung (api/register) und beim Admin-Abgleich. Mit PENDING

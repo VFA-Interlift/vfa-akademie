@@ -79,12 +79,14 @@ export async function GET() {
     );
   }
 
+  // Der rohe Antworttext der Anmeldung enthält das Cobra-Token im Klartext und
+  // wird deshalb nicht mehr zurückgegeben — für die Fehlersuche genügt, ob der
+  // Aufruf geklappt hat und ob ein Token kam.
   return NextResponse.json({
     base,
     tokenCall: {
       status: tokenRes.status,
       ok: tokenRes.ok,
-      body: tokenText.slice(0, 2000),
     },
     tokenPresent: Boolean(token),
     checks,

@@ -84,7 +84,8 @@ export default async function AdminSchulungenPage() {
     const list = signaturesByCode.get(row.kurscode) ?? [];
     list.push({
       id: row.id,
-      url: row.fileUrl,
+      // Geschützte Route statt Blob-Adresse: die Datei liegt privat.
+      url: `/api/dozent/signature-list/${row.id}/datei`,
       uploadedByName: row.uploadedByName,
       uploadedText: sigFmt.format(row.createdAt),
       pageCount: row.pageCount,

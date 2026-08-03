@@ -56,8 +56,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
+    // Interna gehören ins Protokoll, nicht in die Antwort.
+    console.error("FEEDBACK_SEND_FAILED", getErrorMessage(error));
+
     return NextResponse.json(
-      { ok: false, error: "FEEDBACK_SEND_FAILED", details: getErrorMessage(error) },
+      { ok: false, error: "FEEDBACK_SEND_FAILED" },
       { status: 500 }
     );
   }

@@ -289,6 +289,7 @@ export function getCertificateKindByCode(
   return getCertificateTemplateByCode(code)?.kind ?? null;
 }
 
+
 export function getCertificateLabelByCode(
   code: string | null | undefined
 ): string | null {
@@ -308,5 +309,8 @@ export function formatCertificateKind(
   if (kind === "CERTIFICATE") return "Zertifikat";
   if (kind === "VDI_CERTIFICATE") return "VDI-Zertifikat";
 
-  return "Zertifikat";
+  // Ohne hinterlegte Art stellt der Zertifikatslauf nichts aus (z. B. EFK1, YLD).
+  // Früher stand hier "Zertifikat" — der Kurskalender versprach damit eine
+  // Urkunde, die nie kam.
+  return "Ohne Zertifikat";
 }
