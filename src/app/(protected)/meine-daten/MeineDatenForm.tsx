@@ -93,9 +93,12 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
       }
 
       if (data?.emailChanged) {
-        setMsg("Gespeichert. Da du die E-Mail geändert hast, wirst du neu eingeloggt.");
+        setMsg(
+          "Gespeichert. Wir haben dir eine Bestätigungsmail an die neue Adresse geschickt — " +
+            "bitte bestätige sie über den Link, danach kannst du dich mit der neuen Adresse anmelden."
+        );
         setSuccess(true);
-        setTimeout(() => signOut({ callbackUrl: "/login" }), 800);
+        setTimeout(() => signOut({ callbackUrl: "/login" }), 2500);
         return;
       }
 

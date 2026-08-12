@@ -1,9 +1,22 @@
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendEmailVerificationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+
+// Einfache Formatprüfung: genau ein @, davor und danach etwas, ein Punkt in der
+// Domain. Kein Vollständigkeits-Anspruch, aber sie hält "x" oder Tippfehler ab.
+function istEmailFormat(wert: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wert);
+}
+
+function verifyLink(token: string): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL || "https://vfa-akademie.vercel.app";
+  return `${base.replace(/\/$/, "")}/e-mail-bestaetigen?token=${token}`;
+}
 
 function parseGermanDate(value: string): Date | null {
   const trimmed = value.trim();
@@ -64,6 +77,13 @@ export async function PATCH(req: Request) {
       );
     }
 
+    if (!istEmailFormat(email)) {
+      return NextResponse.json(
+        { ok: false, error: "Bitte gib eine gültige E-Mail-Adresse ein." },
+        { status: 400 }
+      );
+    }
+
     const firstName = cleanString(body.firstName);
     const lastName = cleanString(body.lastName);
 
@@ -120,32 +140,67 @@ export async function PATCH(req: Request) {
       }
     }
 
+    const emailChanged = email !== currentUser.email;
+
+    // Nur Felder schreiben, die der Client tatsächlich mitschickt. Sonst würde
+    // ein PATCH, der nur die Telefonnummer ändert, alle übrigen Angaben
+    // (Geburtsdatum, Firma, …) auf null radieren. `undefined` lässt Prisma das
+    // Feld unangetastet.
+    function wenn<T>(schluessel: string, wert: T): T | undefined {
+      return schluessel in body ? wert : undefined;
+    }
+
     await prisma.user.update({
       where: {
         id: currentUser.id,
       },
       data: {
         email,
-        name: fullName,
-        firstName,
-        lastName,
-        birthDate,
-        gender: cleanString(body.gender),
-        phone: cleanString(body.phone),
+        name: firstName || lastName || "name" in body ? fullName : undefined,
+        firstName: wenn("firstName", firstName),
+        lastName: wenn("lastName", lastName),
+        birthDate: wenn("birthDate", birthDate),
+        gender: wenn("gender", cleanString(body.gender)),
+        phone: wenn("phone", cleanString(body.phone)),
 
-        company: cleanString(body.company),
-        companyAddress: cleanString(body.companyAddress),
-        companyStreet: cleanString(body.companyStreet),
-        companyZip: cleanString(body.companyZip),
-        companyCity: cleanString(body.companyCity),
-        companyCountry: cleanString(body.companyCountry),
-        position: cleanString(body.position),
+        company: wenn("company", cleanString(body.company)),
+        companyAddress: wenn("companyAddress", cleanString(body.companyAddress)),
+        companyStreet: wenn("companyStreet", cleanString(body.companyStreet)),
+        companyZip: wenn("companyZip", cleanString(body.companyZip)),
+        companyCity: wenn("companyCity", cleanString(body.companyCity)),
+        companyCountry: wenn("companyCountry", cleanString(body.companyCountry)),
+        position: wenn("position", cleanString(body.position)),
+
+        // Adresswechsel entzieht die Bestätigung: Ein Konto darf nicht auf eine
+        // fremde Adresse umziehen und dabei "bestätigt" bleiben — sonst würden
+        // dem neuen Adressaten über Wix-Webhook/Cobra-Abgleich fremde
+        // Anmeldungen und Zertifikate zugeschrieben.
+        ...(emailChanged ? { emailVerifiedAt: null } : {}),
       },
     });
 
+    // Nach einem Adresswechsel eine neue Bestätigung an die neue Adresse
+    // schicken. Scheitert der Versand, bleibt das Konto unbestätigt (sicher) —
+    // der Nutzer kann die Bestätigung erneut anfordern.
+    if (emailChanged) {
+      try {
+        const token = randomBytes(32).toString("hex");
+        await prisma.emailVerificationToken.create({
+          data: {
+            token,
+            userId: currentUser.id,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        });
+        await sendEmailVerificationEmail(email, verifyLink(token));
+      } catch (mailError) {
+        console.error("PROFILE_EMAIL_CHANGE_VERIFY_MAIL_ERROR", mailError);
+      }
+    }
+
     return NextResponse.json({
       ok: true,
-      emailChanged: email !== currentUser.email,
+      emailChanged,
     });
   } catch (error) {
     console.error(error);
