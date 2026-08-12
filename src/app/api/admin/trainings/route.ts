@@ -73,6 +73,7 @@ export async function GET() {
       instructor: true,
       description: true,
       creditsAward: true,
+      cancelledAt: true,
       createdAt: true,
       updatedAt: true,
     },

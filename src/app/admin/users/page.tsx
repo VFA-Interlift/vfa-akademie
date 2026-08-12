@@ -35,6 +35,8 @@ type AdminEnrollment = {
     creditsAward: number;
   };
   hasCertificate: boolean;
+  certificateId?: string | null;
+  certificateStatus?: string | null;
 };
 
 const ENROLLMENT_STATUSES = [
@@ -96,7 +98,59 @@ export default function AdminUsersPage() {
   const [enrollmentsLoadingId, setEnrollmentsLoadingId] = useState<string | null>(null);
   const [enrollmentActionId, setEnrollmentActionId] = useState<string | null>(null);
 
+  // Schulungsliste für das Nachtragen (einmal geladen, sobald ein Nutzer offen ist).
+  const [alleTrainings, setAlleTrainings] = useState<{ id: string; title: string; code: string | null; date: string }[]>([]);
+  const [nachtragTrainingByUser, setNachtragTrainingByUser] = useState<Record<string, string>>({});
+
+  async function ladeTrainings() {
+    if (alleTrainings.length > 0) return;
+    try {
+      const res = await fetch("/api/admin/trainings", { cache: "no-store" });
+      const data = await res.json();
+      if (data.ok) setAlleTrainings(data.trainings);
+    } catch { /* still */ }
+  }
+
+  async function enrollUser(userId: string) {
+    const trainingId = nachtragTrainingByUser[userId];
+    if (!trainingId) { showMessage("Bitte eine Schulung auswählen."); return; }
+    setEnrollmentActionId(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/enrollments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trainingId }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const t = alleTrainings.find((x) => x.id === trainingId);
+        setEnrollmentsByUser((prev) => ({
+          ...prev,
+          [userId]: [
+            {
+              id: data.enrollmentId, status: "CONFIRMED", attended: false,
+              registeredAt: new Date().toISOString(),
+              training: { id: trainingId, title: t?.title ?? "", code: t?.code ?? null, date: t?.date ?? new Date().toISOString(), endDate: null, creditsAward: 0 },
+              hasCertificate: false, certificateId: null, certificateStatus: null,
+            },
+            ...(prev[userId] ?? []),
+          ],
+        }));
+        setNachtragTrainingByUser((prev) => ({ ...prev, [userId]: "" }));
+        showMessage("Teilnehmer in die Schulung eingetragen.", true);
+      } else {
+        const texte: Record<string, string> = {
+          ALREADY_ENROLLED: "Ist bereits in dieser Schulung eingetragen.",
+          TRAINING_NOT_FOUND: "Schulung nicht gefunden.",
+        };
+        showMessage(texte[data.error] ?? "Fehler beim Eintragen.");
+      }
+    } catch { showMessage("Serverfehler."); }
+    finally { setEnrollmentActionId(null); }
+  }
+
   async function loadEnrollments(userId: string) {
+    void ladeTrainings();
     if (enrollmentsByUser[userId]) return;
     setEnrollmentsLoadingId(userId);
     try {
@@ -137,6 +191,35 @@ export default function AdminUsersPage() {
         showMessage(`Status auf "${statusLabel(newStatus)}" geändert.`, true);
       } else {
         showMessage(data.error ?? "Fehler beim Ändern des Status.");
+      }
+    } catch { showMessage("Serverfehler."); }
+    finally { setEnrollmentActionId(null); }
+  }
+
+  async function revokeCertificate(certificateId: string, userId: string) {
+    if (!window.confirm("Zertifikat wirklich zurückziehen? Die dafür gutgeschriebenen Credits werden zurückgebucht.")) {
+      return;
+    }
+    setEnrollmentActionId(certificateId);
+    try {
+      const res = await fetch(`/api/admin/certificates/${certificateId}/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setEnrollmentsByUser((prev) => ({
+          ...prev,
+          [userId]: (prev[userId] ?? []).map((e) =>
+            e.certificateId === certificateId
+              ? { ...e, status: "NO_SHOW", hasCertificate: false, certificateId: null, certificateStatus: "REVOKED" }
+              : e
+          ),
+        }));
+        showMessage(`Zertifikat zurückgezogen, ${data.creditsZurueck} Credits zurückgebucht.`, true);
+      } else {
+        showMessage(data.error ?? "Fehler beim Zurückziehen.");
       }
     } catch { showMessage("Serverfehler."); }
     finally { setEnrollmentActionId(null); }
@@ -791,6 +874,34 @@ export default function AdminUsersPage() {
                           <h3 style={{ margin: 0, color: "#007873", fontSize: 18, fontWeight: 700 }}>
                             Schulungen & Status
                           </h3>
+
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: "1px dashed #CFCFCF", background: "#FCFCFB" }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>Nachtragen:</span>
+                            <select
+                              value={nachtragTrainingByUser[user.id] ?? ""}
+                              onChange={(e) => setNachtragTrainingByUser((prev) => ({ ...prev, [user.id]: e.target.value }))}
+                              style={{ flex: 1, minWidth: 160, padding: "7px 10px", borderRadius: 8, border: "1px solid #D4D4D4", fontSize: 13, background: "#FFFFFF" }}
+                            >
+                              <option value="">Schulung wählen…</option>
+                              {alleTrainings.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {(t.code?.trim() || t.title)} · {new Date(t.date).toLocaleDateString("de-DE")}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              disabled={enrollmentActionId === user.id || !nachtragTrainingByUser[user.id]}
+                              onClick={() => enrollUser(user.id)}
+                              style={{
+                                padding: "7px 16px", borderRadius: 999, fontSize: 12, fontWeight: 800, border: "none",
+                                background: nachtragTrainingByUser[user.id] ? "#007873" : "#DDDDDD", color: "#FFFFFF",
+                                cursor: nachtragTrainingByUser[user.id] ? "pointer" : "default", opacity: enrollmentActionId === user.id ? 0.6 : 1,
+                              }}
+                            >
+                              Eintragen
+                            </button>
+                          </div>
                           {enrollmentsLoadingId === user.id ? (
                             <div style={{ color: "#888888", fontSize: 13 }}>Wird geladen…</div>
                           ) : (enrollmentsByUser[user.id] ?? []).length === 0 ? (
@@ -832,6 +943,20 @@ export default function AdminUsersPage() {
                                         </button>
                                       ))}
                                     </div>
+                                    {enr.certificateId ? (
+                                      <button
+                                        type="button"
+                                        disabled={enrollmentActionId === enr.certificateId}
+                                        onClick={() => revokeCertificate(enr.certificateId!, user.id)}
+                                        style={{
+                                          justifySelf: "start", padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 800,
+                                          border: "1px solid #B00020", background: "#FFFFFF", color: "#B00020",
+                                          cursor: "pointer", opacity: enrollmentActionId === enr.certificateId ? 0.6 : 1,
+                                        }}
+                                      >
+                                        Zertifikat zurückziehen
+                                      </button>
+                                    ) : null}
                                   </div>
                                 );
                               })}
