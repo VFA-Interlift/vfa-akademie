@@ -23,12 +23,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "INVALID_BODY" }, { status: 400 });
   }
 
-  const result = await submitFeedback({
-    enrollmentId: body.enrollmentId,
-    userEmail: email,
-    anonymous: body.anonymous === true,
-    answers: body.answers,
-  });
+  let result;
+  try {
+    result = await submitFeedback({
+      enrollmentId: body.enrollmentId,
+      userEmail: email,
+      anonymous: body.anonymous === true,
+      answers: body.answers,
+    });
+  } catch (error) {
+    // Ein DB-Aussetzer während der Credit-Transaktion darf dem Handy nicht die
+    // generische Next-500-Seite liefern — die App könnte sie nicht anzeigen.
+    console.error("TRAINING_FEEDBACK_ERROR", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });

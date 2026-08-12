@@ -208,19 +208,35 @@ export async function POST(req: Request) {
       },
     });
 
+    let mailVersandt = true;
     try {
       await sendEmailVerificationEmail(email, bestaetigungsLink(token));
     } catch (mailError) {
       // Ohne Mail kommt niemand weiter — auffindbar protokollieren. Die
       // Registrierung lässt sich einfach wiederholen, ein Konto ist ja noch
-      // nicht entstanden.
+      // nicht entstanden. Dem Nutzer sagen wir es ehrlich, statt ihn auf eine
+      // Mail warten zu lassen, die nie kommt (stiller Totalausfall).
       console.error("REGISTER_VERIFY_MAIL_ERROR", mailError);
+      mailVersandt = false;
     }
 
     // Die interne Benachrichtigung geht erst nach der Bestätigung raus (siehe
     // /api/verify-email). Sonst bekäme die Geschäftsstelle auch Meldungen über
     // Registrierungen, aus denen nie ein Konto wird — und jeder könnte ihr über
     // fremde Adressen Post schicken.
+
+    if (!mailVersandt) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Dein Konto ist vorbereitet, aber die Bestätigungsmail konnte gerade " +
+            "nicht versendet werden. Bitte versuch es in ein paar Minuten noch einmal.",
+          mailFehler: true,
+        },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({
       ok: true,

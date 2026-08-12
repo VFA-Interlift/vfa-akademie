@@ -173,13 +173,21 @@ export async function PATCH(req: NextRequest, context: Ctx) {
         return fail("INVALID_END_DATE", 400);
       }
 
-      const endDate = parseGermanDate(body.endDate);
+      // Leerer String entfernt das Enddatum wieder (wie bei location/instructor).
+      // Ein falsch gesetztes Enddatum in der Vergangenheit liesse den
+      // Zertifikatslauf sonst zu früh ausstellen, und man käme nicht mehr davon
+      // weg — löschen war bisher nicht möglich.
+      if (!body.endDate.trim()) {
+        data.endDate = null;
+      } else {
+        const endDate = parseGermanDate(body.endDate);
 
-      if (!endDate) {
-        return fail("INVALID_END_DATE", 400);
+        if (!endDate) {
+          return fail("INVALID_END_DATE", 400);
+        }
+
+        data.endDate = endDate;
       }
-
-      data.endDate = endDate;
     }
 
     if (body?.location !== undefined) {

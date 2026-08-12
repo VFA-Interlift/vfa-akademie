@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
 
-  const me = await prisma.user.findUnique({ where: { email: session.user.email }, select: { role: true } });
+  const me = await prisma.user.findUnique({ where: { email: session.user.email.trim().toLowerCase() }, select: { role: true } });
   if (!me || me.role !== "ADMIN") return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
 
   const enrollments = await prisma.enrollment.findMany({

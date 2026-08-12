@@ -60,6 +60,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Titel und Datum sind Pflicht." }, { status: 400 });
     }
 
+    // Credits müssen eine ganze Zahl >= 0 sein — sonst wirft das Int-Feld einen
+    // 500 (NaN/Kommazahl) oder es entstehen später Minus-Gutschriften.
+    if (!Number.isInteger(creditsAward) || creditsAward < 0) {
+      return NextResponse.json(
+        { error: "Credits müssen eine ganze Zahl ab 0 sein." },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isInteger(maxClaims) || maxClaims < 1) {
+      return NextResponse.json(
+        { error: "Die Teilnehmerzahl muss eine ganze Zahl ab 1 sein." },
+        { status: 400 }
+      );
+    }
+
     const date = parseGermanDate(dateStr);
     if (!date) {
       return NextResponse.json({ error: "Datum muss TT.MM.JJJJ sein." }, { status: 400 });

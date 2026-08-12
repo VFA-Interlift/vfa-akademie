@@ -50,7 +50,15 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ?? "https://vfa-akademie.vercel.app";
     const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
-    await sendPasswordResetEmail(normalizedEmail, resetUrl);
+    // Ein Mailfehler darf hier nicht durchschlagen: Die Route antwortet für
+    // existierende wie nicht existierende Adressen gleich (verrät nicht, ob ein
+    // Konto besteht). Würde der Versand als 500 durchbrechen, wäre genau dieser
+    // Fehlerpfad das Unterscheidungsmerkmal. Nur protokollieren.
+    try {
+      await sendPasswordResetEmail(normalizedEmail, resetUrl);
+    } catch (mailError) {
+      console.error("FORGOT_PASSWORD_MAIL_ERROR", mailError);
+    }
   }
 
   return NextResponse.json({ ok: true });

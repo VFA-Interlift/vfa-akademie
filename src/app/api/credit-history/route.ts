@@ -10,7 +10,7 @@ export async function GET() {
   if (!session?.user?.email) return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { email: session.user.email.trim().toLowerCase() },
     select: { id: true, creditsTotal: true },
   });
   if (!user) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
