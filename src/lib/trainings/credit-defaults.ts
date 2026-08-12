@@ -21,6 +21,7 @@ const DEFAULT_CREDITS_BY_PREFIX: [string, number][] = [
   ["BRG", 150],
   ["GEF", 150],
   ["FRQ", 100],
+  ["YLD", 200], // testweise 200 (Tobi, 12.08.2026)
   ["B", 200],
   ["C", 200],
 ];

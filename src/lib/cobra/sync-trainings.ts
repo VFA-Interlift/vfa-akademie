@@ -212,6 +212,12 @@ function deriveCredits(training: CobraTraining): CreditRule {
     };
   }
 
+  // YLD vor der Inhouse-Regel: bekommt seit 12.08.2026 feste Credits
+  // (testweise 200, Tobi) und seine Teilnahmebestaetigung aus der App.
+  if (code.startsWith("YLD")) {
+    return { credits: 200, automatic: true, reason: "YLD", label: "Young Leadership Day." };
+  }
+
   if (isInhouseOrManual(code, title)) {
     return {
       credits: 0,
