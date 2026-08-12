@@ -55,7 +55,8 @@ export async function GET(req: Request) {
       where: {
         status: { in: [...ACTIVE_STATUSES] },
         user: { notifyBeforeTraining: true },
-        training: { date: { gte: windowStart, lt: windowEnd } },
+        // Abgesagte Kurse nicht mehr erinnern.
+        training: { date: { gte: windowStart, lt: windowEnd }, cancelledAt: null },
       },
       select: {
         user: {

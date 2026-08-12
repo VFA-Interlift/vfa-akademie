@@ -45,6 +45,8 @@ export async function zertifikateAusstellen(
       status: { in: ["CONFIRMED", "ATTENDED", "COMPLETED"] },
       certificate: null,
       training: {
+        // Abgesagte Kurse stellen keine Zertifikate mehr aus.
+        cancelledAt: null,
         OR: [{ endDate: { lt: now } }, { endDate: null, date: { lt: now } }],
       },
     },

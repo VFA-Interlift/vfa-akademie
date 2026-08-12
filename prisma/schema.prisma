@@ -175,6 +175,12 @@ model Training {
 
   creditsAward Int @default(0)
 
+  /// Gesetzt, wenn der Kurs abgesagt wurde. Abgesagte Kurse fallen aus den
+  /// Erinnerungs- und Zertifikatsläufen; die Anmeldungen bleiben zur Nachschau
+  /// erhalten. Vorher gab es keinen Absage-Weg — ein von der Website
+  /// verschwundener Kurs mailte weiter und stellte sogar Zertifikate aus.
+  cancelledAt DateTime?
+
   tokens            ClaimToken[]
   creditTxs         CreditTransaction[]
   enrollments       Enrollment[]
