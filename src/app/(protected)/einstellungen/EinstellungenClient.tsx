@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import AppCard from "@/components/ui/AppCard";
 import AppButton from "@/components/ui/AppButton";
@@ -47,16 +48,57 @@ function SectionHeader({ title, badge }: { title: string; badge: string }) {
 
 export default function EinstellungenClient({
   notifyBeforeTraining,
+  istTester = false,
+  feedbackGesendet = false,
 }: {
   notifyBeforeTraining: boolean;
+  /** Nur Teilnehmer der Testrunde sehen den Fragebogen. */
+  istTester?: boolean;
+  feedbackGesendet?: boolean;
 }) {
   return (
     <div style={{ display: "grid", gap: 18 }}>
+      {istTester && <TestrundeCard feedbackGesendet={feedbackGesendet} />}
       <NotificationsCard initial={notifyBeforeTraining} />
       <FeedbackCard />
       <DatenschutzCard />
       <AppInfoCard />
     </div>
+  );
+}
+
+/**
+ * Der Fragebogen der Testrunde. Er steht hier oben, weil die Begruessung auf
+ * dem Dashboard genau hierher verweist - der Weg zum Bogen soll immer derselbe
+ * sein. Fuer alle ausserhalb der Testrunde erscheint die Karte nicht.
+ */
+function TestrundeCard({ feedbackGesendet }: { feedbackGesendet: boolean }) {
+  return (
+    <AppCard accent="none">
+      <SectionHeader title="Rückmeldung zur Testrunde" badge="Testrunde" />
+
+      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "#666666", lineHeight: 1.6 }}>
+        {feedbackGesendet
+          ? "Deine Antworten sind angekommen — danke! Ist dir seitdem noch etwas aufgefallen, kannst du den Bogen erneut ausfüllen. Er ersetzt dann deine bisherigen Antworten."
+          : "Zehn Fragen zu deinen Eindrücken, zwei bis drei Minuten. Pflicht ist nur die letzte. Füll ihn aus, wenn du dich in Ruhe umgesehen hast."}
+      </p>
+
+      <Link
+        href="/app-test"
+        style={{
+          display: "inline-block",
+          padding: "10px 22px",
+          borderRadius: 999,
+          background: "#007873",
+          color: "#FFFFFF",
+          fontWeight: 800,
+          fontSize: 14,
+          textDecoration: "none",
+        }}
+      >
+        {feedbackGesendet ? "Rückmeldung ergänzen" : "Zum Fragebogen"}
+      </Link>
+    </AppCard>
   );
 }
 

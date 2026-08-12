@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/ui/PageHeader";
+import { istTester } from "@/lib/app-test/tester";
 import EinstellungenClient from "./EinstellungenClient";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,10 @@ export default async function EinstellungenPage() {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { notifyBeforeTraining: true },
+    select: {
+      notifyBeforeTraining: true,
+      appTestFeedback: { select: { id: true } },
+    },
   });
 
   if (!user) {
@@ -30,7 +34,11 @@ export default async function EinstellungenPage() {
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <PageHeader title="Einstellungen" showTitle={true} />
 
-        <EinstellungenClient notifyBeforeTraining={user.notifyBeforeTraining} />
+        <EinstellungenClient
+          notifyBeforeTraining={user.notifyBeforeTraining}
+          istTester={istTester(email)}
+          feedbackGesendet={Boolean(user.appTestFeedback)}
+        />
       </div>
     </main>
   );

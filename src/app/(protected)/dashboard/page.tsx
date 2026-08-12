@@ -8,6 +8,8 @@ import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
 import FeedbackReminder from "@/components/FeedbackReminder";
+import TesterWelcome from "@/components/TesterWelcome";
+import { istTester } from "@/lib/app-test/tester";
 import { getOpenFeedbackCount } from "@/lib/feedback/service";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +61,7 @@ export default async function DashboardPage() {
       firstName: true,
       lastName: true,
       company: true,
+      appTestFeedback: { select: { id: true } },
       creditsTotal: true,
       createdAt: true,
       enrollments: {
@@ -137,6 +140,13 @@ export default async function DashboardPage() {
             </div>
           </div>
         </AnimatedSection>
+
+        {istTester(user.email) && (
+          <TesterWelcome
+            vorname={user.firstName}
+            feedbackGesendet={Boolean(user.appTestFeedback)}
+          />
+        )}
 
         <FeedbackReminder openCount={openFeedbackCount} />
 

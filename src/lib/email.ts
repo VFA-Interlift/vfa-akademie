@@ -393,3 +393,67 @@ function reminderHtml(p: {
     </table>
   </body></html>`;
 }
+
+/**
+ * Rueckmeldung aus der App-Testrunde. Geht an dieselbe Adresse wie das
+ * allgemeine Feedback, ist aber im Betreff als Testrunde erkennbar.
+ */
+export async function sendAppTestFeedbackEmail(params: {
+  fromUserEmail: string;
+  fromUserName?: string | null;
+  overallRating: number;
+  antworten: { frage: string; antwort: string | number | string[] | undefined }[];
+}): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const to = process.env.FEEDBACK_EMAIL || "info@vfa-interlift.de";
+
+  const name = params.fromUserName?.trim() || "—";
+
+  const alsText = (wert: string | number | string[] | undefined): string => {
+    if (wert === undefined) return "— (keine Angabe)";
+    if (Array.isArray(wert)) return wert.join(", ");
+    if (typeof wert === "number") return `${wert} von 5`;
+    return wert;
+  };
+
+  const zeilenText = params.antworten
+    .map((a) => `${a.frage}\n${alsText(a.antwort)}`)
+    .join("\n\n");
+
+  const zeilenHtml = params.antworten
+    .map(
+      (a) => `
+        <div style="margin-bottom:14px">
+          <div style="font-size:13px;color:#777777">${escapeHtml(a.frage)}</div>
+          <div style="font-size:15px;color:#1F1F1F;white-space:pre-wrap">${escapeHtml(alsText(a.antwort))}</div>
+        </div>`
+    )
+    .join("");
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: params.fromUserEmail,
+    subject: `Testrunde: ${name} bewertet die App mit ${params.overallRating} von 5`,
+    text: `Rueckmeldung aus der App-Testrunde
+
+Von: ${name} (${params.fromUserEmail})
+Gesamtzufriedenheit: ${params.overallRating} von 5
+
+${zeilenText}
+
+Antworten geht direkt per „Antworten" an ${params.fromUserEmail}.`,
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
+        <div style="height:5px;background:#FFC100;margin-bottom:24px"></div>
+        <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#007873">Rückmeldung aus der Testrunde</h1>
+        <p style="margin:0 0 6px;font-size:14px;color:#555555"><strong>Von:</strong> ${escapeHtml(name)} (${escapeHtml(params.fromUserEmail)})</p>
+        <p style="margin:0 0 20px;font-size:14px;color:#555555"><strong>Gesamtzufriedenheit:</strong> ${params.overallRating} von 5</p>
+        <div style="padding:16px;background:#F6F6F4;border:1px solid #E6E6E6;border-radius:8px">${zeilenHtml}</div>
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid #E6E6E6;font-size:13px;color:#888888">
+          Antworten geht direkt per „Antworten" an ${escapeHtml(params.fromUserEmail)}.
+        </div>
+      </div>
+    `,
+  });
+}
