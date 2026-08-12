@@ -73,20 +73,18 @@ export default function TesterWelcome({
 
         <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
           Du gehörst zu den Ersten, die die VFA-Akademie App ausprobieren. Sie bündelt
-          deine Schulungen, Zertifikate und Credits an einer Stelle — gemacht fürs
-          Handy, damit du sie unterwegs dabeihast.
+          deine Schulungen, Zertifikate und Credits an einer Stelle.
         </p>
 
         <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
-          Am besten legst du sie gleich auf den Startbildschirm deines Handys, dann
-          fühlt sie sich an wie eine normale App. Schau dich danach in Ruhe um:
-          Startseite, deine Schulungen und Zertifikate, der Kurskalender, der
-          Kompetenzpass und deine Credits.
+          Am besten legst du sie gleich auf den Startbildschirm deines Handys.
+          Schau dich danach in Ruhe um: Startseite, deine Schulungen und
+          Zertifikate, der Kurskalender, der Kompetenzpass und deine Credits.
         </p>
 
         <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
-          Wenn dir etwas fehlt, komisch vorkommt oder schlicht nicht funktioniert:
-          genau das wollen wir hören. Es gibt keine falschen Antworten.
+          Wenn dir etwas fehlt, komisch vorkommt oder schlicht nicht funktioniert,
+          freuen wir uns über deine Rückmeldung!
         </p>
 
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
