@@ -31,7 +31,9 @@ const RANKS: RankInfo[] = [
   { key: "BRONZE", label: "Bronze", min: 100, max: 499, color: "#A86C3D", softBackground: "rgba(168,108,61,0.10)", softBorder: "1px solid rgba(168,108,61,0.28)" },
   { key: "SILBER", label: "Silber", min: 500, max: 1499, color: "#8E99A8", softBackground: "rgba(142,153,168,0.12)", softBorder: "1px solid rgba(142,153,168,0.32)" },
   { key: "GOLD", label: "Gold", min: 1500, max: 3499, color: "#C79A16", softBackground: "rgba(199,154,22,0.12)", softBorder: "1px solid rgba(199,154,22,0.32)" },
-  { key: "EXPERTE", label: "VFA-Experte", min: 3500, max: null, color: "#1F1F1F", softBackground: "rgba(31,31,31,0.08)", softBorder: "1px solid rgba(31,31,31,0.20)" },
+  // Farbe an den Kompetenzpass angeglichen (VFA-Grün) — derselbe Rang muss
+  // überall dieselbe Farbe haben, sonst leidet die Wiedererkennung.
+  { key: "EXPERTE", label: "VFA-Experte", min: 3500, max: null, color: "#007873", softBackground: "rgba(0,120,115,0.08)", softBorder: "1px solid rgba(0,120,115,0.20)" },
 ];
 
 const STARTER_RANK: RankInfo = {

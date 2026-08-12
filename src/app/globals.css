@@ -71,10 +71,26 @@ textarea {
 /* ── Card hover (linked) ── */
 .vfa-card-link {
   transition: box-shadow 180ms ease, transform 180ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
 .vfa-card-link:hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
   transform: translateY(-2px);
+}
+/* Am Handy gibt es kein Hover — ein Tap soll die Karte trotzdem quittieren,
+   damit sich die App nativ anfühlt. */
+.vfa-card-link:active {
+  transform: scale(0.985);
+}
+/* iOS legt sonst ein graues Rechteck über angetippte Knöpfe/Links. */
+a, button {
+  -webkit-tap-highlight-color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vfa-card-link, .vfa-card-link:active, .vfa-card-link:hover {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* ── Auth split layout ── */

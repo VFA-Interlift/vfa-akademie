@@ -12,7 +12,10 @@ export default function AppCard({
   children,
   as = "div",
   style,
-  accent = "yellow",
+  // Standard neutral: Wenn jede Karte einen gelben Rahmen trägt, hebt Gelb
+  // nichts mehr hervor. Gelb bleibt für die eine Karte je Seite, die
+  // Aufmerksamkeit verdient (accent="yellow" dort ausdrücklich setzen).
+  accent = "none",
 }: AppCardProps) {
   const Component = as;
 

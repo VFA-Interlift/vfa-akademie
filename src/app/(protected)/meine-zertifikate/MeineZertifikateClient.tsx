@@ -185,6 +185,12 @@ export default function MeineZertifikateClient({
                     padding: 0,
                     overflow: "hidden",
                     borderColor: isOpen ? "#FFC100" : undefined,
+                    // Grüner Streifen links: gibt der Kachel eine Urkunden-
+                    // Anmutung. Nach borderColor gesetzt, damit er auch im
+                    // offenen Zustand (gelber Rand) grün bleibt.
+                    borderLeftColor: "#007873",
+                    borderLeftWidth: 4,
+                    borderLeftStyle: "solid",
                     transition:
                       "border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease",
                     boxShadow: isOpen
