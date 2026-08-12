@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import PdfAnsichtLink from "@/components/PdfAnsichtLink";
 import {
   formatDateRange,
   formatInstructorName,
@@ -250,12 +251,14 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
 
               <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
                 {t.certificateId ? (
-                  <a
-                    href={`/api/certificates/${t.certificateId}/download`}
-                    style={{ color: "#007873", fontSize: 12, fontWeight: 800, textDecoration: "none", whiteSpace: "nowrap" }}
+                  <PdfAnsichtLink
+                    url={`/api/certificates/${t.certificateId}/download`}
+                    titel={getDisplayTrainingTitle(t)}
+                    dateiname="nachweis.pdf"
+                    style={{ color: "#007873", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}
                   >
-                    Nachweis ↓
-                  </a>
+                    Nachweis ansehen
+                  </PdfAnsichtLink>
                 ) : null}
                 {t.creditsAward > 0 ? (
                   <span style={{ color: "#007873", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>

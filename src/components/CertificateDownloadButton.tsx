@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import PdfOverlay from "@/components/PdfOverlay";
 
 type DownloadErrorResponse = {
   ok?: false;
@@ -11,13 +12,21 @@ type DownloadErrorResponse = {
 
 export default function CertificateDownloadButton({
   certificateId,
-  label = "Dokument herunterladen",
+  label = "Dokument ansehen",
 }: {
   certificateId: string;
   label?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  const [ansicht, setAnsicht] = useState<{ url: string; dateiname: string } | null>(null);
+
+  // Blob-URL freigeben, sobald die Ansicht zu ist (und beim Abbau der Komponente).
+  useEffect(() => {
+    return () => {
+      if (ansicht) window.URL.revokeObjectURL(ansicht.url);
+    };
+  }, [ansicht]);
 
   async function downloadDocument() {
     setLoading(true);
@@ -45,9 +54,20 @@ export default function CertificateDownloadButton({
       const contentDisposition = res.headers.get("Content-Disposition") ?? "";
       const fileName =
         getFileNameFromContentDisposition(contentDisposition) ??
-        "zertifikat.docx";
+        "zertifikat.pdf";
 
       const url = window.URL.createObjectURL(blob);
+
+      // PDFs bleiben in der App: Vollbild-Ansicht mit X zurueck (Tobi,
+      // 12.08.2026). Nur was kein PDF ist (alte docx-Strecke), geht weiter
+      // in den Download.
+      const istPdf =
+        blob.type.includes("pdf") || fileName.toLowerCase().endsWith(".pdf");
+
+      if (istPdf) {
+        setAnsicht({ url, dateiname: fileName });
+        return;
+      }
 
       const link = document.createElement("a");
       link.href = url;
@@ -60,7 +80,7 @@ export default function CertificateDownloadButton({
 
       setMsg("Download gestartet.");
     } catch {
-      setMsg("Download konnte nicht gestartet werden.");
+      setMsg("Das Dokument konnte nicht geöffnet werden.");
     } finally {
       setLoading(false);
     }
@@ -112,6 +132,18 @@ export default function CertificateDownloadButton({
         >
           {msg}
         </div>
+      )}
+
+      {ansicht && (
+        <PdfOverlay
+          url={ansicht.url}
+          titel="Dein Nachweis"
+          dateiname={ansicht.dateiname}
+          onClose={() => {
+            window.URL.revokeObjectURL(ansicht.url);
+            setAnsicht(null);
+          }}
+        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AppCard from "@/components/ui/AppCard";
+import PdfAnsichtLink from "@/components/PdfAnsichtLink";
 
 const TEAL = "#007873";
 
@@ -485,14 +486,14 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 <p style={{ margin: "0 0 12px", fontSize: 13.5, color: "#666666", lineHeight: 1.6 }}>
                   {selected.feedback.count} Rückmeldung{selected.feedback.count === 1 ? "" : "en"} liegen vor.
                 </p>
-                <a
-                  href={`/api/dozent/feedback/pdf?trainingId=${selected.feedback.trainingId}`}
-                  download
-                  className="vfa-btn"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, padding: "11px 20px", borderRadius: 999, background: TEAL, color: "#FFFFFF", fontSize: 13.5, fontWeight: 800, letterSpacing: "0.04em", textDecoration: "none" }}
+                <PdfAnsichtLink
+                  url={`/api/dozent/feedback/pdf?trainingId=${selected.feedback.trainingId}`}
+                  titel="Feedback-Auswertung"
+                  dateiname="feedback-auswertung.pdf"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, padding: "11px 20px", borderRadius: 999, background: TEAL, color: "#FFFFFF", fontSize: 13.5, fontWeight: 800, letterSpacing: "0.04em" }}
                 >
-                  📄 Feedback-Auswertung herunterladen
-                </a>
+                  📄 Feedback-Auswertung ansehen
+                </PdfAnsichtLink>
               </div>
             ) : (
               <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
