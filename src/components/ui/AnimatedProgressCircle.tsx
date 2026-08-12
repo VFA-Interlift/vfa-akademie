@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AnimatedNumber from "@/components/ui/AnimatedNumber";
 
 type AnimatedProgressCircleProps = {
   percent: number;
@@ -197,7 +198,7 @@ export default function AnimatedProgressCircle({
               lineHeight: 1.3,
             }}
           >
-            {credits.toLocaleString("de-DE")} Credits
+            <AnimatedNumber value={credits} durationMs={ANIMATION_DURATION_MS} /> Credits
           </div>
         </div>
       </div>

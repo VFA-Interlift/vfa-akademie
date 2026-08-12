@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import PageHeader from "@/components/ui/PageHeader";
 
 type CreditTx = {
@@ -50,7 +51,7 @@ export default function MeineCreditsPage() {
 
         <AnimatedSection delayMs={60}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 20 }}>
-            <SummaryBox label="Credits gesamt" value={total} color="#007873" />
+            <SummaryBox label="Credits gesamt" value={total} color="#007873" animate />
             <SummaryBox label="Buchungen" value={txs.length} color="#888888" />
             <SummaryBox label="Davon +" value={txs.filter((t) => t.amount > 0).length} color="#005f5b" />
           </div>
@@ -107,10 +108,12 @@ export default function MeineCreditsPage() {
   );
 }
 
-function SummaryBox({ label, value, color }: { label: string; value: number; color: string }) {
+function SummaryBox({ label, value, color, animate = false }: { label: string; value: number; color: string; animate?: boolean }) {
   return (
     <div style={{ padding: "14px 16px", background: "#FFFFFF", border: "1px solid #EFEFEF", borderRadius: 12 }}>
-      <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>{value.toLocaleString("de-DE")}</div>
+      <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>
+        {animate ? <AnimatedNumber value={value} /> : value.toLocaleString("de-DE")}
+      </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>{label}</div>
     </div>
   );
