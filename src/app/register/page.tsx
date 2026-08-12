@@ -122,11 +122,11 @@ export default function RegisterPage() {
           ) : (
             <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
               <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
-                <AppInput label="Name" value={name} placeholder="Max Mustermann" onChange={setName} />
-                <AppInput label="Geburtsdatum" value={birthDate} type="date" max={todayIso} onChange={setBirthDate} />
-                <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" onChange={setEmail} />
-                <AppInput label="Passwort" value={password} placeholder="Mindestens 10 Zeichen" type="password" onChange={setPassword} />
-                <AppInput label="Passwort bestätigen" value={confirmPassword} placeholder="Passwort wiederholen" type="password" onChange={setConfirmPassword} />
+                <AppInput label="Name" value={name} placeholder="Max Mustermann" name="name" autoComplete="name" onChange={setName} />
+                <AppInput label="Geburtsdatum" value={birthDate} type="date" max={todayIso} name="bday" autoComplete="bday" onChange={setBirthDate} />
+                <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" name="email" autoComplete="email" inputMode="email" onChange={setEmail} />
+                <AppInput label="Passwort" value={password} placeholder="Mindestens 10 Zeichen" type="password" name="new-password" autoComplete="new-password" onChange={setPassword} />
+                <AppInput label="Passwort bestätigen" value={confirmPassword} placeholder="Passwort wiederholen" type="password" name="confirm-password" autoComplete="new-password" onChange={setConfirmPassword} />
 
                 {/* Informationspflicht nach Art. 13 DSGVO: Vor der Registrierung
                     muss erkennbar sein, was mit den Daten geschieht. Das

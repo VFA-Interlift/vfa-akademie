@@ -159,6 +159,8 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
               label="Vorname"
               value={f.firstName}
               placeholder="Max"
+              name="given-name"
+              autoComplete="given-name"
               onChange={(value) => setField("firstName", value)}
             />
 
@@ -166,6 +168,8 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
               label="Nachname"
               value={f.lastName}
               placeholder="Mustermann"
+              name="family-name"
+              autoComplete="family-name"
               onChange={(value) => setField("lastName", value)}
             />
           </div>
@@ -175,6 +179,9 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
             value={f.email}
             placeholder="max@firma.de"
             type="email"
+            name="email"
+            autoComplete="email"
+            inputMode="email"
             onChange={(value) => setField("email", value)}
           />
 
@@ -197,6 +204,9 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
               value={f.phone}
               placeholder="+49 170 1234567"
               type="tel"
+              name="tel"
+              autoComplete="tel"
+              inputMode="tel"
               onChange={(value) => setField("phone", value)}
             />
           </div>

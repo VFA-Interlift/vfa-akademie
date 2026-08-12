@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import HeaderClient from "@/components/HeaderClient";
 import Providers from "@/components/Providers";
 import SocialFooter from "@/components/layout/SocialFooter";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <Providers>
+          <ServiceWorkerRegister />
           <div
             style={{
               minHeight: "100vh",

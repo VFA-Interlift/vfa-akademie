@@ -463,7 +463,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                                   type="button"
                                   disabled={savingId === p.id}
                                   onClick={() => setAttendance(p.id, opt.value)}
-                                  style={{ padding: "5px 10px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 12, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
+                                  style={{ minHeight: 40, padding: "9px 15px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 13, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
                                 >
                                   {opt.label}
                                 </button>

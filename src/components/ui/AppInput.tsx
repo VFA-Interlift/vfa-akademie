@@ -7,6 +7,12 @@ type AppInputProps = {
   disabled?: boolean;
   max?: string;
   min?: string;
+  // Ohne diese Angaben bieten Passwortmanager und Handy-Autofill nichts an —
+  // auf dem Handy heisst das alles von Hand tippen. name gehoert dazu, damit
+  // der Browser die Felder ueberhaupt zuordnen kann.
+  name?: string;
+  autoComplete?: string;
+  inputMode?: "text" | "email" | "tel" | "numeric" | "decimal" | "search" | "url";
 };
 
 export default function AppInput({
@@ -18,6 +24,9 @@ export default function AppInput({
   disabled = false,
   max,
   min,
+  name,
+  autoComplete,
+  inputMode,
 }: AppInputProps) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
@@ -39,6 +48,9 @@ export default function AppInput({
         disabled={disabled}
         max={max}
         min={min}
+        name={name}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
         onChange={(event) => onChange(event.target.value)}
         className="vfa-input"
         style={{

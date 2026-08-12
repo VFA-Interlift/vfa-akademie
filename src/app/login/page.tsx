@@ -70,8 +70,8 @@ export default function LoginPage() {
 
           <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
             <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
-              <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" onChange={setEmail} />
-              <AppInput label="Passwort" value={password} placeholder="Passwort eingeben" type="password" onChange={setPassword} />
+              <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" name="email" autoComplete="email" inputMode="email" onChange={setEmail} />
+              <AppInput label="Passwort" value={password} placeholder="Passwort eingeben" type="password" name="password" autoComplete="current-password" onChange={setPassword} />
 
               <div style={{ textAlign: "right", marginTop: -10 }}>
                 <Link href="/forgot-password" style={{ color: "#007873", fontSize: 13, fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
