@@ -80,6 +80,19 @@ const PDF_COORDS: Record<string, PdfTemplateCoords> = {
   },
   "EFK2-Zertifikat App.pdf":   LAYOUT_STANDARD,
   "GEF-TN-Zert._neu App.pdf": LAYOUT_STANDARD,
+
+  // Young Leadership Day. Positionen aus der Hausvorlage gemessen (Grundlinien
+  // der ausgefuellten Word-Fassung). Zusaetzlich zum Standard schreibt die App
+  // hier den Veranstaltungstitel selbst - er traegt den Jahrgang und stammt
+  // aus dem Training ("VFA-Young Leadership Day 2026").
+  "YLD_TN-Best App.pdf": {
+    fields: {
+      participantName:      { y: 637, size: 13, bold: true, maxWidth: 440, centered: true },
+      participantBirthDate: { y: 617, size: 11,             maxWidth: 440, centered: true, prefix: "geb. " },
+      participationDetails: { y: 595, size: 11,             maxWidth: 440, centered: true },
+      trainingTitle:        { y: 518, size: 14, bold: true, maxWidth: 440, centered: true },
+    },
+  },
 };
 
 /**

@@ -257,6 +257,22 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     pdfTemplateFileName: "SON-TN-Bestätigung App.pdf",
     isVdiCertificate: false,
   },
+
+  /**
+   * Young Leadership Day. Vorlage ist Kristins Entwurf vom 03.08.2026
+   * (Hausvorlage 0_Vorlagen\YLD_TN-Best.docx); die App-Fassung ist deren
+   * Blanko-Ausgabe - Name, Geburtsdatum, Teilnahmezeile und Titel schreibt
+   * die App selbst. Der Titel kommt aus dem Training, so traegt jeder
+   * Jahrgang automatisch sein Jahr ("VFA-Young Leadership Day 2026").
+   */
+  YLD: {
+    code: "YLD",
+    label: "VFA-Young Leadership Day",
+    kind: "ATTENDANCE_CONFIRMATION",
+    templateFileName: "YLD_TN-Best.docx",
+    pdfTemplateFileName: "YLD_TN-Best App.pdf",
+    isVdiCertificate: false,
+  },
 };
 
 export const CERTIFICATE_TEMPLATE_CODES = Object.keys(CERTIFICATE_TEMPLATES);
