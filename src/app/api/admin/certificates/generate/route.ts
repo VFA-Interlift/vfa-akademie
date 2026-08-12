@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
-import { istZertifikatErzeugbar } from "@/lib/certificates/pdf";
+import { zertifikateAusstellen } from "@/lib/certificates/ausstellen";
 
 export const dynamic = "force-dynamic";
 
@@ -54,146 +53,14 @@ export async function POST() {
   const now = new Date();
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      const enrollments = await tx.enrollment.findMany({
-        where: {
-          status: {
-            in: ["CONFIRMED", "ATTENDED", "COMPLETED"],
-          },
-          certificate: null,
-          training: {
-            OR: [
-              {
-                endDate: {
-                  lt: now,
-                },
-              },
-              {
-                endDate: null,
-                date: {
-                  lt: now,
-                },
-              },
-            ],
-          },
-        },
-        select: {
-          id: true,
-          userId: true,
-          trainingId: true,
-          user: { select: { email: true } },
-          training: {
-            select: {
-              id: true,
-              title: true,
-              code: true,
-              certificateKind: true,
-              date: true,
-              endDate: true,
-              creditsAward: true,
-            },
-          },
-        },
-      });
-
-      const absentEnrollmentIds = await findAbsentEnrollmentIds(tx, enrollments);
-
-      let createdCertificates = 0;
-      let awardedCredits = 0;
-      let skippedNoTemplate = 0;
-
-      for (const enrollment of enrollments) {
-        if (absentEnrollmentIds.has(enrollment.id)) {
-          continue;
-        }
-
-        // Derselbe Maßstab wie im nächtlichen Lauf: Es genügt nicht, dass eine
-        // Vorlage eingetragen ist — sie muss sich auch füllen lassen. Sonst
-        // entsteht ein Zertifikat, dessen Download mit Serverfehler abbricht
-        // (betraf SER-SWB und SICH).
-        if (!istZertifikatErzeugbar(enrollment.training.code)) {
-          skippedNoTemplate += 1;
-          continue;
-        }
-
-        const credits = enrollment.training.creditsAward;
-
-        const certificate = await tx.certificate.create({
-          data: {
-            userId: enrollment.userId,
-            trainingId: enrollment.trainingId,
-            enrollmentId: enrollment.id,
-            title: enrollment.training.title,
-            credits,
-            code: enrollment.training.code,
-            certificateKind: enrollment.training.certificateKind,
-            note: "Automatisch nach Schulungsabschluss erstellt.",
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        if (credits > 0) {
-          await tx.creditTransaction.create({
-            data: {
-              userId: enrollment.userId,
-              amount: credits,
-              type: "AWARD",
-              reason: "CERTIFICATE_ISSUED",
-              trainingId: enrollment.trainingId,
-              certificateId: certificate.id,
-              meta: {
-                kind: "CERTIFICATE_AUTO_CREDITS",
-                enrollmentId: enrollment.id,
-                generatedByAdminId: gate.admin.id,
-                trainingCode: enrollment.training.code,
-                certificateKind: enrollment.training.certificateKind,
-              },
-            },
-          });
-
-          await tx.user.update({
-            where: {
-              id: enrollment.userId,
-            },
-            data: {
-              creditsTotal: {
-                increment: credits,
-              },
-            },
-          });
-
-          awardedCredits += credits;
-        }
-
-        await tx.enrollment.update({
-          where: {
-            id: enrollment.id,
-          },
-          data: {
-            status: "CERTIFICATE_ISSUED",
-            attended: true,
-            passed: true,
-            completedAt: now,
-          },
-        });
-
-        createdCertificates += 1;
-      }
-
-      return {
-        checkedEnrollments: enrollments.length,
-        skippedAbsent: absentEnrollmentIds.size,
-        skippedNoTemplate,
-        createdCertificates,
-        awardedCredits,
-      };
-    });
+    const { empfaenger: _unbenutzt, ...zahlen } = await zertifikateAusstellen(
+      now,
+      { adminId: gate.admin.id }
+    );
 
     return NextResponse.json({
       ok: true,
-      ...result,
+      ...zahlen,
     });
   } catch (error: unknown) {
     return NextResponse.json(

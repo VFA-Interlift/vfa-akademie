@@ -253,10 +253,54 @@ const VORLAGEN_ORDNER = path.join(
 );
 
 function normalizePdfText(value: string) {
-  return String(value ?? "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/\s+\n/g, "\n")
-    .replace(/\n\s+/g, "\n")
-    .trim();
+  return winAnsiSicher(
+    String(value ?? "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .replace(/\s+\n/g, "\n")
+      .replace(/\n\s+/g, "\n")
+      .trim()
+  );
+}
+
+/**
+ * Die eingebettete Standardschrift (Helvetica) kann nur WinAnsi/CP1252. Namen
+ * mit ł, ś, ğ, č, ı, đ oder kyrillischen Zeichen liessen den Zertifikat-Download
+ * sonst mit 500 abstuerzen (der Teilnehmer haette ein Zertifikat, koennte es
+ * aber nie oeffnen). In der Aufzugsbranche mit polnischen und tuerkischen Namen
+ * ein realer Fall. Wir transliterieren die gaengigen Zeichen auf ihre
+ * Grundform; alles, was danach immer noch ausserhalb von CP1252 liegt, wird
+ * durch ein neutrales Zeichen ersetzt, damit nie ein Crash entsteht.
+ */
+const TRANSLIT: Record<string, string> = {
+  Ł: "L", ł: "l", Đ: "D", đ: "d", Ħ: "H", ħ: "h", Ø: "O", ø: "o",
+  ı: "i", İ: "I", Œ: "OE", œ: "oe",
+  Ś: "S", ś: "s", Ș: "S", ș: "s", Š: "S", š: "s",
+  Ć: "C", ć: "c", Č: "C", č: "c", Ç: "C", ç: "c",
+  Ź: "Z", ź: "z", Ż: "Z", ż: "z", Ž: "Z", ž: "z",
+  Ń: "N", ń: "n", Ñ: "N", ñ: "n",
+  Ğ: "G", ğ: "g", Ř: "R", ř: "r",
+  Ą: "A", ą: "a", Ę: "E", ę: "e", Ų: "U", ų: "u",
+  Ā: "A", ā: "a", Ē: "E", ē: "e", Ī: "I", ī: "i", Ō: "O", ō: "o", Ū: "U", ū: "u",
+  Ť: "T", ť: "t", Ď: "D", ď: "d", Ľ: "L", ľ: "l", Ŕ: "R", ŕ: "r",
+  Ő: "O", ő: "o", Ű: "U", ű: "u",
+};
+
+// Alles, was Helvetica direkt kann (Basis-Latein + CP1252-Sonderzeichen).
+const CP1252 = /[ -ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/;
+
+function winAnsiSicher(text: string): string {
+  let out = "";
+  for (const ch of text) {
+    if (CP1252.test(ch)) {
+      out += ch;
+    } else if (TRANSLIT[ch]) {
+      out += TRANSLIT[ch];
+    } else {
+      // Akzent per Unicode-Zerlegung entfernen (é→e), sonst neutrales Zeichen.
+      const zerlegt = ch.normalize("NFKD").replace(/[̀-ͯ]/g, "");
+      out += zerlegt && CP1252.test(zerlegt[0]) ? zerlegt : "-";
+    }
+  }
+  return out;
 }

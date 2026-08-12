@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { findAbsentEnrollmentIds } from "@/lib/certificates/attendance";
-import { istZertifikatErzeugbar } from "@/lib/certificates/pdf";
+import { zertifikateAusstellen } from "@/lib/certificates/ausstellen";
 import { formatCertificateKind } from "@/lib/certificates/templates";
 import { sendCertificateReadyEmail } from "@/lib/email";
 
@@ -42,159 +40,22 @@ export async function GET(req: Request) {
   const now = new Date();
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      const enrollments = await tx.enrollment.findMany({
-        where: {
-          status: {
-            in: ["CONFIRMED", "ATTENDED", "COMPLETED"],
-          },
-          certificate: null,
-          training: {
-            OR: [
-              { endDate: { lt: now } },
-              { endDate: null, date: { lt: now } },
-            ],
-          },
-        },
-        select: {
-          id: true,
-          userId: true,
-          trainingId: true,
-          user: {
-            select: { email: true, firstName: true, lastName: true, name: true },
-          },
-          training: {
-            select: {
-              title: true,
-              code: true,
-              certificateKind: true,
-              creditsAward: true,
-            },
-          },
-        },
-      });
+    const result = await zertifikateAusstellen(now);
 
-      const absentEnrollmentIds = await findAbsentEnrollmentIds(tx, enrollments);
-
-      let createdCertificates = 0;
-      let awardedCredits = 0;
-      let skippedNoTemplate = 0;
-
-      // Empfänger sammeln und erst nach der Transaktion anschreiben: Mailversand
-      // in der Transaktion würde sie unnötig lange offen halten.
-      const zuBenachrichtigen: {
-        to: string;
-        name: string | null;
-        trainingTitle: string;
-        artLabel: string;
-        credits: number;
-      }[] = [];
-
-      for (const enrollment of enrollments) {
-        if (absentEnrollmentIds.has(enrollment.id)) {
-          continue;
-        }
-
-        // Ohne erzeugbares Zertifikat entstünde eines, das sich nicht
-        // herunterladen lässt — der Teilnehmer klickt und bekommt einen Fehler.
-        // Geprüft wird nicht nur, OB eine Vorlage eingetragen ist, sondern ob
-        // sie sich auch füllen lässt: SER-SWB und SICH haben keine Datei,
-        // FRQ und MVO hatten keine Schreibpositionen.
-        // Übrig bleibt damit bewusst nur YLD.
-        if (!istZertifikatErzeugbar(enrollment.training.code)) {
-          skippedNoTemplate += 1;
-          continue;
-        }
-
-        const credits = enrollment.training.creditsAward;
-
-        const certificate = await tx.certificate.create({
-          data: {
-            userId: enrollment.userId,
-            trainingId: enrollment.trainingId,
-            enrollmentId: enrollment.id,
-            title: enrollment.training.title,
-            credits,
-            code: enrollment.training.code,
-            certificateKind: enrollment.training.certificateKind,
-            note: "Automatisch nach Schulungsabschluss erstellt.",
-          },
-          select: { id: true },
-        });
-
-        if (credits > 0) {
-          await tx.creditTransaction.create({
-            data: {
-              userId: enrollment.userId,
-              amount: credits,
-              type: "AWARD",
-              reason: "CERTIFICATE_ISSUED",
-              trainingId: enrollment.trainingId,
-              certificateId: certificate.id,
-              meta: {
-                kind: "CERTIFICATE_AUTO_CREDITS",
-                enrollmentId: enrollment.id,
-                trainingCode: enrollment.training.code,
-                certificateKind: enrollment.training.certificateKind,
-              },
-            },
-          });
-
-          await tx.user.update({
-            where: { id: enrollment.userId },
-            data: { creditsTotal: { increment: credits } },
-          });
-
-          awardedCredits += credits;
-        }
-
-        await tx.enrollment.update({
-          where: { id: enrollment.id },
-          data: {
-            status: "CERTIFICATE_ISSUED",
-            attended: true,
-            passed: true,
-            completedAt: now,
-          },
-        });
-
-        createdCertificates += 1;
-
-        if (enrollment.user.email) {
-          zuBenachrichtigen.push({
-            to: enrollment.user.email,
-            name:
-              [enrollment.user.firstName, enrollment.user.lastName]
-                .filter(Boolean)
-                .join(" ")
-                .trim() ||
-              enrollment.user.name ||
-              null,
-            trainingTitle: enrollment.training.code?.trim() || enrollment.training.title,
-            artLabel: formatCertificateKind(enrollment.training.certificateKind),
-            credits,
-          });
-        }
-      }
-
-      return {
-        checkedEnrollments: enrollments.length,
-        skippedAbsent: absentEnrollmentIds.size,
-        skippedNoTemplate,
-        createdCertificates,
-        awardedCredits,
-        zuBenachrichtigen,
-      };
-    });
-
-    // Benachrichtigungen nach der Transaktion. Ein Mailfehler darf die bereits
-    // ausgestellten Zertifikate nicht zurückrollen.
+    // Benachrichtigungen nach der Ausstellung. Ein Mailfehler darf die bereits
+    // ausgestellten Zertifikate nicht berühren.
     let benachrichtigt = 0;
     let benachrichtigungFehler = 0;
 
-    for (const empfaenger of result.zuBenachrichtigen) {
+    for (const empfaenger of result.empfaenger) {
       try {
-        await sendCertificateReadyEmail(empfaenger);
+        await sendCertificateReadyEmail({
+          to: empfaenger.to,
+          name: empfaenger.name,
+          trainingTitle: empfaenger.trainingTitle,
+          artLabel: formatCertificateKind(empfaenger.certificateKind),
+          credits: empfaenger.credits,
+        });
         benachrichtigt += 1;
       } catch (mailError) {
         benachrichtigungFehler += 1;
@@ -202,7 +63,7 @@ export async function GET(req: Request) {
       }
     }
 
-    const { zuBenachrichtigen: _unbenutzt, ...zahlen } = result;
+    const { empfaenger: _unbenutzt, ...zahlen } = result;
 
     return NextResponse.json({
       ok: true,
