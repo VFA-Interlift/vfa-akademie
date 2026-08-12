@@ -441,7 +441,10 @@ textarea {
   .mehr-backdrop,
   .mehr-sheet,
   footer,
-  .kp-actions {
+  .kp-actions,
+  /* Frische-Ampel nur am Bildschirm: Der Ausdruck soll neutral bleiben und
+     nicht wie ein amtlicher Gültigkeitsnachweis wirken. */
+  .kp-frische {
     display: none !important;
   }
   .page-content {

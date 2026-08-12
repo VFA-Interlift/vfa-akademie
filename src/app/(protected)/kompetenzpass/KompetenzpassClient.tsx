@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDate, formatDateRange } from "@/lib/trainings/format";
+import { bewerteFrische, FRISCHE_FARBE } from "@/lib/kompetenz/frische";
 
 type SerializableCertificate = {
   id: string;
@@ -343,6 +344,23 @@ export default function KompetenzpassClient({
                       <div style={{ fontSize: 12, color: "#888888", marginTop: 3, lineHeight: 1.4 }}>
                         {cert.certificateKindLabel} · {formatDateRange(cert.trainingDate, cert.trainingEndDate)}
                       </div>
+                      {(() => {
+                        const f = bewerteFrische(cert.code, new Date(cert.issuedAt), new Date());
+                        const farbe = FRISCHE_FARBE[f.status];
+                        return (
+                          <span
+                            className="kp-frische"
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6,
+                              padding: "3px 9px", borderRadius: 999, fontSize: 11, fontWeight: 700,
+                              background: farbe.bg, color: farbe.fg,
+                            }}
+                          >
+                            <span style={{ width: 7, height: 7, borderRadius: "50%", background: farbe.fg }} />
+                            {f.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                       <div style={{ fontWeight: 900, fontSize: 16, color: "#007873", lineHeight: 1 }}>
