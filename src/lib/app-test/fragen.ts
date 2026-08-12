@@ -70,7 +70,7 @@ export const APP_TEST_FRAGEN: Frage[] = [
   {
     id: "handy",
     typ: "skala",
-    text: "Auf dem Handy ist alles gut lesbar und gut zu treffen.",
+    text: "Auf dem Handy ist alles gut lesbar und gut auszuwählen.",
     links: "gar nicht",
     rechts: "voll und ganz",
   },
