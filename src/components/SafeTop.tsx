@@ -14,10 +14,21 @@ import { usePathname } from "next/navigation";
  * stehen. usePathname wirkt schon beim Server-Rendern, es gibt also auch
  * keinen Augenblick beim Laden, in dem er kurz zu sehen wäre.
  */
+// Seiten, deren Kopf selbst bis unter die Statusleiste reicht: das Dashboard
+// (Parallax-Kopf) und alle Seiten mit dem Streifen-Band aus PageHeader. Dort
+// gibt das Band der Uhr den Grund; ein Deckstreifen darüber ergäbe wieder die
+// bekannte Naht (plain Petrol über bewegtem Muster). Der Kompetenzpass und
+// die Anmeldeseiten haben KEIN Band — dort bleibt der Streifen.
+const OHNE_STREIFEN = [
+  "/dashboard", "/meine-schulungen", "/meine-zertifikate", "/meine-credits",
+  "/meine-daten", "/kurskalender", "/badges", "/leaderboard", "/einstellungen",
+  "/feedback", "/training", "/dozent", "/app-test", "/admin",
+];
+
 export default function SafeTop() {
   const pfad = usePathname();
 
-  if (pfad === "/dashboard" || pfad.startsWith("/dashboard/")) {
+  if (OHNE_STREIFEN.some((p) => pfad === p || pfad.startsWith(p + "/"))) {
     return null;
   }
 

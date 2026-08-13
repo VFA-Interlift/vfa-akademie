@@ -274,7 +274,11 @@ a, button {
   min-height: 100vh;
   background: var(--vfa-light);
   padding: 24px 16px;
-  overflow-x: hidden;
+  /* clip statt hidden: hidden macht die Fläche zum eigenen Scroll-Bereich
+     (overflow-y wird dann automatisch auto) — der schneidet den über die
+     Oberkante gezogenen Seitenkopf ab und bricht sticky. Zweimal an dieser
+     Falle vorbeigelaufen am 13.08.2026. */
+  overflow-x: clip;
 }
 @media (min-width: 600px) {
   .page-main {
@@ -598,6 +602,38 @@ a, button {
 }
 .page-enter {
   animation: pageFadeUp 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Seitenkopf: kompaktes Streifen-Band bis zur Überschrift ──
+   Der Dashboard-Look (Petrol, feine diagonale Streifen, gelber Schein) als
+   schmales Band auf allen übrigen Seiten — nur bis zur Überschrift, nicht
+   tiefer (Tobis Wunsch vom 13.08.2026 abends, „wollen wir das mal
+   ausprobieren"). Auf dem Handy läuft es in voller Breite bis unter die
+   Statusleiste (SafeTop entfällt dort, siehe SafeTop.tsx); am Desktop bleibt
+   es ein gerundetes Band im Inhalt. Bewusst feste Farben: Das Band ist in
+   beiden Modi Petrol, wie der Dashboard-Kopf. */
+.seiten-kopf {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+  padding: 22px 20px;
+  border-radius: 14px;
+  background-color: #007873;
+  background-image:
+    radial-gradient(110% 150% at 100% 0%, rgba(255, 193, 0, 0.45) 0%, rgba(255, 193, 0, 0.12) 40%, rgba(255, 193, 0, 0) 68%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 2px, rgba(255, 255, 255, 0) 2px 15px);
+}
+@media (max-width: 759px) {
+  .seiten-kopf {
+    /* Vollbreite aus dem zentrierten Container heraus und bis unter die
+       Statusleiste hinauf — die Überschrift sitzt damit im Streifenbereich,
+       die weiße Uhr steht auf Petrol. */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: calc(-24px - env(safe-area-inset-top, 0px));
+    border-radius: 0 0 22px 22px;
+    padding: calc(env(safe-area-inset-top, 0px) + 22px) 16px 20px;
+  }
 }
 
 /* ── Streifen hinter der Statusleiste ──

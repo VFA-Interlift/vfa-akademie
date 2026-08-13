@@ -18,8 +18,14 @@ export default function PageHeader({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   description: _description,
 }: PageHeaderProps) {
+  // Der Seitenkopf aller Seiten außer dem Dashboard: ein kompaktes
+  // Petrol-Band mit den feinen diagonalen Streifen und dem gelben Schein der
+  // Marke, nur bis zur Überschrift (Tobis Wunsch vom 13.08.2026). Auf dem
+  // Handy läuft es in voller Breite bis unter die Statusleiste — der
+  // Deckstreifen SafeTop entfällt auf diesen Seiten, das Band selbst gibt der
+  // Uhr den Grund. Gestaltung in globals.css unter .seiten-kopf.
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div className="seiten-kopf">
       {showBackButton && (
         <div style={{ marginBottom: 14 }}>
           <BackButton label={backLabel} />
@@ -31,7 +37,8 @@ export default function PageHeader({
             margin: 0,
             fontSize: "clamp(22px, 5vw, 28px)",
             fontWeight: 800,
-            color: "var(--vfa-text)",
+            // Fest weiß: Das Band ist in beiden Modi Petrol.
+            color: "#FFFFFF",
             letterSpacing: "-0.02em",
             lineHeight: 1.15,
           }}
