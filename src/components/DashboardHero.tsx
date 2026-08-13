@@ -25,7 +25,6 @@ export default function DashboardHero({
   unterzeile: string;
 }) {
   const [gruss, setGruss] = useState("Hallo");
-  const heroRef = useRef<HTMLDivElement>(null);
   const grundRef = useRef<HTMLDivElement>(null);
   const inhaltRef = useRef<HTMLDivElement>(null);
 
@@ -88,16 +87,6 @@ export default function DashboardHero({
         // Faktor 0.3 nach Tobis Nachjustierung vom 13.08.2026 — 0.18 war zu wenig.
         inhaltRef.current.style.transform = `translate3d(0, ${(weite * -0.3).toFixed(1)}px, 0)`;
       }
-      if (heroRef.current) {
-        // Der Kopf klebt hinter der Karte und schaute oben als grüner Rand
-        // hervor, solange die Karte den Bildschirmrand noch nicht erreicht hat
-        // (Tobis Bild vom 13.08.2026, 16:53). Deshalb löst er sich auf den
-        // letzten Zentimetern auf: Einblendung 1 bis 140 Pixel, ab 230 ganz
-        // weg — die Karte erreicht den Rand bei etwa 245, darüber bleibt nur
-        // der helle Grund. Der Name ist zu dem Zeitpunkt längst verdeckt.
-        const deckkraft = 1 - Math.min(Math.max((weite - 140) / 90, 0), 1);
-        heroRef.current.style.opacity = deckkraft.toFixed(3);
-      }
     };
     const beiScroll = () => {
       if (angefordert) return;
@@ -111,10 +100,14 @@ export default function DashboardHero({
   }, []);
 
   return (
-    <div ref={heroRef} className="dash-hero">
+    <div className="dash-hero">
+      {/* Nur Petrol mit feinen Streifen, ohne Farbverläufe: Der gelbe Schein
+          in der Ecke stand beim Scrollen als andersfarbiger Rand über der
+          Karte — Tobi hat ihn am 13.08.2026 komplett streichen lassen
+          („dass das so bleibt wie der Rest"). Ebenso raus: das Ausblenden des
+          Kopfes, das nur einen weißen Übergang erzeugte. */}
       <div ref={grundRef} className="dash-hero-grund">
         <div className="dash-hero-streifen" />
-        <div className="dash-hero-schein" />
       </div>
 
       <div ref={inhaltRef} className="dash-hero-inhalt">
