@@ -38,11 +38,12 @@ export const viewport: Viewport = {
   // unter der Uhr frei, und die Bottom-Nav ignorierte den Home-Indikator.
   // Gehört zwingend zu statusBarStyle "black-translucent" (siehe metadata).
   viewportFit: "cover",
-  // Zoom bleibt erlaubt: Wer schlecht sieht, muss vergrößern können. Das
-  // Sperren war gegen das versehentliche Aufziehen gedacht, nimmt aber allen
-  // die Lupe — und die App wird überwiegend am Handy benutzt.
-  userScalable: true,
-  maximumScale: 5,
+  // Zoom ist AUS — Tobis Entscheidung vom 13.08.2026 („ich möchte nicht,
+  // dass man ranzoomen kann"): kein versehentliches Aufziehen, die App soll
+  // sich nativ anfühlen. Wer vergrößern muss, hat die System-Lupe der
+  // Bedienungshilfen. (Safari am Mac/PC ignoriert die Sperre ohnehin.)
+  userScalable: false,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
