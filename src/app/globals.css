@@ -520,18 +520,34 @@ a, button {
   background: #f7f7f4;
 }
 
+/* `overflow-x: hidden` auf body und .page-main macht die Seite zu einem eigenen
+   Scroll-Bereich — dann klebt der Kopf an diesem Bereich statt am Fenster und
+   scrollt einfach mit weg, statt liegen zu bleiben. `clip` schneidet genauso
+   ab, erzeugt aber keinen Scroll-Bereich. Nur auf dem Dashboard, damit die
+   anderen Seiten unverändert bleiben. */
+body:has(.dashboard-page),
+.dashboard-page.page-main {
+  overflow-x: clip;
+}
+body:has(.dashboard-page) .page-content {
+  overflow: visible;
+}
+
+/* Die Höhe schließt den Bereich der Statusleiste mit ein (safe-area-inset-top),
+   damit das Grün am iPhone bis an den oberen Rand durchläuft und dort keine
+   Kante entsteht. Auf Geräten ohne Aussparung ist der Wert 0. */
 .dash-hero {
   position: sticky;
   top: 0;
   z-index: 0;
-  height: 216px;
+  height: calc(216px + env(safe-area-inset-top, 0px));
   overflow: hidden;
   background: #007873;
   display: flex;
   align-items: flex-end;
 }
 @media (min-width: 600px) {
-  .dash-hero { height: 248px; }
+  .dash-hero { height: calc(248px + env(safe-area-inset-top, 0px)); }
 }
 
 /* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text. */
