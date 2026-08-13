@@ -32,6 +32,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#007873",
+  // Ohne viewport-fit=cover liefert env(safe-area-inset-top/-bottom) schlicht 0:
+  // der Streifen .safe-top wäre unsichtbar, die Seiten hielten keinen Platz
+  // unter der Uhr frei, und die Bottom-Nav ignorierte den Home-Indikator.
+  // Gehört zwingend zu statusBarStyle "black-translucent" (siehe metadata).
+  viewportFit: "cover",
   // Zoom bleibt erlaubt: Wer schlecht sieht, muss vergrößern können. Das
   // Sperren war gegen das versehentliche Aufziehen gedacht, nimmt aber allen
   // die Lupe — und die App wird überwiegend am Handy benutzt.

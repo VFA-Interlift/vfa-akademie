@@ -55,6 +55,37 @@ export default function DashboardHero({
   // wieder ausgebaut: iOS zieht das in installierten Apps nicht nach. Die
   // Statusleiste wird jetzt vom Streifen .safe-top abgedeckt, siehe layout.tsx.
 
+  // Oben auf der Seite bleibt .safe-top durchsichtig, damit hinter der Uhr das
+  // echte, bewegte Muster des Kopfes liegt statt einer starren Kopie. Er
+  // blendet zwischen 40 und 150 Pixeln Scrollstrecke ein — die helle Fläche
+  // erreicht die Statusleiste erst bei rund 186 (Kopfhöhe 216 minus 30
+  // Überlappung), die Uhr steht also nie auf hellem Grund.
+  //
+  // Läuft bewusst auch bei "Bewegung reduzieren": Es geht um die Lesbarkeit
+  // der Uhr, nicht um Zierde.
+  useEffect(() => {
+    const wurzel = document.documentElement;
+    let angefordert = false;
+
+    const setzen = () => {
+      angefordert = false;
+      const deckung = Math.min(Math.max((window.scrollY - 40) / 110, 0), 1);
+      wurzel.style.setProperty("--safe-top-deckung", deckung.toFixed(3));
+    };
+    const beiScroll = () => {
+      if (angefordert) return;
+      angefordert = true;
+      requestAnimationFrame(setzen);
+    };
+
+    setzen();
+    window.addEventListener("scroll", beiScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", beiScroll);
+      wurzel.style.removeProperty("--safe-top-deckung");
+    };
+  }, []);
+
   useEffect(() => {
     const sanft = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (sanft.matches) return;
