@@ -55,6 +55,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           minHeight: "100vh",
         }}
       >
+        {/* Setzt die Dashboard-Markierung, BEVOR der Browser das erste Mal
+            zeichnet. DashboardHero setzt sie erst nach dem Laden des Skripts —
+            beim Öffnen der App (Startadresse ist /dashboard) blitzte dadurch
+            der Streifen .safe-top kurz an der Oberkante auf, ehe er verschwand
+            (Tobis Beobachtung vom 13.08.2026). Bei Seitenwechseln innerhalb
+            der App übernimmt weiterhin DashboardHero das An- und Abmelden. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'if(location.pathname==="/dashboard"||location.pathname.indexOf("/dashboard/")===0)document.documentElement.classList.add("dashboard-aktiv");',
+          }}
+        />
         <Providers>
           <ServiceWorkerRegister />
           <div

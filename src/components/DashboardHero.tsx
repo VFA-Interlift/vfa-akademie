@@ -84,9 +84,9 @@ export default function DashboardHero({
   return (
     <div className="dash-hero">
       {/* Zwei Geschwindigkeiten geben die Tiefe: der Grund wandert mit dem
-          Scrollen leicht nach unten, Name und Begrüßung driften ganz leicht
-          nach oben, während die helle Fläche sich darüberschiebt (Tobis
-          Wunsch vom 13.08.2026: „nur so ganz leicht"). */}
+          Scrollen leicht nach unten, Name und Begrüßung driften nach oben,
+          während die helle Fläche sich darüberschiebt. Faktor 0.3 nach Tobis
+          Nachjustierung vom 13.08.2026 — 0.18 war ihm zu wenig. */}
       <div
         className="dash-hero-grund"
         style={{ transform: `translate3d(0, ${(scrollWeite * 0.28).toFixed(1)}px, 0)` }}
@@ -97,7 +97,7 @@ export default function DashboardHero({
 
       <div
         className="dash-hero-inhalt"
-        style={{ transform: `translate3d(0, ${(scrollWeite * -0.18).toFixed(1)}px, 0)` }}
+        style={{ transform: `translate3d(0, ${(scrollWeite * -0.3).toFixed(1)}px, 0)` }}
       >
         <p className="dash-hero-gruss">{gruss}</p>
         <h1 className="dash-hero-name">{name}</h1>
