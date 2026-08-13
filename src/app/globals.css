@@ -520,16 +520,18 @@ a, button {
   background: #f7f7f4;
 }
 
-/* `overflow-x: hidden` auf body und .page-main macht die Seite zu einem eigenen
+/* `overflow-x: hidden` auf html und body macht das Wurzelelement zum
    Scroll-Bereich — dann klebt der Kopf an diesem Bereich statt am Fenster und
-   scrollt einfach mit weg, statt liegen zu bleiben. `clip` schneidet genauso
-   ab, erzeugt aber keinen Scroll-Bereich. Nur auf dem Dashboard, damit die
+   wandert beim Scrollen einfach mit weg. `clip` schneidet seitlich genauso ab,
+   erzeugt aber keinen Scroll-Bereich. Die Klasse setzt DashboardHero beim
+   Betreten der Seite und nimmt sie beim Verlassen wieder weg, damit die
    anderen Seiten unverändert bleiben. */
-body:has(.dashboard-page),
+html.dashboard-aktiv,
+html.dashboard-aktiv body,
 .dashboard-page.page-main {
   overflow-x: clip;
 }
-body:has(.dashboard-page) .page-content {
+html.dashboard-aktiv .page-content {
   overflow: visible;
 }
 

@@ -27,6 +27,22 @@ export default function DashboardHero({
   const [gruss, setGruss] = useState("Hallo");
   const [versatz, setVersatz] = useState(0);
 
+  // `overflow-x: hidden` steht in globals.css auf html UND body. Das macht das
+  // Wurzelelement zum Scroll-Bereich, an dem der Kopf dann klebt statt am
+  // Fenster — er wandert einfach mit weg. Am 13.08.2026 im Browser gemessen:
+  // ohne Korrektur steht der Kopf nach 800 Pixeln Scrollen bei -800, mit
+  // `clip` bei 0. `clip` schneidet seitlich genauso ab, erzeugt aber keinen
+  // Scroll-Bereich.
+  //
+  // Warum per Klasse und nicht in der CSS-Datei: Eine Regel mit `:has()` auf
+  // body überlebt den Bauvorgang nicht, sie fehlt im ausgelieferten Stylesheet.
+  // Die Klasse wird beim Verlassen der Seite wieder entfernt, damit die
+  // anderen Seiten unverändert bleiben.
+  useEffect(() => {
+    document.documentElement.classList.add("dashboard-aktiv");
+    return () => document.documentElement.classList.remove("dashboard-aktiv");
+  }, []);
+
   // Die Tageszeit richtet sich nach der Uhr des Geräts, nicht nach dem Server.
   // Deshalb erst nach dem Laden setzen — sonst zeigt Vercel (UTC) am Abend
   // noch "Guten Tag".
