@@ -20,7 +20,7 @@ type PageHeaderProps = {
  *
  * Beim Scrollen bewegt sich alles wie auf dem Dashboard (Tobis Ansage vom
  * 13.08.2026 abends): Die Überschrift zieht langsamer als der Inhalt davon
- * (Bildschirm-Geschwindigkeit 0,3-fach nach oben), das Muster driftet leicht
+ * (Bildschirm-Geschwindigkeit 0,45-fach nach oben), das Muster driftet leicht
  * nach unten (0,28-fach). Weil das Band — anders als der klebende
  * Dashboard-Kopf — selbst mitscrollt, sind die Versätze hier GEGENläufig
  * aufgerechnet; die sichtbare Bewegung ist dieselbe.
@@ -50,7 +50,7 @@ export default function PageHeader({
         grundRef.current.style.transform = `translate3d(0, ${(s * 1.28).toFixed(1)}px, 0)`;
       }
       if (inhaltRef.current) {
-        inhaltRef.current.style.transform = `translate3d(0, ${(s * 0.7).toFixed(1)}px, 0)`;
+        inhaltRef.current.style.transform = `translate3d(0, ${(s * 0.55).toFixed(1)}px, 0)`;
       }
     };
     const beiScroll = () => {

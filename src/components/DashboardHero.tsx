@@ -144,8 +144,9 @@ export default function DashboardHero({
         grundRef.current.style.transform = `translate3d(0, ${(weite * 0.28).toFixed(1)}px, 0)`;
       }
       if (inhaltRef.current) {
-        // Faktor 0.3 nach Tobis Nachjustierung vom 13.08.2026 — 0.18 war zu wenig.
-        inhaltRef.current.style.transform = `translate3d(0, ${(weite * -0.3).toFixed(1)}px, 0)`;
+        // Faktor 0.45 nach Tobis zweiter Nachjustierung vom 13.08.2026
+        // („noch ein Tick mehr") — vorher 0.3, davor 0.18.
+        inhaltRef.current.style.transform = `translate3d(0, ${(weite * -0.45).toFixed(1)}px, 0)`;
       }
     };
     const beiScroll = () => {
