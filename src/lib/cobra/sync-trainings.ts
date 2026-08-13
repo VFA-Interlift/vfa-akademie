@@ -489,7 +489,16 @@ async function syncTraining(training: NormalizedTraining) {
  * public calendar (which reads the App-DB) matches Cobra/WebConnect.
  */
 export async function syncCobraTrainings(): Promise<SyncTrainingsResult> {
-  const cobraTrainings = await cobraEndpointGet<CobraTraining[]>("app-schulung");
+  // `top` ist zwingend: ohne den Parameter liefert Cobra stillschweigend nur die
+  // ersten 50 Datensaetze — keine Gesamtzahl, kein Hinweis auf weitere Seiten,
+  // die Antwort sieht vollstaendig aus. Genau daran fehlten von Juni bis August
+  // 2026 saemtliche Schulungen des laufenden Jahres in der App (Fluctus #25319);
+  // die 50 trafen zufaellig den Katalog 2027. `take`, `limit` und `pageSize`
+  // ignoriert die Schnittstelle wirkungslos, nur `top` wird ausgewertet.
+  // Stand 13.08.2026 umfasst der Endpunkt 220 Schulungen ab 2024.
+  const cobraTrainings = await cobraEndpointGet<CobraTraining[]>("app-schulung", {
+    top: 5000,
+  });
 
   const normalized: NormalizedTraining[] = [];
   const skipped: Array<{ reason: string; raw: CobraTraining }> = [];
