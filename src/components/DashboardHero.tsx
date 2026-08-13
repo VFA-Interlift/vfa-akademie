@@ -56,10 +56,14 @@ export default function DashboardHero({
   // Statusleiste wird jetzt vom Streifen .safe-top abgedeckt, siehe layout.tsx.
 
   // Oben auf der Seite bleibt .safe-top durchsichtig, damit hinter der Uhr das
-  // echte, bewegte Muster des Kopfes liegt statt einer starren Kopie. Er
-  // blendet zwischen 40 und 150 Pixeln Scrollstrecke ein — die helle Fläche
-  // erreicht die Statusleiste erst bei rund 186 (Kopfhöhe 216 minus 30
-  // Überlappung), die Uhr steht also nie auf hellem Grund.
+  // echte, bewegte Muster des Kopfes liegt. Der Kopf klebt am oberen Rand und
+  // füllt die Statusleiste selbst — der Streifen wird erst gebraucht, wenn die
+  // helle Fläche sie erreicht, und das ist bei 186 Pixeln Scrollstrecke
+  // (Kopfhöhe 216 minus 30 Überlappung; der Statusleisten-Anteil kürzt sich
+  // heraus). Deshalb blendet er erst ab 170 ein und ist bei 205 deckend.
+  // Früher einblenden erzeugt eine sichtbare Naht: starrer Streifen über dem
+  // bewegten Muster, Gelbschimmer hart abgeschnitten — so sah es am 13.08.2026
+  // auf Tobis iPhone aus.
   //
   // Läuft bewusst auch bei "Bewegung reduzieren": Es geht um die Lesbarkeit
   // der Uhr, nicht um Zierde.
@@ -69,7 +73,7 @@ export default function DashboardHero({
 
     const setzen = () => {
       angefordert = false;
-      const deckung = Math.min(Math.max((window.scrollY - 40) / 110, 0), 1);
+      const deckung = Math.min(Math.max((window.scrollY - 170) / 35, 0), 1);
       wurzel.style.setProperty("--safe-top-deckung", deckung.toFixed(3));
     };
     const beiScroll = () => {

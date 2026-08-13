@@ -532,12 +532,12 @@ a, button {
   height: env(safe-area-inset-top, 0px);
   z-index: 3000;
   pointer-events: none;
+  /* Bewusst OHNE Schraffur: eine eigene Kopie des Musters läge auf dem
+     Dashboard über dem echten, bewegten Muster des Kopfes und erzeugte eine
+     sichtbare Naht (versetzte Linien, abgeschnittener Gelbschimmer — so sah es
+     am 13.08.2026 auf Tobis iPhone aus). Ein ruhiger Petrol-Grund liest sich
+     als Statusleiste, wie in nativen Apps. */
   background-color: #007873;
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.07) 0 2px,
-    rgba(255, 255, 255, 0) 2px 15px
-  );
 }
 
 /* Auf dem Dashboard liegt unter der Statusleiste bereits der echte Kopf mit
