@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppCard from "@/components/ui/AppCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CertificateDownloadButton from "@/components/CertificateDownloadButton";
+import ZertifikatTeilen from "@/components/ZertifikatTeilen";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import {
   formatDate,
@@ -372,6 +373,12 @@ export default function MeineZertifikateClient({
                           ) : (
                             <StatusBadge>Dokument wird vorbereitet</StatusBadge>
                           )}
+
+                          <ZertifikatTeilen
+                            titel={displayTitle}
+                            zeitraum={dateText}
+                            credits={cert.credits}
+                          />
 
                           {cert.feedbackGiven ? (
                             <span

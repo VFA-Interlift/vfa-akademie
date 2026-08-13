@@ -202,8 +202,8 @@ export default async function DashboardPage() {
         {/* Next upcoming training */}
         {nextTraining && (
           <AnimatedSection delayMs={100}>
-            <Link href="/meine-schulungen" style={{ textDecoration: "none", display: "block" }}>
-              <div style={{ padding: "16px 18px", background: "#007873", borderRadius: 14, display: "grid", gap: 6 }}>
+            <div style={{ padding: "16px 18px", background: "#007873", borderRadius: 14, display: "grid", gap: 6 }}>
+              <Link href="/meine-schulungen" style={{ textDecoration: "none", display: "grid", gap: 6 }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   Nächste Schulung
                 </div>
@@ -220,8 +220,26 @@ export default async function DashboardPage() {
                     </span>
                   )}
                 </div>
+              </Link>
+
+              {/* Direkt in den Handy-Kalender bzw. zur Route — ohne den Umweg
+                  über "Meine Schulungen". */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                <a href={`/api/trainings/${nextTraining.training.id}/calendar`} style={heroChipStyle}>
+                  📅 In meinen Kalender
+                </a>
+                {nextTraining.training.location && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nextTraining.training.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={heroChipStyle}
+                  >
+                    🗺️ Route
+                  </a>
+                )}
               </div>
-            </Link>
+            </div>
           </AnimatedSection>
         )}
 
@@ -530,6 +548,21 @@ function getRankProgress(credits: number) {
   }
   return { percent: 100, remainingToNext: 0 };
 }
+
+// Helle Chips auf der Petrol-Karte "Nächste Schulung".
+const heroChipStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "8px 14px",
+  borderRadius: 999,
+  background: "rgba(255, 255, 255, 0.14)",
+  border: "1px solid rgba(255, 255, 255, 0.32)",
+  color: "#FFFFFF",
+  fontSize: 13,
+  fontWeight: 800,
+  textDecoration: "none",
+};
 
 const secondaryLinkStyle: CSSProperties = {
   display: "inline-flex",

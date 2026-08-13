@@ -170,26 +170,53 @@ export default function MeineSchulungenClient({
                           <AddressInfo lines={addressLines} />
                         </div>
 
-                        <a
-                          href={`/api/trainings/${training.id}/calendar`}
-                          style={{
-                            marginTop: 18,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "11px 18px",
-                            borderRadius: 10,
-                            background: "#007873",
-                            color: "#FFFFFF",
-                            fontSize: 14,
-                            fontWeight: 800,
-                            textDecoration: "none",
-                            border: "none",
-                          }}
-                        >
-                          <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>📅</span>
-                          Zum Kalender hinzufügen
-                        </a>
+                        <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          <a
+                            href={`/api/trainings/${training.id}/calendar`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 8,
+                              padding: "11px 18px",
+                              borderRadius: 10,
+                              background: "#007873",
+                              color: "#FFFFFF",
+                              fontSize: 14,
+                              fontWeight: 800,
+                              textDecoration: "none",
+                              border: "none",
+                            }}
+                          >
+                            <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>📅</span>
+                            Zum Kalender hinzufügen
+                          </a>
+                          {/* Route zum Schulungsort — öffnet die Karten-App;
+                              der Google-Link funktioniert auf iPhone und
+                              Android gleichermaßen. */}
+                          {addressLines.length > 0 && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(", "))}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 8,
+                                padding: "11px 18px",
+                                borderRadius: 10,
+                                background: "transparent",
+                                color: "#007873",
+                                fontSize: 14,
+                                fontWeight: 800,
+                                textDecoration: "none",
+                                border: "1px solid #007873",
+                              }}
+                            >
+                              <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>🗺️</span>
+                              Route
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </AnimatedSection>
                   )}
