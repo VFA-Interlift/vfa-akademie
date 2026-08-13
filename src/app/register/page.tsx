@@ -187,15 +187,8 @@ export default function RegisterPage() {
             </Link>
           </p>
 
-          <p style={{ marginTop: 10, textAlign: "center", color: "#AAAAAA", fontSize: 13 }}>
-            <Link href="/impressum" style={{ color: "#888888" }}>
-              Impressum
-            </Link>
-            {" · "}
-            <Link href="/datenschutz" style={{ color: "#888888" }}>
-              Datenschutz
-            </Link>
-          </p>
+          {/* Impressum/Datenschutz stehen im SocialFooter (Root-Layout) —
+              die frühere Inline-Zeile stand doppelt darüber (Tobi, 13.08.). */}
         </div>
       </div>
     </div>
