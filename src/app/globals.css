@@ -686,7 +686,15 @@ html.dashboard-aktiv .page-content {
   padding: 22px 16px 8px;
   background: #f7f7f4;
   border-radius: 26px 26px 0 0;
-  box-shadow: 0 -12px 28px rgba(0, 51, 49, 0.10);
+  /* Gestaffelter Schatten nach oben, damit die Karte sichtbar ÜBER dem grünen
+     Kopf schwebt (Tobis Wunsch vom 13.08.2026: „dass das nach 3D aussieht").
+     Drei Weiten wirken plastischer als ein einzelner weicher Schatten; die
+     helle Linie obenauf ist die Lichtkante. */
+  box-shadow:
+    0 -1px 0 rgba(255, 255, 255, 0.28),
+    0 -3px 8px rgba(0, 26, 24, 0.16),
+    0 -16px 36px rgba(0, 26, 24, 0.22),
+    0 -40px 80px rgba(0, 26, 24, 0.15);
   min-height: 60vh;
 }
 @media (min-width: 600px) {
