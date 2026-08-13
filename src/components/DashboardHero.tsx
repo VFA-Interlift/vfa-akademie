@@ -25,7 +25,7 @@ export default function DashboardHero({
   unterzeile: string;
 }) {
   const [gruss, setGruss] = useState("Hallo");
-  const [versatz, setVersatz] = useState(0);
+  const [scrollWeite, setScrollWeite] = useState(0);
 
   // `overflow-x: hidden` steht in globals.css auf html UND body. Das macht das
   // Wurzelelement zum Scroll-Bereich, an dem der Kopf dann klebt statt am
@@ -55,40 +55,12 @@ export default function DashboardHero({
   // wieder ausgebaut: iOS zieht das in installierten Apps nicht nach. Die
   // Statusleiste wird jetzt vom Streifen .safe-top abgedeckt, siehe layout.tsx.
 
-  // Oben auf der Seite bleibt .safe-top durchsichtig, damit hinter der Uhr das
-  // echte, bewegte Muster des Kopfes liegt. Der Kopf klebt am oberen Rand und
-  // füllt die Statusleiste selbst — der Streifen wird erst gebraucht, wenn die
-  // helle Fläche sie erreicht, und das ist bei 186 Pixeln Scrollstrecke
-  // (Kopfhöhe 216 minus 30 Überlappung; der Statusleisten-Anteil kürzt sich
-  // heraus). Deshalb blendet er erst ab 170 ein und ist bei 205 deckend.
-  // Früher einblenden erzeugt eine sichtbare Naht: starrer Streifen über dem
-  // bewegten Muster, Gelbschimmer hart abgeschnitten — so sah es am 13.08.2026
-  // auf Tobis iPhone aus.
-  //
-  // Läuft bewusst auch bei "Bewegung reduzieren": Es geht um die Lesbarkeit
-  // der Uhr, nicht um Zierde.
-  useEffect(() => {
-    const wurzel = document.documentElement;
-    let angefordert = false;
-
-    const setzen = () => {
-      angefordert = false;
-      const deckung = Math.min(Math.max((window.scrollY - 170) / 35, 0), 1);
-      wurzel.style.setProperty("--safe-top-deckung", deckung.toFixed(3));
-    };
-    const beiScroll = () => {
-      if (angefordert) return;
-      angefordert = true;
-      requestAnimationFrame(setzen);
-    };
-
-    setzen();
-    window.addEventListener("scroll", beiScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", beiScroll);
-      wurzel.style.removeProperty("--safe-top-deckung");
-    };
-  }, []);
+  // Auf dem Dashboard gibt es keinen Deckstreifen hinter der Statusleiste —
+  // Tobis Entscheidung vom 13.08.2026 („Weg mit der Uhr"): Ihm ist wichtiger,
+  // dass beim Scrollen kein grüner Streifen über der hellen Fläche steht, als
+  // dass die weiße Uhrzeit dort lesbar bleibt. Oben auf der Seite steht sie
+  // auf dem Petrol des Kopfes und ist gut zu sehen; nur gescrollt verschwindet
+  // sie optisch. Die Ausblendung steht in globals.css (html.dashboard-aktiv).
 
   useEffect(() => {
     const sanft = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -99,8 +71,8 @@ export default function DashboardHero({
       if (angefordert) return;
       angefordert = true;
       requestAnimationFrame(() => {
-        // Nur die ersten 240 Pixel wirken, danach ist der Kopf ohnehin verdeckt.
-        setVersatz(Math.min(window.scrollY, 240) * 0.28);
+        // Nur die ersten 260 Pixel wirken, danach ist der Kopf ohnehin verdeckt.
+        setScrollWeite(Math.min(window.scrollY, 260));
         angefordert = false;
       });
     };
@@ -111,12 +83,22 @@ export default function DashboardHero({
 
   return (
     <div className="dash-hero">
-      <div className="dash-hero-grund" style={{ transform: `translate3d(0, ${versatz}px, 0)` }}>
+      {/* Zwei Geschwindigkeiten geben die Tiefe: der Grund wandert mit dem
+          Scrollen leicht nach unten, Name und Begrüßung driften ganz leicht
+          nach oben, während die helle Fläche sich darüberschiebt (Tobis
+          Wunsch vom 13.08.2026: „nur so ganz leicht"). */}
+      <div
+        className="dash-hero-grund"
+        style={{ transform: `translate3d(0, ${(scrollWeite * 0.28).toFixed(1)}px, 0)` }}
+      >
         <div className="dash-hero-streifen" />
         <div className="dash-hero-schein" />
       </div>
 
-      <div className="dash-hero-inhalt">
+      <div
+        className="dash-hero-inhalt"
+        style={{ transform: `translate3d(0, ${(scrollWeite * -0.18).toFixed(1)}px, 0)` }}
+      >
         <p className="dash-hero-gruss">{gruss}</p>
         <h1 className="dash-hero-name">{name}</h1>
         <div className="dash-hero-zeile">

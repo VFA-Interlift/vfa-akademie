@@ -532,22 +532,17 @@ a, button {
   height: env(safe-area-inset-top, 0px);
   z-index: 3000;
   pointer-events: none;
-  /* Bewusst OHNE Schraffur: eine eigene Kopie des Musters läge auf dem
-     Dashboard über dem echten, bewegten Muster des Kopfes und erzeugte eine
-     sichtbare Naht (versetzte Linien, abgeschnittener Gelbschimmer — so sah es
-     am 13.08.2026 auf Tobis iPhone aus). Ein ruhiger Petrol-Grund liest sich
-     als Statusleiste, wie in nativen Apps. */
+  /* Ruhiges Petrol ohne Schraffur — der Streifen gilt nur noch für die Seiten
+     außer dem Dashboard, dort hält er die weiße Uhr über hellem Inhalt lesbar. */
   background-color: #007873;
 }
 
-/* Auf dem Dashboard liegt unter der Statusleiste bereits der echte Kopf mit
-   den animierten Streifen — dort wäre der Streifen nur eine starre Kopie mit
-   versetztem Muster. Deshalb ist er oben durchsichtig (das echte Muster läuft
-   bis über die Aussparung durch) und blendet per --safe-top-deckung erst ein,
-   kurz bevor die helle Inhaltsfläche die Uhr erreicht. Den Wert setzt
-   DashboardHero beim Scrollen. */
+/* Auf dem Dashboard gibt es den Streifen gar nicht — Tobis Entscheidung vom
+   13.08.2026 („Weg mit der Uhr"): kein Balken über der hellen Fläche, dafür
+   ist die weiße Uhrzeit im gescrollten Zustand optisch weg. Oben liegt sie
+   auf dem Petrol des Kopfes und bleibt lesbar. */
 html.dashboard-aktiv .safe-top {
-  opacity: var(--safe-top-deckung, 0);
+  display: none;
 }
 
 /* ── Dashboard: Kopfbereich mit zwei Ebenen ──
