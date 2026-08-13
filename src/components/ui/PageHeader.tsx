@@ -26,14 +26,20 @@ export default function PageHeader({
   // Uhr den Grund. Gestaltung in globals.css unter .seiten-kopf.
   return (
     <div className="seiten-kopf">
+      <div className="seiten-kopf-grund" aria-hidden="true">
+        <div className="dash-hero-streifen" />
+        <div className="dash-hero-schein" />
+      </div>
+
       {showBackButton && (
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ position: "relative", marginBottom: 14 }}>
           <BackButton label={backLabel} />
         </div>
       )}
       {showTitle && (
         <h1
           style={{
+            position: "relative",
             margin: 0,
             fontSize: "clamp(22px, 5vw, 28px)",
             fontWeight: 800,

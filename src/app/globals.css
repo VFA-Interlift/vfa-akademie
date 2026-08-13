@@ -619,9 +619,20 @@ a, button {
   padding: 22px 20px;
   border-radius: 14px;
   background-color: #007873;
-  background-image:
-    radial-gradient(110% 150% at 100% 0%, rgba(255, 193, 0, 0.45) 0%, rgba(255, 193, 0, 0.12) 40%, rgba(255, 193, 0, 0) 68%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 2px, rgba(255, 255, 255, 0) 2px 15px);
+}
+
+/* Dieselben Bauteile wie der Dashboard-Kopf (dash-hero-streifen/-schein) in
+   denselben Maßen: Der Grund ist so groß und so verschoben wie dort, das Band
+   zeigt also den identischen oberen Ausschnitt — gleiche Streifenrichtung,
+   gleiche Bewegung, gleicher Gelbschein. Ein eigener Nachbau sah gespiegelt
+   und starr aus (Tobis Bilder vom 13.08.2026 abends). */
+.seiten-kopf-grund {
+  position: absolute;
+  top: -88px;
+  left: 0;
+  right: 0;
+  height: 363px;
+  pointer-events: none;
 }
 @media (max-width: 759px) {
   .seiten-kopf {
