@@ -41,3 +41,44 @@ self.addEventListener("fetch", (event) => {
     fetch(request).catch(() => caches.match(OFFLINE_URL))
   );
 });
+
+/*
+ * Web Push: Erinnerung am Vortag einer Schulung (Absender: /api/cron/reminders).
+ * Der Server schickt JSON { titel, text, url }; ohne lesbare Daten zeigen wir
+ * einen neutralen Hinweis. iOS zeigt Push nur für Apps, die auf dem
+ * Home-Bildschirm liegen und in denen die Erinnerung aktiviert wurde.
+ */
+self.addEventListener("push", (event) => {
+  let inhalt = { titel: "VFA-Akademie", text: "Es gibt Neuigkeiten.", url: "/dashboard" };
+  try {
+    if (event.data) inhalt = { ...inhalt, ...event.data.json() };
+  } catch {
+    // Unlesbare Daten: neutraler Hinweis genügt.
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(inhalt.titel, {
+      body: inhalt.text,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: inhalt.url || "/dashboard" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const ziel = (event.notification.data && event.notification.data.url) || "/dashboard";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((fenster) => {
+      for (const f of fenster) {
+        if ("focus" in f) {
+          f.navigate(ziel);
+          return f.focus();
+        }
+      }
+      return clients.openWindow(ziel);
+    })
+  );
+});

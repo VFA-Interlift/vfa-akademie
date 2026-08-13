@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import AppCard from "@/components/ui/AppCard";
+import PushEinstellung from "@/components/PushEinstellung";
 import AppButton from "@/components/ui/AppButton";
 import AppSelect from "@/components/ui/AppSelect";
 import AppTextarea from "@/components/ui/AppTextarea";
@@ -334,6 +335,14 @@ function NotificationsCard({ initial }: { initial: boolean }) {
           {msg}
         </div>
       )}
+
+      {/* Push aufs Handy — zusätzlich zur E-Mail, je Gerät aktivierbar. */}
+      <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--vfa-linie-2)" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3, marginBottom: 8 }}>
+          Mitteilung aufs Handy
+        </div>
+        <PushEinstellung />
+      </div>
     </AppCard>
   );
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendTrainingReminderEmail } from "@/lib/email";
+import { sendePushAnNutzer } from "@/lib/push";
 import { formatDateRange } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +111,45 @@ export async function GET(req: Request) {
       }
     }
 
+    // Push aufs Handy am VORTAG (die E-Mail geht 3 Tage vorher): eigenes
+    // Tagesfenster, damit jede Schulung genau einmal getroffen wird. Empfänger
+    // ist, wer Erinnerungen wünscht UND auf mindestens einem Gerät die
+    // Mitteilung aktiviert hat (PushAbo vorhanden).
+    let pushGesendet = 0;
+    let pushKandidaten = 0;
+    try {
+      const pushStart = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
+      );
+      const pushEnde = new Date(pushStart);
+      pushEnde.setUTCDate(pushEnde.getUTCDate() + 1);
+
+      const morgen = await prisma.enrollment.findMany({
+        where: {
+          status: { in: [...ACTIVE_STATUSES] },
+          user: { notifyBeforeTraining: true, pushAbos: { some: {} } },
+          training: { date: { gte: pushStart, lt: pushEnde }, cancelledAt: null },
+        },
+        select: {
+          user: { select: { id: true } },
+          training: { select: { title: true, code: true, location: true } },
+        },
+      });
+      pushKandidaten = morgen.length;
+
+      for (const anmeldung of morgen) {
+        const kuerzel = anmeldung.training.code?.trim() || anmeldung.training.title;
+        const ort = anmeldung.training.location?.split(",")[0]?.trim();
+        pushGesendet += await sendePushAnNutzer(anmeldung.user.id, {
+          titel: "Morgen ist es so weit",
+          text: ort ? `${kuerzel} in ${ort} — viel Erfolg!` : `${kuerzel} — viel Erfolg!`,
+          url: "/meine-schulungen",
+        });
+      }
+    } catch (fehler) {
+      console.error("PUSH_ERINNERUNG_FEHLER", getErrorMessage(fehler));
+    }
+
     // Abgelaufene Registrierungsanforderungen wegräumen. Sie tragen
     // Passwort-Prüfwert, Name und Geburtsdatum von Leuten, aus denen nie ein
     // Konto wurde — die haben nach Ablauf des Links nichts mehr zu suchen.
@@ -130,6 +170,8 @@ export async function GET(req: Request) {
       candidates: enrollments.length,
       sent,
       failed,
+      pushKandidaten,
+      pushGesendet,
       aufgeraeumteRegistrierungen,
       triggeredAt: now.toISOString(),
     });

@@ -151,9 +151,37 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   documents          UserDocument[]
   appTestFeedback    AppTestFeedback?
+  pushAbos           PushAbo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Ein Web-Push-Abo eines Geräts (Handy, Browser). Ein Nutzer kann mehrere
+/// haben. Endpunkte, die der Push-Dienst als verschwunden meldet (410),
+/// werden beim Senden aufgeräumt.
+model PushAbo {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Das VAPID-Schlüsselpaar für Web Push — einmalig beim ersten Bedarf erzeugt
+/// und hier abgelegt, damit kein Umweg über Vercel-Umgebungsvariablen nötig
+/// ist. Es gibt genau eine Zeile (id = 1).
+model WebPushSchluessel {
+  id         Int      @id @default(1)
+  publicKey  String
+  privateKey String
+  createdAt  DateTime @default(now())
 }
 
 model Training {
