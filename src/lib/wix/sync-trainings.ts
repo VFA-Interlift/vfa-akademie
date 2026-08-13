@@ -11,8 +11,75 @@ export type WixSyncResult = {
   created: number;
   updated: number;
   skipped: { kurscode: string; reason: string }[];
+  nachgezogen: NachziehErgebnis;
   syncedAt: string;
 };
+
+type NachziehErgebnis = { geprueft: number; zugeordnet: number; eingeschrieben: number };
+
+/**
+ * Ordnet Website-Anmeldungen nach, deren Kurs beim Eingang noch nicht in der
+ * App war. Der Wix-Webhook matcht nur im Moment des Eingangs — Kurse entstehen
+ * aber oft erst danach (nächtlicher Sync, neue Jahrgänge). So hingen 16
+ * A1-2604-Anmeldungen (nachgetragen am Vorabend des ersten Sync-Laufs) und
+ * eine YLD-2704-Anmeldung dauerhaft ohne Schulung in der Luft — ohne
+ * Einschreibung, Zertifikat oder Credits (Befund 13.08.2026).
+ */
+async function offeneAnmeldungenNachziehen(): Promise<NachziehErgebnis> {
+  const offene = await prisma.cobraTrainingParticipant.findMany({
+    where: { participantType: "WIX_WEBSITE", trainingId: null },
+    select: { id: true, caption: true, email: true, raw: true },
+  });
+
+  let zugeordnet = 0;
+  let eingeschrieben = 0;
+
+  for (const eintrag of offene) {
+    const roh = eintrag.raw as { kurscode?: unknown } | null;
+    const kurscode =
+      (typeof roh?.kurscode === "string" && roh.kurscode.trim()) ||
+      (eintrag.caption?.trim() ?? "");
+    if (!kurscode) continue;
+
+    // Bewusst das älteste Training bei gleichem Code: An ihm hängen die
+    // bestehenden Einschreibungen und Zertifikate.
+    const training = await prisma.training.findFirst({
+      where: { code: { equals: kurscode, mode: "insensitive" } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    });
+    if (!training) continue;
+
+    await prisma.cobraTrainingParticipant.update({
+      where: { id: eintrag.id },
+      data: { trainingId: training.id },
+    });
+    zugeordnet += 1;
+
+    // Wie im Wix-Webhook: Ein bereits bestätigtes Konto wird sofort
+    // eingeschrieben; unbestätigte bleiben außen vor.
+    if (eintrag.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: eintrag.email },
+        select: { id: true, emailVerifiedAt: true },
+      });
+      if (user?.emailVerifiedAt) {
+        await prisma.enrollment.upsert({
+          where: { userId_trainingId: { userId: user.id, trainingId: training.id } },
+          create: { userId: user.id, trainingId: training.id, status: "CONFIRMED" },
+          update: {},
+        });
+        eingeschrieben += 1;
+      }
+    }
+  }
+
+  if (zugeordnet > 0) {
+    console.log("WIX_SYNC_ANMELDUNGEN_NACHGEZOGEN", { zugeordnet, eingeschrieben });
+  }
+
+  return { geprueft: offene.length, zugeordnet, eingeschrieben };
+}
 
 /**
  * Übernimmt die Website-Kurse (Wix-CMS „Schulungen") in die App-DB —
@@ -101,11 +168,16 @@ export async function syncWixTrainings(): Promise<WixSyncResult> {
     });
   }
 
+  // Jetzt existieren die Kurse — Anmeldungen nachziehen, die vor ihrem Kurs
+  // eingegangen sind.
+  const nachgezogen = await offeneAnmeldungenNachziehen();
+
   return {
     received: kurse.length,
     created,
     updated,
     skipped,
+    nachgezogen,
     syncedAt: new Date().toISOString(),
   };
 }
