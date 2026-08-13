@@ -320,7 +320,7 @@ export default function KurskalenderPage() {
           <AnimatedSection delayMs={160}>
             <AppCard>
               {loading ? (
-                <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>
                   Kurskalender wird geladen...
                 </div>
               ) : (
@@ -371,7 +371,7 @@ export default function KurskalenderPage() {
                               style={{
                                 minHeight: 92,
                                 padding: 7,
-                                border: "1px solid #E6E6E6",
+                                border: "1px solid var(--vfa-linie)",
                                 background: !day.isCurrentMonth
                                   ? "#F1F1EE"
                                   : isWeekend(day.date)
@@ -522,7 +522,7 @@ export default function KurskalenderPage() {
                 <div style={{ color: "#007873", fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   Alle Schulungen {start}–{end}
                 </div>
-                <button type="button" onClick={() => setOverflowWeek(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#888888", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+                <button type="button" onClick={() => setOverflowWeek(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--vfa-text-3)", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
               </div>
               <div style={{ display: "grid", gap: 8 }}>
                 {bars.map((bar) => (
@@ -539,7 +539,7 @@ export default function KurskalenderPage() {
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800, color: "#1F1F1F", fontSize: 14, lineHeight: 1.2 }}>{getDisplayTrainingTitle(bar.training)}</div>
-                      <div style={{ fontSize: 12, color: "#666666", marginTop: 2 }}>{formatDateRange(bar.training.date, bar.training.endDate)}</div>
+                      <div style={{ fontSize: 12, color: "var(--vfa-text-2)", marginTop: 2 }}>{formatDateRange(bar.training.date, bar.training.endDate)}</div>
                     </div>
                     <div style={{ color: "#007873", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{bar.training.creditsAward} Cr.</div>
                   </button>
@@ -598,7 +598,7 @@ function TrainingDialog({
           maxWidth: 760,
           maxHeight: "calc(100vh - 36px)",
           overflow: "auto",
-          background: "#FFFFFF",
+          background: "var(--vfa-karte)",
           border: "1px solid #FFC100",
           boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
           padding: "clamp(14px, 4vw, 22px)",
@@ -631,7 +631,7 @@ function TrainingDialog({
               style={{
                 marginTop: 8,
                 marginBottom: 0,
-                color: "#333333",
+                color: "var(--vfa-text)",
                 lineHeight: 1.5,
               }}
             >
@@ -675,7 +675,7 @@ function TrainingDialog({
             style={{
               marginTop: 18,
               paddingTop: 16,
-              borderTop: "1px solid #E6E6E6",
+              borderTop: "1px solid var(--vfa-linie)",
             }}
           >
             <Info label="Weitere Informationen" value={training.description} />
@@ -686,7 +686,7 @@ function TrainingDialog({
           style={{
             marginTop: 20,
             paddingTop: 18,
-            borderTop: "1px solid #E6E6E6",
+            borderTop: "1px solid var(--vfa-linie)",
             display: "flex",
             justifyContent: "space-between",
             gap: 12,
@@ -696,7 +696,7 @@ function TrainingDialog({
         >
           <div
             style={{
-              color: "#333333",
+              color: "var(--vfa-text)",
               fontSize: 14,
               lineHeight: 1.5,
             }}
@@ -709,7 +709,7 @@ function TrainingDialog({
               href={getBookingUrl(training)}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ ...bookingButtonStyle, background: "#FFFFFF", color: "#007873", border: "1px solid #007873" }}
+              style={{ ...bookingButtonStyle, background: "var(--vfa-karte)", color: "#007873", border: "1px solid #007873" }}
             >
               Kursdetails
             </a>
@@ -795,7 +795,7 @@ function ListenAnsicht({
   if (loading) {
     return (
       <AppCard>
-        <div style={{ color: "#333333", lineHeight: 1.6 }}>Kurse werden geladen...</div>
+        <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>Kurse werden geladen...</div>
       </AppCard>
     );
   }
@@ -804,7 +804,7 @@ function ListenAnsicht({
     return (
       <AppCard>
         <div style={{ fontWeight: 800, color: "#007873" }}>Keine kommenden Kurse gefunden.</div>
-        <p style={{ margin: "6px 0 0", color: "#666666", fontSize: 14 }}>
+        <p style={{ margin: "6px 0 0", color: "var(--vfa-text-2)", fontSize: 14 }}>
           Falls ein Bereichsfilter aktiv ist, hebe ihn auf.
         </p>
       </AppCard>
@@ -850,8 +850,8 @@ function ListenAnsicht({
                 width: "100%",
                 textAlign: "left",
                 cursor: "pointer",
-                background: "#FFFFFF",
-                border: "1px solid #E6E6E6",
+                background: "var(--vfa-karte)",
+                border: "1px solid var(--vfa-linie)",
                 borderRadius: 12,
                 padding: "14px 16px",
                 display: "flex",
@@ -860,10 +860,10 @@ function ListenAnsicht({
               }}
             >
               <div style={{ textAlign: "center", minWidth: 46 }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#1F1F1F", lineHeight: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: "var(--vfa-text)", lineHeight: 1 }}>
                   {d.getDate()}
                 </div>
-                <div style={{ fontSize: 11, color: "#888888", fontWeight: 700, textTransform: "uppercase" }}>
+                <div style={{ fontSize: 11, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase" }}>
                   {d.toLocaleDateString("de-DE", { month: "short" })}
                 </div>
               </div>
@@ -872,7 +872,7 @@ function ListenAnsicht({
                 <div style={{ fontWeight: 750, color: "#007873", fontSize: 15, lineHeight: 1.25 }}>
                   {cleanTrainingTitle(t.title)}
                 </div>
-                <div style={{ color: "#888888", fontSize: 12, marginTop: 3 }}>
+                <div style={{ color: "var(--vfa-text-3)", fontSize: 12, marginTop: 3 }}>
                   {formatDateRange(t.date, t.endDate)}
                   {t.code ? ` · ${t.code}` : ""}
                   {adresse.length > 0 ? ` · ${adresse[0]}` : ""}
@@ -883,7 +883,7 @@ function ListenAnsicht({
                 <div style={{ color: "#007873", fontWeight: 900, fontSize: 16, lineHeight: 1 }}>
                   {t.creditsAward}
                 </div>
-                <div style={{ fontSize: 10, color: "#888888", fontWeight: 800, textTransform: "uppercase" }}>
+                <div style={{ fontSize: 10, color: "var(--vfa-text-3)", fontWeight: 800, textTransform: "uppercase" }}>
                   Credits
                 </div>
               </div>
@@ -913,10 +913,10 @@ function PreisBlock({ training }: { training: CalendarTraining }) {
   if (stufen.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #E6E6E6" }}>
+    <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--vfa-linie)" }}>
       <div
         style={{
-          color: "#888888",
+          color: "var(--vfa-text-3)",
           fontSize: 11,
           fontWeight: 800,
           letterSpacing: "0.08em",
@@ -937,12 +937,12 @@ function PreisBlock({ training }: { training: CalendarTraining }) {
               minWidth: 110,
             }}
           >
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#1F1F1F" }}>{s.wert}</div>
-            <div style={{ fontSize: 11, color: "#888888", fontWeight: 700 }}>{s.label}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "var(--vfa-text)" }}>{s.wert}</div>
+            <div style={{ fontSize: 11, color: "var(--vfa-text-3)", fontWeight: 700 }}>{s.label}</div>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 8, fontSize: 12, color: "#999999" }}>
+      <div style={{ marginTop: 8, fontSize: 12, color: "var(--vfa-text-3)" }}>
         Angaben ohne Gewähr — verbindliche Preise auf der VFA-Website.
       </div>
     </div>
@@ -1135,7 +1135,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
       ) : (
         <div
           style={{
-            color: "#1F1F1F",
+            color: "var(--vfa-text)",
             lineHeight: 1.45,
             fontSize: 14,
           }}
@@ -1227,7 +1227,7 @@ const arrowButtonStyle: CSSProperties = {
   height: 44,
   borderRadius: 999,
   border: "1px solid #C7C7C7",
-  background: "#FFFFFF",
+  background: "var(--vfa-karte)",
   color: "#007873",
   fontWeight: 900,
   fontSize: 22,
@@ -1241,7 +1241,7 @@ const backButtonStyle: CSSProperties = {
   padding: "8px 14px",
   borderRadius: 999,
   border: "1px solid #007873",
-  background: "#FFFFFF",
+  background: "var(--vfa-karte)",
   color: "#007873",
   fontWeight: 850,
   fontSize: 13,

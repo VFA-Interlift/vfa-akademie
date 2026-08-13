@@ -98,7 +98,7 @@ export default function RangAufstieg({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#FFFFFF",
+          background: "var(--vfa-karte)",
           borderRadius: 20,
           padding: "30px 26px",
           maxWidth: 340,
@@ -109,10 +109,10 @@ export default function RangAufstieg({
         }}
       >
         <div style={{ fontSize: 44, lineHeight: 1 }}>🏆</div>
-        <h2 style={{ margin: "14px 0 0", fontSize: 22, fontWeight: 800, color: "#1F1F1F", letterSpacing: "-0.02em" }}>
+        <h2 style={{ margin: "14px 0 0", fontSize: 22, fontWeight: 800, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
           Glückwunsch!
         </h2>
-        <p style={{ margin: "8px 0 0", fontSize: 15, color: "#555555", lineHeight: 1.5 }}>
+        <p style={{ margin: "8px 0 0", fontSize: 15, color: "var(--vfa-text-2)", lineHeight: 1.5 }}>
           Du hast den Rang{" "}
           <strong style={{ color: rangFarbe }}>{rangLabel}</strong> erreicht.
         </p>

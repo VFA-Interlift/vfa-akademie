@@ -264,7 +264,7 @@ export default async function DashboardPage() {
 
                 <CreditsZuwachs userId={user.id} credits={user.creditsTotal} />
 
-                <div style={{ color: "#666666", fontSize: 13, textAlign: "center", lineHeight: 1.5 }}>
+                <div style={{ color: "var(--vfa-text-2)", fontSize: 13, textAlign: "center", lineHeight: 1.5 }}>
                   {nextRank
                     ? `Noch ${progress.remainingToNext.toLocaleString("de-DE")} Credits bis ${nextRank.label}`
                     : "Höchste Stufe erreicht ✓"}
@@ -369,7 +369,7 @@ export default async function DashboardPage() {
             </div>
 
             {!rankingFirst ? (
-              <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
                 Noch keine Teilnehmer im Ranking – sammle die ersten Credits!
               </div>
             ) : (
@@ -391,12 +391,12 @@ export default async function DashboardPage() {
                       highlight
                     />
                   ) : (
-                    <div style={{ color: "#888888", fontSize: 13, lineHeight: 1.5, padding: "10px 12px", background: "#F7F7F4", borderRadius: 10, border: "1px solid #EFEFEF" }}>
+                    <div style={{ color: "var(--vfa-text-3)", fontSize: 13, lineHeight: 1.5, padding: "10px 12px", background: "var(--vfa-karte-2)", borderRadius: 10, border: "1px solid #EFEFEF" }}>
                       Du bist noch nicht im Ranking – sammle deine ersten Credits.
                     </div>
                   )
                 )}
-                <div style={{ fontSize: 13, color: "#666666", padding: "8px 12px", background: "rgba(0,120,115,0.05)", borderRadius: 10, border: "1px solid rgba(0,120,115,0.15)" }}>
+                <div style={{ fontSize: 13, color: "var(--vfa-text-2)", padding: "8px 12px", background: "rgba(0,120,115,0.05)", borderRadius: 10, border: "1px solid rgba(0,120,115,0.15)" }}>
                   Median aller Teilnehmer: <strong style={{ color: "#007873" }}>{rankingMedian.toLocaleString("de-DE")} Cr.</strong>
                   {user.creditsTotal > 0 && user.creditsTotal !== rankingMedian && (
                     <> · du liegst {Math.abs(user.creditsTotal - rankingMedian).toLocaleString("de-DE")} Cr. {user.creditsTotal > rankingMedian ? "darüber" : "darunter"}</>
@@ -474,7 +474,7 @@ function RankingRow({
         {rankLabel}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-        <div style={{ color: "#1F1F1F", fontSize: 15, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
+        <div style={{ color: "var(--vfa-text)", fontSize: 15, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
           {name}
         </div>
         <div style={{ color: "#007873", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap" }}>
@@ -499,7 +499,7 @@ function StatBox({ label, value, wide }: { label: string; value: string | number
       <div style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 900, color: "#1F1F1F", lineHeight: 1.1 }}>
+      <div style={{ fontSize: 22, fontWeight: 900, color: "var(--vfa-text)", lineHeight: 1.1 }}>
         {value}
       </div>
     </div>

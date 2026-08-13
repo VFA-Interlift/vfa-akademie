@@ -83,7 +83,7 @@ export default async function TrainingPage({
     <main
       style={{
         minHeight: "100vh",
-        background: "#F7F7F4",
+        background: "var(--vfa-karte-2)",
         padding: "40px 24px",
       }}
     >
@@ -142,7 +142,7 @@ export default async function TrainingPage({
               <div
                 style={{
                   fontSize: 14,
-                  color: "#333333",
+                  color: "var(--vfa-text)",
                   textAlign: "right",
                   minWidth: 180,
                 }}
@@ -190,7 +190,7 @@ export default async function TrainingPage({
                 style={{
                   marginTop: 16,
                   paddingTop: 16,
-                  borderTop: "1px solid #E6E6E6",
+                  borderTop: "1px solid var(--vfa-linie)",
                 }}
               >
                 <div
@@ -206,7 +206,7 @@ export default async function TrainingPage({
                   Inhalte
                 </div>
 
-                <div style={{ color: "#333333", lineHeight: 1.6 }}>
+                <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>
                   {training.description}
                 </div>
               </div>
@@ -240,7 +240,7 @@ export default async function TrainingPage({
                   style={{
                     marginTop: 10,
                     marginBottom: 0,
-                    color: "#333333",
+                    color: "var(--vfa-text)",
                     lineHeight: 1.6,
                   }}
                 >
@@ -264,9 +264,9 @@ export default async function TrainingPage({
                   style={{
                     minWidth: 240,
                     padding: 16,
-                    border: "1px solid #E6E6E6",
-                    background: "#F7F7F4",
-                    color: "#333333",
+                    border: "1px solid var(--vfa-linie)",
+                    background: "var(--vfa-karte-2)",
+                    color: "var(--vfa-text)",
                   }}
                 >
                   Kein QR-Code vorhanden.
@@ -274,9 +274,9 @@ export default async function TrainingPage({
               ) : (
                 <div
                   style={{
-                    border: "1px solid #E6E6E6",
+                    border: "1px solid var(--vfa-linie)",
                     padding: 16,
-                    background: "#F7F7F4",
+                    background: "var(--vfa-karte-2)",
                     maxWidth: 330,
                   }}
                 >
@@ -300,8 +300,8 @@ export default async function TrainingPage({
                       display: "block",
                       width: 280,
                       height: 280,
-                      background: "#FFFFFF",
-                      border: "1px solid #E6E6E6",
+                      background: "var(--vfa-karte)",
+                      border: "1px solid var(--vfa-linie)",
                     }}
                   />
                 </div>
@@ -336,7 +336,7 @@ function Info({ label, value }: { label: string; value: string }) {
         {label}
       </div>
 
-      <div style={{ color: "#1F1F1F", lineHeight: 1.5 }}>{value}</div>
+      <div style={{ color: "var(--vfa-text)", lineHeight: 1.5 }}>{value}</div>
     </div>
   );
 }

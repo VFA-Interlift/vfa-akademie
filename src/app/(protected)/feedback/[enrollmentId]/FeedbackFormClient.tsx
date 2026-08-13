@@ -88,7 +88,7 @@ export default function FeedbackFormClient({
             <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: 24, fontWeight: 800 }}>
               Vielen Dank für dein Feedback!
             </h2>
-            <p style={{ margin: 0, color: "#333333", fontSize: 16 }}>
+            <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: 16 }}>
               Dir wurden <strong>+{FEEDBACK_CREDITS} Credits</strong> gutgeschrieben.
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function FeedbackFormClient({
     <div style={{ display: "grid", gap: 12 }}>
       <AnimatedSection>
         <AppCard>
-          <p style={{ margin: "0 0 14px", color: "#333333", lineHeight: 1.6 }}>
+          <p style={{ margin: "0 0 14px", color: "var(--vfa-text)", lineHeight: 1.6 }}>
             Deine Rückmeldung zur Schulung <strong>{trainingTitle}</strong>. Bewerte mit 1–5
             Sternen. Nur die allgemeine Zufriedenheit ist Pflicht – alles andere ist freiwillig.
           </p>
@@ -113,7 +113,7 @@ export default function FeedbackFormClient({
               onChange={(e) => setAnonymous(e.target.checked)}
               style={{ width: 18, height: 18, accentColor: "#007873" }}
             />
-            <span style={{ fontSize: 15, color: "#1F1F1F", fontWeight: 600 }}>
+            <span style={{ fontSize: 15, color: "var(--vfa-text)", fontWeight: 600 }}>
               Anonym ausfüllen (dein Name erscheint nicht in der Auswertung)
             </span>
           </label>
@@ -136,7 +136,7 @@ export default function FeedbackFormClient({
             <div style={{ display: "grid", gap: 18 }}>
               {section.questions.map((q) => (
                 <div key={q.key} style={{ display: "grid", gap: 8 }}>
-                  <span style={{ fontSize: 15, color: "#1F1F1F", fontWeight: 600, lineHeight: 1.45 }}>
+                  <span style={{ fontSize: 15, color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
                     {q.label}
                     {q.required && <span style={{ color: "#B00020" }}> *</span>}
                   </span>
@@ -167,7 +167,7 @@ export default function FeedbackFormClient({
                           onChange={() => setAnswer(q.key, option)}
                           style={{ width: 17, height: 17, accentColor: "#007873" }}
                         />
-                        <span style={{ fontSize: 14, color: "#333333" }}>{option}</span>
+                        <span style={{ fontSize: 14, color: "var(--vfa-text)" }}>{option}</span>
                       </label>
                     ))}
 
@@ -182,7 +182,7 @@ export default function FeedbackFormClient({
                             onChange={() => toggleMulti(q.key, option)}
                             style={{ width: 17, height: 17, accentColor: "#007873", marginTop: 2 }}
                           />
-                          <span style={{ fontSize: 14, color: "#333333" }}>{option}</span>
+                          <span style={{ fontSize: 14, color: "var(--vfa-text)" }}>{option}</span>
                         </label>
                       );
                     })}

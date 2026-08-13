@@ -88,9 +88,9 @@ function getButtonStyle(
   if (variant === "secondary") {
     return {
       ...base,
-      background: "#F0F0F0",
-      color: "#333333",
-      border: "1px solid #DEDEDE",
+      background: "var(--vfa-karte-2)",
+      color: "var(--vfa-text)",
+      border: "1px solid var(--vfa-linie)",
     };
   }
 

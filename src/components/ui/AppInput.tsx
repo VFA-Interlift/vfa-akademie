@@ -60,7 +60,7 @@ export default function AppInput({
           borderRadius: 8,
           border: "1px solid #D4D4D4",
           background: disabled ? "#F7F7F4" : "#FFFFFF",
-          color: "#1F1F1F",
+          color: "var(--vfa-text)",
           fontSize: 15,
           opacity: disabled ? 0.7 : 1,
           transition: "border-color 120ms ease",

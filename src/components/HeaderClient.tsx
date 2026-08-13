@@ -183,7 +183,7 @@ export default function HeaderClient() {
         left: 0,
         right: 0,
         zIndex: 2000,
-        background: "#FFFFFF",
+        background: "var(--vfa-karte)",
         borderBottom: `1px solid ${VFA_GREY}`,
         boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
       }}
@@ -247,7 +247,7 @@ export default function HeaderClient() {
                 marginTop: 2,
                 fontSize: 11,
                 fontWeight: 600,
-                color: "#888888",
+                color: "var(--vfa-text-3)",
                 textTransform: "uppercase",
                 letterSpacing: "0.07em",
                 whiteSpace: "nowrap",
@@ -278,7 +278,7 @@ export default function HeaderClient() {
                 borderRadius: 999,
                 border: `1px solid ${VFA_GREY}`,
                 background: menuOpen ? VFA_YELLOW : "#F4F4F4",
-                color: "#1F1F1F",
+                color: "var(--vfa-text)",
                 fontWeight: 900,
                 fontSize: 20,
                 cursor: "pointer",
@@ -312,7 +312,7 @@ export default function HeaderClient() {
         <div
           style={{
             borderTop: "1px solid #E6E6E6",
-            background: "#FFFFFF",
+            background: "var(--vfa-karte)",
             padding: "14px 18px 18px",
           }}
         >
@@ -329,15 +329,15 @@ export default function HeaderClient() {
                 padding: "12px 14px",
                 borderRadius: 10,
                 border: "1px solid #EBEBEB",
-                background: "#F7F7F4",
-                color: "#1F1F1F",
+                background: "var(--vfa-karte-2)",
+                color: "var(--vfa-text)",
               }}
             >
               <div
                 style={{
                   fontSize: 12,
                   fontWeight: 800,
-                  color: "#666666",
+                  color: "var(--vfa-text-2)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -459,7 +459,7 @@ export default function HeaderClient() {
                 borderRadius: 999,
                 border: `1px solid ${VFA_GREY}`,
                 background: "#EFEFEF",
-                color: "#1F1F1F",
+                color: "var(--vfa-text)",
                 fontWeight: 800,
                 fontSize: 13,
                 textTransform: "uppercase",

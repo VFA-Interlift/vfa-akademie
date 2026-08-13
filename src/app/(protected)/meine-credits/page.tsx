@@ -58,11 +58,11 @@ export default function MeineCreditsPage() {
         </AnimatedSection>
 
         {loading ? (
-          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "#888888", fontSize: 14 }}>Wird geladen…</div></AppCard></AnimatedSection>
+          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: 14 }}>Wird geladen…</div></AppCard></AnimatedSection>
         ) : error ? (
           <AnimatedSection delayMs={80}><AppCard><div style={{ color: "#B00020", fontSize: 14 }}>{error}</div></AppCard></AnimatedSection>
         ) : txs.length === 0 ? (
-          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "#888888", fontSize: 14 }}>Noch keine Credit-Buchungen vorhanden.</div></AppCard></AnimatedSection>
+          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: 14 }}>Noch keine Credit-Buchungen vorhanden.</div></AppCard></AnimatedSection>
         ) : (
           <AnimatedSection delayMs={80}>
             <AppCard accent="green">
@@ -85,8 +85,8 @@ export default function MeineCreditsPage() {
                       }}
                     >
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", lineHeight: 1.2 }}>{title}</div>
-                        <div style={{ fontSize: 12, color: "#888888", marginTop: 3 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14, color: "var(--vfa-text)", lineHeight: 1.2 }}>{title}</div>
+                        <div style={{ fontSize: 12, color: "var(--vfa-text-3)", marginTop: 3 }}>
                           {date} · {reasonLabel(tx.reason)}
                         </div>
                       </div>
@@ -110,11 +110,11 @@ export default function MeineCreditsPage() {
 
 function SummaryBox({ label, value, color, animate = false }: { label: string; value: number; color: string; animate?: boolean }) {
   return (
-    <div style={{ padding: "14px 16px", background: "#FFFFFF", border: "1px solid #EFEFEF", borderRadius: 12 }}>
+    <div style={{ padding: "14px 16px", background: "var(--vfa-karte)", border: "1px solid #EFEFEF", borderRadius: 12 }}>
       <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>
         {animate ? <AnimatedNumber value={value} /> : value.toLocaleString("de-DE")}
       </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--vfa-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>{label}</div>
     </div>
   );
 }

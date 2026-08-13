@@ -432,7 +432,7 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
             borderRadius: 999,
             border: "1px solid #D4D4D4",
             background: "#F4F4F4",
-            color: "#666666",
+            color: "var(--vfa-text-2)",
             fontWeight: 700,
             fontSize: 14,
             letterSpacing: "0.04em",

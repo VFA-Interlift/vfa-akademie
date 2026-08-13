@@ -71,23 +71,23 @@ export default function TesterWelcome({
           {anrede} schön, dass du dabei bist!
         </h2>
 
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
+        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
           Du gehörst zu den Ersten, die die VFA-Akademie App ausprobieren. Sie bündelt
           deine Schulungen, Zertifikate und Credits an einer Stelle.
         </p>
 
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
+        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
           Am besten legst du sie gleich auf den Startbildschirm deines Handys.
           Schau dich danach in Ruhe um: Startseite, deine Schulungen und
           Zertifikate, der Kurskalender, der Kompetenzpass und deine Credits.
         </p>
 
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
+        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
           Wenn dir etwas fehlt, komisch vorkommt oder schlicht nicht funktioniert,
           freuen wir uns über deine Rückmeldung!
         </p>
 
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#333333" }}>
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
           {feedbackGesendet ? "Ist dir seitdem noch etwas aufgefallen? Unter " : "Probier die App erst in Ruhe aus. Danach findest du unter "}
           <Link href="/einstellungen" style={{ color: "#007873", fontWeight: 700 }}>
             Einstellungen
@@ -114,7 +114,7 @@ export default function TesterWelcome({
         border: "1px solid rgba(0,120,115,0.22)",
         borderRadius: 12,
         fontSize: 14,
-        color: "#333333",
+        color: "var(--vfa-text-2)",
       }}
     >
       Deine Rückmeldung zur Testrunde fehlt noch — der Fragebogen liegt unter{" "}

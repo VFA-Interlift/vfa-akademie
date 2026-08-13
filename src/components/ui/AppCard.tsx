@@ -30,9 +30,9 @@ export default function AppCard({
             ? `1px solid ${VFA_GREEN}`
             : accent === "yellow"
               ? `1px solid ${VFA_YELLOW}`
-              : "1px solid #E8E8E8",
-        background: "#FFFFFF",
-        color: "#1F1F1F",
+              : "1px solid var(--vfa-linie)",
+        background: "var(--vfa-karte)",
+        color: "var(--vfa-text)",
         boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
         ...style,
       }}

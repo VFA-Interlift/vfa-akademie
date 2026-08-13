@@ -152,7 +152,7 @@ export default function AnimatedProgressCircle({
             width: 170,
             height: 170,
             borderRadius: "50%",
-            background: "#FFFFFF",
+            background: "var(--vfa-karte)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -167,7 +167,7 @@ export default function AnimatedProgressCircle({
         >
           <div
             style={{
-              color: "#666666",
+              color: "var(--vfa-text-2)",
               fontSize: 12,
               fontWeight: 800,
               textTransform: "uppercase",
@@ -192,7 +192,7 @@ export default function AnimatedProgressCircle({
           <div
             style={{
               marginTop: 8,
-              color: "#1F1F1F",
+              color: "var(--vfa-text)",
               fontSize: 15,
               fontWeight: 800,
               lineHeight: 1.3,

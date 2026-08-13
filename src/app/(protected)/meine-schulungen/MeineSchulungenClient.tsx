@@ -49,7 +49,7 @@ export default function MeineSchulungenClient({
             <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
               Aktuell sind dir keine Schulungen zugeordnet.
             </div>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
               Im{" "}
               <Link href="/kurskalender" style={{ color: "#007873", fontWeight: 700 }}>
                 Kurskalender
@@ -88,7 +88,7 @@ export default function MeineSchulungenClient({
             <div style={{ fontSize: 16, fontWeight: 800, color: "#007873" }}>
               Aktuell sind keine bevorstehenden Schulungen geplant.
             </div>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
               Abgeschlossene Schulungen findest du unter &bdquo;Meine Zertifikate&ldquo;.
             </p>
           </AppCard>
@@ -140,7 +140,7 @@ export default function MeineSchulungenClient({
                           {displayTitle}
                         </h2>
 
-                        <div style={{ marginTop: 12, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "#666666", fontWeight: 600 }}>
+                        <div style={{ marginTop: 12, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "var(--vfa-text-2)", fontWeight: 600 }}>
                           <span>📅 {dateText}</span>
                           {addressLines.length > 0 && <span>📍 {addressLines[0]}</span>}
                         </div>
@@ -150,7 +150,7 @@ export default function MeineSchulungenClient({
                         <div style={{ color: "#007873", fontWeight: 950, fontSize: "clamp(20px, 4vw, 30px)", lineHeight: 1, textAlign: "right" }}>
                           {training.creditsAward}
                         </div>
-                        <div style={{ color: "#888888", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "right" }}>
+                        <div style={{ color: "var(--vfa-text-3)", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "right" }}>
                           Credits
                         </div>
                         <div style={{ marginTop: 8, color: "#007873", fontSize: 22, fontWeight: 900, lineHeight: 1, transition: "transform 180ms ease", transform: isOpen ? "rotate(180deg)" : "none" }}>
@@ -162,7 +162,7 @@ export default function MeineSchulungenClient({
 
                   {isOpen && (
                     <AnimatedSection delayMs={0}>
-                      <div style={{ borderTop: "1px solid #E6E6E6", padding: "16px 20px 18px", background: "#FFFFFF" }}>
+                      <div style={{ borderTop: "1px solid var(--vfa-linie)", padding: "16px 20px 18px", background: "var(--vfa-karte)" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "16px 20px" }}>
                           <Info label="Dozent" value={instructorName} muted={instructorName === "Noch nicht hinterlegt"} />
                           <Info label="Abschlussdokument" value={training.certificateKindLabel} />
@@ -252,7 +252,7 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
         <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
           Bisherige Teilnahmen
         </div>
-        <div style={{ color: "#888888", fontSize: 13, marginTop: 2, marginBottom: 10 }}>
+        <div style={{ color: "var(--vfa-text-3)", fontSize: 13, marginTop: 2, marginBottom: 10 }}>
           {trainings.length} {trainings.length === 1 ? "Schulung" : "Schulungen"} · {credits} Credits gesammelt
         </div>
 
@@ -270,7 +270,7 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
                 <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 14 }}>
                   {getDisplayTrainingTitle(t)}
                 </div>
-                <div style={{ color: "#888888", fontSize: 12, marginTop: 2 }}>
+                <div style={{ color: "var(--vfa-text-3)", fontSize: 12, marginTop: 2 }}>
                   {formatDateRange(t.date, t.endDate)}
                   {t.code ? ` · ${t.code}` : ""}
                 </div>
@@ -324,7 +324,7 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
           <div style={{ fontSize: 12, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             Empfohlen für dich
           </div>
-          <div style={{ fontSize: 13, color: "#999999", marginTop: 2 }}>
+          <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>
             Dein nächster Schritt in der VFA-Weiterbildung
           </div>
         </div>
@@ -335,7 +335,7 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
               <div style={{ fontSize: 11, fontWeight: 800, color: "#7C5A0A", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 ★ {rec.reason}
               </div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#1F1F1F", lineHeight: 1.25 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1.25 }}>
                 {rec.title}
               </div>
               <div style={{ fontSize: 13.5, color: "#555555", lineHeight: 1.55 }}>
@@ -343,7 +343,7 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
               </div>
 
               {rec.nextTraining ? (
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "#666666", fontWeight: 600, marginTop: 2 }}>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "var(--vfa-text-2)", fontWeight: 600, marginTop: 2 }}>
                   <span>
                     📅 Nächster Termin: {formatDateRange(rec.nextTraining.date, rec.nextTraining.endDate)}
                     {rec.nextTraining.code ? ` (${rec.nextTraining.code})` : ""}
@@ -354,7 +354,7 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
                   })()}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: "#888888", fontStyle: "italic" }}>
+                <div style={{ fontSize: 13, color: "var(--vfa-text-3)", fontStyle: "italic" }}>
                   Termine folgen – schau im Kurskalender vorbei.
                 </div>
               )}
@@ -392,11 +392,11 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
 
 function SummaryBox({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ border: "1px solid #EFEFEF", background: "#FFFFFF", padding: "14px 16px", borderRadius: 12 }}>
+    <div style={{ border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte)", padding: "14px 16px", borderRadius: 12 }}>
       <div style={{ color: "#007873", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
         {label}
       </div>
-      <div style={{ color: "#1F1F1F", fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>
+      <div style={{ color: "var(--vfa-text)", fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>
         {value.toLocaleString("de-DE")}
       </div>
     </div>
@@ -409,7 +409,7 @@ function Info({ label, value, muted = false }: { label: string; value: string; m
       <div style={{ fontSize: 12, fontWeight: 850, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
         {label}
       </div>
-      <div style={{ color: muted ? "#777777" : "#1F1F1F", lineHeight: 1.45, fontSize: 14, fontStyle: muted ? "italic" : "normal", overflowWrap: "anywhere" }}>
+      <div style={{ color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)", lineHeight: 1.45, fontSize: 14, fontStyle: muted ? "italic" : "normal", overflowWrap: "anywhere" }}>
         {value}
       </div>
     </div>
@@ -425,7 +425,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
       {lines.length === 0 ? (
         <div style={{ color: "#777777", lineHeight: 1.45, fontSize: 14, fontStyle: "italic" }}>Noch nicht hinterlegt</div>
       ) : (
-        <div style={{ color: "#1F1F1F", lineHeight: 1.45, fontSize: 14 }}>
+        <div style={{ color: "var(--vfa-text)", lineHeight: 1.45, fontSize: 14 }}>
           {lines.map((line) => <div key={line}>{line}</div>)}
         </div>
       )}

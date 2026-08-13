@@ -197,8 +197,8 @@ export default function BadgesClient({
       <div
         style={{
           padding: "18px 22px",
-          background: "#FFFFFF",
-          border: "1px solid #E6E6E6",
+          background: "var(--vfa-karte)",
+          border: "1px solid var(--vfa-linie)",
           borderRadius: 14,
           display: "flex",
           alignItems: "center",
@@ -224,13 +224,13 @@ export default function BadgesClient({
           ★
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 12, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ fontSize: 12, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Dein aktueller Status
           </div>
           <div style={{ fontSize: 19, fontWeight: 800, color: VFA_GREEN, marginTop: 2 }}>
             {earnedRank ? earnedRank.title : "Kein Rang"} · {credits.toLocaleString("de-DE")} Credits
           </div>
-          <div style={{ fontSize: 13, color: "#888888", marginTop: 2 }}>
+          <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>
             {earnedAchievements} von {achievements.length} Auszeichnungen freigeschaltet
           </div>
         </div>
@@ -243,11 +243,11 @@ export default function BadgesClient({
       <div
         style={{
           padding: "14px 18px",
-          background: "#F7F7F4",
-          border: "1px solid #E6E6E6",
+          background: "var(--vfa-karte-2)",
+          border: "1px solid var(--vfa-linie)",
           borderRadius: 10,
           fontSize: 13,
-          color: "#666666",
+          color: "var(--vfa-text-2)",
           lineHeight: 1.6,
         }}
       >
@@ -276,7 +276,7 @@ function BadgeSection({
         <div style={{ fontSize: 12, fontWeight: 800, color: VFA_GREEN, textTransform: "uppercase", letterSpacing: "0.1em" }}>
           {title}
         </div>
-        <div style={{ fontSize: 13, color: "#999999", marginTop: 2 }}>{subtitle}</div>
+        <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>{subtitle}</div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
@@ -345,7 +345,7 @@ function BadgeSection({
                   <div style={{ fontSize: 12, fontWeight: 800, color: badge.color, letterSpacing: "0.04em" }}>
                     {badge.sublabel.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: 12, color: "#888888", marginTop: 2 }}>{badge.footnote}</div>
+                  <div style={{ fontSize: 12, color: "var(--vfa-text-3)", marginTop: 2 }}>{badge.footnote}</div>
                 </div>
               )}
 

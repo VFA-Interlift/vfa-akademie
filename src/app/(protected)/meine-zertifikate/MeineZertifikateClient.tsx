@@ -124,7 +124,7 @@ export default function MeineZertifikateClient({
             <label style={{ display: "grid", gap: 6, minWidth: 180 }}>
               <span
                 style={{
-                  color: "#333333",
+                  color: "var(--vfa-text)",
                   fontSize: 13,
                   fontWeight: 850,
                   textTransform: "uppercase",
@@ -158,7 +158,7 @@ export default function MeineZertifikateClient({
       {filteredCertificates.length === 0 ? (
         <AnimatedSection delayMs={140}>
           <AppCard>
-            <div style={{ color: "#333333", lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>
               Für dieses Jahr wurden keine Zertifikate gefunden.
             </div>
           </AppCard>
@@ -279,7 +279,7 @@ export default function MeineZertifikateClient({
 
                         <div
                           style={{
-                            color: "#666666",
+                            color: "var(--vfa-text-2)",
                             fontSize: 12,
                             fontWeight: 850,
                             letterSpacing: "0.06em",
@@ -315,7 +315,7 @@ export default function MeineZertifikateClient({
                         style={{
                           borderTop: "1px solid #E6E6E6",
                           padding: "16px 20px 18px",
-                          background: "#FFFFFF",
+                          background: "var(--vfa-karte)",
                         }}
                       >
                         <div
@@ -389,8 +389,8 @@ export default function MeineZertifikateClient({
                                 minHeight: 42,
                                 padding: "10px 18px",
                                 borderRadius: 999,
-                                background: "#F0F0F0",
-                                color: "#888888",
+                                background: "var(--vfa-karte-2)",
+                                color: "var(--vfa-text-3)",
                                 fontSize: 14,
                                 fontWeight: 700,
                                 letterSpacing: "0.04em",
@@ -410,7 +410,7 @@ export default function MeineZertifikateClient({
                                 padding: "10px 22px",
                                 borderRadius: 999,
                                 background: "#FFC100",
-                                color: "#1F1F1F",
+                                color: "var(--vfa-text)",
                                 border: "1px solid #FFC100",
                                 fontSize: 14,
                                 fontWeight: 800,
@@ -442,8 +442,8 @@ const selectStyle: React.CSSProperties = {
   padding: "11px 14px",
   borderRadius: 999,
   border: "1px solid #C7C7C7",
-  background: "#FFFFFF",
-  color: "#1F1F1F",
+  background: "var(--vfa-karte)",
+  color: "var(--vfa-text)",
   fontSize: 15,
   fontWeight: 800,
   outlineColor: "#007873",
@@ -454,7 +454,7 @@ function SummaryBox({ label, value }: { label: string; value: number }) {
     <div
       style={{
         border: "1px solid #EFEFEF",
-        background: "#FFFFFF",
+        background: "var(--vfa-karte)",
         padding: "14px 16px",
         borderRadius: 12,
       }}
@@ -474,7 +474,7 @@ function SummaryBox({ label, value }: { label: string; value: number }) {
 
       <div
         style={{
-          color: "#1F1F1F",
+          color: "var(--vfa-text)",
           fontSize: 24,
           fontWeight: 900,
           lineHeight: 1.1,
@@ -512,7 +512,7 @@ function Info({
 
       <div
         style={{
-          color: muted ? "#777777" : "#1F1F1F",
+          color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)",
           lineHeight: 1.45,
           fontSize: 14,
           fontStyle: muted ? "italic" : "normal",
@@ -555,7 +555,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
       ) : (
         <div
           style={{
-            color: "#1F1F1F",
+            color: "var(--vfa-text)",
             lineHeight: 1.45,
             fontSize: 14,
           }}

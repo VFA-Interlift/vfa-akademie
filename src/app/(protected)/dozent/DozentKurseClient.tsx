@@ -283,8 +283,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               </span>
             )}
           </div>
-          <div style={{ fontSize: 14, color: "#555555", marginTop: 4, lineHeight: 1.4 }}>{selected.title}</div>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 13, color: "#666666", fontWeight: 600 }}>
+          <div style={{ fontSize: 14, color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.4 }}>{selected.title}</div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 13, color: "var(--vfa-text-2)", fontWeight: 600 }}>
             <span>📅 {selected.datumText}</span>
             {selected.ort && <span>📍 {selected.ort.split(",")[0]}</span>}
             <span>👥 {selected.participants.length} Teilnehmer{selected.participants.length > 0 ? ` · ${anwesend} anwesend` : ""}</span>
@@ -322,21 +322,21 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                   return (
                     <div key={o.id} style={{ border: "1px solid #EFEFEF", borderRadius: 12, background: "#FAFAF8", overflow: "hidden" }}>
                       <div style={{ padding: "10px 14px", borderBottom: "1px solid #EFEFEF", background: "#F1F6F5" }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 800, color: "#1F1F1F", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
-                        <div style={{ fontSize: 11.5, color: "#888888", marginTop: 3 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
+                        <div style={{ fontSize: 11.5, color: "var(--vfa-text-3)", marginTop: 3 }}>
                           {o.fromAddress ? `${o.fromAddress} · ` : ""}{o.receivedText}
                         </div>
                       </div>
                       <div style={{ padding: "12px 14px" }}>
                         {text && (
-                          <div style={{ fontSize: 13.5, color: "#333333", lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          <div style={{ fontSize: 13.5, color: "var(--vfa-text)", lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                             {renderTextWithLinks(text)}
                           </div>
                         )}
                         {o.images.length > 0 && (
                           <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", marginTop: text ? 12 : 0 }}>
                             {o.images.map((img) => (
-                              <a key={img.url} href={img.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid #E6E6E6", borderRadius: 8, overflow: "hidden" }}>
+                              <a key={img.url} href={img.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid var(--vfa-linie)", borderRadius: 8, overflow: "hidden" }}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img.url} alt={img.filename} style={{ display: "block", width: "100%", height: "auto" }} />
                               </a>
@@ -346,7 +346,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                         {o.files.length > 0 && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: text || o.images.length > 0 ? 12 : 0 }}>
                             {o.files.map((f) => (
-                              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid #E6E6E6", background: "#FFFFFF", color: "#1F1F1F", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+                              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--vfa-linie)", background: "var(--vfa-karte)", color: "var(--vfa-text)", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
                                 📄 {f.filename}
                               </a>
                             ))}
@@ -371,10 +371,10 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                     background: "#FBFBF9",
                   }}
                 >
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#555555" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--vfa-text-2)" }}>
                     Für diesen Kurs liegen noch keine Orga-Infos vor.
                   </div>
-                  <div style={{ fontSize: 13, color: "#888888", marginTop: 6, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 6, lineHeight: 1.6 }}>
                     Sobald die Organisations- oder Bestätigungsmail zur Schulung eintrifft,
                     steht sie hier im Wortlaut — mit allem, was darin zu Hotel, Anreise,
                     Ansprechpartner und Ablauf steht. Bis dahin gelten die Angaben aus
@@ -409,7 +409,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 </div>
 
                 {sheetList.length === 0 ? (
-                  <div style={{ fontSize: 12.5, color: "#999999", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12.5, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
                     Noch keine Liste hochgeladen. Fotografiere die unterschriebene Teilnehmerliste – mehrere Seiten möglich, sie werden zu einem PDF zusammengefasst.
                   </div>
                 ) : (
@@ -420,7 +420,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                           📄 Liste · {sh.pageCount} {sh.pageCount === 1 ? "Seite" : "Seiten"}
                         </a>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 11, color: "#999999" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
+                          <span style={{ fontSize: 11, color: "var(--vfa-text-3)" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
                           {sh.mine && (
                             <button type="button" onClick={() => deleteSignatureList(selected.id, sh.id)} style={{ background: "none", border: "none", color: "#B00020", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}>
                               Entfernen
@@ -436,12 +436,12 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               {/* Website-Anmeldungen / Anwesenheit — darunter */}
               <div style={{ borderTop: "1px solid #EFEFEF", paddingTop: 14 }}>
                 {selected.participants.length === 0 ? (
-                  <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+                  <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
                     Noch keine Website-Anmeldungen für diese Schulung.
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "#999999", marginBottom: 4, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "var(--vfa-text-3)", marginBottom: 4, flexWrap: "wrap" }}>
                       <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
                       <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
                     </div>
@@ -453,7 +453,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                           key={p.id}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}
                         >
-                          <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", minWidth: 100 }}>{p.name}</div>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--vfa-text)", minWidth: 100 }}>{p.name}</div>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                             {STATUS_OPTIONS.map((opt) => {
                               const active = current === opt.value;
@@ -483,7 +483,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
             selected.feedback ? (
               <div>
                 <div style={labelHead}>Feedback-Auswertung</div>
-                <p style={{ margin: "0 0 12px", fontSize: 13.5, color: "#666666", lineHeight: 1.6 }}>
+                <p style={{ margin: "0 0 12px", fontSize: 13.5, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
                   {selected.feedback.count} Rückmeldung{selected.feedback.count === 1 ? "" : "en"} liegen vor.
                 </p>
                 <PdfAnsichtLink
@@ -496,7 +496,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 </PdfAnsichtLink>
               </div>
             ) : (
-              <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
                 Noch keine Feedback-Abgaben für diese Schulung.
               </div>
             )
@@ -542,8 +542,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 13, color: "#555555", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "#666666", fontWeight: 600 }}>
+              <div style={{ fontSize: 13, color: "var(--vfa-text-2)", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "var(--vfa-text-2)", fontWeight: 600 }}>
                 <span>📅 {kurs.datumText}</span>
                 {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}
               </div>
@@ -553,7 +553,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 <div style={{ fontSize: 20, fontWeight: 900, color: codeColor, lineHeight: 1 }}>
                   {kurs.participants.length}
                 </div>
-                <div style={{ fontSize: 10.5, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <div style={{ fontSize: 10.5, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   Teilnehmer
                 </div>
                 {!istVergangen && kurs.participants.length > 0 && (
@@ -582,7 +582,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
       <div style={{ display: "grid", gap: 10 }}>
         <div style={sectionHead}>Bevorstehend ({upcoming.length})</div>
         {upcoming.length === 0 ? (
-          <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+          <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
             Aktuell keine bevorstehenden Schulungen.
           </div>
         ) : (

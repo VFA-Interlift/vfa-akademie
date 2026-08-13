@@ -212,7 +212,7 @@ export default async function DozentPage() {
               <div style={{ fontSize: 17, fontWeight: 700, color: "#B00020", marginBottom: 8 }}>
                 Kurse konnten nicht geladen werden
               </div>
-              <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "var(--vfa-text-2)", lineHeight: 1.6, margin: 0 }}>
                 Die Website ist gerade nicht erreichbar. Bitte versuche es später erneut.
               </p>
             </AppCard>
@@ -223,7 +223,7 @@ export default async function DozentPage() {
               <div style={{ fontSize: 17, fontWeight: 700, color: "#007873", marginBottom: 8 }}>
                 Keine Schulungen gefunden
               </div>
-              <p style={{ color: "#555555", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "var(--vfa-text-2)", lineHeight: 1.6, margin: 0 }}>
                 Es wurden keine Schulungen gefunden, bei denen dein Name als Dozent
                 oder Hospitant hinterlegt ist. Die Dozenten werden auf der Website (Felder
                 „Dozent 1–4" bzw. „Hospitation" der Schulung) gepflegt – Vor- und Nachname

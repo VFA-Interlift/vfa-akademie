@@ -52,5 +52,5 @@ function getColor(variant: StatusBadgeVariant) {
   if (variant === "success") return "#FFFFFF";
   if (variant === "danger") return "#B00020";
 
-  return "#1F1F1F";
+  return "var(--vfa-text)";
 }

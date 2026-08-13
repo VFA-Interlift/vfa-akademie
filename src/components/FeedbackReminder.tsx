@@ -68,7 +68,7 @@ export default function FeedbackReminder({ openCount }: { openCount: number }) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span style={{ fontSize: 18, lineHeight: 1 }}>★</span>
         <div style={{ flex: "1 1 220px", minWidth: 0 }}>
-          <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 13 }}>{label}</div>
+          <div style={{ fontWeight: 700, color: "var(--vfa-text)", fontSize: 13 }}>{label}</div>
           <div style={{ color: "#5b4b00", fontSize: 12, marginTop: 1 }}>
             Gib Feedback und erhalte je Schulung +10 Credits.
           </div>

@@ -25,7 +25,7 @@ export default async function LeaderboardPage() {
             padding: 20,
             borderRadius: 14,
             border: "1px solid #E8E8E8",
-            background: "#FFFFFF",
+            background: "var(--vfa-karte)",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
           }}>
             <LeaderboardPageClient />

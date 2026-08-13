@@ -88,7 +88,7 @@ export default function EtagenAnzeige({
             {etagenNummer}
           </span>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#9AA0A6", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--vfa-text-3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           Deine Etage
         </span>
       </div>
@@ -103,14 +103,14 @@ export default function EtagenAnzeige({
             height: hoehe,
             flexShrink: 0,
             borderRadius: 10,
-            background: "linear-gradient(180deg, #EDF1F0, #E3E9E8)",
-            border: "1px solid #D8DFDE",
+            background: "var(--vfa-karte-2)",
+            border: "1px solid var(--vfa-linie)",
             overflow: "hidden",
           }}
         >
           {/* Führungsschienen */}
-          <div style={{ position: "absolute", top: 4, bottom: 4, left: 9, width: 2, borderRadius: 1, background: "#C9D2D0" }} />
-          <div style={{ position: "absolute", top: 4, bottom: 4, right: 9, width: 2, borderRadius: 1, background: "#C9D2D0" }} />
+          <div style={{ position: "absolute", top: 4, bottom: 4, left: 9, width: 2, borderRadius: 1, background: "var(--vfa-linie)" }} />
+          <div style={{ position: "absolute", top: 4, bottom: 4, right: 9, width: 2, borderRadius: 1, background: "var(--vfa-linie)" }} />
 
           {/* Etagenmarken */}
           {etagen.map((_, i) => (
@@ -122,7 +122,7 @@ export default function EtagenAnzeige({
                 right: 14,
                 top: i * (ROW + GAP) + ROW / 2,
                 height: 1,
-                background: "#CBD4D2",
+                background: "var(--vfa-linie)",
               }}
             />
           ))}
@@ -163,15 +163,15 @@ export default function EtagenAnzeige({
                   alignItems: "center",
                   padding: "0 12px",
                   borderRadius: 8,
-                  border: aktiv ? e.rand : "1px solid #F0F0F0",
+                  border: aktiv ? e.rand : "1px solid var(--vfa-linie-2)",
                   background: aktiv ? e.weich : "transparent",
                   transition: "all 140ms",
                 }}
               >
-                <span style={{ fontSize: 13, fontWeight: aktiv ? 800 : 600, color: aktiv ? e.farbe : "#999999", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ fontSize: 13, fontWeight: aktiv ? 800 : 600, color: aktiv ? e.farbe : "var(--vfa-text-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {e.label}
                 </span>
-                <span style={{ fontSize: 12, color: "#AAAAAA", whiteSpace: "nowrap", marginLeft: 8 }}>
+                <span style={{ fontSize: 12, color: "var(--vfa-text-3)", whiteSpace: "nowrap", marginLeft: 8 }}>
                   {e.bereich}
                 </span>
               </div>

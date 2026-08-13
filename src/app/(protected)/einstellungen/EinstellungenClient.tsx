@@ -77,7 +77,7 @@ function TestrundeCard({ feedbackGesendet }: { feedbackGesendet: boolean }) {
     <AppCard accent="none">
       <SectionHeader title="Rückmeldung zur Testrunde" badge="Testrunde" />
 
-      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "#666666", lineHeight: 1.6 }}>
+      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
         {feedbackGesendet
           ? "Deine Antworten sind angekommen — danke! Ist dir seitdem noch etwas aufgefallen, kannst du den Bogen erneut ausfüllen. Er ersetzt dann deine bisherigen Antworten."
           : "Zehn Fragen zu deinen Eindrücken, zwei bis drei Minuten. Pflicht ist nur die letzte. Füll ihn aus, wenn du dich in Ruhe umgesehen hast."}
@@ -145,7 +145,7 @@ function DatenschutzCard() {
     <AppCard accent="none">
       <SectionHeader title="Meine Daten" badge="Datenschutz" />
 
-      <div style={{ fontSize: 14, color: "#333333", lineHeight: 1.6 }}>
+      <div style={{ fontSize: 14, color: "var(--vfa-text)", lineHeight: 1.6 }}>
         Du kannst jederzeit alle zu deinem Konto gespeicherten Daten herunterladen —
         Profil, Anmeldungen, Zertifikate, Credits und Feedback.
       </div>
@@ -167,9 +167,9 @@ function DatenschutzCard() {
         Daten herunterladen
       </a>
 
-      <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #E6E6E6" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#1F1F1F" }}>Konto löschen</div>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: "#666666", lineHeight: 1.6 }}>
+      <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--vfa-linie)" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)" }}>Konto löschen</div>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
           Dein Konto und alles daran Hängende wird endgültig entfernt: Anmeldungen,
           Zertifikate, Credits, Feedback und hochgeladene Nachweise. Die Teilnahmeunterlagen
           der Akademie zu besuchten Schulungen bleiben davon unberührt.
@@ -184,7 +184,7 @@ function DatenschutzCard() {
               padding: "10px 18px",
               borderRadius: 999,
               border: "1px solid #B00020",
-              background: "#FFFFFF",
+              background: "var(--vfa-karte)",
               color: "#B00020",
               fontWeight: 800,
               fontSize: 14,
@@ -195,7 +195,7 @@ function DatenschutzCard() {
           </button>
         ) : (
           <div style={{ marginTop: 12, display: "grid", gap: 10, maxWidth: 360 }}>
-            <label style={{ fontSize: 13, fontWeight: 700, color: "#333333" }}>
+            <label style={{ fontSize: 13, fontWeight: 700, color: "var(--vfa-text)" }}>
               Zur Bestätigung dein Passwort
               <input
                 type="password"
@@ -229,8 +229,8 @@ function DatenschutzCard() {
                 onClick={() => { setZeigeLoeschen(false); setPasswort(""); setMsg(null); }}
                 style={{
                   padding: "10px 18px", borderRadius: 999,
-                  border: "1px solid #D4D4D4", background: "#FFFFFF",
-                  color: "#666666", fontWeight: 700, fontSize: 14, cursor: "pointer",
+                  border: "1px solid #D4D4D4", background: "var(--vfa-karte)",
+                  color: "var(--vfa-text-2)", fontWeight: 700, fontSize: 14, cursor: "pointer",
                 }}
               >
                 Abbrechen
@@ -284,10 +284,10 @@ function NotificationsCard({ initial }: { initial: boolean }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center" }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#1F1F1F", lineHeight: 1.3 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
             Erinnerung vor Schulungen
           </div>
-          <div style={{ fontSize: 13, color: "#666666", marginTop: 4, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.5 }}>
             Du bekommst 3 Tage vor einer Schulung, für die du angemeldet bist, eine
             E-Mail-Erinnerung.
           </div>
@@ -321,7 +321,7 @@ function NotificationsCard({ initial }: { initial: boolean }) {
               width: 24,
               height: 24,
               borderRadius: "50%",
-              background: "#FFFFFF",
+              background: "var(--vfa-karte)",
               boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
               transition: "left 180ms ease",
             }}
@@ -386,7 +386,7 @@ function FeedbackCard() {
     <AppCard accent="none">
       <SectionHeader title="Feedback geben" badge="Feedback" />
 
-      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "#666666", lineHeight: 1.6 }}>
+      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
         Fehler gefunden, Idee oder Wunsch? Schreib uns – wir lesen jede Nachricht.
       </p>
 
@@ -436,7 +436,7 @@ function AppInfoCard() {
     <AppCard accent="none">
       <SectionHeader title="App-Info" badge="Info" />
 
-      <div style={{ display: "grid", gap: 10, fontSize: 14, color: "#333333", lineHeight: 1.6 }}>
+      <div style={{ display: "grid", gap: 10, fontSize: 14, color: "var(--vfa-text)", lineHeight: 1.6 }}>
         <InfoRow label="App" value="VFA-Akademie" />
         <InfoRow label="Version" value={APP_VERSION} />
         <InfoRow label="Veranstalter" value="VFA-Akademie gGmbH" />
@@ -467,7 +467,7 @@ function AppInfoCard() {
         />
       </div>
 
-      <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #E6E6E6" }}>
+      <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--vfa-linie)" }}>
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
@@ -477,7 +477,7 @@ function AppInfoCard() {
             borderRadius: 999,
             border: "1px solid #D4D4D4",
             background: "#F4F4F4",
-            color: "#666666",
+            color: "var(--vfa-text-2)",
             fontWeight: 700,
             fontSize: 14,
             letterSpacing: "0.04em",
@@ -497,7 +497,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
       <span style={{ fontSize: 12, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em" }}>
         {label}
       </span>
-      <span style={{ color: "#1F1F1F", overflowWrap: "anywhere" }}>{value}</span>
+      <span style={{ color: "var(--vfa-text)", overflowWrap: "anywhere" }}>{value}</span>
     </div>
   );
 }

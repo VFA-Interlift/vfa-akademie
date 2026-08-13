@@ -51,8 +51,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         style={{
           margin: 0,
-          background: "#F7F7F4",
-          color: "#1F1F1F",
+          background: "var(--vfa-light)",
+          color: "var(--vfa-text)",
           minHeight: "100vh",
         }}
       >
@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div
             style={{
               minHeight: "100vh",
-              background: "#F7F7F4",
+              background: "var(--vfa-light)",
               display: "flex",
               flexDirection: "column",
             }}
