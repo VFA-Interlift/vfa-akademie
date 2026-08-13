@@ -72,16 +72,41 @@ export async function POST(req: Request) {
         throw new Error("USER_NOT_FOUND");
       }
 
+      // Saldo nie unter 0: Eine zu grosse Abzugs-Korrektur soll den Rest
+      // abziehen, nicht ein Minus erzeugen (Ultracode-Hinweis 13.08.2026).
+      // Atomar als increment plus Klemme — der fruehere Lese-dann-Schreib-Weg
+      // konnte einen parallel eingehenden Zuwachs (Feedback-Belohnung,
+      // Zertifikats-Cron) ueberschreiben (Gegenpruefung 13.08.2026).
+      const nachher = await tx.user.update({
+        where: { id: user.id },
+        data: { creditsTotal: { increment: credits } },
+        select: { creditsTotal: true },
+      });
+      let creditsTotal = nachher.creditsTotal;
+      // Effektiv angewendeter Betrag: Bei einer Klemme auf 0 wird nur der
+      // Rest abgezogen — genau das steht dann auch in der Buchung, damit
+      // Verlauf und Saldo zusammenpassen.
+      let angewendet = credits;
+      if (creditsTotal < 0) {
+        angewendet = credits - creditsTotal;
+        await tx.user.update({
+          where: { id: user.id },
+          data: { creditsTotal: 0 },
+        });
+        creditsTotal = 0;
+      }
+
       const creditTx = await tx.creditTransaction.create({
         data: {
           userId: user.id,
-          amount: credits,
+          amount: angewendet,
           type: "ADJUSTMENT",
           reason: "ADMIN_ADJUST",
           meta: {
             kind: "ADMIN_MANUAL_CREDITS_ONLY",
             adminId: admin.id,
             note: note ?? undefined,
+            ...(angewendet !== credits ? { angefordert: credits, gekappt: true } : {}),
           },
         },
         select: {
@@ -89,27 +114,9 @@ export async function POST(req: Request) {
         },
       });
 
-      // Saldo nie unter 0: Eine zu grosse Abzugs-Korrektur soll den Rest
-      // abziehen, nicht ein Minus erzeugen (Ultracode-Hinweis 13.08.2026).
-      const aktuell = await tx.user.findUniqueOrThrow({
-        where: { id: user.id },
-        select: { creditsTotal: true },
-      });
-      const updatedUser = await tx.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          creditsTotal: Math.max(0, aktuell.creditsTotal + credits),
-        },
-        select: {
-          creditsTotal: true,
-        },
-      });
-
       return {
         creditTxId: creditTx.id,
-        creditsTotal: updatedUser.creditsTotal,
+        creditsTotal,
       };
     });
 

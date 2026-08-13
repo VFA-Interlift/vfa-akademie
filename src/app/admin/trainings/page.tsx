@@ -69,8 +69,6 @@ export default function AdminTrainingsPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ marginBottom: 10 }}>
-        </div>
         <PageHeader backHref="/admin" backLabel="Adminbereich" title="Schulungen in der App-DB"
           description="Alle Schulungen in der App-Datenbank. Neue kommen täglich automatisch von der Website; ältere stammen aus dem einmaligen Cobra-Import."
         />

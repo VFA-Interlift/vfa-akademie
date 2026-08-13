@@ -67,6 +67,9 @@ export async function getMyPastTrainings(email: string): Promise<MyTrainingItem[
           instructor: true,
           description: true,
           creditsAward: true,
+          // Auch hier: Ein abgesagter Kurs faellt nach dem Kursdatum in diese
+          // Liste und darf dort nicht wie besucht aussehen (Gegenpruefung 13.08.).
+          cancelledAt: true,
         },
       },
     },
@@ -85,6 +88,7 @@ export async function getMyPastTrainings(email: string): Promise<MyTrainingItem[
     description: e.training.description,
     creditsAward: e.training.creditsAward,
     status: e.status,
+    cancelledAt: e.training.cancelledAt,
     certificateId: e.certificate && e.certificate.status === "ISSUED" ? e.certificate.id : null,
   }));
 }

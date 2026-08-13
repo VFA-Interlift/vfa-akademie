@@ -47,11 +47,19 @@ export default function PageHeader({
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // Nur am Handy: Am Desktop ist das Band ein ruhendes Feld im Inhalt —
     // dort schob die Verschiebung den Titel aus dem Band (Ultracode-Hinweis).
-    if (!window.matchMedia("(max-width: 759px)").matches) return;
+    // Die Abfrage lebt IM Handler: Wird das Browserfenster nachträglich auf
+    // Desktop-Breite gezogen, lief der einmal registrierte Handler sonst
+    // weiter und verschob das ruhende Band (Gegenprüfung 13.08.2026).
+    const handy = window.matchMedia("(max-width: 759px)");
 
     let angefordert = false;
     const setzen = () => {
       angefordert = false;
+      if (!handy.matches) {
+        if (grundRef.current) grundRef.current.style.transform = "";
+        if (inhaltRef.current) inhaltRef.current.style.transform = "";
+        return;
+      }
       // Ab ~160 Pixeln ist das Band aus dem Bild; weiter rechnen lohnt nicht.
       const s = Math.min(window.scrollY, 160);
       if (grundRef.current) {
@@ -69,7 +77,13 @@ export default function PageHeader({
 
     setzen();
     window.addEventListener("scroll", beiScroll, { passive: true });
-    return () => window.removeEventListener("scroll", beiScroll);
+    // Beim Überschreiten der Breitengrenze sofort aufräumen bzw. einsetzen,
+    // nicht erst beim nächsten Scroll.
+    handy.addEventListener("change", beiScroll);
+    return () => {
+      window.removeEventListener("scroll", beiScroll);
+      handy.removeEventListener("change", beiScroll);
+    };
   }, []);
 
   return (

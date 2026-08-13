@@ -546,8 +546,6 @@ export default function AdminUsersPage() {
     <main className="page-main"
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ marginBottom: 10 }}>
-        </div>
         <PageHeader backHref="/admin" backLabel="Adminbereich" title="Nutzer verwalten"
           description="Profile prüfen, Credits bearbeiten, Rollen vergeben und Nutzer löschen."
         />

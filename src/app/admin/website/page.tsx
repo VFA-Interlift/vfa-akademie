@@ -37,8 +37,6 @@ export default function AdminWebsitePage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
-        <div style={{ marginBottom: 0 }}>
-        </div>
         <PageHeader backHref="/admin" backLabel="Adminbereich" title="Website-Synchronisation" showTitle />
 
         <AppCard accent="green">

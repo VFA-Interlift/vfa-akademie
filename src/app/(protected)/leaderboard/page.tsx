@@ -15,10 +15,10 @@ export default async function LeaderboardPage() {
 
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gap: 16 }}>
-        <AnimatedSection delayMs={0}>
-          <PageHeader title="Credit-Ranking" showTitle={true} />
-        </AnimatedSection>
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        {/* Ohne AnimatedSection: Das Band muss wie auf allen Seiten bündig an
+            der Oberkante sitzen — die Einblend-Hülle verschob es (13.08.). */}
+        <PageHeader title="Credit-Ranking" showTitle={true} />
 
         <AnimatedSection delayMs={60}>
           <div style={{

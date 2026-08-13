@@ -26,18 +26,53 @@ export async function GET(req: NextRequest) {
     select: { name: true, email: true, createdAt: true, expiresAt: true },
   });
 
-  if (!offen || offen.expiresAt < new Date()) {
-    // Altkonten aus der Übergangszeit haben keine Anforderungsdaten — dort
-    // führt der Weg unverändert direkt über POST.
-    return NextResponse.json({ ok: false, error: "UNBEKANNT" }, { status: 404 });
+  if (offen && offen.expiresAt >= new Date()) {
+    return NextResponse.json({
+      ok: true,
+      art: "registrierung",
+      name: offen.name,
+      email: offen.email,
+      angefordertAm: offen.createdAt.toISOString(),
+    });
   }
 
-  return NextResponse.json({
-    ok: true,
-    name: offen.name,
-    email: offen.email,
-    angefordertAm: offen.createdAt.toISOString(),
+  // Adresswechsel eines bestehenden Kontos: auch hier NACHFRAGEN statt
+  // automatisch einlösen. Ohne diese Auskunft wertete die Seite den Link als
+  // Übergangsfall und zog das Konto beim bloßen Seitenaufruf um — ein
+  // Link-Scanner auf einer Tippfehler-Adresse oder ein neugieriger Klick auf
+  // eine unangeforderte Mail hätten gereicht (Gegenprüfung 13.08.2026).
+  const wechsel = await prisma.emailVerificationToken.findUnique({
+    where: { token },
+    select: {
+      pendingEmail: true,
+      usedAt: true,
+      expiresAt: true,
+      createdAt: true,
+      user: { select: { name: true, firstName: true, lastName: true } },
+    },
   });
+
+  if (
+    wechsel &&
+    wechsel.pendingEmail &&
+    wechsel.usedAt === null &&
+    wechsel.expiresAt >= new Date()
+  ) {
+    const kontoName =
+      [wechsel.user.firstName, wechsel.user.lastName].filter(Boolean).join(" ").trim() ||
+      wechsel.user.name;
+    return NextResponse.json({
+      ok: true,
+      art: "adresswechsel",
+      name: kontoName,
+      email: wechsel.pendingEmail,
+      angefordertAm: wechsel.createdAt.toISOString(),
+    });
+  }
+
+  // Altkonten aus der Übergangszeit haben keine Anforderungsdaten — dort
+  // führt der Weg unverändert direkt über POST.
+  return NextResponse.json({ ok: false, error: "UNBEKANNT" }, { status: 404 });
 }
 
 /**
@@ -70,7 +105,11 @@ export async function POST(req: NextRequest) {
     if (offen.expiresAt < jetzt) {
       await prisma.offeneRegistrierung.delete({ where: { id: offen.id } });
       return NextResponse.json(
-        { ok: false, error: "Der Link ist abgelaufen. Bitte registriere dich erneut." },
+        {
+          ok: false,
+          kontext: "registrierung",
+          error: "Der Link ist abgelaufen. Bitte registriere dich erneut.",
+        },
         { status: 400 }
       );
     }
@@ -85,7 +124,11 @@ export async function POST(req: NextRequest) {
     if (schonDa) {
       await prisma.offeneRegistrierung.deleteMany({ where: { email: offen.email } });
       return NextResponse.json(
-        { ok: false, error: "Für diese Adresse gibt es bereits ein Konto. Bitte melde dich an." },
+        {
+          ok: false,
+          kontext: "konto",
+          error: "Für diese Adresse gibt es bereits ein Konto. Bitte melde dich an.",
+        },
         { status: 409 }
       );
     }
@@ -116,7 +159,11 @@ export async function POST(req: NextRequest) {
       if (code === "P2002") {
         await prisma.offeneRegistrierung.deleteMany({ where: { email: offen.email } });
         return NextResponse.json(
-          { ok: false, error: "Für diese Adresse gibt es bereits ein Konto. Bitte melde dich an." },
+          {
+            ok: false,
+            kontext: "konto",
+            error: "Für diese Adresse gibt es bereits ein Konto. Bitte melde dich an.",
+          },
           { status: 409 }
         );
       }
@@ -156,6 +203,19 @@ export async function POST(req: NextRequest) {
   });
 
   if (!eintrag || eintrag.usedAt !== null || eintrag.expiresAt < jetzt) {
+    // Bei einem verfallenen Adresswechsel-Link wäre "registriere dich neu"
+    // der falsche Rat — der Nutzer HAT ein Konto (Gegenprüfung 13.08.2026).
+    if (eintrag?.pendingEmail) {
+      return NextResponse.json(
+        {
+          ok: false,
+          kontext: "konto",
+          error:
+            "Der Link ist ungültig oder abgelaufen. Dein Konto läuft unter der bisherigen Adresse weiter — fordere den Wechsel unter Meine Daten neu an.",
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { ok: false, error: "Der Link ist ungültig oder abgelaufen." },
       { status: 400 }
@@ -188,6 +248,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           ok: false,
+          kontext: "konto",
           error:
             "Diese Adresse ist inzwischen anderweitig vergeben. Dein Konto läuft unter der bisherigen Adresse weiter — bitte wähle unter Meine Daten eine andere.",
         },

@@ -131,11 +131,7 @@ export default async function AdminSchulungenPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 14 }}>
-        <div>
-        </div>
-        <AnimatedSection delayMs={0}>
-          <PageHeader backHref="/admin" backLabel="Adminbereich" title="Schulungen & Teilnehmer" showTitle />
-        </AnimatedSection>
+        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Schulungen & Teilnehmer" showTitle />
 
         <AnimatedSection delayMs={40}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>

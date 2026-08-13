@@ -60,8 +60,13 @@ export async function POST(
 
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.certificate.update({
-        where: { id: cert.id },
+      // Statuswechsel als Guard IN der Transaktion: Nur wer das Zertifikat
+      // wirklich von einem Nicht-REVOKED-Zustand umstellt, bucht auch die
+      // Credits zurück. Zwei zeitgleiche Widerrufe buchten sonst doppelt ab
+      // (Gegenprüfung 13.08.2026) — der Vorab-Check oben ist nur die schnelle
+      // Antwort für den Normalfall.
+      const umgestellt = await tx.certificate.updateMany({
+        where: { id: cert.id, status: { not: "REVOKED" } },
         data: {
           status: "REVOKED",
           note: grund
@@ -69,6 +74,7 @@ export async function POST(
             : "Widerrufen durch Administration.",
         },
       });
+      if (umgestellt.count === 0) throw new Error("ALREADY_REVOKED");
 
       // Credits zurückbuchen, sofern welche vergeben wurden.
       if (cert.credits > 0) {
@@ -93,15 +99,15 @@ export async function POST(
           },
         });
 
-        // creditsTotal nie unter 0 drücken.
-        const user = await tx.user.findUnique({
-          where: { id: cert.userId },
-          select: { creditsTotal: true },
-        });
-        const neu = Math.max(0, (user?.creditsTotal ?? 0) - cert.credits);
+        // creditsTotal nie unter 0 drücken — atomar (decrement plus Klemme),
+        // damit kein paralleler Zuwachs zwischen Lesen und Schreiben verloren geht.
         await tx.user.update({
           where: { id: cert.userId },
-          data: { creditsTotal: neu },
+          data: { creditsTotal: { decrement: cert.credits } },
+        });
+        await tx.user.updateMany({
+          where: { id: cert.userId, creditsTotal: { lt: 0 } },
+          data: { creditsTotal: 0 },
         });
       }
 
@@ -118,6 +124,9 @@ export async function POST(
 
     return NextResponse.json({ ok: true, creditsZurueck: cert.credits });
   } catch (error) {
+    if (error instanceof Error && error.message === "ALREADY_REVOKED") {
+      return deny(409, "ALREADY_REVOKED");
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       return deny(404, "CERTIFICATE_NOT_FOUND");
     }

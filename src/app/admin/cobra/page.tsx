@@ -29,9 +29,7 @@ export default async function AdminCobraPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <AnimatedSection delayMs={0}>
-          <PageHeader backHref="/admin" backLabel="Adminbereich" title="Cobra/WebConnect" />
-        </AnimatedSection>
+        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Cobra/WebConnect" />
 
         <AnimatedSection delayMs={80}>
           <CobraAdminClient />

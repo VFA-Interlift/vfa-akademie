@@ -202,9 +202,7 @@ export default async function DozentPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
-        <AnimatedSection delayMs={0}>
-          <PageHeader title="Dozentenbereich" showTitle={true} />
-        </AnimatedSection>
+        <PageHeader title="Dozentenbereich" showTitle={true} />
 
         {websiteError ? (
           <AnimatedSection delayMs={80}>

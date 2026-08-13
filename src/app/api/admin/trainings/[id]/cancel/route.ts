@@ -7,6 +7,11 @@ import { sendePushAnNutzer } from "@/lib/push";
 import { formatDateRange } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
+// Der Benachrichtigungs-Versand läuft seriell je Teilnehmer (Mail + Push).
+// Ohne diese Grenze griffe das knappe Standard-Funktionslimit, und bei
+// größeren Kursen risse der Versand mittendrin ab — die Absage wäre gesetzt,
+// aber ein Teil der Angemeldeten erführe nie davon (Gegenprüfung 13.08.2026).
+export const maxDuration = 300;
 
 function deny(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });

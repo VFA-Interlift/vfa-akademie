@@ -186,9 +186,7 @@ export default function KurskalenderPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <AnimatedSection delayMs={0}>
-          <PageHeader title="Kurskalender" showTitle={true} />
-        </AnimatedSection>
+        <PageHeader title="Kurskalender" showTitle={true} />
 
         {msg && (
           <AnimatedSection delayMs={60}>

@@ -256,7 +256,8 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
   if (trainings.length === 0) return null;
 
   const sichtbar = alleZeigen ? trainings : trainings.slice(0, 5);
-  const credits = trainings.reduce((s, t) => s + t.creditsAward, 0);
+  // Abgesagte Kurse zaehlen nicht: Fuer sie entstehen nie Credits (Gegenpruefung 13.08.).
+  const credits = trainings.reduce((s, t) => s + (t.cancelledAt ? 0 : t.creditsAward), 0);
 
   return (
     <AnimatedSection delayMs={120}>
@@ -289,21 +290,32 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
               </div>
 
               <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
-                {t.certificateId ? (
-                  <PdfAnsichtLink
-                    url={`/api/certificates/${t.certificateId}/download`}
-                    titel={getDisplayTrainingTitle(t)}
-                    dateiname="nachweis.pdf"
-                    style={{ color: "#007873", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}
-                  >
-                    Nachweis ansehen
-                  </PdfAnsichtLink>
-                ) : null}
-                {t.creditsAward > 0 ? (
-                  <span style={{ color: "#007873", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
-                    +{t.creditsAward}
+                {t.cancelledAt ? (
+                  <span style={{
+                    color: "var(--vfa-rot-text)", fontWeight: 800, fontSize: 11, whiteSpace: "nowrap",
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}>
+                    Abgesagt
                   </span>
-                ) : null}
+                ) : (
+                  <>
+                    {t.certificateId ? (
+                      <PdfAnsichtLink
+                        url={`/api/certificates/${t.certificateId}/download`}
+                        titel={getDisplayTrainingTitle(t)}
+                        dateiname="nachweis.pdf"
+                        style={{ color: "#007873", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}
+                      >
+                        Nachweis ansehen
+                      </PdfAnsichtLink>
+                    ) : null}
+                    {t.creditsAward > 0 ? (
+                      <span style={{ color: "#007873", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
+                        +{t.creditsAward}
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </div>
             </div>
           ))}

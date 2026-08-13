@@ -93,12 +93,18 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
       }
 
       if (data?.emailChanged) {
+        // Kein Abmelden: Die Sitzung und die bisherige Adresse bleiben gültig,
+        // bis der Link an der neuen Adresse eingelöst ist. Das erzwungene
+        // signOut stammte aus dem alten Sofort-Wechsel-Modell und ließ die
+        // Erklärung nach 2,5 s verschwinden (Gegenprüfung 13.08.2026).
         setMsg(
-          "Gespeichert. Wir haben dir eine Bestätigungsmail an die neue Adresse geschickt — " +
-            "bitte bestätige sie über den Link, danach kannst du dich mit der neuen Adresse anmelden."
+          `Gespeichert. Wir haben eine Bestätigungsmail an ${String(data?.pendingEmail ?? "die neue Adresse")} geschickt — ` +
+            "erst nach dem Klick auf den Link zieht dein Konto um. Bis dahin bleibt " +
+            "deine bisherige Adresse für die Anmeldung aktiv."
         );
         setSuccess(true);
-        setTimeout(() => signOut({ callbackUrl: "/login" }), 2500);
+        // Das Feld zeigt wieder die aktive Adresse, nicht die schwebende.
+        setField("email", initial.email);
         return;
       }
 

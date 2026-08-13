@@ -4,7 +4,13 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-type Anforderung = { name: string; email: string; angefordertAm: string };
+type Anforderung = {
+  /** "registrierung" = neues Konto; "adresswechsel" = bestehendes Konto zieht um. */
+  typ: "registrierung" | "adresswechsel";
+  name: string;
+  email: string;
+  angefordertAm: string;
+};
 
 type Stand =
   | { art: "laedt" }
@@ -12,7 +18,7 @@ type Stand =
   | { art: "bestaetigt" }
   | { art: "laeuft" }
   | { art: "fertig"; uebernommen: number }
-  | { art: "fehler"; text: string };
+  | { art: "fehler"; text: string; kontext: "registrierung" | "konto" };
 
 function zeitpunkt(iso: string) {
   try {
@@ -32,8 +38,15 @@ function Inhalt() {
   const [stand, setStand] = useState<Stand>(
     token
       ? { art: "laedt" }
-      : { art: "fehler", text: "In der Adresse fehlt der Bestätigungsschlüssel." }
+      : {
+          art: "fehler",
+          text: "In der Adresse fehlt der Bestätigungsschlüssel.",
+          kontext: "registrierung",
+        }
   );
+  // Fürs Fehlerbild: Ein gescheiterter Adresswechsel braucht den Weg zur
+  // Anmeldung, keine Aufforderung zur Neu-Registrierung (Gegenprüfung 13.08.).
+  const [herkunft, setHerkunft] = useState<"registrierung" | "adresswechsel" | null>(null);
 
   // Erst nachsehen, WAS bestätigt werden soll. Ohne diesen Schritt bestätigte
   // die Seite ungefragt — wer eine Mail anklickt, die er nie angefordert hat,
@@ -49,9 +62,12 @@ function Inhalt() {
         const data = await res.json().catch(() => ({}));
 
         if (res.ok && data.ok) {
+          const typ = data.art === "adresswechsel" ? "adresswechsel" : "registrierung";
+          setHerkunft(typ);
           setStand({
             art: "nachfragen",
             anforderung: {
+              typ,
               name: String(data.name ?? ""),
               email: String(data.email ?? ""),
               angefordertAm: String(data.angefordertAm ?? ""),
@@ -98,10 +114,18 @@ function Inhalt() {
         setStand({
           art: "fehler",
           text: String(data.error ?? "Der Link ist ungültig oder abgelaufen."),
+          kontext:
+            data.kontext === "konto" || herkunft === "adresswechsel"
+              ? "konto"
+              : "registrierung",
         });
       }
     } catch {
-      setStand({ art: "fehler", text: "Die Bestätigung ließ sich nicht abschließen." });
+      setStand({
+        art: "fehler",
+        text: "Die Bestätigung ließ sich nicht abschließen.",
+        kontext: herkunft === "adresswechsel" ? "konto" : "registrierung",
+      });
     }
   }
 
@@ -118,25 +142,41 @@ function Inhalt() {
       <>
         <h1 style={TITEL}>Das hat nicht geklappt</h1>
         <p style={TEXT}>{stand.text}</p>
-        <p style={TEXT}>
-          Bestätigungslinks gelten 24 Stunden. Ist deiner älter, registriere dich
-          bitte noch einmal.
-        </p>
-        <Link href="/register" style={KNOPF}>
-          Zur Registrierung
-        </Link>
+        {stand.kontext === "konto" ? (
+          // Hier existiert ein Konto — eine Neu-Registrierung wäre der falsche
+          // Weg (sie scheitert an der vergebenen Adresse oder legt ein
+          // Zweitkonto an).
+          <Link href="/login" style={KNOPF}>
+            Zur Anmeldung
+          </Link>
+        ) : (
+          <>
+            <p style={TEXT}>
+              Bestätigungslinks gelten 24 Stunden. Ist deiner älter, registriere dich
+              bitte noch einmal.
+            </p>
+            <Link href="/register" style={KNOPF}>
+              Zur Registrierung
+            </Link>
+          </>
+        )}
       </>
     );
   }
 
   if (stand.art === "nachfragen") {
     const { anforderung } = stand;
+    const wechsel = anforderung.typ === "adresswechsel";
     return (
       <>
         <h1 style={TITEL}>Bist du das?</h1>
         <p style={TEXT}>
-          Zu diesem Link gehört die folgende Registrierung. Stimmt sie nicht,
-          schließ die Seite einfach — dann passiert nichts.
+          {wechsel
+            ? "Ein bestehendes VFA-Akademie-Konto möchte künftig diese E-Mail-Adresse " +
+              "als Anmeldeadresse verwenden. Warst du das nicht, schließ die Seite " +
+              "einfach — dann bleibt alles beim Alten."
+            : "Zu diesem Link gehört die folgende Registrierung. Stimmt sie nicht, " +
+              "schließ die Seite einfach — dann passiert nichts."}
         </p>
 
         <div
@@ -156,7 +196,7 @@ function Inhalt() {
             <strong>Name:</strong> {anforderung.name}
           </div>
           <div>
-            <strong>E-Mail:</strong> {anforderung.email}
+            <strong>{wechsel ? "Neue E-Mail:" : "E-Mail:"}</strong> {anforderung.email}
           </div>
           <div style={{ color: "#777777", fontSize: 14 }}>
             angefordert am {zeitpunkt(anforderung.angefordertAm)} Uhr
@@ -164,7 +204,7 @@ function Inhalt() {
         </div>
 
         <button type="button" onClick={einloesen} style={{ ...KNOPF, border: "none", cursor: "pointer" }}>
-          Ja, Konto anlegen
+          {wechsel ? "Ja, neue Adresse bestätigen" : "Ja, Konto anlegen"}
         </button>
       </>
     );
@@ -174,7 +214,9 @@ function Inhalt() {
     <>
       <h1 style={TITEL}>Adresse bestätigt</h1>
       <p style={TEXT}>
-        Danke. Du kannst dich jetzt anmelden.
+        {herkunft === "adresswechsel"
+          ? "Danke. Dein Konto läuft ab jetzt unter der neuen Adresse — melde dich damit an."
+          : "Danke. Du kannst dich jetzt anmelden."}
         {stand.uebernommen > 0
           ? ` ${stand.uebernommen === 1 ? "Eine Schulung wurde" : `${stand.uebernommen} Schulungen wurden`} deinem Konto zugeordnet.`
           : ""}

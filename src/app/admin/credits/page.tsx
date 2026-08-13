@@ -86,8 +86,6 @@ export default function AdminCreditsPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <div style={{ marginBottom: 10 }}>
-        </div>
         <PageHeader backHref="/admin" backLabel="Adminbereich" title="Credits verwalten"
           description="Hier kannst du Credits manuell vergeben oder abziehen. Jede Änderung wird als Credit-Transaktion gespeichert."
         />

@@ -46,9 +46,7 @@ export default function MeineCreditsPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
-        <AnimatedSection delayMs={0}>
-          <PageHeader title="Meine Credits" showTitle />
-        </AnimatedSection>
+        <PageHeader title="Meine Credits" showTitle />
 
         <AnimatedSection delayMs={60}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 20 }}>
