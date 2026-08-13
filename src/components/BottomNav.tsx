@@ -15,7 +15,7 @@ const MAIN_TABS = [
 
 type MeResponse =
   | { ok: false }
-  | { ok: true; role: "USER" | "ADMIN"; isInstructor: boolean };
+  | { ok: true; email: string; role: "USER" | "ADMIN"; isInstructor: boolean; certCount?: number };
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -23,6 +23,8 @@ export default function BottomNav() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
   const [isInstructor, setIsInstructor] = useState(false);
+  const [zertNeu, setZertNeu] = useState(false);
+  const [zertStand, setZertStand] = useState<{ email: string; anzahl: number } | null>(null);
 
   useEffect(() => {
     document.body.classList.add("has-bottom-nav");
@@ -33,9 +35,32 @@ export default function BottomNav() {
     if (status !== "authenticated") return;
     fetch("/api/me", { cache: "no-store" })
       .then((r) => r.json() as Promise<MeResponse>)
-      .then((d) => { if (d.ok) { setRole(d.role); setIsInstructor(d.isInstructor ?? false); } })
+      .then((d) => {
+        if (!d.ok) return;
+        setRole(d.role);
+        setIsInstructor(d.isInstructor ?? false);
+
+        // "Neu"-Punkt am Zertifikate-Tab: leuchtet, wenn mehr Zertifikate da
+        // sind als beim letzten Blick auf die Seite (Stand im localStorage,
+        // je Konto getrennt).
+        const anzahl = d.certCount ?? 0;
+        setZertStand({ email: d.email, anzahl });
+        try {
+          const gesehen = Number(window.localStorage.getItem(`vfa-zert-gesehen:${d.email}`) ?? "0");
+          setZertNeu(anzahl > gesehen);
+        } catch {}
+      })
       .catch(() => {});
   }, [status]);
+
+  // Beim Besuch der Zertifikatsseite gilt der Stand als gesehen.
+  useEffect(() => {
+    if (!pathname.startsWith("/meine-zertifikate") || !zertStand) return;
+    try {
+      window.localStorage.setItem(`vfa-zert-gesehen:${zertStand.email}`, String(zertStand.anzahl));
+    } catch {}
+    setZertNeu(false);
+  }, [pathname, zertStand]);
 
   useEffect(() => {
     // Mobiles „Mehr"-Sheet schließen, wenn sich die Route ändert (z.B. Browser-Zurück).
@@ -62,7 +87,12 @@ export default function BottomNav() {
           const active = pathname.startsWith(href);
           return (
             <Link key={href} href={href} className={`bottom-nav-item${active ? " active" : ""}`}>
-              <Icon active={active} />
+              <span style={{ position: "relative", display: "inline-flex" }}>
+                <Icon active={active} />
+                {href === "/meine-zertifikate" && zertNeu && (
+                  <span className="bottom-nav-punkt" aria-label="Neue Zertifikate" />
+                )}
+              </span>
               <span className="bottom-nav-label">{label}</span>
             </Link>
           );

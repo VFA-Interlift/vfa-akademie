@@ -7,7 +7,10 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
+import CreditsZuwachs from "@/components/CreditsZuwachs";
 import DashboardHero from "@/components/DashboardHero";
+import EtagenAnzeige from "@/components/EtagenAnzeige";
+import RangAufstieg from "@/components/RangAufstieg";
 import FeedbackReminder from "@/components/FeedbackReminder";
 import TesterWelcome from "@/components/TesterWelcome";
 import { istTester } from "@/lib/app-test/tester";
@@ -108,6 +111,12 @@ export default async function DashboardPage() {
   const progress = getRankProgress(user.creditsTotal);
   const nextRank = getNextRankInfo(user.creditsTotal);
 
+  // Kabinenposition für die Etagenanzeige: Rangstufe (0 = Start … 4 = Experte)
+  // plus Fortschritt innerhalb der Stufe, normiert auf 0–1.
+  const etagenStufe = { STARTER: 0, BRONZE: 1, SILBER: 2, GOLD: 3, EXPERTE: 4 }[rank.key];
+  const etagenAnteil = Math.min((etagenStufe + progress.percent / 100) / 4, 1);
+  const etagenNummer = etagenStufe === 0 ? "EG" : String(etagenStufe);
+
   const nextTraining = user.enrollments.find(
     (e) => new Date(e.training.date) >= today && e.status !== "ATTENDED"
   );
@@ -128,9 +137,25 @@ export default async function DashboardPage() {
       <DashboardHero
         name={displayName || "Willkommen"}
         rangLabel={rank.label}
-        unterzeile={
-          nextTraining ? "Du hast eine Schulung in Kürze." : "Dein aktueller Stand."
+        unterzeile="Dein aktueller Stand."
+        naechste={
+          nextTraining
+            ? {
+                kuerzel: nextTraining.training.code?.trim() || nextTraining.training.title,
+                datumISO: new Date(nextTraining.training.date).toISOString(),
+                endeISO: nextTraining.training.endDate
+                  ? new Date(nextTraining.training.endDate).toISOString()
+                  : null,
+              }
+            : undefined
         }
+      />
+
+      <RangAufstieg
+        userId={user.id}
+        rangKey={rank.key}
+        rangLabel={rank.label}
+        rangFarbe={rank.color}
       />
 
       <div className="dash-inhalt">
@@ -219,37 +244,39 @@ export default async function DashboardPage() {
                   color={rank.color}
                 />
 
+                <CreditsZuwachs userId={user.id} credits={user.creditsTotal} />
+
                 <div style={{ color: "#666666", fontSize: 13, textAlign: "center", lineHeight: 1.5 }}>
                   {nextRank
                     ? `Noch ${progress.remainingToNext.toLocaleString("de-DE")} Credits bis ${nextRank.label}`
                     : "Höchste Stufe erreicht ✓"}
                 </div>
 
-                {/* Rank overview */}
-                <div style={{ display: "grid", gap: 6 }}>
-                  {RANKS.map((r) => (
-                    <div
-                      key={r.key}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "8px 12px",
-                        borderRadius: 8,
-                        border: r.key === rank.key ? r.softBorder : "1px solid #F0F0F0",
-                        background: r.key === rank.key ? r.softBackground : "transparent",
-                        transition: "all 140ms",
-                      }}
-                    >
-                      <span style={{ fontSize: 13, fontWeight: r.key === rank.key ? 800 : 600, color: r.key === rank.key ? r.color : "#999999" }}>
-                        {r.label}
-                      </span>
-                      <span style={{ fontSize: 12, color: "#AAAAAA" }}>
-                        {r.max === null ? `ab ${r.min.toLocaleString("de-DE")}` : `${r.min.toLocaleString("de-DE")}–${r.max.toLocaleString("de-DE")}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {/* Ränge als Etagen mit fahrender Kabine — das Erkennungszeichen
+                    einer Aufzugs-App (Tobis Auswahl vom 13.08.2026). */}
+                <EtagenAnzeige
+                  etagen={[...RANKS].reverse().map((r) => ({
+                    key: r.key,
+                    label: r.label,
+                    bereich:
+                      r.max === null
+                        ? `ab ${r.min.toLocaleString("de-DE")}`
+                        : `${r.min.toLocaleString("de-DE")}–${r.max.toLocaleString("de-DE")}`,
+                    farbe: r.color,
+                    weich: r.softBackground,
+                    rand: r.softBorder,
+                  })).concat([{
+                    key: STARTER_RANK.key,
+                    label: "Start",
+                    bereich: "0–99",
+                    farbe: STARTER_RANK.color,
+                    weich: STARTER_RANK.softBackground,
+                    rand: STARTER_RANK.softBorder,
+                  }])}
+                  aktuellKey={rank.key}
+                  anteil={etagenAnteil}
+                  etagenNummer={etagenNummer}
+                />
               </div>
             </AppCard>
           </AnimatedSection>

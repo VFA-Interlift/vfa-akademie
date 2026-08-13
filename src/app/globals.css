@@ -289,6 +289,22 @@ a, button {
   .bottom-nav-label {
     line-height: 1;
   }
+  /* "Neu"-Punkt am Zertifikate-Tab: leuchtet, bis die Seite einmal besucht
+     wurde. Gelb wie die Marken-Akzentfarbe, sanftes Pulsieren. */
+  .bottom-nav-punkt {
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ffc100;
+    box-shadow: 0 0 0 2px #ffffff;
+    animation: punktPuls 2.2s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bottom-nav-punkt { animation: none; }
+  }
   /* Hide header when logged in on mobile */
   .app-header--authed {
     display: none !important;
@@ -506,6 +522,17 @@ a, button {
   .kp-document .kp-body {
     flex: 1 1 auto !important;
   }
+}
+
+@keyframes punktPuls {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.35); opacity: 0.75; }
+}
+
+/* ── Rangaufstieg: fallendes Konfetti ── */
+@keyframes rangKonfetti {
+  from { transform: translateY(-20px) rotate(0deg); }
+  to   { transform: translateY(105vh) rotate(560deg); }
 }
 
 /* ── Page fade-in ── */

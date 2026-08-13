@@ -19,12 +19,16 @@ export default function DashboardHero({
   name,
   rangLabel,
   unterzeile,
+  naechste,
 }: {
   name: string;
   rangLabel: string;
   unterzeile: string;
+  /** Nächste Schulung für den Countdown; ohne sie bleibt die Unterzeile. */
+  naechste?: { kuerzel: string; datumISO: string; endeISO: string | null };
 }) {
   const [gruss, setGruss] = useState("Hallo");
+  const [zeile, setZeile] = useState(unterzeile);
   const grundRef = useRef<HTMLDivElement>(null);
   const inhaltRef = useRef<HTMLDivElement>(null);
 
@@ -50,16 +54,65 @@ export default function DashboardHero({
   // jedem Aufwecken neu prüfen: iOS lädt eine installierte App beim Öffnen
   // meist nicht neu, sondern weckt den alten Stand — wer die App morgens
   // öffnete, sah abends sonst noch "Guten Morgen" (Tobi, 13.08.2026).
+  //
+  // Reihenfolge der Grüße: erst die wenigen besonderen Tage, dann Wochenende
+  // und Wochenstart, dann die Tageszeit. Bewusst knapp gehalten — ein Gruß,
+  // der jeden Tag anders klingt, wirkt schnell bemüht.
   useEffect(() => {
     const aktualisieren = () => {
-      const stunde = new Date().getHours();
-      setGruss(stunde < 11 ? "Guten Morgen" : stunde < 18 ? "Guten Tag" : "Guten Abend");
+      const jetzt = new Date();
+      const stunde = jetzt.getHours();
+      const wochentag = jetzt.getDay(); // 0 So … 5 Fr, 6 Sa
+      const tag = jetzt.getDate();
+      const monat = jetzt.getMonth() + 1;
+
+      let text: string;
+      if (monat === 12 && tag >= 24 && tag <= 26) {
+        text = "Frohe Weihnachten";
+      } else if (monat === 12 && tag === 31) {
+        text = "Guten Rutsch";
+      } else if (monat === 1 && tag === 1) {
+        text = "Frohes neues Jahr";
+      } else if (wochentag === 5 && stunde >= 12) {
+        text = "Schönes Wochenende";
+      } else if (wochentag === 1 && stunde < 11) {
+        text = "Guten Start in die Woche";
+      } else if (stunde < 11) {
+        text = "Guten Morgen";
+      } else if (stunde < 18) {
+        text = "Guten Tag";
+      } else {
+        text = "Guten Abend";
+      }
+      setGruss(text);
+
+      // Countdown zur nächsten Schulung — nach Kalendertagen auf der
+      // Geräteuhr, nicht nach Stunden: "morgen" heißt morgen, auch wenn es
+      // erst in 30 Stunden losgeht.
+      if (naechste) {
+        const heute = new Date(jetzt.getFullYear(), jetzt.getMonth(), jetzt.getDate());
+        const beginn = new Date(naechste.datumISO);
+        const start = new Date(beginn.getFullYear(), beginn.getMonth(), beginn.getDate());
+        const ende = naechste.endeISO ? new Date(naechste.endeISO) : beginn;
+        const schluss = new Date(ende.getFullYear(), ende.getMonth(), ende.getDate());
+        const tage = Math.round((start.getTime() - heute.getTime()) / 86_400_000);
+
+        if (heute >= start && heute <= schluss) {
+          setZeile(`Heute ist es so weit: ${naechste.kuerzel}`);
+        } else if (tage === 1) {
+          setZeile(`Morgen geht es los: ${naechste.kuerzel}`);
+        } else if (tage > 1) {
+          setZeile(`Noch ${tage} Tage bis ${naechste.kuerzel}`);
+        } else {
+          setZeile(unterzeile);
+        }
+      }
     };
 
     aktualisieren();
     document.addEventListener("visibilitychange", aktualisieren);
     return () => document.removeEventListener("visibilitychange", aktualisieren);
-  }, []);
+  }, [naechste, unterzeile]);
 
   // Auf dem Dashboard gibt es keinen Deckstreifen hinter der Statusleiste —
   // Tobis Entscheidung vom 13.08.2026 („Weg mit der Uhr"): Ihm ist wichtiger,
@@ -115,7 +168,7 @@ export default function DashboardHero({
         <h1 className="dash-hero-name">{name}</h1>
         <div className="dash-hero-zeile">
           <span className="dash-hero-rang">★ {rangLabel}</span>
-          <span className="dash-hero-text">{unterzeile}</span>
+          <span className="dash-hero-text">{zeile}</span>
         </div>
       </div>
     </div>

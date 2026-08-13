@@ -21,6 +21,11 @@ export async function GET() {
       creditsTotal: true,
       role: true,
       isInstructor: true,
+      // Für den "Neu"-Punkt am Zertifikate-Tab (BottomNav): Anzahl der
+      // ausgestellten Zertifikate, verglichen mit dem zuletzt gesehenen Stand.
+      _count: {
+        select: { certificates: { where: { status: "ISSUED" } } },
+      },
     },
   });
 
@@ -32,5 +37,6 @@ export async function GET() {
     creditsTotal: user?.creditsTotal ?? 0,
     role: user?.role ?? "USER",
     isInstructor: user?.isInstructor ?? false,
+    certCount: user?._count.certificates ?? 0,
   });
 }
