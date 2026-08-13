@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
   // Übergangsfall: Konto besteht bereits und wartet auf die Bestätigung.
   const eintrag = await prisma.emailVerificationToken.findUnique({
     where: { token },
-    select: { id: true, userId: true, usedAt: true, expiresAt: true },
+    select: { id: true, userId: true, usedAt: true, expiresAt: true, pendingEmail: true },
   });
 
   if (!eintrag || eintrag.usedAt !== null || eintrag.expiresAt < jetzt) {
@@ -162,10 +162,46 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await prisma.user.update({
-    where: { id: eintrag.userId },
-    data: { emailVerifiedAt: jetzt },
-    select: { id: true, email: true },
+  // Trägt der Link eine neue Adresse (Adresswechsel aus "Meine Daten"), zieht
+  // das Konto JETZT um. Die Adresse kann inzwischen anderweitig vergeben sein —
+  // dann verständlich melden statt Serverfehler (P2002).
+  let user: { id: string; email: string };
+  try {
+    user = await prisma.user.update({
+      where: { id: eintrag.userId },
+      data: {
+        emailVerifiedAt: jetzt,
+        ...(eintrag.pendingEmail ? { email: eintrag.pendingEmail.toLowerCase() } : {}),
+      },
+      select: { id: true, email: true },
+    });
+  } catch (fehler) {
+    const code =
+      typeof fehler === "object" && fehler && "code" in fehler
+        ? String((fehler as { code?: unknown }).code)
+        : "";
+    if (code === "P2002") {
+      await prisma.emailVerificationToken.update({
+        where: { id: eintrag.id },
+        data: { usedAt: jetzt },
+      });
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Diese Adresse ist inzwischen anderweitig vergeben. Dein Konto läuft unter der bisherigen Adresse weiter — bitte wähle unter Meine Daten eine andere.",
+        },
+        { status: 409 }
+      );
+    }
+    throw fehler;
+  }
+
+  // Weitere offene Links dieses Kontos verfallen — sonst könnte ein älterer
+  // Link später eine andere Adresse setzen.
+  await prisma.emailVerificationToken.updateMany({
+    where: { userId: eintrag.userId, usedAt: null, id: { not: eintrag.id } },
+    data: { usedAt: jetzt },
   });
 
   await prisma.emailVerificationToken.update({

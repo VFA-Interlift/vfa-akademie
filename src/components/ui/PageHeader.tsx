@@ -9,6 +9,10 @@ type PageHeaderProps = {
   backLabel?: string;
   showBackButton?: boolean;
   showTitle?: boolean;
+  /** Fester Rückweg (z. B. "/admin") — erscheint weiß IM Band über dem Titel.
+      Vorher lag der Link der Admin-Unterseiten unsichtbar UNTER dem Band
+      (Ultracode-Befund 13.08.2026). */
+  backHref?: string;
 };
 
 /**
@@ -27,6 +31,7 @@ type PageHeaderProps = {
  */
 export default function PageHeader({
   title,
+  backHref,
   backLabel = "Zurück",
   // Untere Menüleiste (BottomNav) + Browser-Zurück decken die Navigation ab,
   // daher standardmäßig kein redundanter Zurück-Button mehr oben.
@@ -40,6 +45,9 @@ export default function PageHeader({
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Nur am Handy: Am Desktop ist das Band ein ruhendes Feld im Inhalt —
+    // dort schob die Verschiebung den Titel aus dem Band (Ultracode-Hinweis).
+    if (!window.matchMedia("(max-width: 759px)").matches) return;
 
     let angefordert = false;
     const setzen = () => {
@@ -72,6 +80,21 @@ export default function PageHeader({
       </div>
 
       <div ref={inhaltRef} style={{ position: "relative" }}>
+        {backHref && (
+          <a
+            href={backHref}
+            style={{
+              display: "inline-block",
+              marginBottom: 10,
+              color: "rgba(255,255,255,0.85)",
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            ← {backLabel}
+          </a>
+        )}
         {showBackButton && (
           <div style={{ marginBottom: 14 }}>
             <BackButton label={backLabel} />

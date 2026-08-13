@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendTrainingReminderEmail } from "@/lib/email";
 import { sendePushAnNutzer } from "@/lib/push";
@@ -50,8 +51,17 @@ export async function GET(req: Request) {
   const tagesMarke = now.toISOString().slice(0, 10);
   try {
     await prisma.erinnerungsLauf.create({ data: { datum: tagesMarke } });
-  } catch {
-    return NextResponse.json({ ok: true, uebersprungen: "heute bereits gelaufen", datum: tagesMarke });
+  } catch (fehler) {
+    // Nur die Unique-Kollision heißt "heute bereits gelaufen". Jeder andere
+    // Fehler (DB weg) muss als Fehler sichtbar werden, sonst fallen die
+    // Erinnerungen still aus (Ultracode-Befund 13.08.2026).
+    if (
+      fehler instanceof Prisma.PrismaClientKnownRequestError &&
+      fehler.code === "P2002"
+    ) {
+      return NextResponse.json({ ok: true, uebersprungen: "heute bereits gelaufen", datum: tagesMarke });
+    }
+    throw fehler;
   }
 
   // Tagesfenster [heute + DAYS_BEFORE, heute + DAYS_BEFORE + 1) in UTC
@@ -189,6 +199,12 @@ export async function GET(req: Request) {
     });
   } catch (error: unknown) {
     console.error("REMINDERS_FAILED", getErrorMessage(error));
+
+    // Marke freigeben: Sonst verschluckt ein Absturz nach dem Eintrag alle
+    // Erinnerungen des Tages, weil kein zweiter Versuch mehr möglich wäre.
+    await prisma.erinnerungsLauf
+      .delete({ where: { datum: tagesMarke } })
+      .catch(() => {});
 
     return NextResponse.json(
       { ok: false, error: "REMINDERS_FAILED" },

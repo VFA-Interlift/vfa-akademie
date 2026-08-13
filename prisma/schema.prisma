@@ -73,6 +73,11 @@ model EmailVerificationToken {
   token     String    @unique
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Bei einem Adresswechsel: die NEUE Adresse, auf die das Konto erst beim
+  /// Einlösen des Links umzieht. Vorher wechselte die Route die Adresse
+  /// sofort — ein Tippfehler sperrte das Konto endgültig aus, weil der
+  /// Bestätigungslink an die falsche Adresse ging (Ultracode 13.08.2026).
+  pendingEmail String?
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

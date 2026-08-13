@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { del } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -72,7 +73,26 @@ export async function POST(req: Request) {
 
   bremseZuruecksetzen(`konto-loeschen:${email}`);
 
+  // Hochgeladene Nachweis-Dateien VOR dem Löschen einsammeln (die DB-Zeilen
+  // reißt die Kaskade mit), die Blobs aber erst NACH dem erfolgreichen
+  // DB-Löschen entfernen: Scheitert der Blob-Store, scheitert nicht die
+  // Kontolöschung — Art. 17 verspricht das Konto, nicht die Speicherinterna
+  // (Ultracode-Befund 13.08.2026). Fehler werden geloggt, damit Verwaiste
+  // auffallen.
+  const dokumente = await prisma.userDocument.findMany({
+    where: { userId: user.id },
+    select: { fileUrl: true },
+  });
+
   await prisma.user.delete({ where: { id: user.id } });
+
+  if (dokumente.length > 0) {
+    try {
+      await del(dokumente.map((d) => d.fileUrl));
+    } catch (fehler) {
+      console.error("KONTOLOESCHUNG_BLOB_FEHLER", fehler);
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -89,14 +89,18 @@ export async function POST(req: Request) {
         },
       });
 
+      // Saldo nie unter 0: Eine zu grosse Abzugs-Korrektur soll den Rest
+      // abziehen, nicht ein Minus erzeugen (Ultracode-Hinweis 13.08.2026).
+      const aktuell = await tx.user.findUniqueOrThrow({
+        where: { id: user.id },
+        select: { creditsTotal: true },
+      });
       const updatedUser = await tx.user.update({
         where: {
           id: user.id,
         },
         data: {
-          creditsTotal: {
-            increment: credits,
-          },
+          creditsTotal: Math.max(0, aktuell.creditsTotal + credits),
         },
         select: {
           creditsTotal: true,

@@ -79,9 +79,14 @@ export async function POST(
             type: "ADJUSTMENT",
             reason: "ADMIN_ADJUST",
             trainingId: cert.trainingId,
-            certificateId: cert.id,
+            // BEWUSST ohne certificateId: Das Feld ist @unique und die
+            // AWARD-Buchung der Ausstellung belegt es bereits — mit gesetztem
+            // Feld kollidierte jede Gegenbuchung (P2002) und der Widerruf
+            // schlug bei Zertifikaten mit Credits IMMER fehl
+            // (Ultracode-Befund 13.08.2026). Die Zuordnung steht in meta.
             meta: {
               kind: "CERTIFICATE_REVOKED",
+              certificateId: cert.id,
               revokedByAdminId: admin.id,
               grund,
             },

@@ -26,6 +26,7 @@ export default async function MeineSchulungenPage() {
       ...training,
       date: training.date.toISOString(),
       endDate: training.endDate ? training.endDate.toISOString() : null,
+      cancelledAt: training.cancelledAt ? training.cancelledAt.toISOString() : null,
     }));
 
   const serializableTrainings = serialisieren(trainings);

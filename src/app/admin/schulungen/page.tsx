@@ -132,10 +132,9 @@ export default async function AdminSchulungenPage() {
     <main className="page-main">
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 14 }}>
         <div>
-          <a href="/admin" style={{ color: TEAL, fontWeight: 700, fontSize: 13, textDecoration: "none" }}>← Adminbereich</a>
         </div>
         <AnimatedSection delayMs={0}>
-          <PageHeader title="Schulungen & Teilnehmer" showTitle />
+          <PageHeader backHref="/admin" backLabel="Adminbereich" title="Schulungen & Teilnehmer" showTitle />
         </AnimatedSection>
 
         <AnimatedSection delayMs={40}>

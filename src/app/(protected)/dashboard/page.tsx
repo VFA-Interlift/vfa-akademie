@@ -76,7 +76,7 @@ export default async function DashboardPage() {
           id: true,
           status: true,
           training: {
-            select: { id: true, title: true, code: true, date: true, endDate: true, location: true },
+            select: { id: true, title: true, code: true, date: true, endDate: true, location: true, cancelledAt: true },
           },
         },
         orderBy: { training: { date: "asc" } },
@@ -116,15 +116,20 @@ export default async function DashboardPage() {
   const etagenStufe = { STARTER: 0, BRONZE: 1, SILBER: 2, GOLD: 3, EXPERTE: 4 }[rank.key];
   const etagenNummer = etagenStufe === 0 ? "EG" : String(etagenStufe);
 
+  // Abgesagte Kurse zaehlen nicht als "naechste Schulung", und ein laufender
+  // Mehrtageskurs bleibt bis zu seinem Ende die naechste (Ultracode 13.08.).
   const nextTraining = user.enrollments.find(
-    (e) => new Date(e.training.date) >= today && e.status !== "ATTENDED"
+    (e) =>
+      !e.training.cancelledAt &&
+      new Date(e.training.endDate ?? e.training.date) >= today &&
+      e.status !== "ATTENDED"
   );
 
   // Nur tatsächlich bevorstehende/laufende Schulungen zählen (gleiche Logik wie
   // „Meine Schulungen": endDate bzw. date >= heute). Vergangene, noch nicht vom
   // Cron in Zertifikate umgewandelte Anmeldungen sollen hier nicht mitzählen.
   const upcomingEnrollments = user.enrollments.filter(
-    (e) => new Date(e.training.endDate ?? e.training.date) >= today
+    (e) => !e.training.cancelledAt && new Date(e.training.endDate ?? e.training.date) >= today
   );
   const enrollmentCount = upcomingEnrollments.length;
   const certCount = user.certificates.length;

@@ -27,6 +27,7 @@ type SerializableTraining = {
   description: string | null;
   creditsAward: number;
   status: string;
+  cancelledAt?: string | null;
   certificateId?: string | null;
 };
 
@@ -71,7 +72,11 @@ export default function MeineSchulungenClient({
   // automatisch (Cron) in Zertifikate umgewandelt (Enrollment → CERTIFICATE_ISSUED)
   // und erscheinen dann unter „Meine Zertifikate".
   const visible = trainings.filter((t) => new Date(t.endDate ?? t.date) >= today);
-  const totalCredits = visible.reduce((sum, t) => sum + t.creditsAward, 0);
+  // Abgesagte Kurse zaehlen nicht zu den moeglichen Credits.
+  const totalCredits = visible.reduce(
+    (sum, t) => sum + (t.cancelledAt ? 0 : t.creditsAward),
+    0
+  );
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
@@ -101,8 +106,13 @@ export default function MeineSchulungenClient({
             const displayTitle = getDisplayTrainingTitle(training);
             const addressLines = formatVenueLines(training.location, training.instructor);
             const instructorName = formatInstructorName(training.instructor);
-            const statusLabel = formatEnrollmentStatus(training.status);
-            const statusStyle = enrollmentStatusColor(training.status);
+            // Eine Absage ueberschreibt den Anmeldestatus in der Anzeige —
+            // der Kurs bleibt sichtbar, damit niemand umsonst anreist.
+            const abgesagt = Boolean(training.cancelledAt);
+            const statusLabel = abgesagt ? "Abgesagt" : formatEnrollmentStatus(training.status);
+            const statusStyle = abgesagt
+              ? { bg: "rgba(176,0,32,0.10)", color: "var(--vfa-rot-text)", border: "1px solid rgba(176,0,32,0.28)" }
+              : enrollmentStatusColor(training.status);
 
             return (
               <AnimatedSection key={training.id} delayMs={Math.min(80 + index * 50, 400)}>
@@ -171,6 +181,7 @@ export default function MeineSchulungenClient({
                         </div>
 
                         <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          {!abgesagt && (
                           <a
                             href={`/api/trainings/${training.id}/calendar`}
                             style={{
@@ -190,10 +201,11 @@ export default function MeineSchulungenClient({
                             <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>📅</span>
                             Zum Kalender hinzufügen
                           </a>
+                          )}
                           {/* Route zum Schulungsort — öffnet die Karten-App;
                               der Google-Link funktioniert auf iPhone und
                               Android gleichermaßen. */}
-                          {addressLines.length > 0 && (
+                          {!abgesagt && addressLines.length > 0 && (
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(", "))}`}
                               target="_blank"

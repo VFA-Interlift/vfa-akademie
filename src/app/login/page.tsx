@@ -20,11 +20,20 @@ export default function LoginPage() {
     setLoading(true);
     setMsg(null);
 
-    const res = await signIn("credentials", {
-      email: email.trim().toLowerCase(),
-      password,
-      redirect: false,
-    });
+    // signIn wirft bei Netzfehlern — ungefangen blieb der Knopf für immer
+    // gesperrt und der Nutzer ohne Meldung (Ultracode-Hinweis 13.08.2026).
+    let res: Awaited<ReturnType<typeof signIn>>;
+    try {
+      res = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+      });
+    } catch {
+      setLoading(false);
+      setMsg("Keine Verbindung. Bitte prüfe dein Netz und versuch es erneut.");
+      return;
+    }
 
     setLoading(false);
 

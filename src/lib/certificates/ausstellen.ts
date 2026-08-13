@@ -39,6 +39,18 @@ export async function zertifikateAusstellen(
   now: Date,
   opts?: { adminId?: string }
 ): Promise<AusstellenErgebnis> {
+  // Grenze ist der BEGINN des heutigen UTC-Tags, nicht der Augenblick: Die
+  // Kursdaten stehen als 00:00 UTC des Kalendertags in der Datenbank (der
+  // Wix-/Cobra-Sync verwirft Uhrzeiten). Mit `lt: now` stellte der 00:20-Cron
+  // Zertifikate samt Credits und "Zertifikat ist da"-Mail bereits in der Nacht
+  // ZUM letzten Kurstag aus — Stunden bevor der Kurs lief und bevor ein Dozent
+  // Fehlende eintragen konnte (kritischer Ultracode-Befund vom 13.08.2026).
+  // Ein Kurs mit Ende am Tag X wird so erst ab dem Folgetag ausgestellt; das
+  // gilt bewusst auch für den Admin-Knopf, damit beide Wege dasselbe sagen.
+  const tagesbeginn = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+
   // Lesen läuft ausserhalb jeder Transaktion — nichts wird hier geschrieben.
   const enrollments = await prisma.enrollment.findMany({
     where: {
@@ -47,7 +59,10 @@ export async function zertifikateAusstellen(
       training: {
         // Abgesagte Kurse stellen keine Zertifikate mehr aus.
         cancelledAt: null,
-        OR: [{ endDate: { lt: now } }, { endDate: null, date: { lt: now } }],
+        OR: [
+          { endDate: { lt: tagesbeginn } },
+          { endDate: null, date: { lt: tagesbeginn } },
+        ],
       },
     },
     select: {

@@ -407,26 +407,42 @@ function normalizeTraining(training: CobraTraining): NormalizedTraining | null {
   };
 }
 
+
+/**
+ * Baut die Update-Felder so, dass Wix- und Handpflege überleben: Cobra kennt
+ * weder Credits noch die in der App gepflegten Orte/Dozenten verlässlich.
+ * creditsAward wird nur gesetzt, solange in der DB 0 steht (Regelwert als
+ * Starthilfe), location/instructor/description nur, solange die DB leer ist.
+ * Vorher setzte jeder Admin-Klick auf "Cobra-Sync" die Handpflege zurück
+ * (Ultracode-Befund 13.08.2026).
+ */
+function schonendeUpdateFelder(
+  training: NormalizedTraining,
+  bestand: { creditsAward: number; location: string | null; instructor: string | null; description: string | null }
+) {
+  return {
+    title: training.title,
+    code: training.code,
+    date: training.date,
+    endDate: training.endDate,
+    certificateKind: training.certificateKind,
+    ...(bestand.creditsAward === 0 ? { creditsAward: training.creditsAward } : {}),
+    ...(!bestand.location?.trim() ? { location: training.location } : {}),
+    ...(!bestand.instructor?.trim() ? { instructor: training.instructor } : {}),
+    ...(!bestand.description?.trim() ? { description: training.description } : {}),
+  };
+}
+
 async function syncTraining(training: NormalizedTraining) {
   const existingByCobraId = await prisma.training.findUnique({
     where: { cobraId: training.cobraId },
-    select: { id: true, code: true },
+    select: { id: true, code: true, creditsAward: true, location: true, instructor: true, description: true },
   });
 
   if (existingByCobraId) {
     const updated = await prisma.training.update({
       where: { id: existingByCobraId.id },
-      data: {
-        title: training.title,
-        code: training.code,
-        date: training.date,
-        endDate: training.endDate,
-        location: training.location,
-        instructor: training.instructor,
-        description: training.description,
-        certificateKind: training.certificateKind,
-        creditsAward: training.creditsAward,
-      },
+      data: schonendeUpdateFelder(training, existingByCobraId),
       select: { id: true, code: true, title: true, cobraId: true },
     });
 
@@ -440,7 +456,7 @@ async function syncTraining(training: NormalizedTraining) {
   // überlebt nur eine Schulung pro Code (A1/A2-2026-Bug).
   const existingByCode = await prisma.training.findFirst({
     where: { code: training.code, cobraId: null },
-    select: { id: true, code: true },
+    select: { id: true, code: true, creditsAward: true, location: true, instructor: true, description: true },
   });
 
   if (existingByCode) {
@@ -448,15 +464,7 @@ async function syncTraining(training: NormalizedTraining) {
       where: { id: existingByCode.id },
       data: {
         cobraId: training.cobraId,
-        title: training.title,
-        code: training.code,
-        date: training.date,
-        endDate: training.endDate,
-        location: training.location,
-        instructor: training.instructor,
-        description: training.description,
-        certificateKind: training.certificateKind,
-        creditsAward: training.creditsAward,
+        ...schonendeUpdateFelder(training, existingByCode),
       },
       select: { id: true, code: true, title: true, cobraId: true },
     });

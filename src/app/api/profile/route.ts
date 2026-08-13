@@ -105,6 +105,13 @@ export async function PATCH(req: Request) {
       );
     }
 
+    if (birthDate && (birthDate > new Date() || birthDate.getFullYear() < 1900)) {
+      return NextResponse.json(
+        { ok: false, error: "Das Geburtsdatum liegt außerhalb des gültigen Bereichs." },
+        { status: 400 }
+      );
+    }
+
     const currentUser = await prisma.user.findUnique({
       where: {
         email: currentEmail,
@@ -155,7 +162,9 @@ export async function PATCH(req: Request) {
         id: currentUser.id,
       },
       data: {
-        email,
+        // Die Adresse wechselt NICHT hier: Erst wenn der Bestätigungslink an
+        // die neue Adresse eingelöst wird, zieht das Konto um (pendingEmail
+        // am Token). Vorher sperrte ein Tippfehler das Konto aus.
         name: firstName || lastName || "name" in body ? fullName : undefined,
         firstName: wenn("firstName", firstName),
         lastName: wenn("lastName", lastName),
@@ -171,36 +180,43 @@ export async function PATCH(req: Request) {
         companyCountry: wenn("companyCountry", cleanString(body.companyCountry)),
         position: wenn("position", cleanString(body.position)),
 
-        // Adresswechsel entzieht die Bestätigung: Ein Konto darf nicht auf eine
-        // fremde Adresse umziehen und dabei "bestätigt" bleiben — sonst würden
-        // dem neuen Adressaten über Wix-Webhook/Cobra-Abgleich fremde
-        // Anmeldungen und Zertifikate zugeschrieben.
-        ...(emailChanged ? { emailVerifiedAt: null } : {}),
       },
     });
 
-    // Nach einem Adresswechsel eine neue Bestätigung an die neue Adresse
-    // schicken. Scheitert der Versand, bleibt das Konto unbestätigt (sicher) —
-    // der Nutzer kann die Bestätigung erneut anfordern.
+    // Adresswechsel: Bestätigungslink an die NEUE Adresse; das Konto läuft
+    // bis zum Einlösen unter der alten weiter. Scheitert der Versand, erfährt
+    // es der Nutzer — vorher wurde der Fehler verschluckt und als Erfolg
+    // gemeldet (Ultracode-Befund 13.08.2026).
     if (emailChanged) {
+      const token = randomBytes(32).toString("hex");
+      await prisma.emailVerificationToken.create({
+        data: {
+          token,
+          userId: currentUser.id,
+          pendingEmail: email,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
       try {
-        const token = randomBytes(32).toString("hex");
-        await prisma.emailVerificationToken.create({
-          data: {
-            token,
-            userId: currentUser.id,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          },
-        });
         await sendEmailVerificationEmail(email, verifyLink(token));
       } catch (mailError) {
         console.error("PROFILE_EMAIL_CHANGE_VERIFY_MAIL_ERROR", mailError);
+        await prisma.emailVerificationToken.deleteMany({ where: { token } });
+        return NextResponse.json(
+          {
+            ok: false,
+            error:
+              "Die Bestätigungsmail an die neue Adresse konnte nicht gesendet werden. Deine bisherige Adresse bleibt aktiv — bitte versuch es später erneut.",
+          },
+          { status: 502 }
+        );
       }
     }
 
     return NextResponse.json({
       ok: true,
       emailChanged,
+      ...(emailChanged ? { pendingEmail: email } : {}),
     });
   } catch (error) {
     console.error(error);

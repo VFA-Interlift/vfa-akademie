@@ -254,6 +254,51 @@ VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
   });
 }
 
+
+/**
+ * Meldung an alle Angemeldeten, wenn ein Kurs abgesagt wird. Vorher erfuhr
+ * das niemand — der Kurs stand einfach weiter in der App (Ultracode-Befund
+ * 13.08.2026). Bewusst OHNE Abmelde-Rücksicht: Eine Absage ist keine
+ * Werbung, sie muss jeden erreichen.
+ */
+export async function sendTrainingCancelledEmail(params: {
+  to: string;
+  name?: string | null;
+  trainingTitle: string;
+  dateText: string;
+  from?: string;
+}): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const greetingName = params.name?.trim() ? ` ${params.name.trim()}` : "";
+
+  await resend.emails.send({
+    from: params.from || FROM,
+    to: params.to,
+    replyTo: REPLY_TO,
+    subject: `Abgesagt: ${params.trainingTitle}`,
+    text: `Deine Schulung wurde abgesagt
+
+Hallo${greetingName},
+
+leider müssen wir die folgende Schulung absagen:
+
+${params.trainingTitle}
+Geplant war: ${params.dateText}
+
+Bitte plane den Termin nicht weiter ein. Zu Ersatzterminen melden wir uns; bei Fragen erreichst du uns unter info@vfa-interlift.de.
+
+VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1f1f;max-width:560px">
+<h2 style="color:#b00020;font-size:18px">Deine Schulung wurde abgesagt</h2>
+<p>Hallo${escapeHtml(greetingName)},</p>
+<p>leider m&uuml;ssen wir die folgende Schulung absagen:</p>
+<p style="padding:12px 16px;background:#f7f7f4;border-left:4px solid #b00020"><strong>${escapeHtml(params.trainingTitle)}</strong><br>Geplant war: ${escapeHtml(params.dateText)}</p>
+<p>Bitte plane den Termin nicht weiter ein. Zu Ersatzterminen melden wir uns; bei Fragen erreichst du uns unter <a href="mailto:info@vfa-interlift.de">info@vfa-interlift.de</a>.</p>
+<p style="color:#888;font-size:12px">VFA-Akademie &middot; Diese E-Mail wurde automatisch generiert.</p>
+</div>`,
+  });
+}
+
 /**
  * Meldung, sobald ein Zertifikat oder eine Teilnahmebestätigung bereitliegt.
  * Vorher erfuhr das niemand — der Teilnehmer musste von selbst nachsehen.

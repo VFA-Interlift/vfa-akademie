@@ -15,6 +15,8 @@ export type MyTrainingItem = {
   description: string | null;
   creditsAward: number;
   status: string;
+  /** Gesetzt, wenn der Kurs abgesagt wurde — die Anzeige sagt es dazu. */
+  cancelledAt?: Date | null;
   /** Nur bei vergangenen Teilnahmen gesetzt, wenn ein Zertifikat ausgestellt ist. */
   certificateId?: string | null;
 };
@@ -42,7 +44,12 @@ export async function getMyPastTrainings(email: string): Promise<MyTrainingItem[
     where: {
       userId: user.id,
       status: { notIn: ["CANCELLED", "NO_SHOW"] },
-      training: { date: { lt: heuteBeginn() } },
+      training: {
+        OR: [
+          { endDate: { lt: heuteBeginn() } },
+          { endDate: null, date: { lt: heuteBeginn() } },
+        ],
+      },
     },
     orderBy: { training: { date: "desc" } },
     select: {
@@ -100,7 +107,14 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
       status: {
         in: ["PENDING", "CONFIRMED", "ATTENDED", "COMPLETED"],
       },
-      training: { date: { gte: heuteBeginn() } },
+      // endDate zaehlt mit: Ein laufender Mehrtageskurs rutschte sonst ab
+      // Tag 2 in die Vergangenheit (Ultracode-Befund 13.08.2026).
+      training: {
+        OR: [
+          { endDate: { gte: heuteBeginn() } },
+          { endDate: null, date: { gte: heuteBeginn() } },
+        ],
+      },
     },
     orderBy: {
       training: {
@@ -121,6 +135,7 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
           instructor: true,
           description: true,
           creditsAward: true,
+          cancelledAt: true,
         },
       },
     },
@@ -139,5 +154,6 @@ export async function getMyTrainings(email: string): Promise<MyTrainingItem[]> {
     description: enrollment.training.description,
     creditsAward: enrollment.training.creditsAward,
     status: enrollment.status,
+    cancelledAt: enrollment.training.cancelledAt,
   }));
 }

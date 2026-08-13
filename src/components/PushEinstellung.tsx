@@ -41,6 +41,16 @@ export default function PushEinstellung() {
         const reg = await navigator.serviceWorker.ready;
         const abo = await reg.pushManager.getSubscription();
         setZustand(abo ? "aktiv" : "aus");
+        // Kontowechsel am selben Gerät: Das Abo hängt sonst noch am vorigen
+        // Konto und liefert fremde Erinnerungen. Der Upsert schreibt es dem
+        // aktuell Angemeldeten zu (Ultracode-Hinweis 13.08.2026).
+        if (abo) {
+          fetch("/api/push", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(abo.toJSON()),
+          }).catch(() => {});
+        }
       } catch {
         setZustand("aus");
       }

@@ -22,13 +22,18 @@ import { usePathname } from "next/navigation";
 const OHNE_STREIFEN = [
   "/dashboard", "/meine-schulungen", "/meine-zertifikate", "/meine-credits",
   "/meine-daten", "/kurskalender", "/badges", "/leaderboard", "/einstellungen",
-  "/feedback", "/training", "/dozent", "/app-test", "/admin",
+  "/feedback", "/training", "/dozent", "/app-test",
 ];
 
 export default function SafeTop() {
   const pfad = usePathname();
 
-  if (OHNE_STREIFEN.some((p) => pfad === p || pfad.startsWith(p + "/"))) {
+  // Die Admin-STARTSEITE hat kein Band (eigener Kopf) — nur die Unterseiten.
+  const bandSeite =
+    OHNE_STREIFEN.some((p) => pfad === p || pfad.startsWith(p + "/")) ||
+    pfad.startsWith("/admin/");
+
+  if (bandSeite) {
     return null;
   }
 

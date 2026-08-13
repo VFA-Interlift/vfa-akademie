@@ -87,10 +87,8 @@ export default function AdminCreditsPage() {
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <div style={{ marginBottom: 10 }}>
-          <a href="/admin" style={{ color: "#007873", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>← Adminbereich</a>
         </div>
-        <PageHeader
-          title="Credits verwalten"
+        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Credits verwalten"
           description="Hier kannst du Credits manuell vergeben oder abziehen. Jede Änderung wird als Credit-Transaktion gespeichert."
         />
 

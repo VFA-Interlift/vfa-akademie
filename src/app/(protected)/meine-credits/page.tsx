@@ -21,6 +21,7 @@ function reasonLabel(reason: string) {
   if (reason === "CERTIFICATE_ISSUED") return "Zertifikat ausgestellt";
   if (reason === "ADMIN_ADJUST") return "Admin-Korrektur";
   if (reason === "TRAINING_CLAIM") return "Schulungs-Claim";
+  if (reason === "FEEDBACK_SUBMITTED") return "Feedback-Belohnung";
   return reason;
 }
 

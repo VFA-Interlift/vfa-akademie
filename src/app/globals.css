@@ -667,6 +667,13 @@ a, button {
       0 -40px 80px rgba(0, 26, 24, 0.15);
   }
 }
+/* page-main polstert ab 600px mit 40px statt 24px — das Band muss dort
+   entsprechend weiter hinauf, sonst hängt es 16px unter der Oberkante. */
+@media (min-width: 600px) and (max-width: 759px) {
+  .seiten-kopf {
+    margin-top: calc(-40px - env(safe-area-inset-top, 0px));
+  }
+}
 
 /* ── Streifen hinter der Statusleiste ──
    Seit die Seite unter der Statusleiste durchläuft (statusBarStyle

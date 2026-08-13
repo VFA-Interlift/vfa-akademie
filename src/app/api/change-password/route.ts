@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { passwortFehler } from "@/lib/passwort";
+import { bremsePruefen, bremseZuruecksetzen } from "@/lib/bremse";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,22 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
+  }
+
+  // Gleiche Zugriffsbremse wie beim Konto-Löschen: Ohne sie war das Feld
+  // "aktuelles Passwort" ein Prüf-Orakel für eine gekaperte Sitzung
+  // (Ultracode-Befund 13.08.2026).
+  const bremsSchluessel = `passwort-aendern:${session.user.email.toLowerCase()}`;
+  const bremse = bremsePruefen(bremsSchluessel, {
+    versuche: 5,
+    fensterSekunden: 300,
+    sperreSekunden: 900,
+  });
+  if (!bremse.erlaubt) {
+    return NextResponse.json(
+      { error: "Zu viele Versuche. Bitte warte einen Moment." },
+      { status: 429 }
+    );
   }
 
   let body: { currentPassword?: string; newPassword?: string };
@@ -48,6 +65,8 @@ export async function POST(req: Request) {
   if (!valid) {
     return NextResponse.json({ error: "Aktuelles Passwort ist falsch." }, { status: 400 });
   }
+
+  bremseZuruecksetzen(bremsSchluessel);
 
   const hashed = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({

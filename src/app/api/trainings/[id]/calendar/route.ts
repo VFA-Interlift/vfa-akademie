@@ -58,10 +58,13 @@ export async function GET(_req: Request, context: Ctx) {
       instructor: true,
       description: true,
       creditsAward: true,
+      cancelledAt: true,
     },
   });
 
   if (!training) return fail("TRAINING_NOT_FOUND", 404);
+  // Ein abgesagter Kurs gehoert in keinen Kalender.
+  if (training.cancelledAt) return fail("TRAINING_CANCELLED", 410);
 
   const ics = buildTrainingIcs(training);
   const fileName = icsFileName(training);

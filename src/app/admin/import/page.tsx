@@ -14,8 +14,7 @@ export default function ImportPage() {
           </Link>
         </div>
 
-        <PageHeader
-          title="Historie importieren"
+        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Historie importieren"
           description="Einmaliger Import vergangener Schulungen und Teilnehmer aus zwei Cobra-Exporten. Ein erneuter Lauf legt nichts doppelt an, sondern aktualisiert die vorhandenen Datensätze."
         />
 
