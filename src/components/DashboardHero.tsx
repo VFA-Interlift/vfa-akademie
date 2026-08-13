@@ -51,6 +51,35 @@ export default function DashboardHero({
     setGruss(stunde < 11 ? "Guten Morgen" : stunde < 18 ? "Guten Tag" : "Guten Abend");
   }, []);
 
+  // Die Statusleiste des iPhones gehört dem Betriebssystem und nimmt die
+  // theme-color an. Bleibt sie grün, schneidet sie die helle Inhaltsfläche beim
+  // Hochscrollen oben ab. Deshalb wandert die Farbe mit: oben Petrol, passend
+  // zum Kopf; sobald die Inhaltsfläche den oberen Rand erreicht, wechselt sie
+  // auf denselben Hellton. Dann ist an keiner Scrollposition eine Kante zu
+  // sehen. Beim Verlassen der Seite wird wieder Petrol gesetzt.
+  useEffect(() => {
+    const marke = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!marke) return;
+
+    const PETROL = "#007873";
+    const HELL = "#f7f7f4";
+    let letzte = "";
+
+    const faerben = () => {
+      const wunsch = window.scrollY > 150 ? HELL : PETROL;
+      if (wunsch === letzte) return;
+      letzte = wunsch;
+      marke.setAttribute("content", wunsch);
+    };
+
+    faerben();
+    window.addEventListener("scroll", faerben, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", faerben);
+      marke.setAttribute("content", PETROL);
+    };
+  }, []);
+
   useEffect(() => {
     const sanft = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (sanft.matches) return;
