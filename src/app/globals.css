@@ -625,6 +625,9 @@ html.dashboard-aktiv .page-content {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 16px 46px;
+  /* Eigene Ebene für die Parallax-Verschiebung — ohne sie rastert der Browser
+     den Block bei jedem Schritt neu und das Scrollen ruckelt. */
+  will-change: transform;
 }
 @media (min-width: 600px) {
   .dash-hero-inhalt { padding: 0 24px 54px; }

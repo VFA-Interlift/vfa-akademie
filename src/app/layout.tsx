@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import HeaderClient from "@/components/HeaderClient";
 import Providers from "@/components/Providers";
 import SocialFooter from "@/components/layout/SocialFooter";
+import SafeTop from "@/components/SafeTop";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({
@@ -77,11 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               flexDirection: "column",
             }}
           >
-            {/* Deckt den Bereich der Statusleiste ab, seit die Seite darunter
-                läuft. Petrol mit denselben Streifen wie der Dashboard-Kopf,
-                damit das Muster dort durchläuft; auf Geräten ohne Aussparung
-                ist die Höhe 0 und der Streifen unsichtbar. */}
-            <div className="safe-top" aria-hidden="true" />
+            <SafeTop />
 
             <HeaderClient />
 
