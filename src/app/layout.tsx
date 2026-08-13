@@ -17,7 +17,12 @@ export const metadata: Metadata = {
   applicationName: "VFA-Akademie",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    // "black-translucent" legt die Seite unter die Statusleiste, sodass Farben
+    // und Muster bis über die Aussparung des iPhones durchlaufen. Die Symbole
+    // dort werden dann weiß gezeichnet — damit sie überall lesbar bleiben,
+    // liegt der Streifen .safe-top (globals.css) in Petrol darüber. Wer das
+    // eine ändert, muss das andere mitändern.
+    statusBarStyle: "black-translucent",
     title: "VFA-Akademie",
   },
   icons: {
@@ -55,9 +60,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               flexDirection: "column",
             }}
           >
+            {/* Deckt den Bereich der Statusleiste ab, seit die Seite darunter
+                läuft. Petrol mit denselben Streifen wie der Dashboard-Kopf,
+                damit das Muster dort durchläuft; auf Geräten ohne Aussparung
+                ist die Höhe 0 und der Streifen unsichtbar. */}
+            <div className="safe-top" aria-hidden="true" />
+
             <HeaderClient />
 
-            <div className="page-content" style={{ flex: "1 0 auto", paddingTop: 78 }}>
+            <div
+              className="page-content"
+              style={{ flex: "1 0 auto", paddingTop: "calc(78px + env(safe-area-inset-top, 0px))" }}
+            >
               {children}
             </div>
 
