@@ -30,20 +30,23 @@ const SCHACHT_B = 44;
 export default function EtagenAnzeige({
   etagen,
   aktuellKey,
-  anteil,
   etagenNummer,
 }: {
   /** Etagen von OBEN nach UNTEN (Experte zuerst, Start zuletzt). */
   etagen: Etage[];
   aktuellKey: string;
-  /** Kabinenposition 0 (ganz unten) bis 1 (ganz oben). */
-  anteil: number;
   /** Anzeige über dem Schacht, z. B. "3" oder "EG". */
   etagenNummer: string;
 }) {
   const hoehe = etagen.length * ROW + (etagen.length - 1) * GAP;
-  const weg = hoehe - KABINE_H;
-  const ziel = -Math.min(Math.max(anteil, 0), 1) * weg;
+
+  // Die Kabine hält EXAKT auf der Etage des aktuellen Rangs, mittig zur
+  // Zeile — nicht anteilig dazwischen (Tobis Ansage vom 13.08. abends:
+  // "der Fahrkorb genau da, wo man grad ist"). Fällt der Rang aus der Liste,
+  // bleibt sie im Erdgeschoss.
+  const idxVonOben = etagen.findIndex((e) => e.key === aktuellKey);
+  const idxVonUnten = idxVonOben < 0 ? 0 : etagen.length - 1 - idxVonOben;
+  const ziel = -(idxVonUnten * (ROW + GAP) + (ROW - KABINE_H) / 2 - 2);
 
   const [versatz, setVersatz] = useState(0);
   const sanft = useRef(false);

@@ -111,10 +111,9 @@ export default async function DashboardPage() {
   const progress = getRankProgress(user.creditsTotal);
   const nextRank = getNextRankInfo(user.creditsTotal);
 
-  // Kabinenposition für die Etagenanzeige: Rangstufe (0 = Start … 4 = Experte)
-  // plus Fortschritt innerhalb der Stufe, normiert auf 0–1.
+  // Etagenanzeige: Anzeige über dem Schacht (EG bis 4). Die Kabinenposition
+  // rechnet die Komponente selbst — exakt auf der Etage des Rangs.
   const etagenStufe = { STARTER: 0, BRONZE: 1, SILBER: 2, GOLD: 3, EXPERTE: 4 }[rank.key];
-  const etagenAnteil = Math.min((etagenStufe + progress.percent / 100) / 4, 1);
   const etagenNummer = etagenStufe === 0 ? "EG" : String(etagenStufe);
 
   const nextTraining = user.enrollments.find(
@@ -292,7 +291,6 @@ export default async function DashboardPage() {
                     rand: STARTER_RANK.softBorder,
                   }])}
                   aktuellKey={rank.key}
-                  anteil={etagenAnteil}
                   etagenNummer={etagenNummer}
                 />
               </div>
@@ -491,8 +489,8 @@ function StatBox({ label, value, wide }: { label: string; value: string | number
       style={{
         padding: "12px 14px",
         borderRadius: 10,
-        border: "1px solid #EFEFEF",
-        background: "#FFFFFF",
+        border: "1px solid var(--vfa-linie-2)",
+        background: "var(--vfa-karte-2)",
         gridColumn: wide ? "1 / -1" : undefined,
       }}
     >

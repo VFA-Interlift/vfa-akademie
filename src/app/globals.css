@@ -20,14 +20,19 @@
   --vfa-text-3: #999999;     /* Nebensächliches */
   --vfa-gruen-text: #007873; /* Petrol als TEXTfarbe (im Dunkeln aufgehellt) */
 
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-/* Dark Mode folgt der Geräte-Einstellung. Petrol und Gelb bleiben die Marke;
-   Flächen werden dunkles Graugrün, Text hell. Der Kompetenzpass bleibt als
-   Dokument bewusst hell (eigene kp-Stile, unangetastet). */
-@media (prefers-color-scheme: dark) {
-  :root {
+/* Dark Mode ist ein SCHALTER in den App-Einstellungen (Tobis Ansage vom
+   13.08.2026 abends): Grundzustand ist immer hell, die Geräte-Einstellung
+   spielt keine Rolle. Der Schalter setzt die Klasse `dunkel` an <html>
+   (gemerkt in localStorage "vfa-dunkel", vor dem ersten Zeichnen vom
+   Inline-Skript in layout.tsx gesetzt). Petrol und Gelb bleiben die Marke;
+   der Kompetenzpass bleibt als Dokument hell. */
+html.dunkel {
+  color-scheme: dark;
+}
+html.dunkel {
     --background: #101615;
     --foreground: #edf1f0;
 
@@ -43,7 +48,13 @@
     --vfa-text-2: #b4bfbd;
     --vfa-text-3: #8b9694;
     --vfa-gruen-text: #45bdb5;
-  }
+}
+
+/* Im Dunkeln ist der Seitengrund dunkel — die weiße Uhr ist darauf lesbar,
+   der Petrol-Streifen hinter der Statusleiste wird nicht gebraucht und stand
+   als grüner Rand über den Seiten (Tobi, 13.08. abends). */
+html.dunkel .safe-top {
+  display: none;
 }
 
 html,
@@ -401,7 +412,7 @@ a, button {
   .mehr-handle {
     width: 36px;
     height: 4px;
-    background: #e0e0e0;
+    background: var(--vfa-linie);
     border-radius: 2px;
     margin: 12px auto 16px;
   }
@@ -417,7 +428,7 @@ a, button {
     padding: 14px 16px;
     border-radius: 12px;
     text-decoration: none;
-    color: #1f1f1f;
+    color: var(--vfa-text);
     font-size: 16px;
     font-weight: 600;
     transition: background 120ms ease;
@@ -429,7 +440,7 @@ a, button {
   }
   .mehr-divider {
     height: 1px;
-    background: #f0f0f0;
+    background: var(--vfa-linie-2);
     margin: 8px 16px;
   }
   .mehr-logout {
@@ -441,7 +452,7 @@ a, button {
     background: none;
     border: none;
     cursor: pointer;
-    color: #888888;
+    color: var(--vfa-text-3);
     font-size: 16px;
     font-weight: 600;
     width: 100%;

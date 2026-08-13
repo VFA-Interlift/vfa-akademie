@@ -65,7 +65,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           dangerouslySetInnerHTML={{
             __html:
-              'if(location.pathname==="/dashboard"||location.pathname.indexOf("/dashboard/")===0)document.documentElement.classList.add("dashboard-aktiv");',
+              'if(location.pathname==="/dashboard"||location.pathname.indexOf("/dashboard/")===0)document.documentElement.classList.add("dashboard-aktiv");' +
+              // Dark Mode ist ein App-Schalter (Einstellungen), kein System-
+              // Automatismus: Grundzustand hell, die Wahl liegt im localStorage
+              // und muss vor dem ersten Zeichnen an <html>, sonst blitzt beim
+              // Start die falsche Fassung auf.
+              'try{if(localStorage.getItem("vfa-dunkel")==="1")document.documentElement.classList.add("dunkel")}catch(e){}',
           }}
         />
         <Providers>

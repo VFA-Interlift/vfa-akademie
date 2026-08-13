@@ -223,7 +223,7 @@ export default function KurskalenderPage() {
                       cursor: "pointer",
                       fontWeight: 800,
                       fontSize: 13,
-                      background: ansicht === v ? "#007873" : "#FFFFFF",
+                      background: ansicht === v ? "#007873" : "var(--vfa-karte)",
                       color: ansicht === v ? "#FFFFFF" : "#007873",
                     }}
                   >
@@ -246,7 +246,7 @@ export default function KurskalenderPage() {
                         fontSize: 12,
                         fontWeight: 700,
                         border: bereich === b ? "1px solid #FFC100" : "1px solid #DDDDDD",
-                        background: bereich === b ? "#FFF6E0" : "#FFFFFF",
+                        background: bereich === b ? "#FFF6E0" : "var(--vfa-karte)",
                         color: "#1F1F1F",
                       }}
                     >
@@ -373,10 +373,10 @@ export default function KurskalenderPage() {
                                 padding: 7,
                                 border: "1px solid var(--vfa-linie)",
                                 background: !day.isCurrentMonth
-                                  ? "#F1F1EE"
+                                  ? "var(--vfa-karte-2)"
                                   : isWeekend(day.date)
-                                    ? "#ECECE8"
-                                    : "#FFFFFF",
+                                    ? "var(--vfa-karte-2)"
+                                    : "var(--vfa-karte)",
                                 opacity: day.isCurrentMonth ? 1 : 0.55,
                               }}
                             >
@@ -384,7 +384,7 @@ export default function KurskalenderPage() {
                                 style={{
                                   color: isToday(day.date)
                                     ? "#FFFFFF"
-                                    : "#333333",
+                                    : "var(--vfa-text)",
                                   background: isToday(day.date)
                                     ? "#007873"
                                     : "transparent",
@@ -463,7 +463,7 @@ export default function KurskalenderPage() {
                                 top: 8,
                                 fontSize: 12,
                                 fontWeight: 900,
-                                background: overflowWeek === week.key ? "#007873" : "#FFFFFF",
+                                background: overflowWeek === week.key ? "#007873" : "var(--vfa-karte)",
                                 color: overflowWeek === week.key ? "#FFFFFF" : "#007873",
                                 border: "1px solid #007873",
                                 borderRadius: 999,
@@ -718,8 +718,8 @@ function TrainingDialog({
               <span
                 style={{
                   ...bookingButtonStyle,
-                  background: "#EFEFEF",
-                  color: "#777777",
+                  background: "var(--vfa-karte-2)",
+                  color: "var(--vfa-text-3)",
                   cursor: "default",
                 }}
               >

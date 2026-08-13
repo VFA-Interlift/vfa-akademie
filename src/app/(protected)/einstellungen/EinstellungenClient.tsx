@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import AppCard from "@/components/ui/AppCard";
 import PushEinstellung from "@/components/PushEinstellung";
+import ThemaSchalter from "@/components/ThemaSchalter";
 import AppButton from "@/components/ui/AppButton";
 import AppSelect from "@/components/ui/AppSelect";
 import AppTextarea from "@/components/ui/AppTextarea";
@@ -60,11 +61,21 @@ export default function EinstellungenClient({
   return (
     <div style={{ display: "grid", gap: 18 }}>
       {istTester && <TestrundeCard feedbackGesendet={feedbackGesendet} />}
+      <DarstellungCard />
       <NotificationsCard initial={notifyBeforeTraining} />
       <FeedbackCard />
       <DatenschutzCard />
       <AppInfoCard />
     </div>
+  );
+}
+
+function DarstellungCard() {
+  return (
+    <AppCard accent="none">
+      <SectionHeader title="Darstellung" badge="Design" />
+      <ThemaSchalter />
+    </AppCard>
   );
 }
 
