@@ -586,10 +586,15 @@ html.dashboard-aktiv .page-content {
   .dash-hero { height: calc(248px + env(safe-area-inset-top, 0px)); }
 }
 
-/* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text. */
+/* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text.
+   Die Reserve nach oben MUSS größer sein als die maximale Parallax-Wanderung
+   (260 Pixel Scrollstrecke × Faktor 0.28 = 73 Pixel): Mit den früheren 40
+   Pixeln wanderte die Musterebene unter die Oberkante, und dort lugte der
+   nackte Petrol-Grund als eigener Streifen hervor — der „oberste Effekt an
+   der Kante", den Tobi den ganzen 13.08.2026 gemeldet hat. */
 .dash-hero-grund {
   position: absolute;
-  inset: -40px 0 0;
+  inset: -88px 0 0;
   will-change: transform;
 }
 
