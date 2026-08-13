@@ -559,6 +559,17 @@ html.dashboard-aktiv .page-content {
   will-change: transform;
 }
 
+/* Oben blenden Streifen und Verlauf aus, damit der Kopf dort reines Petrol
+   zeigt und nahtlos an die Statusleiste des iPhones anschließt. Die Statusleiste
+   ist ein Bereich des Betriebssystems: Sie nimmt die theme-color (#007873) an,
+   kann aber keine Streifen tragen. Ohne diese Ausblendung sieht man dort eine
+   Kante — und genau die wirkte wie ein eigener grüner Balken. */
+.dash-hero-streifen,
+.dash-hero-schein {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 38px, #000 104px);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent 38px, #000 104px);
+}
+
 .dash-hero-streifen {
   position: absolute;
   inset: 0;
