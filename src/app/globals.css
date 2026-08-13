@@ -295,8 +295,12 @@ a, button {
     background: var(--vfa-karte);
     border-top: 1px solid var(--vfa-linie);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    height: calc(76px + env(safe-area-inset-bottom, 0px));
+    /* KEIN safe-area-Polster: Seit viewport-fit=cover (13.08.2026) meldet das
+       iPhone unten ≈34px für den Home-Balken — als Polster hob das die
+       Symbole sichtbar an. Tobis Ansage: Leiste wieder auf den alten Stand,
+       also feste 76px bündig am unteren Rand. */
+    padding-bottom: 0;
+    height: 76px;
     align-items: stretch;
   }
   .bottom-nav-item {
