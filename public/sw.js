@@ -72,13 +72,12 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((fenster) => {
-      for (const f of fenster) {
-        if ("focus" in f) {
-          f.navigate(ziel);
-          return f.focus();
-        }
-      }
-      return clients.openWindow(ziel);
+      const f = fenster.find((w) => "focus" in w);
+      if (!f) return clients.openWindow(ziel);
+      return Promise.resolve(f.navigate ? f.navigate(ziel) : null)
+        .catch(() => {})
+        .then(() => f.focus())
+        .catch(() => clients.openWindow(ziel));
     })
   );
 });

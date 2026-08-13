@@ -48,7 +48,7 @@ export default function Error({
             margin: "10px 0 12px",
             fontSize: "clamp(26px, 6vw, 34px)",
             fontWeight: 800,
-            color: "#1F1F1F",
+            color: "var(--vfa-text)",
             letterSpacing: "-0.02em",
             lineHeight: 1.15,
           }}
@@ -110,7 +110,7 @@ export default function Error({
               padding: "12px 22px",
               borderRadius: 999,
               background: "transparent",
-              color: "#444444",
+              color: "var(--vfa-text)",
               fontWeight: 600,
               fontSize: 15,
               textDecoration: "none",

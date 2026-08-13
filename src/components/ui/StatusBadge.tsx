@@ -36,7 +36,7 @@ function getBackground(variant: StatusBadgeVariant) {
   if (variant === "yellow") return "#FFC100";
   if (variant === "danger") return "rgba(176,0,32,0.10)";
 
-  return "#EFEFEF";
+  return "var(--vfa-karte-2)";
 }
 
 function getBorder(variant: StatusBadgeVariant) {
@@ -45,12 +45,14 @@ function getBorder(variant: StatusBadgeVariant) {
   if (variant === "yellow") return "1px solid #FFC100";
   if (variant === "danger") return "1px solid rgba(176,0,32,0.28)";
 
-  return "1px solid #C7C7C7";
+  return "1px solid var(--vfa-linie)";
 }
 
 function getColor(variant: StatusBadgeVariant) {
   if (variant === "success") return "#FFFFFF";
-  if (variant === "danger") return "#B00020";
+  if (variant === "danger") return "var(--vfa-rot-text)";
+  // Fest dunkel auf dem fest gelben Grund — die Gelb-Regel des Dark Mode.
+  if (variant === "yellow") return "#1F1F1F";
 
   return "var(--vfa-text)";
 }

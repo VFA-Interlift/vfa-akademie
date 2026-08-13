@@ -247,7 +247,7 @@ export default function KurskalenderPage() {
                         fontWeight: 700,
                         border: bereich === b ? "1px solid #FFC100" : "1px solid #DDDDDD",
                         background: bereich === b ? "#FFF6E0" : "var(--vfa-karte)",
-                        color: "#1F1F1F",
+                        color: bereich === b ? "#1F1F1F" : "var(--vfa-text)",
                       }}
                     >
                       {b}
@@ -538,7 +538,7 @@ export default function KurskalenderPage() {
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, color: "#1F1F1F", fontSize: 14, lineHeight: 1.2 }}>{getDisplayTrainingTitle(bar.training)}</div>
+                      <div style={{ fontWeight: 800, color: "var(--vfa-text)", fontSize: 14, lineHeight: 1.2 }}>{getDisplayTrainingTitle(bar.training)}</div>
                       <div style={{ fontSize: 12, color: "var(--vfa-text-2)", marginTop: 2 }}>{formatDateRange(bar.training.date, bar.training.endDate)}</div>
                     </div>
                     <div style={{ color: "#007873", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{bar.training.creditsAward} Cr.</div>
@@ -932,7 +932,7 @@ function PreisBlock({ training }: { training: CalendarTraining }) {
             key={s.label}
             style={{
               padding: "8px 12px",
-              background: "#F7F7F7",
+              background: "var(--vfa-karte-2)",
               borderRadius: 8,
               minWidth: 110,
             }}
@@ -1209,7 +1209,7 @@ function Info({
 
       <div
         style={{
-          color: muted ? "#777777" : "#1F1F1F",
+          color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)",
           lineHeight: 1.45,
           fontSize: 14,
           fontStyle: muted ? "italic" : "normal",

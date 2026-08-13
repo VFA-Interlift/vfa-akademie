@@ -60,7 +60,7 @@ export async function sendePushAnNutzer(userId: string, inhalt: PushInhalt) {
       await webpush.sendNotification(
         { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } },
         JSON.stringify(inhalt),
-        { TTL: 60 * 60 * 12 }
+        { TTL: 60 * 60 * 24 }
       );
       zugestellt += 1;
     } catch (fehler) {
@@ -68,8 +68,8 @@ export async function sendePushAnNutzer(userId: string, inhalt: PushInhalt) {
       if (status === 404 || status === 410) {
         await prisma.pushAbo.delete({ where: { id: abo.id } }).catch(() => {});
       }
-      // Andere Fehler (Zeitüberschreitung, Dienst kurz weg) still lassen —
-      // der nächste Cron-Lauf versucht es wieder.
+      // Andere Fehler (Zeitüberschreitung, Dienst kurz weg) still lassen;
+      // eine verpasste Erinnerung ist kein Grund für einen Fehlerlauf.
     }
   }
   return zugestellt;

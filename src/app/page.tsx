@@ -40,7 +40,7 @@ export default function HomePage() {
                 fontSize: "clamp(40px, 6.5vw, 68px)",
                 fontWeight: 800,
                 margin: 0,
-                color: "#1F1F1F",
+                color: "var(--vfa-text)",
                 letterSpacing: "-0.03em",
                 lineHeight: 1.0,
               }}
@@ -207,7 +207,7 @@ export default function HomePage() {
                     }}
                   />
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", marginBottom: 2 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "var(--vfa-text)", marginBottom: 2 }}>
                       {f.title}
                     </div>
                     <div style={{ fontSize: 13, color: "#888888", lineHeight: 1.5 }}>
@@ -248,7 +248,7 @@ const ghostButtonStyle: React.CSSProperties = {
   padding: "12px 24px",
   borderRadius: 999,
   background: "transparent",
-  color: "#444444",
+  color: "var(--vfa-text)",
   fontWeight: 600,
   fontSize: 15,
   letterSpacing: "0.01em",

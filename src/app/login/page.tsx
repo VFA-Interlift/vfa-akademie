@@ -55,7 +55,7 @@ export default function LoginPage() {
           <h1
             style={{
               margin: "0 0 6px",
-              color: "#1F1F1F",
+              color: "var(--vfa-text)",
               fontSize: "clamp(24px, 4vw, 32px)",
               fontWeight: 800,
               letterSpacing: "-0.02em",
@@ -196,7 +196,7 @@ function ErrorBox({ children }: { children: React.ReactNode }) {
         borderRadius: 8,
         border: "1px solid rgba(176,0,32,0.2)",
         background: "rgba(176,0,32,0.05)",
-        color: "#B00020",
+        color: "var(--vfa-rot-text)",
         fontWeight: 600,
         fontSize: 14,
         lineHeight: 1.5,

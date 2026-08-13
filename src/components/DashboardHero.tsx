@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+// Layout-Effekte laufen synchron vor dem Zeichnen — beim Serverrendern gibt es
+// sie nicht, dort genügt der normale Effekt (die Warnung wäre nur Rauschen).
+const useVorDemZeichnen = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Kopfbereich des Dashboards mit zwei Ebenen.
@@ -43,8 +47,11 @@ export default function DashboardHero({
   // body überlebt den Bauvorgang nicht, sie fehlt im ausgelieferten Stylesheet.
   // Die Klasse wird beim Verlassen der Seite wieder entfernt, damit die
   // anderen Seiten unverändert bleiben. Beim ersten Zeichnen setzt sie das
-  // Inline-Skript in layout.tsx, sonst blitzte der Streifen .safe-top auf.
-  useEffect(() => {
+  // Inline-Skript in layout.tsx; für Tab-Wechsel INNERHALB der App läuft das
+  // Setzen/Entfernen hier als Layout-Effekt — synchron vor dem Zeichnen,
+  // sonst sprang der Inhalt bei jedem Wechsel vom und zum Dashboard um die
+  // Statusleistenhöhe (Ultracode-Befund 13.08.2026).
+  useVorDemZeichnen(() => {
     document.documentElement.classList.add("dashboard-aktiv");
     return () => document.documentElement.classList.remove("dashboard-aktiv");
   }, []);

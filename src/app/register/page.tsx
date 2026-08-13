@@ -73,7 +73,7 @@ export default function RegisterPage() {
           <h1
             style={{
               margin: "0 0 6px",
-              color: "#1F1F1F",
+              color: "var(--vfa-text)",
               fontSize: "clamp(24px, 4vw, 32px)",
               fontWeight: 800,
               letterSpacing: "-0.02em",
@@ -109,7 +109,7 @@ export default function RegisterPage() {
               <h2 style={{ margin: "0 0 6px", color: "#007873", fontSize: 22, fontWeight: 800 }}>
                 Fast geschafft
               </h2>
-              <p style={{ margin: 0, color: "#333333", fontSize: 15, lineHeight: 1.6 }}>
+              <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: 15, lineHeight: 1.6 }}>
                 Wir haben dir eine E-Mail an <strong>{email.trim().toLowerCase()}</strong>{" "}
                 geschickt. Öffne darin den Bestätigungslink, dann kannst du dich
                 anmelden.
@@ -167,7 +167,7 @@ export default function RegisterPage() {
                       borderRadius: 8,
                       border: "1px solid rgba(176,0,32,0.2)",
                       background: "rgba(176,0,32,0.05)",
-                      color: "#B00020",
+                      color: "var(--vfa-rot-text)",
                       fontWeight: 600,
                       fontSize: 14,
                       lineHeight: 1.5,

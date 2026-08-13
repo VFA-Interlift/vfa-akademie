@@ -20,6 +20,15 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <>
+            {/* Setzt die Leisten-Klasse VOR dem ersten Zeichnen — BottomNav tat es
+          erst nach dem Laden des Skripts, der Inhalt sprang dadurch beim
+          App-Start um die Leistenhöhe (Ultracode-Befund 13.08.2026). Das
+          Aufräumen beim Verlassen übernimmt weiter der Effekt in BottomNav. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: 'document.body.classList.add("has-bottom-nav");',
+        }}
+      />
       {children}
       <BottomNav />
     </>

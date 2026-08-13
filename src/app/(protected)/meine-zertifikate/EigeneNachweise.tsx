@@ -145,7 +145,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
     <AnimatedSection delayMs={60}>
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
         <div style={{ marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 800, color: "#1F1F1F" }}>
+          <h2 style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 800, color: "var(--vfa-text)" }}>
             Meine Nachweise
           </h2>
           <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14, lineHeight: 1.5 }}>
@@ -286,7 +286,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
                       }}>
                         {fileKindLabel(doc.fileType)}
                       </span>
-                      <span style={{ fontWeight: 800, fontSize: 15, color: "#1F1F1F", overflowWrap: "anywhere" }}>
+                      <span style={{ fontWeight: 800, fontSize: 15, color: "var(--vfa-text)", overflowWrap: "anywhere" }}>
                         {doc.title}
                       </span>
                     </div>
@@ -340,7 +340,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 8,
   border: "1px solid #D9D9D9",
   fontSize: 14,
-  color: "#1F1F1F",
+  color: "var(--vfa-text)",
   background: "#FFFFFF",
 };
 

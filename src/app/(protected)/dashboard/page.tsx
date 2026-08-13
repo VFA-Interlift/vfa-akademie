@@ -179,8 +179,8 @@ export default async function DashboardPage() {
                 alignItems: "center",
                 gap: 14,
                 padding: "14px 18px",
-                background: "rgba(255,193,0,0.10)",
-                border: "1px solid rgba(255,193,0,0.45)",
+                background: "#FFF6E0",
+                border: "1px solid rgba(255,193,0,0.6)",
                 borderRadius: 12,
                 textDecoration: "none",
               }}
@@ -459,7 +459,7 @@ function RankingRow({
     <div
       style={{
         border: highlight ? "1px solid rgba(0,120,115,0.3)" : "1px solid #EFEFEF",
-        background: highlight ? "rgba(0,120,115,0.05)" : "#FFFFFF",
+        background: highlight ? "rgba(0,120,115,0.05)" : "var(--vfa-karte-2)",
         padding: "12px 14px",
         borderRadius: 10,
         display: "grid",

@@ -19,7 +19,7 @@ export default function AppTextarea({
     <label style={{ display: "grid", gap: 6 }}>
       <span
         style={{
-          color: "#444444",
+          color: "var(--vfa-text-2)",
           fontSize: 13,
           fontWeight: 600,
           letterSpacing: "0.01em",
@@ -39,7 +39,7 @@ export default function AppTextarea({
           width: "100%",
           padding: "11px 14px",
           borderRadius: 8,
-          border: "1px solid #D4D4D4",
+          border: "1px solid var(--vfa-linie)",
           background: disabled ? "var(--vfa-karte-2)" : "var(--vfa-karte)",
           color: "var(--vfa-text)",
           fontSize: 15,

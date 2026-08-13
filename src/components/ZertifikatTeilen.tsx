@@ -75,7 +75,9 @@ export default function ZertifikatTeilen({
       z.fillStyle = dunkel;
       z.fillRect(0, 0, B, H);
 
-      const schrift = "Inter, system-ui, sans-serif";
+      // next/font registriert Inter unter einem generierten Namen — den echten
+      // Namen von der Seite uebernehmen, sonst malt die Leinwand Systemschrift.
+      const schrift = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
 
       // Kopfzeile
       z.fillStyle = "rgba(255, 255, 255, 0.85)";
@@ -136,10 +138,11 @@ export default function ZertifikatTeilen({
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [datei] })) {
         try {
           await navigator.share({ files: [datei], title: "Mein VFA-Zertifikat" });
-          return;
         } catch {
-          // Abbruch durch den Nutzer ist kein Fehler; sonst Fallback unten.
+          // Abbruch durch den Nutzer ist kein Fehler — und ausdruecklich auch
+          // kein Grund, ihm das Bild ungefragt in die Downloads zu legen.
         }
+        return;
       }
 
       const adresse = URL.createObjectURL(blob);

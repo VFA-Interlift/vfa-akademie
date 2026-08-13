@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendTrainingReminderEmail } from "@/lib/email";
 import { sendePushAnNutzer } from "@/lib/push";
-import { formatDateRange } from "@/lib/trainings/format";
+import { formatDateRange, formatVenueLines } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +43,16 @@ export async function GET(req: Request) {
   }
 
   const now = new Date();
+
+  // Ein Lauf je Kalendertag: Der Vercel-Cron feuert einmal täglich, aber ein
+  // Aufruf von Hand (Test, erneutes Deployment) darf nicht alle Erinnerungen
+  // ein zweites Mal verschicken (Ultracode-Befund 13.08.2026).
+  const tagesMarke = now.toISOString().slice(0, 10);
+  try {
+    await prisma.erinnerungsLauf.create({ data: { datum: tagesMarke } });
+  } catch {
+    return NextResponse.json({ ok: true, uebersprungen: "heute bereits gelaufen", datum: tagesMarke });
+  }
 
   // Tagesfenster [heute + DAYS_BEFORE, heute + DAYS_BEFORE + 1) in UTC
   const windowStart = new Date(
@@ -139,7 +149,9 @@ export async function GET(req: Request) {
 
       for (const anmeldung of morgen) {
         const kuerzel = anmeldung.training.code?.trim() || anmeldung.training.title;
-        const ort = anmeldung.training.location?.split(",")[0]?.trim();
+        // Dieselbe Aufbereitung wie in "Meine Schulungen" — das Adressfeld beginnt
+        // sonst gern mit dem Firmennamen ("A1-2701 in Henning GmbH & Co. KG").
+        const ort = formatVenueLines(anmeldung.training.location, null)[0];
         pushGesendet += await sendePushAnNutzer(anmeldung.user.id, {
           titel: "Morgen ist es so weit",
           text: ort ? `${kuerzel} in ${ort} — viel Erfolg!` : `${kuerzel} — viel Erfolg!`,

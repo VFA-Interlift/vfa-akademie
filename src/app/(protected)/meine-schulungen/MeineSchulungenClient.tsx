@@ -263,11 +263,11 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
               style={{
                 display: "flex", gap: 12, alignItems: "baseline", justifyContent: "space-between",
                 padding: "12px 16px",
-                borderTop: i === 0 ? "none" : "1px solid #EFEFEF",
+                borderTop: i === 0 ? "none" : "1px solid var(--vfa-linie-2)",
               }}
             >
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 14 }}>
+                <div style={{ fontWeight: 700, color: "var(--vfa-text)", fontSize: 14 }}>
                   {getDisplayTrainingTitle(t)}
                 </div>
                 <div style={{ color: "var(--vfa-text-3)", fontSize: 12, marginTop: 2 }}>
@@ -301,8 +301,8 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
               type="button"
               onClick={() => setAlleZeigen(!alleZeigen)}
               style={{
-                width: "100%", padding: "11px 16px", border: "none", borderTop: "1px solid #EFEFEF",
-                background: "#FAFAFA", color: "#007873", fontWeight: 800, fontSize: 13, cursor: "pointer",
+                width: "100%", padding: "11px 16px", border: "none", borderTop: "1px solid var(--vfa-linie-2)",
+                background: "var(--vfa-karte-2)", color: "#007873", fontWeight: 800, fontSize: 13, cursor: "pointer",
               }}
             >
               {alleZeigen ? "Weniger anzeigen" : `Alle ${trainings.length} anzeigen`}
@@ -332,7 +332,7 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
         {recommendations.map((rec) => (
           <AppCard key={rec.prefix} accent="yellow">
             <div style={{ display: "grid", gap: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#7C5A0A", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--vfa-text-2)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 ★ {rec.reason}
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1.25 }}>

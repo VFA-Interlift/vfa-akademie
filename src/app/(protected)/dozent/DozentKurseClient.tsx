@@ -320,8 +320,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 {selected.orga.map((o) => {
                   const text = o.text?.trim() || "";
                   return (
-                    <div key={o.id} style={{ border: "1px solid #EFEFEF", borderRadius: 12, background: "#FAFAF8", overflow: "hidden" }}>
-                      <div style={{ padding: "10px 14px", borderBottom: "1px solid #EFEFEF", background: "#F1F6F5" }}>
+                    <div key={o.id} style={{ border: "1px solid var(--vfa-linie-2)", borderRadius: 12, background: "var(--vfa-karte-2)", overflow: "hidden" }}>
+                      <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)" }}>
                         <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
                         <div style={{ fontSize: 11.5, color: "var(--vfa-text-3)", marginTop: 3 }}>
                           {o.fromAddress ? `${o.fromAddress} · ` : ""}{o.receivedText}
@@ -415,7 +415,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 ) : (
                   <div style={{ display: "grid", gap: 6 }}>
                     {sheetList.map((sh) => (
-                      <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}>
+                      <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 11px", borderRadius: 10, border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)", flexWrap: "wrap" }}>
                         <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: TEAL, fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
                           📄 Liste · {sh.pageCount} {sh.pageCount === 1 ? "Seite" : "Seiten"}
                         </a>
@@ -434,7 +434,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               </div>
 
               {/* Website-Anmeldungen / Anwesenheit — darunter */}
-              <div style={{ borderTop: "1px solid #EFEFEF", paddingTop: 14 }}>
+              <div style={{ borderTop: "1px solid var(--vfa-linie-2)", paddingTop: 14 }}>
                 {selected.participants.length === 0 ? (
                   <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
                     Noch keine Website-Anmeldungen für diese Schulung.
@@ -451,7 +451,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                       return (
                         <div
                           key={p.id}
-                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAF8", flexWrap: "wrap" }}
+                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)", flexWrap: "wrap" }}
                         >
                           <div style={{ fontWeight: 700, fontSize: 14, color: "var(--vfa-text)", minWidth: 100 }}>{p.name}</div>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

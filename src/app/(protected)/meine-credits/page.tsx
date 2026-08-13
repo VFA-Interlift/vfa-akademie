@@ -60,7 +60,7 @@ export default function MeineCreditsPage() {
         {loading ? (
           <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: 14 }}>Wird geladen…</div></AppCard></AnimatedSection>
         ) : error ? (
-          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "#B00020", fontSize: 14 }}>{error}</div></AppCard></AnimatedSection>
+          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-rot-text)", fontSize: 14 }}>{error}</div></AppCard></AnimatedSection>
         ) : txs.length === 0 ? (
           <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: 14 }}>Noch keine Credit-Buchungen vorhanden.</div></AppCard></AnimatedSection>
         ) : (
@@ -110,7 +110,7 @@ export default function MeineCreditsPage() {
 
 function SummaryBox({ label, value, color, animate = false }: { label: string; value: number; color: string; animate?: boolean }) {
   return (
-    <div style={{ padding: "14px 16px", background: "var(--vfa-karte)", border: "1px solid #EFEFEF", borderRadius: 12 }}>
+    <div style={{ padding: "14px 16px", background: "var(--vfa-karte)", border: "1px solid var(--vfa-linie-2)", borderRadius: 12 }}>
       <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>
         {animate ? <AnimatedNumber value={value} /> : value.toLocaleString("de-DE")}
       </div>

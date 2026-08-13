@@ -19,6 +19,7 @@
   --vfa-text-2: #666666;     /* Fließtext gedämpft */
   --vfa-text-3: #999999;     /* Nebensächliches */
   --vfa-gruen-text: #007873; /* Petrol als TEXTfarbe (im Dunkeln aufgehellt) */
+  --vfa-rot-text: #b00020;   /* Fehlertexte (im Dunkeln aufgehellt) */
 
   color-scheme: light;
 }
@@ -48,6 +49,7 @@ html.dunkel {
     --vfa-text-2: #b4bfbd;
     --vfa-text-3: #8b9694;
     --vfa-gruen-text: #45bdb5;
+    --vfa-rot-text: #ff8091;
 }
 
 /* Im Dunkeln ist der Seitengrund dunkel — die weiße Uhr ist darauf lesbar,
@@ -367,7 +369,11 @@ a, button {
     padding-top: env(safe-area-inset-top, 0px) !important;
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
-  html.dashboard-aktiv body.has-bottom-nav .page-content {
+  /* Bewusst OHNE has-bottom-nav: die Leisten-Klasse kam frueher erst nach
+     dem Laden des Skripts, und das Dashboard-Padding sprang beim Start mit
+     (Ultracode-Befund 13.08.2026). dashboard-aktiv steht dank Inline-Skript
+     schon beim ersten Zeichnen. */
+  html.dashboard-aktiv .page-content {
     padding-top: 0 !important;
   }
   /* Hide footer on mobile when bottom nav is present */

@@ -216,7 +216,7 @@ function DatenschutzCard() {
                 autoComplete="current-password"
                 style={{
                   width: "100%", marginTop: 4, padding: "10px 12px",
-                  border: "1px solid #D4D4D4", borderRadius: 8, fontSize: 14,
+                  border: "1px solid var(--vfa-linie)", borderRadius: 8, fontSize: 14,
                 }}
               />
             </label>
@@ -241,7 +241,7 @@ function DatenschutzCard() {
                 onClick={() => { setZeigeLoeschen(false); setPasswort(""); setMsg(null); }}
                 style={{
                   padding: "10px 18px", borderRadius: 999,
-                  border: "1px solid #D4D4D4", background: "var(--vfa-karte)",
+                  border: "1px solid var(--vfa-linie)", background: "var(--vfa-karte)",
                   color: "var(--vfa-text-2)", fontWeight: 700, fontSize: 14, cursor: "pointer",
                 }}
               >
@@ -495,8 +495,8 @@ function AppInfoCard() {
             width: "100%",
             padding: "14px 16px",
             borderRadius: 999,
-            border: "1px solid #D4D4D4",
-            background: "#F4F4F4",
+            border: "1px solid var(--vfa-linie)",
+            background: "var(--vfa-karte-2)",
             color: "var(--vfa-text-2)",
             fontWeight: 700,
             fontSize: 14,

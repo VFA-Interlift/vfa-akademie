@@ -410,7 +410,7 @@ export default function MeineZertifikateClient({
                                 padding: "10px 22px",
                                 borderRadius: 999,
                                 background: "#FFC100",
-                                color: "var(--vfa-text)",
+                                color: "#1F1F1F",
                                 border: "1px solid #FFC100",
                                 fontSize: 14,
                                 fontWeight: 800,
@@ -453,7 +453,7 @@ function SummaryBox({ label, value }: { label: string; value: number }) {
   return (
     <div
       style={{
-        border: "1px solid #EFEFEF",
+        border: "1px solid var(--vfa-linie-2)",
         background: "var(--vfa-karte)",
         padding: "14px 16px",
         borderRadius: 12,

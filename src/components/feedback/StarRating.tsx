@@ -70,7 +70,7 @@ export default function StarRating({ value, onChange, disabled = false }: StarRa
         );
       })}
 
-      <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 700, color: value ? "#1F1F1F" : "#999999", minWidth: 64 }}>
+      <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 700, color: value ? "var(--vfa-text)" : "var(--vfa-text-3)", minWidth: 64 }}>
         {value ? `${value} / 5` : "keine Wahl"}
       </span>
     </div>

@@ -174,6 +174,15 @@ model PushAbo {
   @@index([userId])
 }
 
+/// Genau eine Zeile je Kalendertag (UTC): verhindert, dass ein zweiter
+/// Cron-Aufruf am selben Tag alle Erinnerungen (Mail und Push) erneut
+/// verschickt. Bewusst simpel — bricht der erste Lauf nach dem Eintrag ab,
+/// gibt es an dem Tag keinen zweiten Versuch.
+model ErinnerungsLauf {
+  datum     String   @id
+  createdAt DateTime @default(now())
+}
+
 /// Das VAPID-Schlüsselpaar für Web Push — einmalig beim ersten Bedarf erzeugt
 /// und hier abgelegt, damit kein Umweg über Vercel-Umgebungsvariablen nötig
 /// ist. Es gibt genau eine Zeile (id = 1).

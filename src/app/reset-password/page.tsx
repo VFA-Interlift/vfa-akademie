@@ -17,7 +17,7 @@ export default function ResetPasswordPage() {
           <h1
             style={{
               margin: "0 0 6px",
-              color: "#1F1F1F",
+              color: "var(--vfa-text)",
               fontSize: "clamp(24px, 4vw, 32px)",
               fontWeight: 800,
               letterSpacing: "-0.02em",
@@ -79,7 +79,7 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
-        <div style={{ color: "#B00020", fontWeight: 600, marginBottom: 14, fontSize: 14 }}>
+        <div style={{ color: "var(--vfa-rot-text)", fontWeight: 600, marginBottom: 14, fontSize: 14 }}>
           Ungültiger Link. Bitte fordere einen neuen Reset-Link an.
         </div>
         <Link href="/forgot-password" style={{ color: "#007873", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3, fontSize: 14 }}>
@@ -111,7 +111,7 @@ function ResetPasswordForm() {
           {loading ? "Wird gespeichert..." : "Passwort speichern"}
         </AppButton>
         {error && (
-          <div style={{ padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(176,0,32,0.2)", background: "rgba(176,0,32,0.05)", color: "#B00020", fontWeight: 600, fontSize: 14, lineHeight: 1.5 }}>
+          <div style={{ padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(176,0,32,0.2)", background: "rgba(176,0,32,0.05)", color: "var(--vfa-rot-text)", fontWeight: 600, fontSize: 14, lineHeight: 1.5 }}>
             {error}
           </div>
         )}

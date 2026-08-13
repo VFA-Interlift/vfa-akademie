@@ -149,7 +149,7 @@ function Inhalt() {
             textAlign: "left",
             fontSize: 15,
             lineHeight: 1.7,
-            color: "#1F1F1F",
+            color: "var(--vfa-text)",
           }}
         >
           <div>
@@ -210,7 +210,7 @@ const TITEL: React.CSSProperties = {
   margin: "0 0 12px",
   fontSize: "clamp(26px, 6vw, 34px)",
   fontWeight: 800,
-  color: "#1F1F1F",
+  color: "var(--vfa-text)",
   letterSpacing: "-0.02em",
   lineHeight: 1.15,
 };

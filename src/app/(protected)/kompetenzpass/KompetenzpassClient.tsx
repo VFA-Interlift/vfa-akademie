@@ -159,7 +159,7 @@ export default function KompetenzpassClient({
         {/* Action bar (hidden on print) */}
         <div className="kp-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 800, color: "#1F1F1F", letterSpacing: "-0.02em" }}>
+            <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 800, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
               Kompetenzpass
             </h1>
             <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14 }}>
@@ -338,7 +338,7 @@ export default function KompetenzpassClient({
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: "#1F1F1F", lineHeight: 1.25 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: "var(--vfa-text)", lineHeight: 1.25 }}>
                         {getCompetencyTitle(cert)}
                       </div>
                       <div style={{ fontSize: 12, color: "#888888", marginTop: 3, lineHeight: 1.4 }}>
