@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
+import DashboardHero from "@/components/DashboardHero";
 import FeedbackReminder from "@/components/FeedbackReminder";
 import TesterWelcome from "@/components/TesterWelcome";
 import { istTester } from "@/lib/app-test/tester";
@@ -123,25 +124,17 @@ export default async function DashboardPage() {
   const openFeedbackCount = await getOpenFeedbackCount(user.id);
 
   return (
-    <main className="page-main">
-      <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 18 }}>
+    <main className="page-main dashboard-page">
+      <DashboardHero
+        name={displayName || "Willkommen"}
+        rangLabel={rank.label}
+        unterzeile={
+          nextTraining ? "Du hast eine Schulung in Kürze." : "Dein aktueller Stand."
+        }
+      />
 
-        {/* Greeting */}
-        <AnimatedSection delayMs={0}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <h2 style={{ margin: 0, color: "#1F1F1F", fontSize: "clamp(22px, 5vw, 30px)", fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.02em" }}>
-                Hallo{displayName ? `, ${displayName}` : ""}
-              </h2>
-              <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14, lineHeight: 1.5 }}>
-                {nextTraining ? "Du hast eine Schulung in Kürze." : "Dein aktueller Stand."}
-              </p>
-            </div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, background: rank.softBackground, border: rank.softBorder, color: rank.color, fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
-              ★ {rank.label}
-            </div>
-          </div>
-        </AnimatedSection>
+      <div className="dash-inhalt">
+      <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 18 }}>
 
         {istTester(user.email) && (
           <TesterWelcome
@@ -399,6 +392,7 @@ export default async function DashboardPage() {
           </div>
         </AnimatedSection>
 
+      </div>
       </div>
     </main>
   );

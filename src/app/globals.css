@@ -510,3 +510,135 @@ a, button {
 .page-enter {
   animation: pageFadeUp 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* ── Dashboard: Kopfbereich mit zwei Ebenen ──
+   Der Kopf liegt fest (sticky, Ebene 0), der Inhalt schiebt sich beim Scrollen
+   mit runder Oberkante darüber (Ebene 1) und verdeckt die Begrüßung. Optik von
+   vfa-interlift.de: Petrol, diagonale Streifen, gelber Verlauf in der Ecke. */
+.dashboard-page.page-main {
+  padding: 0 0 24px;
+  background: #f7f7f4;
+}
+
+.dash-hero {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 216px;
+  overflow: hidden;
+  background: #007873;
+  display: flex;
+  align-items: flex-end;
+}
+@media (min-width: 600px) {
+  .dash-hero { height: 248px; }
+}
+
+/* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text. */
+.dash-hero-grund {
+  position: absolute;
+  inset: -40px 0 0;
+  will-change: transform;
+}
+
+.dash-hero-streifen {
+  position: absolute;
+  inset: 0;
+  /* Dieselbe Schraffur wie im Toolbox-Band der Website: dünne Linien, 45 Grad. */
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07) 0 2px,
+    rgba(255, 255, 255, 0) 2px 15px
+  );
+  background-size: 200% 200%;
+  animation: dashStreifen 48s linear infinite;
+}
+
+.dash-hero-schein {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(255, 193, 0, 0.85) 0%, rgba(255, 193, 0, 0.28) 32%, rgba(255, 193, 0, 0) 62%),
+    radial-gradient(90% 70% at 0% 100%, rgba(0, 55, 53, 0.55) 0%, rgba(0, 55, 53, 0) 60%);
+}
+
+@keyframes dashStreifen {
+  from { background-position: 0 0; }
+  to   { background-position: 200% 0; }
+}
+
+.dash-hero-inhalt {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 46px;
+}
+@media (min-width: 600px) {
+  .dash-hero-inhalt { padding: 0 24px 54px; }
+}
+
+.dash-hero-gruss {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(15px, 4vw, 18px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dash-hero-name {
+  margin: 2px 0 0;
+  color: #ffffff;
+  font-size: clamp(26px, 7vw, 38px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.dash-hero-zeile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.dash-hero-rang {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.dash-hero-text {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Die Inhaltsfläche liegt über dem Kopf und zieht ihn beim Scrollen zu. */
+.dash-inhalt {
+  position: relative;
+  z-index: 1;
+  margin-top: -30px;
+  padding: 22px 16px 8px;
+  background: #f7f7f4;
+  border-radius: 26px 26px 0 0;
+  box-shadow: 0 -12px 28px rgba(0, 51, 49, 0.10);
+  min-height: 60vh;
+}
+@media (min-width: 600px) {
+  .dash-inhalt { padding: 30px 24px 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-hero-streifen { animation: none; }
+  .dash-hero-grund { transform: none !important; }
+}
