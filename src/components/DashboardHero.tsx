@@ -101,13 +101,13 @@ export default function DashboardHero({
 
   return (
     <div className="dash-hero">
-      {/* Nur Petrol mit feinen Streifen, ohne Farbverläufe: Der gelbe Schein
-          in der Ecke stand beim Scrollen als andersfarbiger Rand über der
-          Karte — Tobi hat ihn am 13.08.2026 komplett streichen lassen
-          („dass das so bleibt wie der Rest"). Ebenso raus: das Ausblenden des
-          Kopfes, das nur einen weißen Übergang erzeugte. */}
+      {/* Petrol, feine Streifen, gelber Schein in der Ecke — der Schein war am
+          13.08.2026 kurz draußen und ist auf Tobis Ansage zurück („dieser
+          gelbe Schimmer oben rechts ist gut"). Was ihn wirklich störte, war
+          der weiße Schleier der Kopf-Ausblendung; die bleibt draußen. */}
       <div ref={grundRef} className="dash-hero-grund">
         <div className="dash-hero-streifen" />
+        <div className="dash-hero-schein" />
       </div>
 
       <div ref={inhaltRef} className="dash-hero-inhalt">

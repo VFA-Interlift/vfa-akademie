@@ -606,10 +606,17 @@ html.dashboard-aktiv .page-content {
   animation: dashStreifen 48s linear infinite;
 }
 
-/* Der frühere .dash-hero-schein (gelber Verlauf in der Ecke plus dunkle
-   Abschattung unten) ist am 13.08.2026 auf Tobis Ansage komplett entfallen:
-   Beim Scrollen stand der gelbe Teil als andersfarbiger Rand über der Karte.
-   Der Kopf ist seitdem durchgehend Petrol mit Streifen. */
+/* Gelber Verlauf in der oberen Ecke (wie auf vfa-interlift.de) plus leichte
+   Abschattung unten. Am 13.08.2026 kurz entfernt und auf Tobis Ansage wieder
+   hergestellt — „dieser gelbe Schimmer oben rechts ist gut". Sein eigentlicher
+   Störfaktor war der weiße Schleier der damaligen Kopf-Ausblendung. */
+.dash-hero-schein {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(255, 193, 0, 0.85) 0%, rgba(255, 193, 0, 0.28) 32%, rgba(255, 193, 0, 0) 62%),
+    radial-gradient(90% 70% at 0% 100%, rgba(0, 55, 53, 0.55) 0%, rgba(0, 55, 53, 0) 60%);
+}
 
 @keyframes dashStreifen {
   from { background-position: 0 0; }
