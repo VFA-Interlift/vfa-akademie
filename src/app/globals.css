@@ -780,16 +780,17 @@ html.dashboard-aktiv .page-content {
   position: sticky;
   top: 0;
   z-index: 0;
-  /* Einen Tick höher als bisher (216) — mehr Luft über der Begrüßung, damit
-     der Kopf so großzügig wirkt wie das Band der übrigen Seiten (Tobi, 14.08.). */
-  height: calc(236px + env(safe-area-inset-top, 0px));
+  /* Deutlich höher als der Ursprung (216) — mehr Grün und Luft über der
+     Begrüßung, so großzügig wie das Band der übrigen Seiten (Tobi, 14.08.,
+     „geht das noch höher?"). */
+  height: calc(288px + env(safe-area-inset-top, 0px));
   overflow: hidden;
   background: #007873;
   display: flex;
   align-items: flex-end;
 }
 @media (min-width: 600px) {
-  .dash-hero { height: calc(268px + env(safe-area-inset-top, 0px)); }
+  .dash-hero { height: calc(324px + env(safe-area-inset-top, 0px)); }
 }
 
 /* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text.
