@@ -780,17 +780,19 @@ html.dashboard-aktiv .page-content {
   position: sticky;
   top: 0;
   z-index: 0;
-  /* Deutlich höher als der Ursprung (216) — mehr Grün und Luft über der
-     Begrüßung, so großzügig wie das Band der übrigen Seiten (Tobi, 14.08.,
-     „geht das noch höher?"). */
-  height: calc(288px + env(safe-area-inset-top, 0px));
+  /* Kompakt — die weiße Karte soll höher rücken, so wenig Grün wie möglich,
+     wie das schmale Band der übrigen Seiten (Tobi, 14.08.: „kleiner machen,
+     wie die anderen Seiten"). Der Kopf trägt Begrüßung, Name und Rang, deshalb
+     nicht ganz so schmal wie ein reiner Titel, aber deutlich kürzer als der
+     Ursprung (216). */
+  height: calc(168px + env(safe-area-inset-top, 0px));
   overflow: hidden;
   background: #007873;
   display: flex;
   align-items: flex-end;
 }
 @media (min-width: 600px) {
-  .dash-hero { height: calc(324px + env(safe-area-inset-top, 0px)); }
+  .dash-hero { height: calc(188px + env(safe-area-inset-top, 0px)); }
 }
 
 /* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text.
