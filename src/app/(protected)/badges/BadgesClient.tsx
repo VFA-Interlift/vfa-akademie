@@ -227,7 +227,7 @@ export default function BadgesClient({
           <div style={{ fontSize: 12, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Dein aktueller Status
           </div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: VFA_GREEN, marginTop: 2 }}>
+          <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 750, color: VFA_GREEN, marginTop: 2 }}>
             {earnedRank ? earnedRank.title : "Kein Rang"} · {credits.toLocaleString("de-DE")} Credits
           </div>
           <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>

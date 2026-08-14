@@ -858,7 +858,7 @@ function ListenAnsicht({
               }}
             >
               <div style={{ textAlign: "center", minWidth: 46 }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "var(--vfa-text)", lineHeight: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1 }}>
                   {d.getDate()}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase" }}>
@@ -878,7 +878,7 @@ function ListenAnsicht({
               </div>
 
               <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ color: "#007873", fontWeight: 900, fontSize: 16, lineHeight: 1 }}>
+                <div style={{ color: "#007873", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>
                   {t.creditsAward}
                 </div>
                 <div style={{ fontSize: 10, color: "var(--vfa-text-3)", fontWeight: 800, textTransform: "uppercase" }}>
@@ -1122,7 +1122,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
       {lines.length === 0 ? (
         <div
           style={{
-            color: "#777777",
+            color: "var(--vfa-text-3)",
             lineHeight: 1.45,
             fontSize: 14,
             fontStyle: "italic",

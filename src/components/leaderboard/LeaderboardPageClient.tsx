@@ -51,7 +51,7 @@ export default function LeaderboardPageClient() {
   }, []);
 
   if (loading) {
-    return <div style={{ color: "#888888", fontSize: 14, padding: "4px 0" }}>Wird geladen...</div>;
+    return <div style={{ color: "var(--vfa-text-3)", fontSize: 14, padding: "4px 0" }}>Wird geladen...</div>;
   }
 
   if (msg || !data) {
@@ -64,7 +64,7 @@ export default function LeaderboardPageClient() {
 
   if (!data.first || data.participants === 0) {
     return (
-      <div style={{ color: "#888888", fontSize: 14 }}>
+      <div style={{ color: "var(--vfa-text-2)", fontSize: 14 }}>
         Noch keine Teilnehmer im Ranking – sammle die ersten Credits!
       </div>
     );
@@ -120,7 +120,7 @@ export default function LeaderboardPageClient() {
         <div style={{ fontSize: 11, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.08em" }}>
           Median aller Teilnehmer
         </div>
-        <div style={{ fontSize: 20, fontWeight: 900, color: "#1F1F1F" }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: "var(--vfa-text)" }}>
           {data.median.toLocaleString("de-DE")} Credits
         </div>
         {data.me.credits > 0 && (
@@ -134,7 +134,7 @@ export default function LeaderboardPageClient() {
         )}
       </div>
 
-      <div style={{ fontSize: 12, color: "#999999", lineHeight: 1.5 }}>
+      <div style={{ fontSize: 12, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
         Aus Datenschutzgründen werden keine Namen angezeigt – du siehst den Spitzenreiter, deine eigene Platzierung und den Median.
       </div>
     </div>

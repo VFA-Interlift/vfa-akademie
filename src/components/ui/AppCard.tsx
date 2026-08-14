@@ -23,8 +23,8 @@ export default function AppCard({
     <Component
       style={{
         position: "relative",
-        padding: 22,
-        borderRadius: 12,
+        padding: 18,
+        borderRadius: 14,
         border:
           accent === "green"
             ? `1px solid ${VFA_GREEN}`

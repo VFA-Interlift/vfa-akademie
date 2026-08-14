@@ -118,8 +118,9 @@ export default function PageHeader({
           <h1
             style={{
               margin: 0,
-              fontSize: "clamp(22px, 5vw, 28px)",
-              fontWeight: 800,
+              // Schriftstaffel (--t-titel): ruhiger als das frühere clamp bis 28px.
+              fontSize: "var(--t-titel)",
+              fontWeight: 750,
               // Fest weiß: Das Band ist in beiden Modi Petrol.
               color: "#FFFFFF",
               letterSpacing: "-0.02em",

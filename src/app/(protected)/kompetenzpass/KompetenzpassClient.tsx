@@ -159,10 +159,10 @@ export default function KompetenzpassClient({
         {/* Action bar (hidden on print) */}
         <div className="kp-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 800, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
+            <h1 style={{ margin: 0, fontSize: "var(--t-titel)", fontWeight: 750, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
               Kompetenzpass
             </h1>
-            <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14 }}>
+            <p style={{ margin: "4px 0 0", color: "var(--vfa-text-2)", fontSize: 14 }}>
               Dein persönlicher Qualifikationsnachweis – zum Drucken oder als PDF speichern.
             </p>
           </div>

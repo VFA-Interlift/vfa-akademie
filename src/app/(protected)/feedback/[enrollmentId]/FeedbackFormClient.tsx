@@ -85,7 +85,7 @@ export default function FeedbackFormClient({
         <AppCard>
           <div style={{ textAlign: "center", padding: "20px 8px" }}>
             <div style={{ fontSize: 44, lineHeight: 1 }}>★</div>
-            <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: 24, fontWeight: 800 }}>
+            <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: "var(--t-titel)", fontWeight: 700 }}>
               Vielen Dank für dein Feedback!
             </h2>
             <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: 16 }}>
@@ -129,7 +129,7 @@ export default function FeedbackFormClient({
       {sections.map((section, sIndex) => (
         <AnimatedSection key={section.title} delayMs={Math.min(80 + sIndex * 40, 360)}>
           <AppCard>
-            <h2 style={{ margin: "0 0 14px", color: "#007873", fontSize: 18, fontWeight: 800 }}>
+            <h2 style={{ margin: "0 0 14px", color: "#007873", fontSize: "var(--t-gross)", fontWeight: 700 }}>
               {section.title}
             </h2>
 

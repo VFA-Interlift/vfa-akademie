@@ -66,7 +66,7 @@ export default function MeineZertifikateClient({
     return (
       <AnimatedSection>
         <AppCard>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
+          <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "#007873" }}>
             Aktuell sind noch keine Zertifikate vorhanden.
           </div>
         </AppCard>
@@ -227,9 +227,9 @@ export default function MeineZertifikateClient({
                           style={{
                             margin: 0,
                             color: "#007873",
-                            fontSize: "clamp(18px, 5vw, 32px)",
-                            fontWeight: 750,
-                            lineHeight: 1.12,
+                            fontSize: "var(--t-gross)",
+                            fontWeight: 700,
+                            lineHeight: 1.2,
                             maxWidth: 520,
                             textWrap: "balance",
                           }}
@@ -268,7 +268,7 @@ export default function MeineZertifikateClient({
                         <div
                           style={{
                             color: "#007873",
-                            fontWeight: 950,
+                            fontWeight: 800,
                             fontSize: "clamp(22px, 5vw, 34px)",
                             lineHeight: 1,
                             textAlign: "right",
@@ -544,7 +544,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
       {lines.length === 0 ? (
         <div
           style={{
-            color: "#777777",
+            color: "var(--vfa-text-3)",
             lineHeight: 1.45,
             fontSize: 14,
             fontStyle: "italic",

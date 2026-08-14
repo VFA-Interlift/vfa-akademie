@@ -21,6 +21,18 @@
   --vfa-gruen-text: #007873; /* Petrol als TEXTfarbe (im Dunkeln aufgehellt) */
   --vfa-rot-text: #b00020;   /* Fehlertexte (im Dunkeln aufgehellt) */
 
+  /* ── Schriftstaffel (Vera, 14.08.2026) ──
+     Eine Skala für die ganze App. Früher setzte jede Seite ihre Größen selbst
+     (11–30px wild gemischt, Gewichte bis 950); das machte die App unruhig.
+     Neue Flächen nehmen diese fünf Stufen, statt eigene Zahlen zu erfinden. */
+  --t-titel: 22px;   /* Seiten- und Band-Überschrift */
+  --t-gross: 17px;   /* Karten- und Blocktitel */
+  --t-basis: 15px;   /* Fließtext */
+  --t-klein: 13px;   /* Meta, Nebensächliches */
+  --t-label: 12px;   /* Kapitälchen-Etiketten */
+  --lh-eng: 1.2;     /* Überschriften */
+  --lh-weit: 1.55;   /* Fließtext */
+
   color-scheme: light;
 }
 
@@ -74,12 +86,46 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Ruhige Grundschrift für alles ohne eigene Größe. Wo eine Komponente selbst
+     eine Größe setzt, gilt weiter ihre. */
+  font-size: var(--t-basis);
+  line-height: var(--lh-weit);
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+/* Saubere Umbrüche für die ganze App: Überschriften brechen ausgewogen statt
+   mitten im Gedanken, Fließtext bekommt hübschere letzte Zeilen. Greift auf
+   echte Überschrift-Tags; div-Titel bekommen die Klasse .balance. */
+h1, h2, h3, h4, .balance {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* Fließtext auf zwei Zeilen kürzen (Kursbeschreibungen u. Ä.) — der Rest steht
+   auf der Detailseite. */
+.text-2zeilen {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Etikett: kleine Kapitälchen in Petrol — das eine Muster für alle
+   Abschnitts-Überschriften (EMPFOHLEN FÜR DICH, BISHERIGE TEILNAHMEN …). */
+.etikett {
+  font-size: var(--t-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vfa-gruen-text);
+  line-height: 1.3;
 }
 
 a {
@@ -734,14 +780,16 @@ html.dashboard-aktiv .page-content {
   position: sticky;
   top: 0;
   z-index: 0;
-  height: calc(216px + env(safe-area-inset-top, 0px));
+  /* Einen Tick höher als bisher (216) — mehr Luft über der Begrüßung, damit
+     der Kopf so großzügig wirkt wie das Band der übrigen Seiten (Tobi, 14.08.). */
+  height: calc(236px + env(safe-area-inset-top, 0px));
   overflow: hidden;
   background: #007873;
   display: flex;
   align-items: flex-end;
 }
 @media (min-width: 600px) {
-  .dash-hero { height: calc(248px + env(safe-area-inset-top, 0px)); }
+  .dash-hero { height: calc(268px + env(safe-area-inset-top, 0px)); }
 }
 
 /* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text.

@@ -71,7 +71,7 @@ function TabButton({
         border: "none",
         borderRadius: 8,
         background: active ? TEAL : "transparent",
-        color: active ? "#FFFFFF" : "#555555",
+        color: active ? "#FFFFFF" : "var(--vfa-text-2)",
         fontWeight: 800,
         fontSize: 13.5,
         cursor: "pointer",

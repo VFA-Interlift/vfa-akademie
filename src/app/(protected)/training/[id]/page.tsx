@@ -109,8 +109,8 @@ export default async function TrainingPage({
                   style={{
                     margin: 0,
                     color: "#007873",
-                    fontSize: 24,
-                    fontWeight: 500,
+                    fontSize: "var(--t-gross)",
+                    fontWeight: 700,
                     lineHeight: 1.3,
                   }}
                 >
@@ -228,8 +228,8 @@ export default async function TrainingPage({
                   style={{
                     margin: 0,
                     color: "#007873",
-                    fontSize: 24,
-                    fontWeight: 500,
+                    fontSize: "var(--t-gross)",
+                    fontWeight: 700,
                     lineHeight: 1.3,
                   }}
                 >

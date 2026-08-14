@@ -145,10 +145,10 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
     <AnimatedSection delayMs={60}>
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
         <div style={{ marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 800, color: "var(--vfa-text)" }}>
+          <h2 style={{ margin: 0, fontSize: "var(--t-titel)", fontWeight: 700, color: "var(--vfa-text)" }}>
             Meine Nachweise
           </h2>
-          <p style={{ margin: "4px 0 0", color: "#888888", fontSize: 14, lineHeight: 1.5 }}>
+          <p style={{ margin: "4px 0 0", color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.5 }}>
             Eigene Weiterbildungen, Abschlüsse und externe Nachweise – alles an einem Ort.
           </p>
         </div>
@@ -230,7 +230,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
           <AppCard style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ display: "grid", gap: 5, flex: "1 1 150px", minWidth: 150 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>Kategorie</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--vfa-text-2)" }}>Kategorie</span>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
@@ -244,7 +244,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
               </label>
 
               <label style={{ display: "grid", gap: 5, flex: "1 1 180px", minWidth: 180 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>Sortieren nach</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--vfa-text-2)" }}>Sortieren nach</span>
                 <select
                   value={sortKey}
                   onChange={(e) => setSortKey(e.target.value as SortKey)}
@@ -262,13 +262,13 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
         {/* Liste */}
         {documents.length === 0 ? (
           <AppCard>
-            <div style={{ color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
               Noch keine eigenen Nachweise hochgeladen.
             </div>
           </AppCard>
         ) : visibleDocuments.length === 0 ? (
           <AppCard>
-            <div style={{ color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
               Für diese Kategorie wurden keine Nachweise gefunden.
             </div>
           </AppCard>
@@ -290,7 +290,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
                         {doc.title}
                       </span>
                     </div>
-                    <div style={{ fontSize: 12, color: "#888888", marginTop: 4, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 12, color: "var(--vfa-text-3)", marginTop: 4, lineHeight: 1.5 }}>
                       {[doc.category, doc.issuer, doc.issuedDate ? formatDate(doc.issuedDate) : null, formatSize(doc.fileSize)]
                         .filter(Boolean)
                         .join(" · ")}
@@ -347,7 +347,7 @@ const inputStyle: React.CSSProperties = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label style={{ display: "grid", gap: 5 }}>
-      <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--vfa-text-2)" }}>{label}</span>
       {children}
     </label>
   );

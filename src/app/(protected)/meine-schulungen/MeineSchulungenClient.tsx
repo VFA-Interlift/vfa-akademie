@@ -47,16 +47,25 @@ export default function MeineSchulungenClient({
       <div style={{ display: "grid", gap: 16 }}>
         <AnimatedSection>
           <AppCard>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#007873" }}>
-              Aktuell sind dir keine Schulungen zugeordnet.
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <span aria-hidden="true" style={{
+                flex: "none", width: 30, height: 30, borderRadius: 9,
+                background: "rgba(0,120,115,0.10)", color: "#007873",
+                display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800,
+              }}>i</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
+                  Keine Schulung zugeordnet
+                </div>
+                <p style={{ marginTop: 3, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: 1.5 }}>
+                  Im{" "}
+                  <Link href="/kurskalender" style={{ color: "#007873", fontWeight: 700 }}>
+                    Kurskalender
+                  </Link>{" "}
+                  findest du alle kommenden Termine.
+                </p>
+              </div>
             </div>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
-              Im{" "}
-              <Link href="/kurskalender" style={{ color: "#007873", fontWeight: 700 }}>
-                Kurskalender
-              </Link>{" "}
-              findest du alle kommenden Termine.
-            </p>
           </AppCard>
         </AnimatedSection>
         <RecommendationsSection recommendations={recommendations} />
@@ -146,7 +155,7 @@ export default function MeineSchulungenClient({
                           </span>
                         </div>
 
-                        <h2 style={{ margin: 0, color: "#007873", fontSize: "clamp(17px, 4vw, 26px)", fontWeight: 750, lineHeight: 1.15, maxWidth: 520 }}>
+                        <h2 style={{ margin: 0, color: "#007873", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: 1.2, maxWidth: 520 }}>
                           {displayTitle}
                         </h2>
 
@@ -157,7 +166,7 @@ export default function MeineSchulungenClient({
                       </div>
 
                       <div style={{ minWidth: 80, display: "grid", justifyItems: "end", alignContent: "start", gap: 4, paddingTop: 2 }}>
-                        <div style={{ color: "#007873", fontWeight: 950, fontSize: "clamp(20px, 4vw, 30px)", lineHeight: 1, textAlign: "right" }}>
+                        <div style={{ color: "#007873", fontWeight: 800, fontSize: "clamp(20px, 4vw, 26px)", lineHeight: 1, textAlign: "right" }}>
                           {training.creditsAward}
                         </div>
                         <div style={{ color: "var(--vfa-text-3)", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "right" }}>
@@ -359,10 +368,10 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
               <div style={{ fontSize: 11, fontWeight: 800, color: "var(--vfa-text-2)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 ★ {rec.reason}
               </div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1.25 }}>
+              <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.25 }}>
                 {rec.title}
               </div>
-              <div style={{ fontSize: 13.5, color: "#555555", lineHeight: 1.55 }}>
+              <div className="text-2zeilen" style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: 1.5 }}>
                 {rec.description}
               </div>
 
@@ -447,7 +456,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
         Adresse
       </div>
       {lines.length === 0 ? (
-        <div style={{ color: "#777777", lineHeight: 1.45, fontSize: 14, fontStyle: "italic" }}>Noch nicht hinterlegt</div>
+        <div style={{ color: "var(--vfa-text-3)", lineHeight: 1.45, fontSize: 14, fontStyle: "italic" }}>Noch nicht hinterlegt</div>
       ) : (
         <div style={{ color: "var(--vfa-text)", lineHeight: 1.45, fontSize: 14 }}>
           {lines.map((line) => <div key={line}>{line}</div>)}
