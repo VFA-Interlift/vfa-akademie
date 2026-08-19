@@ -896,6 +896,110 @@ html.dashboard-aktiv .page-content {
   font-weight: 600;
 }
 
+/* Glocke oben rechts im grünen Kopf (Tobi, 19.08.2026). Sie sitzt unter der
+   Statusleiste des Geräts und bleibt beim Scrollen an ihrem Platz — anders
+   als Begrüßung und Name, die nach oben wegdriften. */
+.hero-glocke {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 16px;
+  z-index: 2;
+}
+@media (min-width: 600px) {
+  .hero-glocke { right: 24px; }
+}
+
+.hero-glocke-knopf {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hero-glocke-knopf:active {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+/* Der rote Punkt mit der Anzahl. Zweistellige Zahlen dürfen ihn breiter
+   machen, deshalb min-width statt fester Breite. */
+.hero-glocke-zahl {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #D92D20;
+  border: 2px solid #007873;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 16px;
+  text-align: center;
+}
+
+.hero-glocke-liste {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: min(300px, calc(100vw - 32px));
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--vfa-karte);
+  border: 1px solid var(--vfa-linie-2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  display: grid;
+  gap: 2px;
+}
+
+.hero-glocke-zeile {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+}
+
+.hero-glocke-zeile:active {
+  background: var(--vfa-karte-2);
+}
+
+.hero-glocke-punkt {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #D92D20;
+}
+
+.hero-glocke-titel {
+  display: block;
+  color: var(--vfa-text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.hero-glocke-text {
+  display: block;
+  margin-top: 2px;
+  color: var(--vfa-text-2);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
 /* Die Inhaltsfläche liegt über dem Kopf und zieht ihn beim Scrollen zu. */
 .dash-inhalt {
   position: relative;

@@ -11,7 +11,7 @@ import CreditsZuwachs from "@/components/CreditsZuwachs";
 import DashboardHero from "@/components/DashboardHero";
 import EtagenAnzeige from "@/components/EtagenAnzeige";
 import RangAufstieg from "@/components/RangAufstieg";
-import FeedbackReminder from "@/components/FeedbackReminder";
+import type { Hinweis } from "@/components/HeroGlocke";
 import TesterWelcome from "@/components/TesterWelcome";
 import { istTester } from "@/lib/app-test/tester";
 import { getOpenFeedbackCount } from "@/lib/feedback/service";
@@ -136,12 +136,34 @@ export default async function DashboardPage() {
 
   const openFeedbackCount = await getOpenFeedbackCount(user.id);
 
+  // Erinnerungen sitzen seit dem 19.08.2026 als Glocke oben in der grünen
+  // Leiste, nicht mehr als Kachel über dem Inhalt — so beginnt die weiße
+  // Fläche gleich mit dem Diagramm (Tobis Ansage).
+  const hinweise: Hinweis[] = [];
+
+  if (openFeedbackCount > 0) {
+    hinweise.push({
+      titel: openFeedbackCount === 1 ? "Feedback steht aus" : `${openFeedbackCount}× Feedback steht aus`,
+      text: "Je Schulung gibt es dafür 10 Credits.",
+      href: "/meine-zertifikate",
+    });
+  }
+
+  if (!user.firstName || !user.lastName) {
+    hinweise.push({
+      titel: "Profil unvollständig",
+      text: "Vor- und Nachname fehlen, sie stehen später auf dem Zertifikat.",
+      href: "/meine-daten",
+    });
+  }
+
   return (
     <main className="page-main dashboard-page">
       <DashboardHero
         name={displayName || "Willkommen"}
         rangLabel={rank.label}
         unterzeile="Dein aktueller Stand."
+        hinweise={hinweise}
         naechste={
           nextTraining
             ? {
@@ -172,36 +194,8 @@ export default async function DashboardPage() {
           />
         )}
 
-        <FeedbackReminder openCount={openFeedbackCount} />
-
-        {/* Profile completeness hint */}
-        {(!user.firstName || !user.lastName) && (
-          <AnimatedSection delayMs={80}>
-            <Link
-              href="/meine-daten"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                padding: "14px 18px",
-                background: "#FFF6E0",
-                border: "1px solid rgba(255,193,0,0.6)",
-                borderRadius: 12,
-                textDecoration: "none",
-              }}
-            >
-              <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#7C5A0A", lineHeight: 1.25 }}>
-                  Profil unvollständig
-                </div>
-                <div style={{ fontSize: 13, color: "#7C5A0A", opacity: 0.8, marginTop: 2, lineHeight: 1.4 }}>
-                  Vor- und Nachname fehlen – werden für Zertifikate benötigt. Jetzt ausfüllen →
-                </div>
-              </div>
-            </Link>
-          </AnimatedSection>
-        )}
+        {/* Offenes Feedback und ein unvollstaendiges Profil melden sich seit
+            dem 19.08.2026 ueber die Glocke im gruenen Kopf. */}
 
         {/* Next upcoming training */}
         {nextTraining && (

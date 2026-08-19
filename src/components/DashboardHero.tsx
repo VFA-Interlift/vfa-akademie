@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import HeroGlocke, { type Hinweis } from "@/components/HeroGlocke";
 
 // Layout-Effekte laufen synchron vor dem Zeichnen — beim Serverrendern gibt es
 // sie nicht, dort genügt der normale Effekt (die Warnung wäre nur Rauschen).
@@ -24,12 +25,15 @@ export default function DashboardHero({
   rangLabel,
   unterzeile,
   naechste,
+  hinweise = [],
 }: {
   name: string;
   rangLabel: string;
   unterzeile: string;
   /** Nächste Schulung für den Countdown; ohne sie bleibt die Unterzeile. */
   naechste?: { kuerzel: string; datumISO: string; endeISO: string | null };
+  /** Offene Erinnerungen für die Glocke oben rechts. Leer = keine Glocke. */
+  hinweise?: Hinweis[];
 }) {
   const [gruss, setGruss] = useState("Hallo");
   const [zeile, setZeile] = useState(unterzeile);
@@ -170,6 +174,10 @@ export default function DashboardHero({
         <div className="dash-hero-streifen" />
         <div className="dash-hero-schein" />
       </div>
+
+      {/* Die Glocke bleibt beim Scrollen stehen, wo sie ist — sie gehört zur
+          Leiste, nicht zum Text, der nach oben wegdriftet. */}
+      <HeroGlocke hinweise={hinweise} />
 
       <div ref={inhaltRef} className="dash-hero-inhalt">
         <p className="dash-hero-gruss">{gruss}</p>
