@@ -793,10 +793,33 @@ html.dashboard-aktiv .page-content {
      anhaben kann. Die Höhe sank trotzdem von 168 auf 156, weil mit der
      Countdown-Zeile eine ganze Zeile aus dem Kopf gefallen ist. */
   height: calc(164px + env(safe-area-inset-top, 0px));
-  overflow: hidden;
+  /* KEIN overflow: hidden — sonst schneidet der Kopf die aufgeklappte Liste
+     der Glocke an seiner Unterkante ab (Tobi, 20.08.2026: sie soll über die
+     weiße Kachel gehen). Beschnitten wird stattdessen nur die wandernde
+     Musterebene, siehe .dash-hero-clip. */
   background: #007873;
   display: flex;
   align-items: flex-end;
+}
+
+/* Beschneidet die Parallax-Ebene, die über die Kanten des Kopfes hinausragt.
+   Früher tat das .dash-hero selbst — dann kam aber auch die Glockenliste nicht
+   heraus. */
+.dash-hero-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Der Kopf liegt normalerweise UNTER der weißen Inhaltsfläche (z-index 1), die
+   sich beim Scrollen darüberschiebt. Steht die Glockenliste offen, muss er für
+   diesen Moment darüber — sonst verschwindet die Liste hinter der Kachel.
+   Die Klasse setzt HeroGlocke beim Öffnen an <html>, wie schon bei
+   `dashboard-aktiv`; eine Regel mit :has() überlebt den Bauvorgang hier
+   nicht. */
+html.glocke-offen .dash-hero {
+  z-index: 5;
 }
 @media (min-width: 600px) {
   .dash-hero { height: calc(184px + env(safe-area-inset-top, 0px)); }
@@ -906,12 +929,16 @@ html.dashboard-aktiv .page-content {
    als Begrüßung und Name, die nach oben wegdriften. */
 .hero-glocke {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 26px);
+  /* Auf Höhe des Rang-Chips statt oben in der Ecke (Tobi, 20.08.2026). Von der
+     UNTERKANTE aus gemessen, damit sie dort bleibt, wenn sich die Kopfhöhe
+     ändert: 40px Abstand des Textblocks nach unten, davon 5px abgezogen, weil
+     die Glocke etwas höher ist als der Chip. */
+  bottom: 35px;
   right: 16px;
   z-index: 2;
 }
 @media (min-width: 600px) {
-  .hero-glocke { right: 24px; }
+  .hero-glocke { right: 24px; bottom: 43px; }
 }
 
 .hero-glocke-knopf {
@@ -957,6 +984,9 @@ html.dashboard-aktiv .page-content {
   position: absolute;
   top: 48px;
   right: 0;
+  /* Über dem Kopfinhalt; dass sie auch über der weißen Kachel liegt, besorgt
+     `html.glocke-offen .dash-hero`. */
+  z-index: 10;
   width: min(300px, calc(100vw - 32px));
   padding: 6px;
   border-radius: 14px;

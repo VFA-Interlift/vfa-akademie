@@ -142,9 +142,11 @@ export default function DashboardHero({
           13.08.2026 kurz draußen und ist auf Tobis Ansage zurück („dieser
           gelbe Schimmer oben rechts ist gut"). Was ihn wirklich störte, war
           der weiße Schleier der Kopf-Ausblendung; die bleibt draußen. */}
-      <div ref={grundRef} className="dash-hero-grund">
-        <div className="dash-hero-streifen" />
-        <div className="dash-hero-schein" />
+      <div className="dash-hero-clip">
+        <div ref={grundRef} className="dash-hero-grund">
+          <div className="dash-hero-streifen" />
+          <div className="dash-hero-schein" />
+        </div>
       </div>
 
       {/* Die Glocke bleibt beim Scrollen stehen, wo sie ist — sie gehört zur

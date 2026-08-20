@@ -25,6 +25,15 @@ export default function HeroGlocke({ hinweise }: { hinweise: Hinweis[] }) {
   const [offen, setOffen] = useState(false);
   const bereichRef = useRef<HTMLDivElement>(null);
 
+  // Solange die Liste offen ist, muss der grüne Kopf über der weißen
+  // Inhaltsfläche liegen — sonst verschwindet sie dahinter (Tobi, 20.08.2026).
+  // Der Weg über eine Klasse an <html> ist derselbe wie bei `dashboard-aktiv`.
+  useEffect(() => {
+    if (!offen) return;
+    document.documentElement.classList.add("glocke-offen");
+    return () => document.documentElement.classList.remove("glocke-offen");
+  }, [offen]);
+
   // Tippen daneben schließt die Liste wieder - auf dem Handy die einzige
   // Geste, die man dafür erwartet.
   useEffect(() => {
