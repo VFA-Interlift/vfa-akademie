@@ -812,13 +812,20 @@ html.dashboard-aktiv .page-content {
   pointer-events: none;
 }
 
-/* Der Kopf liegt normalerweise UNTER der weißen Inhaltsfläche (z-index 1), die
-   sich beim Scrollen darüberschiebt. Steht die Glockenliste offen, muss er für
-   diesen Moment darüber — sonst verschwindet die Liste hinter der Kachel.
-   Die Klasse setzt HeroGlocke beim Öffnen an <html>, wie schon bei
-   `dashboard-aktiv`; eine Regel mit :has() überlebt den Bauvorgang hier
-   nicht. */
+/* Die aufgeklappte Glockenliste muss über der weißen Inhaltsfläche liegen.
+   Den ganzen Kopf hochzuheben war der erste Versuch und falsch: sein grüner
+   Grund deckte dann die obersten 30 Pixel der Kachel zu, also gerade ihre
+   runde Kante und den Schatten (Tobi, 20.08.2026).
+
+   Stattdessen wird der Kopf für diesen Moment als Stapel-Ebene aufgelöst
+   (z-index: auto) — er bleibt durch die Dokumentreihenfolge weiter unter der
+   Kachel — und nur die Glocke steigt über sie. Die Klasse setzt HeroGlocke
+   beim Öffnen an <html>, wie schon bei `dashboard-aktiv`; eine Regel mit
+   :has() überlebt den Bauvorgang hier nicht. */
 html.glocke-offen .dash-hero {
+  z-index: auto;
+}
+html.glocke-offen .hero-glocke {
   z-index: 5;
 }
 @media (min-width: 600px) {
@@ -933,12 +940,12 @@ html.glocke-offen .dash-hero {
      UNTERKANTE aus gemessen, damit sie dort bleibt, wenn sich die Kopfhöhe
      ändert: 40px Abstand des Textblocks nach unten, davon 5px abgezogen, weil
      die Glocke etwas höher ist als der Chip. */
-  bottom: 35px;
+  bottom: 41px;
   right: 16px;
   z-index: 2;
 }
 @media (min-width: 600px) {
-  .hero-glocke { right: 24px; bottom: 43px; }
+  .hero-glocke { right: 24px; bottom: 49px; }
 }
 
 .hero-glocke-knopf {
