@@ -28,6 +28,11 @@ const TESTRUNDE = [
   "lisa.wallisch@hissmekano.de",
   "h.f.lutz@outlook.de",
   "m.molineus@henning-gmbh.de",
+  // Marcel Puttrus-Kowollik (Tobi, 20.08.2026) — hat TGE verlassen, private
+  // Adresse; seine Kurse (VDI A1/A2/B/C, YLD) hängen in Cobra noch an
+  // marcel.puttrus@tge-gruppe.de und werden nach der Registrierung von Hand
+  // verknüpft.
+  "marcel@puttrus.de",
 ];
 
 function liste(): string[] {
