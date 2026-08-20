@@ -15,6 +15,14 @@
 const TESTRUNDE = [
   "kristin.hemker@vfa-interlift.de",
   "tobias.doehring@vfa-interlift.de",
+  // Die drei Dozenten aus der Einladung zur Testphase vom 06.07.2026. Ohne
+  // diese Zeilen sehen sie den Fragebogen unter Einstellungen nicht — und die
+  // Erinnerungsmail liefe ins Leere. Wer sich mit einer ANDEREN Adresse in der
+  // App registriert hat, faellt weiterhin durch; dann gehoert die genutzte
+  // Adresse hier hinein.
+  "robert.makarun@mliftconsulting.com",
+  "sascha.goebel@email.de",
+  "volker-sepanski@t-online.de",
 ];
 
 function liste(): string[] {
