@@ -245,10 +245,16 @@ function PdfViewerModal({
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 1000,
+        // 4100 statt 1000 (20.08.2026): Die Bottom-Nav liegt bei z-index 3000
+        // und stand sonst am Handy über dem Viewer; 4100 liegt wie beim
+        // PdfOverlay über allen Leisten und Sheets (3000/3500/4000).
+        zIndex: 4100,
         background: "rgba(0,0,0,0.55)",
         display: "flex",
         flexDirection: "column",
+        // Unten bis über den iPhone-Home-Balken polstern, sonst endet das
+        // iframe unsichtbar dahinter.
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
       <div

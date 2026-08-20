@@ -171,10 +171,12 @@ export async function getTrainingRecommendations(
   }
 
   // Bevorstehende öffentliche Termine je Kürzel (frühester zuerst).
+  // Abgesagte Kurse bleiben draussen — sonst nennt die Empfehlungskarte einen
+  // abgesagten Termin als "Nächster Termin" (20.08.2026).
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const upcoming = await prisma.training.findMany({
-    where: { date: { gte: today } },
+    where: { date: { gte: today }, cancelledAt: null },
     orderBy: { date: "asc" },
     select: {
       id: true,

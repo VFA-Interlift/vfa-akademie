@@ -975,6 +975,14 @@ function getBookingUrl(training: CalendarTraining) {
     return EFK_BOOKING_URL;
   }
 
+  // EFK-Auffrischung ("EFK-ffT_Auffrischung_online-…"): der Code steht in keiner
+  // Codeliste, der Kurs landete darum faelschlich auf der Schwerpunkt-Seite.
+  // Die Auffrischungstermine stehen auf der Website im selben EFK-Block wie
+  // EFK1/EFK2, also dorthin (Sitemap gegengeprueft, 20.08.2026).
+  if (normalizeCourseText(training.code ?? "").startsWith("EFK")) {
+    return EFK_BOOKING_URL;
+  }
+
   return FOCUS_BOOKING_URL;
 }
 

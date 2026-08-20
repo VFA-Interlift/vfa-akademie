@@ -5,6 +5,9 @@ type AppTextareaProps = {
   placeholder?: string;
   rows?: number;
   disabled?: boolean;
+  /** Zeichengrenze des Feldes — setzen, wenn der Server ohnehin kappt,
+      damit nichts still verloren geht (Befund 20.08.2026). */
+  maxLength?: number;
 };
 
 export default function AppTextarea({
@@ -14,6 +17,7 @@ export default function AppTextarea({
   placeholder,
   rows = 4,
   disabled = false,
+  maxLength,
 }: AppTextareaProps) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
@@ -33,6 +37,7 @@ export default function AppTextarea({
         placeholder={placeholder}
         rows={rows}
         disabled={disabled}
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         className="vfa-input"
         style={{

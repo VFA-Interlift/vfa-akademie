@@ -37,6 +37,13 @@ const VFA_GREY = "#C7C7C7";
 // globale Header nicht erscheinen.
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
 
+// Impressum und Datenschutz bringen im (rechtliches)-Layout ihre eigene feste
+// Zurück-Leiste mit — sie ist dort der einzige Kopf. Vorher lugte für
+// Ausgeloggte (z. B. Datenschutz-Link vor der Registrierung) der globale
+// Header als Reststreifen mit angeschnittenem Logo darunter hervor
+// (20.08.2026).
+const RECHTLICHE_ROUTEN = ["/impressum", "/datenschutz"];
+
 export default function HeaderClient() {
   const { status } = useSession();
   const pathname = usePathname();
@@ -171,8 +178,10 @@ export default function HeaderClient() {
   // on top before the bottom nav takes over on app start.
   const hideMobileHeader = status === "authenticated" || status === "loading";
 
-  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
-  if (isAuthRoute) return null;
+  const ohneGlobalenHeader = [...AUTH_ROUTES, ...RECHTLICHE_ROUTEN].some(
+    (r) => pathname === r || pathname.startsWith(`${r}/`)
+  );
+  if (ohneGlobalenHeader) return null;
 
   return (
     <header

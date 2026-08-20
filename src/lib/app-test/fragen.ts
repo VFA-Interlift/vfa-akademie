@@ -107,6 +107,13 @@ export const APP_TEST_FRAGEN: Frage[] = [
 /** Die einzige Pflichtfrage. Getrennt gehalten, damit Formular und API dieselbe Quelle nutzen. */
 export const PFLICHT_FRAGE_ID = "gesamt";
 
+/**
+ * Obergrenze fuer Freitexte. Die API kappte still bei 4000 Zeichen, das
+ * Formular liess beliebig viel zu — laengere Texte gingen unbemerkt verloren
+ * (Befund 20.08.2026). Eine Quelle fuer Formular (maxLength) und API (slice).
+ */
+export const APP_TEST_TEXT_MAX = 4000;
+
 export const APP_TEST_FRAGEN_BY_ID: Record<string, Frage> = Object.fromEntries(
   APP_TEST_FRAGEN.map((f) => [f.id, f])
 );

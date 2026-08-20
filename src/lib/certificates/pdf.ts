@@ -160,6 +160,9 @@ export async function renderCertificatePdf({
       size: fieldCfg.size ?? 11,
       maxWidth: fieldCfg.maxWidth,
       centered: fieldCfg.centered,
+      // Der Name bekommt nie eine zweite Zeile; Details in drawText.
+      // (20.08.2026)
+      einzeilig: fieldName === "participantName",
     });
   }
 
@@ -176,27 +179,47 @@ type DrawTextOptions = {
   maxWidth?: number;
   lineHeight?: number;
   centered?: boolean;
+  einzeilig?: boolean;
 };
 
-function drawText({ page, font, text, x = 0, y, size = 11, maxWidth, lineHeight, centered }: DrawTextOptions) {
+function drawText({ page, font, text, x = 0, y, size = 11, maxWidth, lineHeight, centered, einzeilig }: DrawTextOptions) {
   const safeText = normalizePdfText(text);
 
   if (!safeText) return;
 
   const pageWidth = page.getWidth();
-  const resolvedLineHeight = lineHeight ?? size * 1.25;
 
-  const lines = maxWidth
-    ? wrapText({ text: safeText, font, size, maxWidth })
-    : [safeText];
+  // Einzeilig (der Teilnehmername): Ein Umbruch wuerde die zweite Zeile
+  // mitten in die "geb."-Zeile darunter drucken. Stattdessen die Schrift in
+  // halben Punkten verkleinern, bis der Name in eine Zeile passt. Unter 7 pt
+  // geht es nicht weiter; dann laeuft die Zeile zentriert etwas ueber
+  // maxWidth hinaus in die Seitenraender, beruehrt aber keine andere Zeile.
+  // (20.08.2026)
+  let resolvedSize = size;
+  let lines: string[];
+  if (einzeilig) {
+    const eineZeile = safeText.split(/\s+/).filter(Boolean).join(" ");
+    if (maxWidth) {
+      while (resolvedSize > 7 && font.widthOfTextAtSize(eineZeile, resolvedSize) > maxWidth) {
+        resolvedSize -= 0.5;
+      }
+    }
+    lines = [eineZeile];
+  } else {
+    lines = maxWidth
+      ? wrapText({ text: safeText, font, size, maxWidth })
+      : [safeText];
+  }
+
+  const resolvedLineHeight = lineHeight ?? resolvedSize * 1.25;
 
   lines.forEach((line, index) => {
-    const lineWidth = font.widthOfTextAtSize(line, size);
+    const lineWidth = font.widthOfTextAtSize(line, resolvedSize);
     const drawX = centered ? (pageWidth - lineWidth) / 2 : x;
     page.drawText(line, {
       x: drawX,
       y: y - index * resolvedLineHeight,
-      size,
+      size: resolvedSize,
       font,
       color: rgb(0, 0, 0),
     });
@@ -287,7 +310,14 @@ const TRANSLIT: Record<string, string> = {
 };
 
 // Alles, was Helvetica direkt kann (Basis-Latein + CP1252-Sonderzeichen).
-const CP1252 = /[ -ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/;
+// \t und \n duerfen passieren, wrapText raeumt sie als Trenner weg; DEL und
+// die C1-Steuerzeichen (U+007F bis U+009F) bleiben draussen, weil WinAnsi sie
+// nicht kodieren kann. Die Untergrenzen sichtbar bzw. als \u00A0-Escape
+// halten: Bis 20.08.2026 stand vor dem ersten "-" ein unsichtbares rohes
+// NUL-Byte, die Klasse begann dadurch bei U+0000 und liess jedes
+// Steuerzeichen bis zum pdf-lib-Encoder durch; der Zertifikat-Download
+// brach dann mit 500 ab.
+const CP1252 = /[\t\n -~\u00A0-ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/;
 
 function winAnsiSicher(text: string): string {
   let out = "";

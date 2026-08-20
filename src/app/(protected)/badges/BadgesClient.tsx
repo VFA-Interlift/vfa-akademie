@@ -58,7 +58,7 @@ function achievementConfigs(completedCount: number, vdiCompleted: string[]): Bad
       key: "vdi-reihe",
       title: "VDI-Reihe",
       sublabel: "A1 · A2 · B · C",
-      footnote: vdiDone >= 4 ? "Komplett abgeschlossen" : `${vdiDone} / 4 Kursen`,
+      footnote: vdiDone >= 4 ? "Komplett abgeschlossen" : `${vdiDone} / 4 Kurse`,
       earned: vdiDone >= 4,
       color: "#0B4F4B",
       accent: VFA_GREEN,

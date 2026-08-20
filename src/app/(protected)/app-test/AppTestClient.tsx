@@ -5,7 +5,7 @@ import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AppTextarea from "@/components/ui/AppTextarea";
 import StarRating from "@/components/feedback/StarRating";
-import { APP_TEST_FRAGEN, PFLICHT_FRAGE_ID } from "@/lib/app-test/fragen";
+import { APP_TEST_FRAGEN, APP_TEST_TEXT_MAX, PFLICHT_FRAGE_ID } from "@/lib/app-test/fragen";
 
 type Antwort = number | string | string[];
 
@@ -17,8 +17,17 @@ const auswahlZeile = {
   padding: "4px 0",
 } as const;
 
-export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: boolean }) {
-  const [answers, setAnswers] = useState<Record<string, Antwort>>({});
+export default function AppTestClient({
+  bereitsGesendet,
+  gespeicherteAntworten,
+}: {
+  bereitsGesendet: boolean;
+  gespeicherteAntworten: Record<string, Antwort> | null;
+}) {
+  // Vorbefuellt mit den gespeicherten Antworten: die API ersetzt beim erneuten
+  // Absenden den kompletten Datensatz — ein leerer Bogen loeschte beim
+  // "Ergaenzen" alle Erstantworten (Befund 20.08.2026).
+  const [answers, setAnswers] = useState<Record<string, Antwort>>(gespeicherteAntworten ?? {});
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -57,6 +66,10 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
 
       if (!res.ok) {
         setError("Das hat nicht geklappt. Bitte versuche es gleich noch einmal.");
+        // Die Fehlerkarte steht ueber den Fragekarten, der Knopf ganz unten —
+        // ohne Scroll blieb die Meldung auf dem Handy unsichtbar und der Bogen
+        // wirkte abgeschickt (Befund 20.08.2026).
+        window.scrollTo({ top: 0, behavior: "smooth" });
         setSending(false);
         return;
       }
@@ -64,6 +77,7 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
       setDone(true);
     } catch {
       setError("Keine Verbindung. Bitte versuche es gleich noch einmal.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setSending(false);
     }
   }
@@ -77,7 +91,7 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
             <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: 24, fontWeight: 800 }}>
               Danke für deine Rückmeldung!
             </h2>
-            <p style={{ margin: 0, color: "#333333", fontSize: 16, lineHeight: 1.6 }}>
+            <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: 16, lineHeight: 1.6 }}>
               Deine Antworten sind angekommen. Wenn dir später noch etwas auffällt,
               kannst du den Bogen einfach noch einmal ausfüllen.
             </p>
@@ -91,15 +105,16 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
     <div style={{ display: "grid", gap: 12 }}>
       <AnimatedSection>
         <AppCard>
-          <p style={{ margin: 0, color: "#333333", lineHeight: 1.6 }}>
+          <p style={{ margin: 0, color: "var(--vfa-text)", lineHeight: 1.6 }}>
             Zehn Fragen, zwei bis drei Minuten. Pflicht ist nur die letzte —
             alles andere ist freiwillig. Es gibt keine falschen Antworten:
             was dich stört, hilft uns am meisten.
           </p>
           {bereitsGesendet && (
-            <p style={{ margin: "12px 0 0", color: "#777777", fontSize: 14, lineHeight: 1.6 }}>
-              Du hast den Bogen schon einmal abgeschickt. Wenn du ihn erneut
-              absendest, ersetzt das deine bisherigen Antworten.
+            <p style={{ margin: "12px 0 0", color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
+              Du hast den Bogen schon einmal abgeschickt — deine bisherigen
+              Antworten sind unten bereits eingetragen. Ändere oder ergänze
+              einfach, was dir aufgefallen ist, und sende erneut.
             </p>
           )}
         </AppCard>
@@ -115,7 +130,7 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
         <AnimatedSection key={frage.id} delayMs={Math.min(60 + i * 30, 360)}>
           <AppCard>
             <div style={{ display: "grid", gap: 10 }}>
-              <span style={{ fontSize: 15, color: "#1F1F1F", fontWeight: 600, lineHeight: 1.45 }}>
+              <span style={{ fontSize: 15, color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
                 {frage.text}
                 {frage.id === PFLICHT_FRAGE_ID && <span style={{ color: "#B00020" }}> *</span>}
               </span>
@@ -132,7 +147,7 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
                       justifyContent: "space-between",
                       maxWidth: 200,
                       fontSize: 12,
-                      color: "#888888",
+                      color: "var(--vfa-text-3)",
                     }}
                   >
                     <span>{frage.links}</span>
@@ -148,6 +163,7 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
                   onChange={(v) => setAnswer(frage.id, v)}
                   rows={3}
                   placeholder={frage.platzhalter}
+                  maxLength={APP_TEST_TEXT_MAX}
                 />
               )}
 
@@ -167,7 +183,7 @@ export default function AppTestClient({ bereitsGesendet }: { bereitsGesendet: bo
                         }
                         style={{ width: 17, height: 17, accentColor: "#007873", marginTop: 2 }}
                       />
-                      <span style={{ fontSize: 14, color: "#333333" }}>{option}</span>
+                      <span style={{ fontSize: 14, color: "var(--vfa-text)" }}>{option}</span>
                     </label>
                   );
                 })}

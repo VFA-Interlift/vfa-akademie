@@ -18,15 +18,28 @@ export default async function AppTestPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email.trim().toLowerCase() },
-    select: { appTestFeedback: { select: { id: true } } },
+    select: { appTestFeedback: { select: { id: true, answers: true } } },
   });
+
+  // Die gespeicherten Antworten befuellen den Bogen vor: die API ersetzt beim
+  // erneuten Absenden den kompletten Datensatz — startete der Bogen leer,
+  // loeschte ein "Ergaenzen" alle Erstantworten (Befund 20.08.2026). Die Werte
+  // wurden beim Speichern serverseitig geprueft, hier reicht der Objekt-Check.
+  const gespeichert = user?.appTestFeedback?.answers;
+  const gespeicherteAntworten =
+    gespeichert && typeof gespeichert === "object" && !Array.isArray(gespeichert)
+      ? (gespeichert as Record<string, number | string | string[]>)
+      : null;
 
   return (
     <main className="page-main">
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <PageHeader title="Deine Rückmeldung zur App" showTitle={true} />
 
-        <AppTestClient bereitsGesendet={Boolean(user?.appTestFeedback)} />
+        <AppTestClient
+          bereitsGesendet={Boolean(user?.appTestFeedback)}
+          gespeicherteAntworten={gespeicherteAntworten}
+        />
       </div>
     </main>
   );

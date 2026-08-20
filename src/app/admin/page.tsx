@@ -159,6 +159,22 @@ export default async function AdminMenuPage() {
           </div>
         </AnimatedSection>
 
+        {/* Section: Testrunde — die Rueckmeldungen hingen bisher allein an der
+            Benachrichtigungs-Mail; hier sind sie auch ohne Mail sichtbar
+            (Befund 20.08.2026). */}
+        <AnimatedSection delayMs={180}>
+          <SectionLabel>Testrunde</SectionLabel>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 28 }}>
+            <AdminTile
+              href="/admin/app-test"
+              abbr="TR"
+              title="Testrunde: Rückmeldungen"
+              description="Alle eingegangenen Testbogen mit sämtlichen Antworten, direkt aus der Datenbank."
+              color="#007873"
+            />
+          </div>
+        </AnimatedSection>
+
       </div>
     </main>
   );

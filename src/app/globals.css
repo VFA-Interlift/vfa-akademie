@@ -287,7 +287,12 @@ a, button {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 20px 24px;
+  /* Oben um die Geräteaussparung polstern (20.08.2026): Die Auth-Seiten heben
+     den globalen Header-Offset auf (padding-top: 0 weiter oben), das Banner
+     beginnt also bei y=0 und lief in der installierten iPhone-App unter
+     Statusleiste und Petrol-Streifen (safe-top) — Logo und Schriftzug waren
+     verdeckt. Der Banner-Grund ist ohnehin Petrol, der Streifen fügt sich ein. */
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 24px 20px;
   background: linear-gradient(135deg, #007873 0%, #005f5b 100%);
   width: 100%;
 }

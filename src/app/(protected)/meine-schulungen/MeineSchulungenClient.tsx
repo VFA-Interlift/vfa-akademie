@@ -265,8 +265,11 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
   if (trainings.length === 0) return null;
 
   const sichtbar = alleZeigen ? trainings : trainings.slice(0, 5);
-  // Abgesagte Kurse zaehlen nicht: Fuer sie entstehen nie Credits (Gegenpruefung 13.08.).
-  const credits = trainings.reduce((s, t) => s + (t.cancelledAt ? 0 : t.creditsAward), 0);
+  // "Gesammelt" heisst gutgeschrieben: Credits bucht erst die Zertifikat-Ausstellung
+  // auf das Konto. Teilnahmen ohne Zertifikat (abwesend, keine Vorlage, abgesagt)
+  // zaehlen hier nicht mit — sonst nennt diese Kachel eine hoehere Summe als
+  // "Meine Credits" (20.08.2026).
+  const credits = trainings.reduce((s, t) => s + (t.certificateId ? t.creditsAward : 0), 0);
 
   return (
     <AnimatedSection delayMs={120}>
@@ -318,7 +321,9 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
                         Nachweis ansehen
                       </PdfAnsichtLink>
                     ) : null}
-                    {t.creditsAward > 0 ? (
+                    {/* "+X" nur bei ausgestelltem Zertifikat — vorher ist nichts gutgeschrieben,
+                        und die Zeilen muessen zur Summe oben passen (20.08.2026). */}
+                    {t.certificateId && t.creditsAward > 0 ? (
                       <span style={{ color: "#007873", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
                         +{t.creditsAward}
                       </span>

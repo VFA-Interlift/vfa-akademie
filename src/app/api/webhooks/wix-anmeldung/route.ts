@@ -88,34 +88,69 @@ export async function POST(req: Request) {
 
   const participantText = `${firstName} ${lastName}`;
 
-  await prisma.cobraTrainingParticipant.upsert({
-    where: { cobraParticipantId: stagingId },
-    create: {
-      cobraParticipantId: stagingId,
-      cobraTrainingCaption: null,
-      cobraTrainingId: null,
-      trainingId: training?.id ?? null,
-      caption: clean(body.kursTitel) ?? kurscode,
-      participantText,
-      participantType: "WIX_WEBSITE",
-      status: "ANGEMELDET",
-      email,
-      firstName,
-      lastName,
-      company: clean(body.firma),
-      raw: body as object,
-    },
-    update: {
-      trainingId: training?.id ?? null,
-      caption: clean(body.kursTitel) ?? kurscode,
-      participantText,
-      email,
-      firstName,
-      lastName,
-      company: clean(body.firma),
-      raw: body as object,
-    },
-  });
+  // Erneute Formularabsendung derselben Person: Wix vergibt dafür eine neue
+  // Anmeldungs-ID, die sonst eine zweite Staging-Zeile zum selben Kurs anlegte.
+  // Die Dublette stünde doppelt in der Anwesenheitsliste des Dozenten, und eine
+  // als abwesend markierte Zweitzeile blockierte das Zertifikat des real
+  // Anwesenden. Deshalb: bestehende Zeile derselben E-Mail am selben Training
+  // aktualisieren statt eine neue anzulegen; die gepflegte Anwesenheit bleibt
+  // dabei unangetastet (20.08.2026).
+  const vorhandene =
+    training && email
+      ? await prisma.cobraTrainingParticipant.findFirst({
+          where: {
+            participantType: "WIX_WEBSITE",
+            trainingId: training.id,
+            email,
+            NOT: { cobraParticipantId: stagingId },
+          },
+          orderBy: { createdAt: "asc" },
+          select: { id: true },
+        })
+      : null;
+
+  if (vorhandene) {
+    await prisma.cobraTrainingParticipant.update({
+      where: { id: vorhandene.id },
+      data: {
+        caption: clean(body.kursTitel) ?? kurscode,
+        participantText,
+        firstName,
+        lastName,
+        company: clean(body.firma),
+        raw: body as object,
+      },
+    });
+  } else {
+    await prisma.cobraTrainingParticipant.upsert({
+      where: { cobraParticipantId: stagingId },
+      create: {
+        cobraParticipantId: stagingId,
+        cobraTrainingCaption: null,
+        cobraTrainingId: null,
+        trainingId: training?.id ?? null,
+        caption: clean(body.kursTitel) ?? kurscode,
+        participantText,
+        participantType: "WIX_WEBSITE",
+        status: "ANGEMELDET",
+        email,
+        firstName,
+        lastName,
+        company: clean(body.firma),
+        raw: body as object,
+      },
+      update: {
+        trainingId: training?.id ?? null,
+        caption: clean(body.kursTitel) ?? kurscode,
+        participantText,
+        email,
+        firstName,
+        lastName,
+        company: clean(body.firma),
+        raw: body as object,
+      },
+    });
+  }
 
   // 3) Hat der Teilnehmer schon ein bestätigtes Konto → sofort einschreiben.
   //    Unbestätigte Konten bleiben außen vor: sonst könnte sich jemand mit einer

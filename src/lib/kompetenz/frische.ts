@@ -41,17 +41,21 @@ function fristMonateFuer(code: string | null | undefined): number {
 }
 
 /**
- * Bewertet, wie frisch eine Kompetenz zum Stichtag ist. `jetzt` wird
- * hereingereicht, damit die Funktion rein und testbar bleibt.
+ * Bewertet, wie frisch eine Kompetenz zum Stichtag ist. `erworbenAm` ist das
+ * Kursende, nicht das Ausstellungsdatum des Zertifikats: das läge bei
+ * nachgezogenen Alt-Kursen erst am Tag des Ausstellungslaufs (20.08.2026).
+ * `jetzt` wird hereingereicht, damit die Funktion rein und testbar bleibt.
  */
 export function bewerteFrische(
   code: string | null | undefined,
-  ausgestelltAm: Date,
+  erworbenAm: Date,
   jetzt: Date
 ): Frische {
   const fristMonate = fristMonateFuer(code);
-  const ablaufDatum = new Date(ausgestelltAm.getTime() + fristMonate * MONAT);
-  const monateBisAblauf = Math.round((ablaufDatum.getTime() - jetzt.getTime()) / MONAT);
+  const ablaufDatum = new Date(erworbenAm.getTime() + fristMonate * MONAT);
+  // Aufgerundet (ceil): solange die Frist läuft, zeigt die Ampel mindestens
+  // "in 1 Mon."; gerundet stand kurz vor Ablauf verwirrend "in 0 Mon." (20.08.2026)
+  const monateBisAblauf = Math.ceil((ablaufDatum.getTime() - jetzt.getTime()) / MONAT);
 
   let status: FrischeStatus;
   let label: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Vollbild-Ansicht fuer PDFs innerhalb der App. Tobis Vorgabe (12.08.2026):
@@ -32,7 +33,15 @@ export default function PdfOverlay({
     };
   }, []);
 
-  return (
+  // Per Portal direkt an den <body> (20.08.2026): Auf meine-zertifikate und
+  // meine-schulungen sitzt der Aufrufer in einer AnimatedSection, deren
+  // stehendes transform (animationFillMode "both") fixe Kinder einfängt — die
+  // Vollbild-Ansicht blieb dort im Karten-Rechteck stecken. Am body greift auch
+  // der z-index: 4100 liegt über Bottom-Nav und safe-top (3000), Glocken-Liste
+  // (3500) und Mehr-Sheet (4000) — vorher lag die weiße Tab-Leiste ÜBER dem
+  // Viewer und blieb antippbar. Gefahrlos, weil das Overlay erst nach dem
+  // Antippen gerendert wird, document gibt es dann immer.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -40,10 +49,13 @@ export default function PdfOverlay({
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 1000,
+        zIndex: 4100,
         display: "flex",
         flexDirection: "column",
         background: "#1F1F1F",
+        // Unten bis über den iPhone-Home-Balken polstern, sonst endet das
+        // iframe unsichtbar dahinter.
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
       <div
@@ -70,6 +82,28 @@ export default function PdfOverlay({
         >
           {titel}
         </span>
+
+        {/* iOS zeigt PDFs im iframe nur als starre erste Seite — mehrseitige
+            Dokumente (z. B. der Dozenten-Feedback-Report) wären ab Seite 2
+            unsichtbar. Der neue Tab nutzt den Safari-eigenen Viewer mit
+            Blättern und Zoom (20.08.2026). */}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener"
+          style={{
+            flexShrink: 0,
+            padding: "8px 14px",
+            borderRadius: 999,
+            border: "1px solid rgba(255,255,255,0.65)",
+            color: "#FFFFFF",
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: "none",
+          }}
+        >
+          Öffnen
+        </a>
 
         <a
           href={url}
@@ -114,6 +148,7 @@ export default function PdfOverlay({
         title={titel}
         style={{ flex: 1, width: "100%", border: "none", background: "#3A3A3A" }}
       />
-    </div>
+    </div>,
+    document.body
   );
 }

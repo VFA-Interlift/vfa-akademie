@@ -338,10 +338,10 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
   padding: "10px 12px",
   borderRadius: 8,
-  border: "1px solid #D9D9D9",
+  border: "1px solid var(--vfa-linie)",
   fontSize: 14,
   color: "var(--vfa-text)",
-  background: "#FFFFFF",
+  background: "var(--vfa-karte)",
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

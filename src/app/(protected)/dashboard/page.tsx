@@ -71,7 +71,9 @@ export default async function DashboardPage() {
       creditsTotal: true,
       createdAt: true,
       enrollments: {
-        where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED"] } },
+        // Gleiche Statusmenge wie getMyTrainings ("Meine Schulungen") — sonst
+        // widersprechen sich Dashboard-Zaehler und Schulungs-Seite (20.08.2026).
+        where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED", "COMPLETED"] } },
         select: {
           id: true,
           status: true,
@@ -118,11 +120,13 @@ export default async function DashboardPage() {
 
   // Abgesagte Kurse zaehlen nicht als "naechste Schulung", und ein laufender
   // Mehrtageskurs bleibt bis zu seinem Ende die naechste (Ultracode 13.08.).
+  // Kein Status-Ausschluss mehr: die Kachel zeigt dieselbe Menge wie der
+  // Zaehler darunter und wie "Meine Schulungen" — ein laufender Kurs blieb
+  // sonst verschwunden, sobald der Dozent die Anwesenheit erfasst hatte (20.08.2026).
   const nextTraining = user.enrollments.find(
     (e) =>
       !e.training.cancelledAt &&
-      new Date(e.training.endDate ?? e.training.date) >= today &&
-      e.status !== "ATTENDED"
+      new Date(e.training.endDate ?? e.training.date) >= today
   );
 
   // Nur tatsächlich bevorstehende/laufende Schulungen zählen (gleiche Logik wie
@@ -528,7 +532,9 @@ function getRankProgress(credits: number) {
     if (credits < thresholds[i + 1]) {
       const range = thresholds[i + 1] - thresholds[i];
       const val = credits - thresholds[i];
-      return { percent: Math.round((val / range) * 100), remainingToNext: thresholds[i + 1] - credits };
+      // Abrunden: 100 % zeigt der Ring erst, wenn der Rang wirklich erreicht
+      // ist — gerundet stand er sonst schon knapp davor auf 100 (20.08.2026).
+      return { percent: Math.floor((val / range) * 100), remainingToNext: thresholds[i + 1] - credits };
     }
   }
   return { percent: 100, remainingToNext: 0 };

@@ -31,9 +31,10 @@ export default function ZurueckLeiste() {
   return (
     <div
       style={{
-        // Fest oben: Der globale Kopf wird für eingeloggte Handy-Nutzer
-        // ausgeblendet, deshalb muss diese Leiste selbst ganz oben kleben und
-        // über allem liegen (z-index über dem globalen Kopf).
+        // Fest oben: Auf Impressum/Datenschutz rendert HeaderClient seit dem
+        // 20.08.2026 gar nicht mehr (vorher lugte er für Ausgeloggte als
+        // Reststreifen darunter hervor) — diese Leiste ist hier der einzige
+        // Kopf und muss selbst ganz oben kleben.
         position: "fixed",
         top: 0,
         left: 0,

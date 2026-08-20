@@ -198,7 +198,9 @@ export default function FeedbackFormClient({
           position: "sticky",
           bottom: 0,
           padding: "12px 0",
-          background: "linear-gradient(to top, #F7F7F4 70%, rgba(247,247,244,0))",
+          // Auslauf aus dem Seitengrund-Token statt festem Hell, sonst steht im
+          // Dunkelmodus ein heller Balken über dem Knopf (20.08.2026)
+          background: "linear-gradient(to top, var(--vfa-light) 70%, transparent)",
         }}
       >
         <button

@@ -338,14 +338,19 @@ export default function KompetenzpassClient({
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: "var(--vfa-text)", lineHeight: 1.25 }}>
+                      {/* Fest dunkel statt var(--vfa-text): der Pass bleibt als Dokument immer hell,
+                          die Variable stünde im Dunkelmodus weiß auf weiß (20.08.2026) */}
+                      <div style={{ fontWeight: 800, fontSize: 15, color: "#1F1F1F", lineHeight: 1.25 }}>
                         {getCompetencyTitle(cert)}
                       </div>
                       <div style={{ fontSize: 12, color: "#888888", marginTop: 3, lineHeight: 1.4 }}>
                         {cert.certificateKindLabel} · {formatDateRange(cert.trainingDate, cert.trainingEndDate)}
                       </div>
                       {(() => {
-                        const f = bewerteFrische(cert.code, new Date(cert.issuedAt), new Date());
+                        // Frische ab Kursende, nicht ab issuedAt: nachgezogene Alt-Kurse bekommen
+                        // ihr issuedAt erst am Tag des Ausstellungslaufs und stünden sonst
+                        // dauerhaft auf "aktuell" (20.08.2026)
+                        const f = bewerteFrische(cert.code, new Date(cert.trainingEndDate ?? cert.trainingDate), new Date());
                         const farbe = FRISCHE_FARBE[f.status];
                         return (
                           <span

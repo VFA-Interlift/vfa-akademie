@@ -72,7 +72,7 @@ export default async function DozentPage() {
   const websiteParticipants = meine.length
     ? await prisma.cobraTrainingParticipant.findMany({
         where: { participantType: "WIX_WEBSITE" },
-        select: { id: true, firstName: true, lastName: true, participantText: true, attendanceStatus: true, raw: true },
+        select: { id: true, firstName: true, lastName: true, participantText: true, attendanceStatus: true, raw: true, email: true },
         orderBy: { createdAt: "asc" },
       })
     : [];
@@ -173,8 +173,33 @@ export default async function DozentPage() {
 
   const kurse: DozentKurs[] = meine.map(({ kurs, rolle, vergangen }) => {
     const code = kurs.kurscode.trim().toUpperCase();
-    const participants = websiteParticipants
-      .filter((p) => participantKurscode(p.raw) === code && code !== "")
+    const zeilen = websiteParticipants.filter(
+      (p) => participantKurscode(p.raw) === code && code !== ""
+    );
+
+    // Doppelte Website-Anmeldungen derselben Person (erneute Formularabsendung
+    // = neue Wix-ID = zweite Staging-Zeile) nur einmal anzeigen — sonst
+    // markiert der Dozent plausibel eine der beiden als abwesend, und die
+    // Dublette blockiert das Zertifikat des real Anwesenden. Sichtbar bleibt je
+    // E-Mail die Zeile mit gepflegter Anwesenheit (ANWESEND zuerst), damit der
+    // Klick des Dozenten dieselbe Zeile weiterpflegt. Ohne E-Mail wird nichts
+    // zusammengefasst: gleiche Namen können echte verschiedene Personen sein
+    // (20.08.2026).
+    const rang = (status: string | null) => (status === "ANWESEND" ? 2 : status ? 1 : 0);
+    const jeMail = new Map<string, (typeof zeilen)[number]>();
+    for (const p of zeilen) {
+      const key = p.email?.toLowerCase();
+      if (!key) continue;
+      const bisher = jeMail.get(key);
+      if (!bisher || rang(p.attendanceStatus) > rang(bisher.attendanceStatus)) {
+        jeMail.set(key, p);
+      }
+    }
+    const participants = zeilen
+      .filter((p) => {
+        const key = p.email?.toLowerCase();
+        return !key || jeMail.get(key) === p;
+      })
       .map((p) => ({
         id: p.id,
         name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || p.participantText,

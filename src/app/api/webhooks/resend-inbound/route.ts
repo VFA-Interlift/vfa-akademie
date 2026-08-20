@@ -65,6 +65,18 @@ export async function POST(req: Request) {
   const subject = email.subject?.trim() || event.data.subject?.trim() || "";
   const body = email.text ?? "";
 
+  // Die Inbound-Adresse ist von außen erreichbar — ohne Absenderprüfung würde
+  // jede Fremdmail mit passendem Kurscode im Betreff als vertrauenswürdige
+  // Orga-Info im Dozentenbereich angezeigt. Nur Absender aus dem eigenen Haus
+  // verarbeiten; Fremdes still quittieren (200, sonst stellt Resend erneut zu)
+  // und nur protokollieren (20.08.2026).
+  const fromRaw = email.from ?? "";
+  const fromAdresse = (fromRaw.match(/<([^>]+)>/)?.[1] ?? fromRaw).trim().toLowerCase();
+  if (!fromAdresse.endsWith("@vfa-interlift.de")) {
+    console.warn("RESEND_INBOUND_FREMDER_ABSENDER", { from: fromRaw, subject });
+    return NextResponse.json({ ok: true, ignored: "FREMDER_ABSENDER" });
+  }
+
   // Kurscode aus Betreff + Body gegen bekannte Training-Codes matchen.
   const trainings = await prisma.training.findMany({
     where: { code: { not: null } },

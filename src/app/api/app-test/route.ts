@@ -7,13 +7,12 @@ import { istTester } from "@/lib/app-test/tester";
 import {
   APP_TEST_FRAGEN,
   APP_TEST_FRAGEN_BY_ID,
+  APP_TEST_TEXT_MAX,
   PFLICHT_FRAGE_ID,
   type Frage,
 } from "@/lib/app-test/fragen";
 
 export const dynamic = "force-dynamic";
-
-const MAX_TEXT = 4000;
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
@@ -45,7 +44,7 @@ function pruefeAntwort(frage: Frage, wert: unknown): string | number | string[] 
   if (typeof wert !== "string") return null;
   const text = wert.trim();
   if (!text) return null;
-  return text.slice(0, MAX_TEXT);
+  return text.slice(0, APP_TEST_TEXT_MAX);
 }
 
 export async function POST(req: Request) {

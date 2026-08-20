@@ -46,8 +46,11 @@ export async function POST(req: NextRequest) {
       data: { token, userId: user.id, expiresAt },
     });
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ?? "https://vfa-akademie.vercel.app";
+    // Trailing-Slash abschneiden (wie APP_URL in lib/email.ts) — sonst steht
+    // im Reset-Link ein doppelter Slash.
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ?? "https://vfa-akademie.vercel.app"
+    ).replace(/\/$/, "");
     const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
     // Ein Mailfehler darf hier nicht durchschlagen: Die Route antwortet für

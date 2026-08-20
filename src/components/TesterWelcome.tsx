@@ -21,7 +21,10 @@ export default function TesterWelcome({
   vorname: string | null;
   feedbackGesendet: boolean;
 }) {
-  const [begruessungOffen, setBegruessungOffen] = useState(false);
+  // null = noch nicht entschieden (localStorage erst im Effekt lesbar). Mit
+  // false als Startwert blitzte beim ersten Laden kurz der "Rueckmeldung
+  // fehlt"-Hinweis auf, bevor die Begruessung ihn ersetzte (Befund 20.08.2026).
+  const [begruessungOffen, setBegruessungOffen] = useState<boolean | null>(null);
 
   useEffect(() => {
     setBegruessungOffen(window.localStorage.getItem(STORAGE_KEY) !== "1");
@@ -33,6 +36,10 @@ export default function TesterWelcome({
   }
 
   const anrede = vorname ? `Hallo ${vorname},` : "Hallo,";
+
+  // Vor der Entscheidung weder Begruessung noch Hinweis zeigen — sonst flackert
+  // es beim Start.
+  if (begruessungOffen === null) return null;
 
   if (begruessungOffen) {
     return (
