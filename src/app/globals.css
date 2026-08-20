@@ -785,14 +785,21 @@ html.dashboard-aktiv .page-content {
      wie die anderen Seiten"). Der Kopf trägt Begrüßung, Name und Rang, deshalb
      nicht ganz so schmal wie ein reiner Titel, aber deutlich kürzer als der
      Ursprung (216). */
-  height: calc(168px + env(safe-area-inset-top, 0px));
+  /* iOS 26 zeichnet hinter der Statusleiste einen weichen Verlauf über alles,
+     was dort durchläuft — die Begrüßung lag genau darin und wurde unscharf
+     (Tobi, 20.08.2026). Der Textblock hängt an der Unterkante, also schiebt
+     ihn der kleinere Abstand nach unten in .dash-hero-inhalt aus dem Bereich
+     heraus; oben steht dann nur einfarbiges Petrol, dem der Verlauf nichts
+     anhaben kann. Die Höhe sank trotzdem von 168 auf 156, weil mit der
+     Countdown-Zeile eine ganze Zeile aus dem Kopf gefallen ist. */
+  height: calc(156px + env(safe-area-inset-top, 0px));
   overflow: hidden;
   background: #007873;
   display: flex;
   align-items: flex-end;
 }
 @media (min-width: 600px) {
-  .dash-hero { height: calc(188px + env(safe-area-inset-top, 0px)); }
+  .dash-hero { height: calc(176px + env(safe-area-inset-top, 0px)); }
 }
 
 /* Eigene Ebene, damit der Grund beim Scrollen langsamer wandert als der Text.
@@ -842,13 +849,17 @@ html.dashboard-aktiv .page-content {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 16px 46px;
+  /* Abstand nach unten von 46 auf 32: der Textblock hängt an der Unterkante
+     des Kopfes, ein kleinerer Wert schiebt ihn nach unten. Zusammen mit den
+     16 Pixeln mehr Kopfhöhe steht die Begrüßung 30 Pixel tiefer und damit
+     unterhalb des Weichzeichners von iOS 26. */
+  padding: 0 16px 32px;
   /* Eigene Ebene für die Parallax-Verschiebung — ohne sie rastert der Browser
      den Block bei jedem Schritt neu und das Scrollen ruckelt. */
   will-change: transform;
 }
 @media (min-width: 600px) {
-  .dash-hero-inhalt { padding: 0 24px 54px; }
+  .dash-hero-inhalt { padding: 0 24px 40px; }
 }
 
 .dash-hero-gruss {
@@ -888,12 +899,6 @@ html.dashboard-aktiv .page-content {
   font-weight: 800;
   white-space: nowrap;
   backdrop-filter: blur(4px);
-}
-
-.dash-hero-text {
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 13px;
-  font-weight: 600;
 }
 
 /* Glocke oben rechts im grünen Kopf (Tobi, 19.08.2026). Sie sitzt unter der

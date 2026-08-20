@@ -23,20 +23,14 @@ const useVorDemZeichnen = typeof window !== "undefined" ? useLayoutEffect : useE
 export default function DashboardHero({
   name,
   rangLabel,
-  unterzeile,
-  naechste,
   hinweise = [],
 }: {
   name: string;
   rangLabel: string;
-  unterzeile: string;
-  /** Nächste Schulung für den Countdown; ohne sie bleibt die Unterzeile. */
-  naechste?: { kuerzel: string; datumISO: string; endeISO: string | null };
   /** Offene Erinnerungen für die Glocke oben rechts. Leer = keine Glocke. */
   hinweise?: Hinweis[];
 }) {
   const [gruss, setGruss] = useState("Hallo");
-  const [zeile, setZeile] = useState(unterzeile);
   const grundRef = useRef<HTMLDivElement>(null);
   const inhaltRef = useRef<HTMLDivElement>(null);
 
@@ -96,34 +90,12 @@ export default function DashboardHero({
         text = "Guten Abend";
       }
       setGruss(text);
-
-      // Countdown zur nächsten Schulung — nach Kalendertagen auf der
-      // Geräteuhr, nicht nach Stunden: "morgen" heißt morgen, auch wenn es
-      // erst in 30 Stunden losgeht.
-      if (naechste) {
-        const heute = new Date(jetzt.getFullYear(), jetzt.getMonth(), jetzt.getDate());
-        const beginn = new Date(naechste.datumISO);
-        const start = new Date(beginn.getFullYear(), beginn.getMonth(), beginn.getDate());
-        const ende = naechste.endeISO ? new Date(naechste.endeISO) : beginn;
-        const schluss = new Date(ende.getFullYear(), ende.getMonth(), ende.getDate());
-        const tage = Math.round((start.getTime() - heute.getTime()) / 86_400_000);
-
-        if (heute >= start && heute <= schluss) {
-          setZeile(`Heute ist es so weit: ${naechste.kuerzel}`);
-        } else if (tage === 1) {
-          setZeile(`Morgen geht es los: ${naechste.kuerzel}`);
-        } else if (tage > 1) {
-          setZeile(`Noch ${tage} Tage bis ${naechste.kuerzel}`);
-        } else {
-          setZeile(unterzeile);
-        }
-      }
     };
 
     aktualisieren();
     document.addEventListener("visibilitychange", aktualisieren);
     return () => document.removeEventListener("visibilitychange", aktualisieren);
-  }, [naechste, unterzeile]);
+  }, []);
 
   // Auf dem Dashboard gibt es keinen Deckstreifen hinter der Statusleiste —
   // Tobis Entscheidung vom 13.08.2026 („Weg mit der Uhr"): Ihm ist wichtiger,
@@ -182,9 +154,11 @@ export default function DashboardHero({
       <div ref={inhaltRef} className="dash-hero-inhalt">
         <p className="dash-hero-gruss">{gruss}</p>
         <h1 className="dash-hero-name">{name}</h1>
+        {/* Nur noch der Rang. Der Countdown zur nächsten Schulung stand hier
+            doppelt — dieselbe Angabe trägt die Kachel „Nächste Schulung"
+            direkt darunter (Tobi, 20.08.2026). */}
         <div className="dash-hero-zeile">
           <span className="dash-hero-rang">★ {rangLabel}</span>
-          <span className="dash-hero-text">{zeile}</span>
         </div>
       </div>
     </div>

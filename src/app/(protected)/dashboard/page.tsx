@@ -162,19 +162,7 @@ export default async function DashboardPage() {
       <DashboardHero
         name={displayName || "Willkommen"}
         rangLabel={rank.label}
-        unterzeile="Dein aktueller Stand."
         hinweise={hinweise}
-        naechste={
-          nextTraining
-            ? {
-                kuerzel: nextTraining.training.code?.trim() || nextTraining.training.title,
-                datumISO: new Date(nextTraining.training.date).toISOString(),
-                endeISO: nextTraining.training.endDate
-                  ? new Date(nextTraining.training.endDate).toISOString()
-                  : null,
-              }
-            : undefined
-        }
       />
 
       <RangAufstieg
