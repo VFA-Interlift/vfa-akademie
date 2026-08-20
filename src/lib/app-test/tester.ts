@@ -23,6 +23,11 @@ const TESTRUNDE = [
   "robert.makarun@mliftconsulting.com",
   "sascha.goebel@email.de",
   "volker-sepanski@t-online.de",
+  // Die ersten drei Teilnehmer-Tester (Tobi, 20.08.2026) — alle auch zum YLD
+  // angemeldet.
+  "lisa.wallisch@hissmekano.de",
+  "h.f.lutz@outlook.de",
+  "m.molineus@henning-gmbh.de",
 ];
 
 function liste(): string[] {
