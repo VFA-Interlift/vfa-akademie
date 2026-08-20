@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type Hinweis = {
   /** Kurze Überschrift, eine Zeile. */
@@ -24,15 +25,39 @@ export type Hinweis = {
 export default function HeroGlocke({ hinweise }: { hinweise: Hinweis[] }) {
   const [offen, setOffen] = useState(false);
   const bereichRef = useRef<HTMLDivElement>(null);
+  const listeRef = useRef<HTMLDivElement>(null);
 
-  // Solange die Liste offen ist, muss der grüne Kopf über der weißen
-  // Inhaltsfläche liegen — sonst verschwindet sie dahinter (Tobi, 20.08.2026).
-  // Der Weg über eine Klasse an <html> ist derselbe wie bei `dashboard-aktiv`.
+  // Die Liste hängt NICHT im grünen Kopf, sondern wird an die Seite selbst
+  // gehängt (createPortal). Grund: Der Kopf klebt beim Scrollen fest, und ein
+  // festgeklebtes Element bildet immer eine eigene Stapel-Ebene — alles darin
+  // bleibt darin gefangen und verschwand deshalb hinter der weißen Kachel
+  // (Tobi, 20.08.2026, zweiter Anlauf). Zwei frühere Versuche über z-index am
+  // Kopf scheiterten daran: entweder blieb die Liste dahinter, oder der grüne
+  // Grund deckte die runde Kante der Kachel zu.
+  //
+  // Weil die Liste damit außerhalb des Kopfes sitzt, muss ihre Position von
+  // Hand gesetzt werden: direkt unter den Knopf, rechtsbündig mit ihm.
+  const [platz, setPlatz] = useState<{ top: number; right: number } | null>(null);
+
+  const platzMessen = useCallback(() => {
+    const knopf = bereichRef.current;
+    if (!knopf) return;
+    const r = knopf.getBoundingClientRect();
+    setPlatz({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) });
+  }, []);
+
+  // Beim Öffnen messen und beim Scrollen/Drehen nachführen — sonst bliebe die
+  // Liste stehen, während die Glocke darunter wegwandert.
   useEffect(() => {
     if (!offen) return;
-    document.documentElement.classList.add("glocke-offen");
-    return () => document.documentElement.classList.remove("glocke-offen");
-  }, [offen]);
+    platzMessen();
+    window.addEventListener("scroll", platzMessen, { passive: true });
+    window.addEventListener("resize", platzMessen);
+    return () => {
+      window.removeEventListener("scroll", platzMessen);
+      window.removeEventListener("resize", platzMessen);
+    };
+  }, [offen, platzMessen]);
 
   // Tippen daneben schließt die Liste wieder - auf dem Handy die einzige
   // Geste, die man dafür erwartet.
@@ -40,7 +65,12 @@ export default function HeroGlocke({ hinweise }: { hinweise: Hinweis[] }) {
     if (!offen) return;
 
     const beiKlick = (e: MouseEvent | TouchEvent) => {
-      if (!bereichRef.current?.contains(e.target as Node)) setOffen(false);
+      const ziel = e.target as Node;
+      // Die Liste steht außerhalb des Glockenbereichs, sie muss getrennt
+      // geprüft werden — sonst schlösse sich die Liste beim Antippen selbst.
+      if (bereichRef.current?.contains(ziel)) return;
+      if (listeRef.current?.contains(ziel)) return;
+      setOffen(false);
     };
     const beiTaste = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOffen(false);
@@ -89,24 +119,33 @@ export default function HeroGlocke({ hinweise }: { hinweise: Hinweis[] }) {
         <span className="hero-glocke-zahl">{anzahl}</span>
       </button>
 
-      {offen && (
-        <div className="hero-glocke-liste" role="dialog" aria-label="Benachrichtigungen">
-          {hinweise.map((hinweis) => (
-            <Link
-              key={hinweis.href + hinweis.titel}
-              href={hinweis.href}
-              className="hero-glocke-zeile"
-              onClick={() => setOffen(false)}
-            >
-              <span className="hero-glocke-punkt" aria-hidden="true" />
-              <span>
-                <span className="hero-glocke-titel">{hinweis.titel}</span>
-                <span className="hero-glocke-text">{hinweis.text}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
+      {offen &&
+        platz &&
+        createPortal(
+          <div
+            ref={listeRef}
+            className="hero-glocke-liste"
+            role="dialog"
+            aria-label="Benachrichtigungen"
+            style={{ top: platz.top, right: platz.right }}
+          >
+            {hinweise.map((hinweis) => (
+              <Link
+                key={hinweis.href + hinweis.titel}
+                href={hinweis.href}
+                className="hero-glocke-zeile"
+                onClick={() => setOffen(false)}
+              >
+                <span className="hero-glocke-punkt" aria-hidden="true" />
+                <span>
+                  <span className="hero-glocke-titel">{hinweis.titel}</span>
+                  <span className="hero-glocke-text">{hinweis.text}</span>
+                </span>
+              </Link>
+            ))}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

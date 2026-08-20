@@ -812,22 +812,6 @@ html.dashboard-aktiv .page-content {
   pointer-events: none;
 }
 
-/* Die aufgeklappte Glockenliste muss über der weißen Inhaltsfläche liegen.
-   Den ganzen Kopf hochzuheben war der erste Versuch und falsch: sein grüner
-   Grund deckte dann die obersten 30 Pixel der Kachel zu, also gerade ihre
-   runde Kante und den Schatten (Tobi, 20.08.2026).
-
-   Stattdessen wird der Kopf für diesen Moment als Stapel-Ebene aufgelöst
-   (z-index: auto) — er bleibt durch die Dokumentreihenfolge weiter unter der
-   Kachel — und nur die Glocke steigt über sie. Die Klasse setzt HeroGlocke
-   beim Öffnen an <html>, wie schon bei `dashboard-aktiv`; eine Regel mit
-   :has() überlebt den Bauvorgang hier nicht. */
-html.glocke-offen .dash-hero {
-  z-index: auto;
-}
-html.glocke-offen .hero-glocke {
-  z-index: 5;
-}
 @media (min-width: 600px) {
   .dash-hero { height: calc(184px + env(safe-area-inset-top, 0px)); }
 }
@@ -988,12 +972,12 @@ html.glocke-offen .hero-glocke {
 }
 
 .hero-glocke-liste {
-  position: absolute;
-  top: 48px;
-  right: 0;
-  /* Über dem Kopfinhalt; dass sie auch über der weißen Kachel liegt, besorgt
-     `html.glocke-offen .dash-hero`. */
-  z-index: 10;
+  /* Hängt an der Seite selbst, nicht im Kopf (siehe HeroGlocke.tsx) — deshalb
+     `fixed` statt `absolute`; top und right setzt die Komponente nach der
+     Lage des Knopfes. Der hohe Wert legt sie über die weiße Kachel und über
+     die untere Leiste. */
+  position: fixed;
+  z-index: 3500;
   width: min(300px, calc(100vw - 32px));
   padding: 6px;
   border-radius: 14px;
