@@ -1,0 +1,41 @@
+# Baut die iPhone-Huelle (Capacitor) auf einem macOS-Rechner von GitHub.
+# Nur von Hand zu starten (Actions > iOS-Huelle bauen > Run workflow), weil
+# macOS-Minuten zehnfach zaehlen. Ohne Apple-Entwicklerkonto entsteht nur ein
+# unsigniertes Archiv als Bauprobe; das Signieren und der Upload in App Store
+# Connect kommen dazu, sobald Zertifikat und Profil der VFA-Akademie gGmbH da
+# sind (Angelegt am 03.09.2026, Vera).
+name: iOS-Huelle bauen
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bauen:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Abhaengigkeiten
+        run: npm ci --ignore-scripts
+
+      - name: Web-Ordner in die Huelle kopieren
+        run: npx cap sync ios
+
+      - name: Unsigniert bauen (Bauprobe)
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App \
+            -sdk iphoneos -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Ergebnis sichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: VFA-Akademie-iOS-unsigniert
+          path: build/Build/Products/Release-iphoneos/App.app
+          if-no-files-found: error
