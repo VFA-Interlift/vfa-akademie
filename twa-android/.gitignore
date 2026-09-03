@@ -1,0 +1,8 @@
+# Bauergebnisse der Android-Verpackung (Trusted Web Activity)
+/.gradle/
+/build/
+/app/build/
+*.apk
+*.aab
+*.idsig
+local.properties

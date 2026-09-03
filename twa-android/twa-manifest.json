@@ -1,0 +1,49 @@
+{
+  "packageId": "de.vfaakademie.app",
+  "host": "vfa-akademie.vercel.app",
+  "name": "VFA-Akademie",
+  "launcherName": "VFA-Akademie",
+  "display": "standalone",
+  "themeColor": "#007873",
+  "themeColorDark": "#007873",
+  "navigationColor": "#007873",
+  "navigationColorDark": "#007873",
+  "navigationDividerColor": "#007873",
+  "navigationDividerColorDark": "#007873",
+  "backgroundColor": "#F7F7F4",
+  "enableNotifications": true,
+  "startUrl": "/dashboard",
+  "iconUrl": "https://vfa-akademie.vercel.app/icon-512.png",
+  "maskableIconUrl": "https://vfa-akademie.vercel.app/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:/Users/tobid/OneDrive/Desktop/Akademie App/store/android/android-upload.keystore",
+    "alias": "upload"
+  },
+  "appVersionName": "1.0.0",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://vfa-akademie.vercel.app/manifest.webmanifest",
+  "fullScopeUrl": "https://vfa-akademie.vercel.app/",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [
+    {
+      "name": "Upload-Schluessel (03.09.2026)",
+      "value": "34:55:1B:A1:C9:0A:7A:CE:2B:51:89:58:73:58:E8:65:C5:D5:39:DE:4D:5B:5B:5E:B9:6F:CE:68:AA:E0:03:F0"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": []
+}
