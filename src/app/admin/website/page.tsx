@@ -43,7 +43,7 @@ export default function AdminWebsitePage() {
           <AppCard accent="green">
             <div style={{ display: "grid", gap: 10 }}>
               <div className="etikett">So läuft die Verbindung zur Website</div>
-              <ul style={{ margin: 0, paddingLeft: 18, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: 1.7 }}>
+              <ul style={{ margin: 0, paddingLeft: 18, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
                 <li><strong>Kurskalender & Dozenten:</strong> kommen live von der Website (höchstens fünf Minuten zwischengespeichert), kein Abgleich nötig.</li>
                 <li><strong>Anmeldungen:</strong> kommen sofort an, wenn jemand das Formular auf der Website absendet.</li>
                 <li><strong>App-Datenbank (für Anmeldungen, Zertifikate, Credits):</strong> wird mit dem Knopf unten aus den Website-Schulungen befüllt und aktualisiert.</li>

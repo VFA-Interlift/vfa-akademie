@@ -42,7 +42,7 @@ const dateifeldStil: React.CSSProperties = {
   border: "1px solid var(--vfa-linie)",
   background: "var(--vfa-karte)",
   color: "var(--vfa-text)",
-  fontSize: 15,
+  fontSize: "var(--t-basis)",
 };
 
 export default function ImportClient() {
@@ -120,7 +120,7 @@ export default function ImportClient() {
         </p>
 
         <label style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--vfa-text-2)", letterSpacing: "0.01em" }}>
+          <span style={{ fontSize: "var(--t-klein)", fontWeight: 600, color: "var(--vfa-text-2)", letterSpacing: "0.01em" }}>
             1. Schulungen (mit Datum)
           </span>
           <input
@@ -133,7 +133,7 @@ export default function ImportClient() {
         </label>
 
         <label style={{ display: "grid", gap: 6, marginBottom: 18 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--vfa-text-2)", letterSpacing: "0.01em" }}>
+          <span style={{ fontSize: "var(--t-klein)", fontWeight: 600, color: "var(--vfa-text-2)", letterSpacing: "0.01em" }}>
             2. Teilnehmer (nach Schulung gruppiert)
           </span>
           <input
@@ -163,7 +163,7 @@ export default function ImportClient() {
       {bericht ? (
         <AppCard>
           <h2 style={{ margin: "0 0 12px", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
-            {geschrieben ? "Import abgeschlossen" : "Vorschau — es wurde nichts geschrieben"}
+            {geschrieben ? "Import abgeschlossen" : "Vorschau, es wurde nichts geschrieben"}
           </h2>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 16 }}>
@@ -180,9 +180,9 @@ export default function ImportClient() {
           {Object.keys(bericht.teilnehmer.uebersprungenNachArt).length > 0 ? (
             <div style={{ marginBottom: 16 }}>
               <div className="etikett" style={{ marginBottom: 6 }}>
-                Übersprungen ({bericht.teilnehmer.uebersprungen}) — keine echten Teilnahmen
+                Übersprungen ({bericht.teilnehmer.uebersprungen}): keine echten Teilnahmen
               </div>
-              <ul style={{ margin: 0, paddingLeft: 20, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: 1.7 }}>
+              <ul style={{ margin: 0, paddingLeft: 20, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
                 {Object.entries(bericht.teilnehmer.uebersprungenNachArt).map(([art, n]) => (
                   <li key={art}>
                     {art}: {n}
@@ -210,10 +210,10 @@ export default function ImportClient() {
           </div>
 
           {geschrieben ? (
-            <p style={{ marginTop: 16, marginBottom: 0, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: 1.7 }}>
+            <p style={{ marginTop: 16, marginBottom: 0, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
               Die Teilnehmer liegen jetzt in der App. Anmeldungen entstehen automatisch, sobald
               jemand mit der passenden E-Mail-Adresse seine Registrierung bestätigt. Für bereits
-              registrierte Nutzer geschieht das nicht rückwirkend — dort hilft nur, die
+              registrierte Nutzer geschieht das nicht rückwirkend. Dort hilft nur, die
               Anmeldung unter „Nutzer verwalten“ von Hand zu setzen.
             </p>
           ) : null}

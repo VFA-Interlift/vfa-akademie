@@ -113,10 +113,10 @@ export default function RangAufstieg({
         }}
       >
         <div style={{ fontSize: 44, lineHeight: 1 }}>🏆</div>
-        <h2 style={{ margin: "14px 0 0", fontSize: 22, fontWeight: 800, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
+        <h2 style={{ margin: "14px 0 0", fontSize: "var(--t-titel)", fontWeight: 800, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
           Glückwunsch!
         </h2>
-        <p style={{ margin: "8px 0 0", fontSize: 15, color: "var(--vfa-text-2)", lineHeight: 1.5 }}>
+        <p style={{ margin: "8px 0 0", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
           Du hast den Rang{" "}
           <strong style={{ color: rangFarbe }}>{rangLabel}</strong> erreicht.
         </p>

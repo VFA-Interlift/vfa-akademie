@@ -361,7 +361,7 @@ export default function KurskalenderPage() {
                                   // mit 12 px blieben nur Auslassungspunkte
                                   // (05.09.2026).
                                   fontSize: 11,
-                                  lineHeight: 1.15,
+                                  lineHeight: "var(--lh-eng)",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
@@ -571,7 +571,7 @@ function ListenAnsicht({
               }}
             >
               <div style={{ textAlign: "center", minWidth: 46 }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1 }}>
+                <div style={{ fontSize: "var(--t-titel)", fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1 }}>
                   {d.getDate()}
                 </div>
                 <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase" }}>
@@ -580,7 +580,7 @@ function ListenAnsicht({
               </div>
 
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 700, color: "var(--vfa-gruen-text)", fontSize: "var(--t-basis)", lineHeight: 1.25 }}>
+                <div style={{ fontWeight: 700, color: "var(--vfa-gruen-text)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-eng)" }}>
                   {cleanTrainingTitle(t.title)}
                 </div>
                 <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", marginTop: 3 }}>
@@ -731,7 +731,7 @@ const arrowButtonStyle: CSSProperties = {
   background: "var(--vfa-karte)",
   color: "var(--vfa-gruen-text)",
   fontWeight: 700,
-  fontSize: 22,
+  fontSize: "var(--t-titel)",
   cursor: "pointer",
   boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
   transition: "background 180ms ease, border-color 180ms ease, transform 180ms ease",

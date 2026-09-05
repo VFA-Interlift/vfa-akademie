@@ -86,7 +86,7 @@ function TestrundeCard({ feedbackGesendet }: { feedbackGesendet: boolean }) {
 
       <p style={{ marginTop: 0, marginBottom: 14, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
         {feedbackGesendet
-          ? "Deine Antworten sind angekommen — danke! Ist dir seitdem noch etwas aufgefallen, kannst du den Bogen erneut ausfüllen. Er ersetzt dann deine bisherigen Antworten."
+          ? "Deine Antworten sind angekommen, danke! Ist dir seitdem noch etwas aufgefallen, kannst du den Bogen erneut ausfüllen. Er ersetzt dann deine bisherigen Antworten."
           : "Zehn Fragen zu deinen Eindrücken, zwei bis drei Minuten. Pflicht ist nur die letzte. Füll ihn aus, wenn du dich in Ruhe umgesehen hast."}
       </p>
 
@@ -143,8 +143,8 @@ function DatenschutzCard() {
       <SectionHeader title="Datenauskunft" badge="Datenschutz" />
 
       <div style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
-        Du kannst jederzeit alle zu deinem Konto gespeicherten Daten herunterladen —
-        Profil, Anmeldungen, Zertifikate, Credits und Feedback.
+        Alles, was zu deinem Konto gespeichert ist: Profil, Anmeldungen,
+        Zertifikate, Credits und Feedback.
       </div>
 
       <div style={{ marginTop: 12 }}>
@@ -245,10 +245,10 @@ function NotificationsCard({ initial }: { initial: boolean }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center" }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
+          <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: "var(--lh-eng)" }}>
             Erinnerung vor Schulungen
           </div>
-          <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.5 }}>
+          <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: "var(--lh-weit)" }}>
             Du bekommst 3 Tage vor einer Schulung, für die du angemeldet bist, eine
             E-Mail-Erinnerung.
           </div>
@@ -299,7 +299,7 @@ function NotificationsCard({ initial }: { initial: boolean }) {
 
       {/* Push aufs Handy — zusätzlich zur E-Mail, je Gerät aktivierbar. */}
       <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--vfa-linie-2)" }}>
-        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3, marginBottom: 8 }}>
+        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: "var(--lh-eng)", marginBottom: 8 }}>
           Mitteilung aufs Handy
         </div>
         <PushEinstellung />
@@ -361,7 +361,7 @@ function FeedbackCard() {
       <SectionHeader title="Feedback geben" badge="Feedback" />
 
       <p style={{ marginTop: 0, marginBottom: 14, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
-        Fehler gefunden, Idee oder Wunsch? Schreib uns – wir lesen jede Nachricht.
+        Fehler gefunden, Idee oder Wunsch? Schreib uns, wir lesen jede Nachricht.
       </p>
 
       <div style={{ display: "grid", gap: 14 }}>

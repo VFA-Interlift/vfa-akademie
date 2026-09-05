@@ -69,7 +69,7 @@ const FEHLERTEXTE: Record<string, string> = {
   CANNOT_DELETE_SELF: "Du kannst deinen eigenen Admin-Nutzer nicht löschen.",
   ALREADY_ENROLLED: "Ist bereits in dieser Schulung eingetragen.",
   TRAINING_NOT_FOUND: "Schulung nicht gefunden.",
-  TRAINING_CANCELLED: "Diese Schulung ist abgesagt — dort lässt sich niemand mehr eintragen.",
+  TRAINING_CANCELLED: "Diese Schulung ist abgesagt. Dort lässt sich niemand mehr eintragen.",
   TRAINING_REQUIRED: "Bitte eine Schulung auswählen.",
   NOT_FOUND: "Der Eintrag wurde nicht gefunden.",
   INVALID_STATUS: "Ungültiger Status.",

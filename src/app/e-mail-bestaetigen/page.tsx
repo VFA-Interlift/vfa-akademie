@@ -245,7 +245,7 @@ function Inhalt() {
                 border: "1px solid var(--vfa-linie)",
                 borderRadius: 10,
                 fontSize: "var(--t-basis)",
-                lineHeight: 1.7,
+                lineHeight: "var(--lh-weit)",
                 color: "var(--vfa-text)",
               }}
             >
@@ -255,7 +255,7 @@ function Inhalt() {
               <div>
                 <strong>{wechsel ? "Neue E-Mail:" : "E-Mail:"}</strong> {anforderung.email}
               </div>
-              <div style={{ color: "var(--vfa-text-3)", fontSize: 13 }}>
+              <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)" }}>
                 angefordert am {zeitpunkt(anforderung.angefordertAm)} Uhr
               </div>
             </div>
@@ -336,7 +336,7 @@ const KARTENTEXT: React.CSSProperties = {
 const FUSSZEILE: React.CSSProperties = {
   marginTop: 20,
   textAlign: "center",
-  fontSize: 13,
+  fontSize: "var(--t-klein)",
   color: "var(--vfa-text-2)",
 };
 

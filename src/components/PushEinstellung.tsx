@@ -114,7 +114,7 @@ export default function PushEinstellung() {
 
   if (zustand === "nicht-unterstuetzt") {
     return (
-      <p style={{ margin: 0, fontSize: 13, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: "var(--lh-weit)" }}>
         Mitteilungen aufs Handy gehen auf diesem Gerät nicht. Auf dem iPhone
         funktionieren sie nur, wenn die App über „Teilen → Zum Home-Bildschirm“
         installiert ist und von dort geöffnet wird.
@@ -124,7 +124,7 @@ export default function PushEinstellung() {
 
   if (zustand === "blockiert") {
     return (
-      <p style={{ margin: 0, fontSize: 13, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: "var(--lh-weit)" }}>
         Mitteilungen sind für diese App auf Systemebene ausgeschaltet. Zum
         Einschalten: Geräte-Einstellungen → Mitteilungen → VFA-Akademie.
       </p>
@@ -135,7 +135,7 @@ export default function PushEinstellung() {
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--vfa-text-2)", lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
         {aktiv
           ? "Dieses Gerät erinnert dich am Vortag deiner Schulung."
           : "Bekomme am Vortag deiner Schulung eine Mitteilung aufs Handy."}

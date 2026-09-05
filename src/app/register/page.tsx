@@ -90,7 +90,7 @@ export default function RegisterPage() {
                 background: "rgba(0,120,115,0.10)",
                 border: "1px solid rgba(0,120,115,0.30)",
                 color: "var(--vfa-gruen-text)",
-                fontSize: 22,
+                fontSize: "var(--t-titel)",
                 fontWeight: 800,
                 display: "flex",
                 alignItems: "center",
@@ -108,7 +108,7 @@ export default function RegisterPage() {
               geschickt. Öffne darin den Bestätigungslink, dann kannst du dich
               anmelden.
             </p>
-            <p style={{ margin: "12px 0 0", color: "var(--vfa-text-2)", fontSize: 13, lineHeight: "var(--lh-weit)" }}>
+            <p style={{ margin: "12px 0 0", color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
               Nichts angekommen? Sieh bitte im Spam-Ordner nach. Der Link gilt 24
               Stunden.
             </p>
@@ -130,7 +130,7 @@ export default function RegisterPage() {
               <p
                 style={{
                   margin: 0,
-                  fontSize: 13,
+                  fontSize: "var(--t-klein)",
                   lineHeight: "var(--lh-weit)",
                   color: "var(--vfa-text-2)",
                 }}
@@ -185,7 +185,7 @@ const UNTERTITEL: React.CSSProperties = {
 const FUSSZEILE: React.CSSProperties = {
   marginTop: 20,
   textAlign: "center",
-  fontSize: 13,
+  fontSize: "var(--t-klein)",
   color: "var(--vfa-text-2)",
 };
 

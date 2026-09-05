@@ -111,7 +111,7 @@ function LoginForm() {
         <AppInput label="Passwort" value={password} placeholder="Passwort eingeben" type="password" name="password" autoComplete="current-password" onChange={setPassword} />
 
         <div style={{ textAlign: "right", marginTop: -10 }}>
-          <Link href="/forgot-password" style={{ color: "var(--vfa-gruen-text)", fontSize: 13, fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
+          <Link href="/forgot-password" style={{ color: "var(--vfa-gruen-text)", fontSize: "var(--t-klein)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
             Passwort vergessen?
           </Link>
         </div>
@@ -136,7 +136,7 @@ const UNTERTITEL: React.CSSProperties = {
 const FUSSZEILE: React.CSSProperties = {
   marginTop: 20,
   textAlign: "center",
-  fontSize: 13,
+  fontSize: "var(--t-klein)",
   color: "var(--vfa-text-2)",
 };
 

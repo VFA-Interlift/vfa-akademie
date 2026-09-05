@@ -101,21 +101,13 @@ export default function MeineZertifikateClient({
         </div>
       </AnimatedSection>
 
-      <AnimatedSection delayMs={80}>
-        {/* Ohne gelben Rand: Der Filter ist nicht die eine wichtige Karte
-            der Seite (Launch-Runde 05.09.2026). */}
-        <AppCard>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 14,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <div className="etikett">Jahresfilter</div>
-
+      {/* Nur der Wähler, ohne eigene Karte und ohne die Überschrift
+          „Jahresfilter": drei Wörter für ein Auswahlfeld waren zu viel
+          (Tobi, 05.09.2026). Gibt es nur einen Jahrgang, entfällt er ganz —
+          dann ist nichts zu filtern. */}
+      {years.length > 1 ? (
+        <AnimatedSection delayMs={80}>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <div style={{ minWidth: 180, flex: "0 1 220px" }}>
               <AppSelect
                 label="Jahr"
@@ -129,13 +121,13 @@ export default function MeineZertifikateClient({
               />
             </div>
           </div>
-        </AppCard>
-      </AnimatedSection>
+        </AnimatedSection>
+      ) : null}
 
       {filteredCertificates.length === 0 ? (
         <AnimatedSection delayMs={140}>
           <AppCard>
-            <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
               Für dieses Jahr wurden keine Zertifikate gefunden.
             </div>
           </AppCard>
@@ -214,21 +206,11 @@ export default function MeineZertifikateClient({
                           {displayTitle}
                         </h2>
 
-                        <div
-                          style={{
-                            marginTop: 18,
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fit, minmax(170px, 1fr))",
-                            gap: "10px 18px",
-                          }}
-                        >
+                        {/* Zugeklappt steht nur der Zeitraum da. „Ausgestellt
+                            am" ist eine Angabe zum Nachschlagen und sitzt jetzt
+                            unten bei Dozent und Status (Tobi, 05.09.2026). */}
+                        <div style={{ marginTop: 14 }}>
                           <Info label="Zeitraum" value={dateText} />
-
-                          <Info
-                            label="Ausgestellt am"
-                            value={formatDate(cert.issuedAt)}
-                          />
                         </div>
                       </div>
 
@@ -320,6 +302,11 @@ export default function MeineZertifikateClient({
                           <Info
                             label="Status"
                             value={formatStatus(cert.status)}
+                          />
+
+                          <Info
+                            label="Ausgestellt am"
+                            value={formatDate(cert.issuedAt)}
                           />
 
                           <AddressInfo lines={addressLines} />

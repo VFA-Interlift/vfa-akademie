@@ -60,7 +60,7 @@ export default function CreditsZuwachs({
           background: "rgba(0, 120, 115, 0.10)",
           border: "1px solid rgba(0, 120, 115, 0.25)",
           color: "var(--vfa-gruen-text)",
-          fontSize: 13,
+          fontSize: "var(--t-klein)",
           fontWeight: 800,
           animation: "pageFadeUp 600ms cubic-bezier(0.22, 1, 0.36, 1) both",
         }}

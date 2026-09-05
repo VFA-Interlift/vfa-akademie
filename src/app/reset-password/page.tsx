@@ -130,7 +130,7 @@ const UNTERTITEL: React.CSSProperties = {
 const FUSSZEILE: React.CSSProperties = {
   marginTop: 20,
   textAlign: "center",
-  fontSize: 13,
+  fontSize: "var(--t-klein)",
   color: "var(--vfa-text-2)",
 };
 

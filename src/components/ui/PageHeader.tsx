@@ -94,7 +94,7 @@ export default function PageHeader({
               // Fest weiß: Das Band ist in beiden Modi Petrol.
               color: "#FFFFFF",
               letterSpacing: "-0.02em",
-              lineHeight: 1.15,
+              lineHeight: "var(--lh-eng)",
             }}
           >
             {title}

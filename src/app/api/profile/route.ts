@@ -226,7 +226,7 @@ export async function PATCH(req: Request) {
           {
             ok: false,
             error:
-              "Die Bestätigungsmail an die neue Adresse konnte nicht gesendet werden. Deine bisherige Adresse bleibt aktiv — bitte versuch es später erneut.",
+              "Die Bestätigungsmail an die neue Adresse konnte nicht gesendet werden. Deine bisherige Adresse bleibt aktiv. Bitte versuch es später erneut.",
           },
           { status: 502 }
         );

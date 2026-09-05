@@ -87,7 +87,7 @@ export default async function AdminMenuPage() {
                 <span style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
                   Der Kurscode der Anmeldung passt zu keiner Schulung in der App. Diese
                   Teilnehmenden erhalten keine Einschreibung, kein Zertifikat und keine Credits.
-                  Meist ein abweichender Kurscode auf der Website — unter „Schulungen“ nachsehen.
+                  Meist ein abweichender Kurscode auf der Website. Unter „Schulungen“ nachsehen.
                 </span>
               </div>
             </div>
@@ -121,7 +121,7 @@ export default async function AdminMenuPage() {
               href="/admin/website"
               abbr="WS"
               title="Website-Synchronisation"
-              description="Schulungen der Website (Wix-CMS) in die App übernehmen – ersetzt den Cobra-Sync."
+              description="Schulungen der Website (Wix-CMS) in die App übernehmen. Ersetzt den Cobra-Sync."
             />
             <AdminTile
               href="/admin/import"

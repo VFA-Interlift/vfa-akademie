@@ -22,7 +22,7 @@ export default function StatusBadge({
         color: getColor(variant),
         fontSize: "var(--t-klein)",
         fontWeight: 700,
-        lineHeight: 1.2,
+        lineHeight: "var(--lh-eng)",
         letterSpacing: "0.04em",
         textTransform: "uppercase",
       }}

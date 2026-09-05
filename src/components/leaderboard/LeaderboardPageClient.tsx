@@ -63,7 +63,7 @@ export default function LeaderboardPageClient() {
   if (!data.first || data.participants === 0) {
     return (
       <div style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
-        Noch keine Teilnehmer im Ranking – sammle die ersten Credits!
+        Noch keine Teilnehmer im Ranking. Sammle die ersten Credits!
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function LeaderboardPageClient() {
           />
         ) : (
           <Meldung art="hinweis">
-            Du bist noch nicht im Ranking – sammle deine ersten Credits über Schulungen und Feedback.
+            Du bist noch nicht im Ranking. Sammle deine ersten Credits über Schulungen und Feedback.
           </Meldung>
         )
       )}
@@ -131,7 +131,7 @@ export default function LeaderboardPageClient() {
       </div>
 
       <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: "var(--lh-weit)" }}>
-        Aus Datenschutzgründen werden keine Namen angezeigt – du siehst den Spitzenreiter, deine eigene Platzierung und den Median.
+        Namen werden nicht angezeigt. Du siehst den Spitzenreiter, deine eigene Platzierung und den Median.
       </div>
     </div>
   );

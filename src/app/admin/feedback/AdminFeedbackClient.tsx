@@ -276,7 +276,7 @@ function PdfViewerModal({
             border: "none",
             background: "rgba(255,255,255,0.15)",
             color: "#FFFFFF",
-            fontSize: 22,
+            fontSize: "var(--t-titel)",
             lineHeight: 1,
             cursor: "pointer",
           }}

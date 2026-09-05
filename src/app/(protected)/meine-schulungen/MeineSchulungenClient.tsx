@@ -59,10 +59,10 @@ export default function MeineSchulungenClient({
               <div style={{ minWidth: 0 }}>
                 {/* „bevorstehende": darunter kann die Liste bisheriger
                     Teilnahmen stehen — „zugeordnet" widersprach ihr. */}
-                <div style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
+                <div style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: "var(--lh-eng)" }}>
                   Keine bevorstehende Schulung
                 </div>
-                <p style={{ marginTop: 3, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: 1.5 }}>
+                <p style={{ marginTop: 3, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
                   Im{" "}
                   <Link href="/kurskalender" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>
                     Kurskalender
@@ -106,7 +106,7 @@ export default function MeineSchulungenClient({
             <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
               Aktuell sind keine bevorstehenden Schulungen geplant.
             </h2>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: 1.5 }}>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
               Abgeschlossene Schulungen findest du unter &bdquo;Meine Zertifikate&ldquo;.
             </p>
           </AppCard>
@@ -148,7 +148,7 @@ export default function MeineSchulungenClient({
                           <StatusBadge variant={statusVariant}>{statusLabel}</StatusBadge>
                         </div>
 
-                        <h2 style={{ margin: 0, color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: 1.2, maxWidth: 520 }}>
+                        <h2 style={{ margin: 0, color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: "var(--lh-eng)", maxWidth: 520 }}>
                           {displayTitle}
                         </h2>
 
@@ -165,7 +165,7 @@ export default function MeineSchulungenClient({
                         <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-label)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", textAlign: "right" }}>
                           Credits
                         </div>
-                        <div style={{ marginTop: 8, color: "var(--vfa-gruen-text)", fontSize: 22, fontWeight: 800, lineHeight: 1, transition: "transform 180ms ease", transform: isOpen ? "rotate(180deg)" : "none" }}>
+                        <div style={{ marginTop: 8, color: "var(--vfa-gruen-text)", fontSize: "var(--t-titel)", fontWeight: 800, lineHeight: 1, transition: "transform 180ms ease", transform: isOpen ? "rotate(180deg)" : "none" }}>
                           {isOpen ? "−" : "+"}
                         </div>
                       </div>
@@ -335,10 +335,10 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
               <div style={{ fontSize: "var(--t-label)", fontWeight: 700, color: "var(--vfa-text-2)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 ★ {rec.reason}
               </div>
-              <h2 className="balance" style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: 1.25 }}>
+              <h2 className="balance" style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
                 {rec.title}
               </h2>
-              <div className="text-2zeilen" style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: 1.5 }}>
+              <div className="text-2zeilen" style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
                 {rec.description}
               </div>
 

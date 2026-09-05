@@ -81,30 +81,30 @@ export default function TesterWelcome({
           {anrede} schön, dass du dabei bist!
         </h2>
 
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
+        <p style={{ margin: "0 0 10px", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)", color: "var(--vfa-text-2)" }}>
           Du gehörst zu den Ersten, die die VFA-Akademie-App ausprobieren. Sie bündelt
           deine Schulungen, Zertifikate und Credits an einer Stelle.
         </p>
 
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
+        <p style={{ margin: "0 0 10px", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)", color: "var(--vfa-text-2)" }}>
           Am besten legst du sie gleich auf den Startbildschirm deines Handys.
           Schau dich danach in Ruhe um: Startseite, deine Schulungen und
           Zertifikate, der Kurskalender, der Kompetenzpass und deine Credits.
         </p>
 
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
+        <p style={{ margin: "0 0 10px", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)", color: "var(--vfa-text-2)" }}>
           Wenn dir etwas fehlt, komisch vorkommt oder schlicht nicht funktioniert,
           freuen wir uns über deine Rückmeldung!
         </p>
 
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
+        <p style={{ margin: 0, fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)", color: "var(--vfa-text-2)" }}>
           {feedbackGesendet ? "Ist dir seitdem noch etwas aufgefallen? Unter " : "Probier die App erst in Ruhe aus. Danach findest du unter "}
           <Link href="/einstellungen" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>
             Einstellungen
           </Link>
           {feedbackGesendet
             ? " kannst du deine Rückmeldung jederzeit ergänzen."
-            : " den Fragebogen zur Testrunde — zehn Fragen, zwei bis drei Minuten. Lass dir damit ruhig ein paar Tage Zeit."}
+            : " den Fragebogen zur Testrunde. Zehn Fragen, zwei bis drei Minuten. Lass dir ruhig ein paar Tage Zeit."}
         </p>
       </div>
     );
@@ -123,12 +123,12 @@ export default function TesterWelcome({
         background: "rgba(0,120,115,0.06)",
         border: "1px solid rgba(0,120,115,0.22)",
         borderRadius: 12,
-        fontSize: 15,
-        lineHeight: 1.55,
+        fontSize: "var(--t-basis)",
+        lineHeight: "var(--lh-weit)",
         color: "var(--vfa-text-2)",
       }}
     >
-      Deine Rückmeldung zur Testrunde fehlt noch — der Fragebogen liegt unter{" "}
+      Deine Rückmeldung zur Testrunde fehlt noch. Der Fragebogen liegt unter{" "}
       <Link href="/einstellungen" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>
         Einstellungen
       </Link>

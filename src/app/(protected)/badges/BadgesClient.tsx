@@ -223,7 +223,7 @@ export default function BadgesClient({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 22,
+            fontSize: "var(--t-titel)",
             color: "var(--vfa-gruen-text)",
             flexShrink: 0,
           }}
@@ -248,9 +248,8 @@ export default function BadgesClient({
       {/* „Badges" ist der Oberbegriff für Ränge und Auszeichnungen; beide
           Auszeichnungs-Formate stehen dran, weil es beide Knöpfe gibt (05.09.2026). */}
       <Meldung art="hinweis">
-        Freigeschaltete Badges lassen sich herunterladen – z. B. für LinkedIn,
-        E-Mail-Signaturen oder die eigene Website. Ränge kommen als PNG,
-        Auszeichnungen als SVG oder PNG.
+        Freigeschaltete Badges kannst du herunterladen, zum Beispiel für
+        LinkedIn oder deine E-Mail-Signatur.
       </Meldung>
     </div>
   );

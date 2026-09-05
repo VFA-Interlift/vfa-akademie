@@ -141,10 +141,9 @@ export default function KompetenzpassClient({
             bleiben. Beides ist im Druck ausgeblendet (05.09.2026). */}
         <div className="kp-actions" style={{ display: "grid", gap: 16 }}>
           <PageHeader title="Kompetenzpass" />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <p style={{ margin: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
-              Dein persönlicher Qualifikationsnachweis – zum Drucken oder als PDF speichern.
-            </p>
+          {/* Ohne erklärenden Satz: Der Knopf sagt selbst, was passiert
+              (Tobi, 05.09.2026). */}
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <AppButton onClick={() => window.print()}>↓ Als PDF / Drucken</AppButton>
           </div>
         </div>

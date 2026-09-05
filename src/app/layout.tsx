@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "VFA-Akademie",
   // Derselbe Satz wie im Manifest (manifest.ts) — vorher fehlte die
   // Beschreibung im ausgelieferten HTML (Befund f10-9, 05.09.2026).
-  description: "Schulungen, Zertifikate und Credits – digital verwaltet.",
+  description: "Schulungen, Zertifikate und Credits an einem Ort.",
   applicationName: "VFA-Akademie",
   appleWebApp: {
     capable: true,

@@ -11,7 +11,7 @@ import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
 import Kennzahl from "@/components/ui/Kennzahl";
 import CreditsZuwachs from "@/components/CreditsZuwachs";
 import DashboardHero from "@/components/DashboardHero";
-import EtagenAnzeige from "@/components/EtagenAnzeige";
+import RangUebersicht from "@/components/RangUebersicht";
 import RangAufstieg from "@/components/RangAufstieg";
 import type { Hinweis } from "@/components/HeroGlocke";
 import TesterWelcome from "@/components/TesterWelcome";
@@ -98,11 +98,6 @@ export default async function DashboardPage() {
   const progress = rangFortschritt(user.creditsTotal);
   const nextRank = naechsterRang(user.creditsTotal);
 
-  // Etagenanzeige: Anzeige über dem Schacht (EG bis 4). Die Kabinenposition
-  // rechnet die Komponente selbst — exakt auf der Etage des Rangs.
-  const etagenStufe = { STARTER: 0, BRONZE: 1, SILBER: 2, GOLD: 3, EXPERTE: 4 }[rank.key];
-  const etagenNummer = etagenStufe === 0 ? "EG" : String(etagenStufe);
-
   // Abgesagte Kurse zaehlen nicht als "naechste Schulung", und ein laufender
   // Mehrtageskurs bleibt bis zu seinem Ende die naechste (Ultracode 13.08.).
   // Kein Status-Ausschluss mehr: die Kachel zeigt dieselbe Menge wie der
@@ -188,11 +183,11 @@ export default async function DashboardPage() {
                   {nextTraining.training.code?.trim() || nextTraining.training.title}
                 </div>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 2 }}>
-                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
+                  <span style={{ fontSize: "var(--t-klein)", color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
                     📅 {formatDateRange(nextTraining.training.date.toISOString(), nextTraining.training.endDate?.toISOString() ?? null)}
                   </span>
                   {nextTraining.training.location && (
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
+                    <span style={{ fontSize: "var(--t-klein)", color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
                       📍 {nextTraining.training.location.split(",")[0]?.trim()}
                     </span>
                   )}
@@ -239,35 +234,23 @@ export default async function DashboardPage() {
 
                 <CreditsZuwachs userId={user.id} credits={user.creditsTotal} />
 
-                <div style={{ color: "var(--vfa-text-2)", fontSize: 13, textAlign: "center", lineHeight: 1.5 }}>
+                <div style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", textAlign: "center", lineHeight: "var(--lh-weit)" }}>
                   {nextRank
                     ? `Noch ${progress.remainingToNext.toLocaleString("de-DE")} Credits bis ${nextRank.label}`
                     : "Höchste Stufe erreicht ✓"}
                 </div>
 
-                {/* Ränge als Etagen mit fahrender Kabine — das Erkennungszeichen
-                    einer Aufzugs-App (Tobis Auswahl vom 13.08.2026). */}
-                <EtagenAnzeige
-                  etagen={[...RAENGE].reverse().map((r) => ({
-                    key: r.key,
-                    label: r.label,
-                    bereich:
-                      r.max === null
-                        ? `ab ${r.min.toLocaleString("de-DE")}`
-                        : `${r.min.toLocaleString("de-DE")}–${r.max.toLocaleString("de-DE")}`,
-                    farbe: FARBEN[r.key].color,
-                    weich: FARBEN[r.key].softBackground,
-                    rand: FARBEN[r.key].softBorder,
-                  })).concat([{
-                    key: OHNE_RANG.key,
-                    label: "Start",
-                    bereich: "0–99",
-                    farbe: FARBEN.STARTER.color,
-                    weich: FARBEN.STARTER.softBackground,
-                    rand: FARBEN.STARTER.softBorder,
-                  }])}
+                {/* Ränge als schlichte Liste — die Etagenanzeige mit Schacht
+                    und Kabine ist auf Tobis Ansage vom 05.09.2026 entfallen. */}
+                <RangUebersicht
                   aktuellKey={rank.key}
-                  etagenNummer={etagenNummer}
+                  farben={{
+                    STARTER: FARBEN.STARTER.color,
+                    BRONZE: FARBEN.BRONZE.color,
+                    SILBER: FARBEN.SILBER.color,
+                    GOLD: FARBEN.GOLD.color,
+                    EXPERTE: FARBEN.EXPERTE.color,
+                  }}
                 />
               </div>
             </AppCard>
@@ -434,7 +417,7 @@ function RankingRow({
         {rankLabel}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-        <div style={{ color: "var(--vfa-text)", fontSize: 15, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
+        <div style={{ color: "var(--vfa-text)", fontSize: "var(--t-basis)", fontWeight: 700, lineHeight: "var(--lh-eng)", minWidth: 0 }}>
           {name}
         </div>
         <div style={{ color: "var(--vfa-gruen-text)", fontWeight: 800, fontSize: "var(--t-basis)", whiteSpace: "nowrap" }}>
@@ -462,7 +445,7 @@ const heroChipStyle: CSSProperties = {
   background: "rgba(255, 255, 255, 0.14)",
   border: "1px solid rgba(255, 255, 255, 0.32)",
   color: "#FFFFFF",
-  fontSize: 13,
+  fontSize: "var(--t-klein)",
   fontWeight: 800,
   textDecoration: "none",
 };

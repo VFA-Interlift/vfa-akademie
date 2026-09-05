@@ -41,11 +41,11 @@ export default function ThemaSchalter() {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center" }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
+        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: "var(--lh-eng)" }}>
           Dunkles Design
         </div>
-        <div style={{ fontSize: 13, color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.5 }}>
-          Dunkle Flächen, helle Schrift — gilt für dieses Gerät.
+        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: "var(--lh-weit)" }}>
+          Dunkle Flächen, helle Schrift. Gilt für dieses Gerät.
         </div>
       </div>
 

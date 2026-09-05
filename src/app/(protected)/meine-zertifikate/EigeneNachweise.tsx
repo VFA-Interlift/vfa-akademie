@@ -160,7 +160,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
         <div style={{ marginBottom: 12 }}>
           <div className="etikett">Meine Nachweise</div>
           <p style={{ margin: "4px 0 0", color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
-            Eigene Weiterbildungen, Abschlüsse und externe Nachweise – alles an einem Ort.
+            Eigene Weiterbildungen, Abschlüsse und externe Nachweise.
           </p>
         </div>
 
@@ -318,7 +318,7 @@ const dateiFeldStyle: React.CSSProperties = {
   padding: "11px 14px",
   borderRadius: 8,
   border: "1px solid var(--vfa-linie)",
-  fontSize: 15,
+  fontSize: "var(--t-basis)",
   color: "var(--vfa-text)",
   background: "var(--vfa-karte)",
 };
@@ -326,7 +326,7 @@ const dateiFeldStyle: React.CSSProperties = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
-      <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.01em", color: "var(--vfa-text-2)" }}>{label}</span>
+      <span style={{ fontSize: "var(--t-klein)", fontWeight: 600, letterSpacing: "0.01em", color: "var(--vfa-text-2)" }}>{label}</span>
       {children}
     </label>
   );

@@ -198,9 +198,9 @@ export default function AnimatedProgressCircle({
             style={{
               marginTop: 8,
               color: "var(--vfa-text)",
-              fontSize: 15,
+              fontSize: "var(--t-basis)",
               fontWeight: 800,
-              lineHeight: 1.3,
+              lineHeight: "var(--lh-eng)",
             }}
           >
             <AnimatedNumber value={credits} durationMs={ANIMATION_DURATION_MS} /> Credits

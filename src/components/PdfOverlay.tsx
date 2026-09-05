@@ -98,7 +98,7 @@ export default function PdfOverlay({
             border: "1px solid rgba(255,255,255,0.65)",
             color: "#FFFFFF",
             fontWeight: 700,
-            fontSize: 13,
+            fontSize: "var(--t-klein)",
             textDecoration: "none",
           }}
         >
@@ -115,7 +115,7 @@ export default function PdfOverlay({
             border: "1px solid rgba(255,255,255,0.65)",
             color: "#FFFFFF",
             fontWeight: 700,
-            fontSize: 13,
+            fontSize: "var(--t-klein)",
             textDecoration: "none",
           }}
         >
@@ -134,7 +134,7 @@ export default function PdfOverlay({
             border: "none",
             background: "rgba(255,255,255,0.16)",
             color: "#FFFFFF",
-            fontSize: 22,
+            fontSize: "var(--t-titel)",
             lineHeight: 1,
             cursor: "pointer",
           }}

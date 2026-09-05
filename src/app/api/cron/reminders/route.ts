@@ -155,7 +155,7 @@ export async function GET(req: Request) {
         const ort = formatVenueLines(anmeldung.training.location, null)[0];
         pushGesendet += await sendePushAnNutzer(anmeldung.user.id, {
           titel: "Morgen ist es so weit",
-          text: ort ? `${kuerzel} in ${ort} — viel Erfolg!` : `${kuerzel} — viel Erfolg!`,
+          text: ort ? `${kuerzel} in ${ort}. Viel Erfolg!` : `${kuerzel}. Viel Erfolg!`,
           url: "/meine-schulungen",
         });
       }

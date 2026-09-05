@@ -211,7 +211,7 @@ export async function POST(req: NextRequest) {
           ok: false,
           kontext: "konto",
           error:
-            "Der Link ist ungültig oder abgelaufen. Dein Konto läuft unter der bisherigen Adresse weiter — fordere den Wechsel unter Meine Daten neu an.",
+            "Der Link ist ungültig oder abgelaufen. Dein Konto läuft unter der bisherigen Adresse weiter. Fordere den Wechsel unter Meine Daten neu an.",
         },
         { status: 400 }
       );
@@ -255,7 +255,7 @@ export async function POST(req: NextRequest) {
           ok: false,
           kontext: "konto",
           error:
-            "Diese Adresse ist inzwischen anderweitig vergeben. Dein Konto läuft unter der bisherigen Adresse weiter — bitte wähle unter Meine Daten eine andere.",
+            "Diese Adresse ist inzwischen anderweitig vergeben. Dein Konto läuft unter der bisherigen Adresse weiter. Bitte wähle unter Meine Daten eine andere.",
         },
         { status: 409 }
       );

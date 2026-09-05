@@ -278,7 +278,7 @@ export default function HeaderClient() {
             }}
           />
 
-          <div style={{ lineHeight: 1.15, minWidth: 0 }}>
+          <div style={{ lineHeight: "var(--lh-eng)", minWidth: 0 }}>
             <div
               style={{
                 fontSize: "var(--t-gross)",
@@ -392,7 +392,7 @@ export default function HeaderClient() {
                   borderRadius: 999,
                   background: VFA_GREEN,
                   color: "#FFFFFF",
-                  fontSize: 12,
+                  fontSize: "var(--t-label)",
                   fontWeight: 800,
                   letterSpacing: "0.05em",
                   textTransform: "uppercase",
@@ -447,9 +447,9 @@ export default function HeaderClient() {
                 Badges
               </MenuLink>
 
-              <MenuLink href="/leaderboard" onClick={() => setMenuOpen(false)}>
-                Ranking
-              </MenuLink>
+              {/* Kein Ranking im Menü (05.09.2026): Die Seite zeigt nichts,
+                  was nicht schon auf dem Dashboard steht — dort führt der Knopf
+                  „Zum Ranking" hin. */}
 
               {/* Einstellungen hängen sonst allein an der unteren Leiste, die ab
                   760px ausgeblendet wird — Datenauskunft, Kontolöschung und der

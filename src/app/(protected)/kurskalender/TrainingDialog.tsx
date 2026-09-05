@@ -293,7 +293,7 @@ function Info({
       <div
         style={{
           color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)",
-          lineHeight: 1.45,
+          lineHeight: "var(--lh-weit)",
           fontSize: "var(--t-basis)",
           fontStyle: muted ? "italic" : "normal",
           overflowWrap: "anywhere",
@@ -316,7 +316,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
         <div
           style={{
             color: "var(--vfa-text-3)",
-            lineHeight: 1.45,
+            lineHeight: "var(--lh-weit)",
             fontSize: "var(--t-basis)",
             fontStyle: "italic",
           }}
@@ -327,7 +327,7 @@ function AddressInfo({ lines }: { lines: string[] }) {
         <div
           style={{
             color: "var(--vfa-text)",
-            lineHeight: 1.45,
+            lineHeight: "var(--lh-weit)",
             fontSize: "var(--t-basis)",
           }}
         >
@@ -384,7 +384,7 @@ function PreisBlock({ training }: { training: CalendarTraining }) {
         ))}
       </div>
       <div style={{ marginTop: 8, fontSize: "var(--t-klein)", color: "var(--vfa-text-3)" }}>
-        Angaben ohne Gewähr — verbindliche Preise auf der VFA-Website.
+        Angaben ohne Gewähr. Verbindliche Preise stehen auf der VFA-Website.
       </div>
     </div>
   );

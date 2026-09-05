@@ -121,15 +121,15 @@ export default function AppTestClient({
       <AnimatedSection>
         <AppCard>
           <p style={{ margin: 0, color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
-            Zehn Fragen, zwei bis drei Minuten. Pflicht ist nur die letzte —
+            Zehn Fragen, zwei bis drei Minuten. Pflicht ist nur die letzte,
             alles andere ist freiwillig. Es gibt keine falschen Antworten:
             was dich stört, hilft uns am meisten.
           </p>
           {bereitsGesendet && (
             <p style={{ margin: "12px 0 0", color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
-              Du hast den Bogen schon einmal abgeschickt — deine bisherigen
-              Antworten sind unten bereits eingetragen. Ändere oder ergänze
-              einfach, was dir aufgefallen ist, und sende erneut.
+              Du hast den Bogen schon einmal abgeschickt. Deine bisherigen
+              Antworten stehen unten schon drin. Ändere oder ergänze, was dir
+              aufgefallen ist, und sende erneut.
             </p>
           )}
         </AppCard>
@@ -141,7 +141,7 @@ export default function AppTestClient({
         <AnimatedSection key={frage.id} delayMs={Math.min(60 + i * 30, 360)}>
           <AppCard>
             <div style={{ display: "grid", gap: 10 }}>
-              <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
+              <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600, lineHeight: "var(--lh-weit)" }}>
                 {frage.text}
                 {frage.id === PFLICHT_FRAGE_ID && <span style={{ color: "var(--vfa-rot-text)" }}> *</span>}
               </span>

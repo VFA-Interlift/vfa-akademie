@@ -149,7 +149,7 @@ export default function FeedbackFormClient({
         <AppCard>
           <p style={{ margin: "0 0 14px", color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
             Deine Rückmeldung zur Schulung <strong>{trainingTitle}</strong>. Bewerte mit 1–5
-            Sternen. Nur die allgemeine Zufriedenheit ist Pflicht – alles andere ist freiwillig.
+            Sternen. Nur die allgemeine Zufriedenheit ist Pflicht, alles andere ist freiwillig.
           </p>
 
           <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
@@ -178,7 +178,7 @@ export default function FeedbackFormClient({
             <div style={{ display: "grid", gap: 18 }}>
               {section.questions.map((q) => (
                 <div key={q.key} style={{ display: "grid", gap: 8 }}>
-                  <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
+                  <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600, lineHeight: "var(--lh-weit)" }}>
                     {q.label}
                     {q.required && <span style={{ color: "var(--vfa-rot-text)" }}> *</span>}
                   </span>

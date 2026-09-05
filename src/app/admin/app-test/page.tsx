@@ -39,7 +39,7 @@ export default async function AdminAppTestPage() {
                   {rueckmeldungen.length} von {anzahlTester()}
                 </strong>{" "}
                 Testerinnen und Testern haben den Bogen abgeschickt. Jede
-                Rückmeldung steht hier vollständig — auch wenn die
+                Rückmeldung steht hier vollständig, auch wenn die
                 Benachrichtigungs-Mail nicht angekommen sein sollte.
               </p>
             </AppCard>
@@ -96,7 +96,7 @@ export default async function AdminAppTestPage() {
                       const antwort = formatAntwort(antworten[frage.id]);
                       return (
                         <div key={frage.id} style={{ display: "grid", gap: 3 }}>
-                          <span style={{ fontSize: "var(--t-klein)", fontWeight: 700, color: "var(--vfa-text-2)", lineHeight: 1.45 }}>
+                          <span style={{ fontSize: "var(--t-klein)", fontWeight: 700, color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
                             {frage.text}
                           </span>
                           <span

@@ -159,7 +159,7 @@ export default async function AdminSchulungenPage() {
           </AnimatedSection>
 
           {websiteError ? (
-            <Meldung art="fehler">Website nicht erreichbar – bitte später erneut versuchen.</Meldung>
+            <Meldung art="fehler">Website nicht erreichbar. Bitte später erneut versuchen.</Meldung>
           ) : (
             <AnimatedSection delayMs={80}>
               <AdminSchulungenClient kurse={kurse} />

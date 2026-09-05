@@ -125,8 +125,8 @@ export default function MeineDatenForm({
         // signOut stammte aus dem alten Sofort-Wechsel-Modell und ließ die
         // Erklärung nach 2,5 s verschwinden (Gegenprüfung 13.08.2026).
         setMsg(
-          `Gespeichert. Wir haben eine Bestätigungsmail an ${String(data?.pendingEmail ?? "die neue Adresse")} geschickt — ` +
-            "erst nach dem Klick auf den Link zieht dein Konto um. Bis dahin bleibt " +
+          `Gespeichert. Wir haben eine Bestätigungsmail an ${String(data?.pendingEmail ?? "die neue Adresse")} geschickt. ` +
+            "Erst nach dem Klick auf den Link zieht dein Konto um. Bis dahin bleibt " +
             "deine bisherige Adresse für die Anmeldung aktiv."
         );
         setSuccess(true);

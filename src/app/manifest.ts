@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "VFA-Akademie",
     short_name: "VFA-Akademie",
-    description: "Schulungen, Zertifikate und Credits – digital verwaltet.",
+    description: "Schulungen, Zertifikate und Credits an einem Ort.",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#F7F7F4",

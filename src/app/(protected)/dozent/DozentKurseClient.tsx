@@ -280,7 +280,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
             {selected.rolle === "HOSPITATION" && <StatusBadge variant="warning">Hospitation</StatusBadge>}
             {selected.vergangen && <StatusBadge>Vergangen</StatusBadge>}
           </div>
-          <div style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.4 }}>{selected.title}</div>
+          <div style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: "var(--lh-weit)" }}>{selected.title}</div>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", fontWeight: 600 }}>
             <span>📅 {selected.datumText}</span>
             {selected.ort && <span>📍 {selected.ort.split(",")[0]}</span>}
@@ -319,7 +319,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                   return (
                     <div key={o.id} style={{ border: "1px solid var(--vfa-linie-2)", borderRadius: 12, background: "var(--vfa-karte-2)", overflow: "hidden" }}>
                       <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)" }}>
-                        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
+                        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: "var(--lh-eng)" }}>{o.subject || "Orga-Info"}</div>
                         <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 3 }}>
                           {o.fromAddress ? `${o.fromAddress} · ` : ""}{o.receivedText}
                         </div>
@@ -373,8 +373,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                   </div>
                   <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 6, lineHeight: "var(--lh-weit)" }}>
                     Sobald die Organisations- oder Bestätigungsmail zur Schulung eintrifft,
-                    steht sie hier im Wortlaut — mit allem, was darin zu Hotel, Anreise,
-                    Ansprechpartner und Ablauf steht. Bis dahin gelten die Angaben aus
+                    steht sie hier im Wortlaut, mit allem zu Hotel, Anreise,
+                    Ansprechpartner und Ablauf. Bis dahin gelten die Angaben aus
                     deiner E-Mail-Korrespondenz.
                   </div>
                 </div>
@@ -408,8 +408,8 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 </div>
 
                 {sheetList.length === 0 ? (
-                  <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
-                    Noch keine Liste hochgeladen. Fotografiere die unterschriebene Teilnehmerliste – mehrere Seiten möglich, sie werden zu einem PDF zusammengefasst.
+                  <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: "var(--lh-weit)" }}>
+                    Noch keine Liste hochgeladen. Fotografiere die unterschriebene Teilnehmerliste. Mehrere Seiten sind möglich, sie werden zu einem PDF zusammengefasst.
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 6 }}>
@@ -529,7 +529,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 </div>
                 {kurs.rolle === "HOSPITATION" && <StatusBadge variant="warning">Hospitation</StatusBadge>}
               </div>
-              <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
+              <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 3, lineHeight: "var(--lh-weit)" }}>{kurs.title}</div>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", fontWeight: 600 }}>
                 <span>📅 {kurs.datumText}</span>
                 {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}

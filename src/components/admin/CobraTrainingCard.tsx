@@ -88,7 +88,7 @@ export function CobraFelder({ raw }: { raw: Record<string, unknown> | null }) {
         fontSize: "var(--t-klein)",
       }}
     >
-      <div style={{ color: "var(--vfa-text-2)", marginBottom: 4, lineHeight: 1.5 }}>
+      <div style={{ color: "var(--vfa-text-2)", marginBottom: 4, lineHeight: "var(--lh-weit)" }}>
         Felder einer Beispiel-Schulung aus Cobra.
       </div>
       {Object.entries(raw).map(([key, value]) => (
@@ -193,7 +193,7 @@ export function TrainingCard({
             style={{
               marginTop: 4,
               color: "var(--vfa-text-2)",
-              lineHeight: 1.5,
+              lineHeight: "var(--lh-weit)",
               fontSize: "var(--t-klein)",
             }}
           >
@@ -216,7 +216,7 @@ export function TrainingCard({
           gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
           gap: 10,
           fontSize: "var(--t-basis)",
-          lineHeight: 1.5,
+          lineHeight: "var(--lh-weit)",
         }}
       >
         <Info label="Start" value={formatDateTime(training.date)} />
@@ -275,7 +275,7 @@ function PreviewBox({
           gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: 10,
           fontSize: "var(--t-basis)",
-          lineHeight: 1.5,
+          lineHeight: "var(--lh-weit)",
         }}
       >
         <Info label="Kurscode" value={preview.proposed.code} />
