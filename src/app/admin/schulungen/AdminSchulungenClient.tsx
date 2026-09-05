@@ -102,6 +102,7 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ flex: "1 1 200px", minWidth: 180 }}>
           <AppSelect
+            ohnePlatzhalter
             label="Sortieren nach"
             value={sortKey}
             onChange={(v) => setSortKey((v || "neueste") as SortKey)}

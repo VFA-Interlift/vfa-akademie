@@ -226,6 +226,12 @@ export default function HeaderClient() {
         background: "var(--vfa-karte)",
         borderBottom: "1px solid var(--vfa-linie)",
         boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+        // Unter der Aussparung des iPhones (black-translucent) läuft der Kopf
+        // bis an die Oberkante; dieses Polster hält Logo und Titel unterhalb
+        // der Uhr, der Petrol-Streifen (SafeTop) liegt genau auf dem Polster.
+        // .page-content rechnet dieselbe Höhe mit (layout.tsx), das Band der
+        // Seite beginnt also weiter direkt unter dem Kopf (05.09.2026).
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
       <div

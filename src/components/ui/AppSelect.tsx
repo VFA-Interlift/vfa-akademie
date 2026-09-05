@@ -9,6 +9,9 @@ type AppSelectProps = {
   onChange: (value: string) => void;
   options: AppSelectOption[];
   placeholder?: string;
+  /** Sortier- und Filtermenüs haben immer einen gültigen Wert — dort keine leere
+      Platzhalter-Option anbieten (Gegenprüfung der Launch-Runde, 05.09.2026). */
+  ohnePlatzhalter?: boolean;
   disabled?: boolean;
 };
 
@@ -18,6 +21,7 @@ export default function AppSelect({
   onChange,
   options,
   placeholder = "Bitte auswählen",
+  ohnePlatzhalter = false,
   disabled = false,
 }: AppSelectProps) {
   return (
@@ -52,7 +56,7 @@ export default function AppSelect({
           transition: "border-color 120ms ease",
         }}
       >
-        <option value="">{placeholder}</option>
+        {!ohnePlatzhalter && <option value="">{placeholder}</option>}
 
         {options.map((option) => (
           <option key={option.value} value={option.value}>

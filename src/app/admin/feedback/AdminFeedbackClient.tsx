@@ -79,6 +79,7 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 2, flexWrap: "wrap", alignItems: "flex-end" }}>
           <div style={{ minWidth: 220 }}>
             <AppSelect
+              ohnePlatzhalter
               label="Sortieren nach"
               value={sortKey}
               onChange={(v) => setSortKey((v || "recent") as SortKey)}

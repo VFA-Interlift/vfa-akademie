@@ -366,6 +366,7 @@ function FeedbackCard() {
 
       <div style={{ display: "grid", gap: 14 }}>
         <AppSelect
+          ohnePlatzhalter
           label="Kategorie"
           value={category}
           onChange={setCategory}

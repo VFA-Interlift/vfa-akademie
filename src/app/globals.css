@@ -601,12 +601,23 @@ a, button {
        die weiße Uhr steht auf Petrol. */
     width: 100vw;
     margin-left: calc(50% - 50vw);
-    margin-top: calc(-24px - env(safe-area-inset-top, 0px));
+    /* Ohne untere Leiste (Anmeldefamilie, Impressum, Datenschutz) steht der
+       globale Kopf oben und trägt das Aussparungs-Polster selbst — das Band
+       beginnt dann direkt unter ihm, ohne eigenen Streifenanteil
+       (Gegenprüfung der Launch-Runde, 05.09.2026). */
+    margin-top: -24px;
     border-radius: 0;
     /* Unten Platz für die helle Lippe, die sich wie die Dashboard-Karte mit
        runden Ecken ÜBER das Grün schiebt (Tobis Ansage 13.08.: das Weiß ist
        die Karte, nicht das Grün). */
-    padding: calc(env(safe-area-inset-top, 0px) + 22px) 16px 52px;
+    padding: 22px 16px 52px;
+  }
+  /* Eingeloggt am Handy ist der Kopf versteckt: das Band läuft bis unter die
+     Statusleiste hinauf, die Überschrift sitzt im Streifenbereich, die weiße
+     Uhr steht auf Petrol. */
+  body.has-bottom-nav .seiten-kopf {
+    margin-top: calc(-24px - env(safe-area-inset-top, 0px));
+    padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
   }
   .seiten-kopf::after {
     content: "";
@@ -631,11 +642,14 @@ a, button {
    entsprechend weiter hinauf, sonst hängt es 16px unter der Oberkante. */
 @media (min-width: 600px) and (max-width: 759px) {
   .seiten-kopf {
-    margin-top: calc(-40px - env(safe-area-inset-top, 0px));
+    margin-top: -40px;
     /* Seitlich wie page-main (24px) — sonst stand der Bandtitel 8px links
        vom Inhalt (Befund f07-8). */
     padding-left: 24px;
     padding-right: 24px;
+  }
+  body.has-bottom-nav .seiten-kopf {
+    margin-top: calc(-40px - env(safe-area-inset-top, 0px));
   }
 }
 
@@ -667,6 +681,14 @@ a, button {
    ist die weiße Uhrzeit im gescrollten Zustand optisch weg. Oben liegt sie
    auf dem Petrol des Kopfes und bleibt lesbar. */
 html.dashboard-aktiv .safe-top {
+  display: none;
+}
+
+/* Eingeloggt am Handy: der Kopf ist versteckt und das Petrol-Band jeder Seite
+   reicht selbst bis unter die Uhr — ein Deckstreifen darüber ergäbe wieder
+   die bekannte Naht (plain Petrol über bewegtem Muster). Die Leisten-Klasse
+   steht dank Inline-Skript in den Layouts schon beim ersten Zeichnen. */
+body.has-bottom-nav .safe-top {
   display: none;
 }
 
