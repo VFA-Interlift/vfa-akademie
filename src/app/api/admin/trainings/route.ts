@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { deutschesDatum } from "@/lib/trainings/format";
 import {
   getCertificateKindByCode,
   normalizeCertificateCode,
@@ -11,29 +12,6 @@ export const dynamic = "force-dynamic";
 
 function deny(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
-}
-
-function parseGermanDate(value: string): Date | null {
-  const trimmed = value.trim();
-
-  const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(trimmed);
-  if (!match) return null;
-
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
 }
 
 async function requireAdmin() {
@@ -125,10 +103,10 @@ export async function POST(req: Request) {
     return deny(400, "UNKNOWN_CERTIFICATE_CODE");
   }
 
-  const startDate = parseGermanDate(startDateStr);
+  const startDate = deutschesDatum(startDateStr);
   if (!startDate) return deny(400, "INVALID_START_DATE");
 
-  const endDate = parseGermanDate(endDateStr);
+  const endDate = deutschesDatum(endDateStr);
   if (!endDate) return deny(400, "INVALID_END_DATE");
 
   if (endDate.getTime() < startDate.getTime()) {

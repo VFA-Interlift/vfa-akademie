@@ -17,6 +17,41 @@ export function formatDate(value: string | null | undefined) {
   });
 }
 
+/**
+ * Liest ein deutsch geschriebenes Datum („05.03.1990" oder „5.3.1990") als
+ * reinen Kalendertag in UTC. Ungültige Angaben und Tage, die es nicht gibt
+ * („31.02.2026"), ergeben null.
+ *
+ * Bis zum 05.09.2026 stand dieselbe Prüfung dreimal im Code, und die Kopien
+ * waren schon auseinandergelaufen: Das Profil nahm einstellige Tage an, die
+ * beiden Adminrouten für Schulungstermine verlangten weiter zwei Stellen.
+ *
+ * UTC ist Absicht: Ein Geburts- oder Kurstag ist ein Kalendertag, keine
+ * Uhrzeit. Über lokale Zeit gelesen läge er je nach Zeitzone einen Tag daneben.
+ */
+export function deutschesDatum(value: string): Date | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
 export function formatInstructorName(value: string | null) {
   return extractInstructorName(value) || "Noch nicht hinterlegt";
 }

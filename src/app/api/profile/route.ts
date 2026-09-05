@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmailChangeEmail } from "@/lib/email";
 import { bremsePruefen } from "@/lib/bremse";
+import { deutschesDatum } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
 
@@ -17,33 +18,6 @@ function istEmailFormat(wert: string): boolean {
 function verifyLink(token: string): string {
   const base = process.env.NEXT_PUBLIC_APP_URL || "https://vfa-akademie.vercel.app";
   return `${base.replace(/\/$/, "")}/e-mail-bestaetigen?token=${token}`;
-}
-
-function parseGermanDate(value: string): Date | null {
-  const trimmed = value.trim();
-
-  if (!trimmed) return null;
-
-  // Auch „5.3.1990“ ist eindeutig — einstellige Tage und Monate zulassen
-  // (Befund f03-16, 05.09.2026).
-  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
-  if (!match) return null;
-
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
 }
 
 function cleanString(value: unknown): string | null {
@@ -100,7 +74,7 @@ export async function PATCH(req: Request) {
     const birthDateStr =
       typeof body.birthDate === "string" ? body.birthDate.trim() : "";
 
-    const birthDate = birthDateStr ? parseGermanDate(birthDateStr) : null;
+    const birthDate = birthDateStr ? deutschesDatum(birthDateStr) : null;
 
     if (birthDateStr && !birthDate) {
       return NextResponse.json(

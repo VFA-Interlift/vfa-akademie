@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { deutschesDatum } from "@/lib/trainings/format";
 import {
   getCertificateKindByCode,
   normalizeCertificateCode,
@@ -54,29 +55,6 @@ function getErrorMessage(error: unknown) {
   }
 
   return String(error);
-}
-
-function parseGermanDate(value: string): Date | null {
-  const trimmed = value.trim();
-
-  const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(trimmed);
-  if (!match) return null;
-
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
 }
 
 async function requireAdmin() {
@@ -159,7 +137,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
         return fail("INVALID_START_DATE", 400);
       }
 
-      const startDate = parseGermanDate(body.date);
+      const startDate = deutschesDatum(body.date);
 
       if (!startDate) {
         return fail("INVALID_START_DATE", 400);
@@ -180,7 +158,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       if (!body.endDate.trim()) {
         data.endDate = null;
       } else {
-        const endDate = parseGermanDate(body.endDate);
+        const endDate = deutschesDatum(body.endDate);
 
         if (!endDate) {
           return fail("INVALID_END_DATE", 400);
