@@ -47,7 +47,10 @@ export function formatVenueLines(
   location: string | null,
   host: string | null
 ): string[] {
-  const primary = formatLocationLines(location);
+  // Das echte Ortsfeld (Wix: „Firma, Straße, PLZ Ort") enthält keinen
+  // Ansprechpartner — der Personenfilter warf dort Veranstaltungsorte wie
+  // „Hotel Hafen Hamburg" weg. Er gilt nur für den Gastgeber-Rückfall (05.09.2026).
+  const primary = formatAddressLines(location);
   if (primary.length) return primary;
   const firstHost = host ? host.split("|")[0] : null;
   return formatLocationLines(firstHost);
@@ -245,11 +248,21 @@ export function formatEnrollmentStatus(status: string) {
   return map[status] ?? status;
 }
 
+// Textfarben als Token, damit die Chips im Dunkelmodus lesbar bleiben
+// (vorher #005f5b, #B00020, #7C5A0A fest; Launch-Runde 05.09.2026).
 export function enrollmentStatusColor(status: string): { bg: string; color: string; border: string } {
-  if (status === "CONFIRMED") return { bg: "rgba(0,120,115,0.08)", color: "#007873", border: "1px solid rgba(0,120,115,0.25)" };
+  if (status === "CONFIRMED") return { bg: "rgba(0,120,115,0.08)", color: "var(--vfa-gruen-text)", border: "1px solid rgba(0,120,115,0.25)" };
   if (status === "ATTENDED" || status === "COMPLETED" || status === "CERTIFICATE_ISSUED")
-    return { bg: "rgba(0,120,115,0.12)", color: "#005f5b", border: "1px solid rgba(0,120,115,0.35)" };
+    return { bg: "rgba(0,120,115,0.12)", color: "var(--vfa-gruen-text)", border: "1px solid rgba(0,120,115,0.35)" };
   if (status === "CANCELLED" || status === "NO_SHOW")
-    return { bg: "rgba(176,0,32,0.08)", color: "#B00020", border: "1px solid rgba(176,0,32,0.25)" };
-  return { bg: "rgba(255,193,0,0.10)", color: "#7C5A0A", border: "1px solid rgba(255,193,0,0.35)" };
+    return { bg: "rgba(176,0,32,0.08)", color: "var(--vfa-rot-text)", border: "1px solid rgba(176,0,32,0.25)" };
+  return { bg: "rgba(255,193,0,0.25)", color: "var(--vfa-text)", border: "1px solid #FFC100" };
+}
+
+/** Variante des StatusBadge je Anmeldestatus — der Chip auf „Meine Schulungen". */
+export function enrollmentStatusVariant(status: string): "success" | "warning" | "danger" | "default" {
+  if (status === "CONFIRMED" || status === "ATTENDED" || status === "COMPLETED" || status === "CERTIFICATE_ISSUED")
+    return "success";
+  if (status === "CANCELLED" || status === "NO_SHOW") return "danger";
+  return "warning";
 }

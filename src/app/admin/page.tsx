@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import AppCard from "@/components/ui/AppCard";
+import PageHeader from "@/components/ui/PageHeader";
 import { fetchWixKurse } from "@/lib/wix/kurse";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +19,10 @@ export default async function AdminMenuPage() {
   ] = await Promise.all([
     prisma.user.count(),
     prisma.certificate.count({ where: { status: "ISSUED" } }),
-    prisma.enrollment.count({ where: { status: { in: ["PENDING", "CONFIRMED", "ATTENDED"] } } }),
+    // Alle Anmeldungen außer stornierten — vorher fiel die Zahl nach jedem
+    // Zertifikatslauf, weil CERTIFICATE_ISSUED nicht mitzählte, während die
+    // Schulungsseite alle zeigte (Befund f12-7, 05.09.2026).
+    prisma.enrollment.count({ where: { status: { not: "CANCELLED" } } }),
     prisma.training.count(),
     prisma.trainingFeedback.count(),
     prisma.cobraTrainingParticipant.count({ where: { participantType: "WIX_WEBSITE" } }),
@@ -39,18 +44,10 @@ export default async function AdminMenuPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-
-        <AnimatedSection delayMs={0}>
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ width: 40, height: 4, background: "#FFC100", borderRadius: 999, marginBottom: 14 }} />
-            <h1 style={{ margin: 0, fontSize: "clamp(24px, 5vw, 34px)", fontWeight: 800, color: "#1F1F1F", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-              Adminbereich
-            </h1>
-            <p style={{ margin: "8px 0 0", color: "#888888", fontSize: 15 }}>
-              Zentrale Verwaltung der VFA-Akademie.
-            </p>
-          </div>
-        </AnimatedSection>
+        <PageHeader title="Adminbereich" />
+        <p style={{ margin: "0 0 20px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)" }}>
+          Zentrale Verwaltung der VFA-Akademie.
+        </p>
 
         {/* Stats row */}
         <AnimatedSection delayMs={60}>
@@ -74,7 +71,7 @@ export default async function AdminMenuPage() {
                 padding: "14px 16px",
                 marginBottom: 28,
                 borderRadius: 12,
-                background: "#FFF6E0",
+                background: "rgba(255,193,0,0.12)",
                 border: "1px solid #FFC100",
               }}
             >
@@ -82,14 +79,14 @@ export default async function AdminMenuPage() {
                 ⚠
               </span>
               <div>
-                <strong style={{ display: "block", color: "#1F1F1F", fontSize: 15 }}>
+                <strong style={{ display: "block", color: "var(--vfa-text)", fontSize: "var(--t-basis)" }}>
                   {ohneSchulung} Website-{ohneSchulung === 1 ? "Anmeldung" : "Anmeldungen"} ohne
                   Schulungszuordnung
                 </strong>
-                <span style={{ color: "#6B6B6B", fontSize: 14 }}>
+                <span style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
                   Der Kurscode der Anmeldung passt zu keiner Schulung in der App. Diese
                   Teilnehmenden erhalten keine Einschreibung, kein Zertifikat und keine Credits.
-                  Meist ein abweichender Kurscode auf der Website — unter „Schulungen" nachsehen.
+                  Meist ein abweichender Kurscode auf der Website — unter „Schulungen“ nachsehen.
                 </span>
               </div>
             </div>
@@ -105,7 +102,6 @@ export default async function AdminMenuPage() {
               abbr="NZ"
               title="Nutzer verwalten"
               description="Profile prüfen, Credits bearbeiten, Rollen vergeben, Nutzer löschen."
-              color="#007873"
             />
           </div>
         </AnimatedSection>
@@ -118,43 +114,37 @@ export default async function AdminMenuPage() {
               href="/admin/schulungen"
               abbr="ST"
               title="Schulungen & Teilnehmer"
-              description="Alle Website-Kurse mit Anmeldungen, Teilnehmern und Anwesenheitsstatus."
-              color="#007873"
+              description="Alle Website-Schulungen mit Anmeldungen, Teilnehmern und Anwesenheitsstatus."
             />
             <AdminTile
               href="/admin/website"
               abbr="WS"
               title="Website-Synchronisation"
-              description="Kurse der Website (Wix-CMS) in die App übernehmen – ersetzt den Cobra-Sync."
-              color="#5A6472"
+              description="Schulungen der Website (Wix-CMS) in die App übernehmen – ersetzt den Cobra-Sync."
             />
             <AdminTile
               href="/admin/import"
               abbr="HI"
               title="Historie importieren"
               description="Vergangene Schulungen und Teilnehmer aus den Cobra-Exporten einlesen."
-              color="#5A6472"
             />
             <AdminTile
               href="/admin/trainings"
               abbr="DB"
               title="Schulungen in der Datenbank"
               description="Alle gespeicherten Schulungen mit Datum, Credits und Herkunft."
-              color="#5A6472"
             />
             <AdminTile
               href="/admin/credits"
               abbr="CR"
-              title="Credits buchen"
+              title="Credits verwalten"
               description="Credits manuell gutschreiben oder abziehen, mit Notiz."
-              color="#5A6472"
             />
             <AdminTile
               href="/admin/feedback"
               abbr="FB"
               title="Feedback-Auswertung"
               description="Sterne-Durchschnitte je Frage und Schulung, Freitexte und Excel-Export."
-              color="#FFB000"
             />
           </div>
         </AnimatedSection>
@@ -170,7 +160,6 @@ export default async function AdminMenuPage() {
               abbr="TR"
               title="Testrunde: Rückmeldungen"
               description="Alle eingegangenen Testbogen mit sämtlichen Antworten, direkt aus der Datenbank."
-              color="#007873"
             />
           </div>
         </AnimatedSection>
@@ -180,56 +169,47 @@ export default async function AdminMenuPage() {
   );
 }
 
+// Kennzahl nach Kanon: Etikett oben, Zahl darunter (.kennzahl), Karte AppCard
+// (Launch-Runde 05.09.2026).
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ padding: "14px 16px", background: "#FFFFFF", border: "1px solid #EFEFEF", borderRadius: 12 }}>
-      <div style={{ fontSize: 26, fontWeight: 900, color: "#007873", lineHeight: 1 }}>
-        {value.toLocaleString("de-DE")}
-      </div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>
-        {label}
-      </div>
-    </div>
+    <AppCard style={{ padding: "14px 16px", boxShadow: "none" }}>
+      <div className="etikett" style={{ marginBottom: 4 }}>{label}</div>
+      <div className="kennzahl">{value.toLocaleString("de-DE")}</div>
+    </AppCard>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>
+    <div className="etikett" style={{ marginBottom: 10 }}>
       {children}
     </div>
   );
 }
 
-function AdminTile({ href, abbr, title, description, color }: {
-  href: string; abbr: string; title: string; description: string; color: string;
+// Eine Kachelfarbe (Petrol) für alle; Titel in Textfarbe, 17/700.
+function AdminTile({ href, abbr, title, description }: {
+  href: string; abbr: string; title: string; description: string;
 }) {
   return (
-    <Link href={href} style={{ textDecoration: "none", display: "block" }}>
-      <div style={{
-        padding: "18px 20px",
-        background: "#FFFFFF",
-        border: "1px solid #EFEFEF",
-        borderRadius: 14,
-        display: "grid",
-        gap: 10,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-      }}>
+    <Link href={href} style={{ textDecoration: "none", display: "block", height: "100%" }}>
+      <AppCard style={{ padding: "18px 20px", display: "grid", gap: 10, height: "100%", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             width: 36, height: 36, borderRadius: 8,
-            background: `${color}18`,
-            border: `1px solid ${color}30`,
+            background: "rgba(0,120,115,0.10)",
+            border: "1px solid rgba(0,120,115,0.20)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 900, color, letterSpacing: "0.04em", flexShrink: 0,
+            fontSize: "var(--t-label)", fontWeight: 800, color: "var(--vfa-gruen-text)", letterSpacing: "0.04em", flexShrink: 0,
           }}>
             {abbr}
           </div>
-          <span style={{ fontSize: 16, fontWeight: 800, color, letterSpacing: "-0.01em" }}>{title}</span>
+          <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", letterSpacing: "-0.01em", lineHeight: "var(--lh-eng)" }}>{title}</h2>
         </div>
-        <p style={{ margin: 0, fontSize: 13, color: "#666666", lineHeight: 1.55 }}>{description}</p>
-        <span style={{ fontSize: 12, fontWeight: 700, color, letterSpacing: "0.04em" }}>Öffnen →</span>
-      </div>
+        <p style={{ margin: 0, fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>{description}</p>
+        <span style={{ fontSize: "var(--t-label)", fontWeight: 700, color: "var(--vfa-gruen-text)", letterSpacing: "0.04em" }}>Öffnen →</span>
+      </AppCard>
     </Link>
   );
 }

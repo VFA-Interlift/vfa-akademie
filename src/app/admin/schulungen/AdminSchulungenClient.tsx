@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
-const TEAL = "#007873";
+import AppInput from "@/components/ui/AppInput";
+import AppSelect from "@/components/ui/AppSelect";
 
 export type AdminKurs = {
   id: string;
@@ -28,7 +28,15 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "app", label: "Meiste App-Anmeldungen" },
 ];
 
-/** Neueste Website-Anmeldung eines Kurses (ISO) – für Sortierung „neueste zuerst". */
+// Karten wie AppCard — <details> lässt sich nicht als AppCard rendern.
+const karteStil: React.CSSProperties = {
+  background: "var(--vfa-karte)",
+  border: "1px solid var(--vfa-linie)",
+  borderRadius: 14,
+  boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
+};
+
+/** Neueste Website-Anmeldung eines Kurses (ISO) – für Sortierung „neueste zuerst“. */
 function letzteAnmeldung(kurs: AdminKurs): string {
   return kurs.teilnehmer.reduce((max, t) => (t.angemeldetAm && t.angemeldetAm > max ? t.angemeldetAm : max), "");
 }
@@ -37,14 +45,16 @@ function formatAnmeldung(iso: string | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  // Feste Zeitzone: Server (UTC) und Browser müssen dieselbe Uhrzeit ausgeben,
+  // sonst springt die Anzeige beim Laden um (05.09.2026).
+  return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
 }
 
 function attendanceLabel(status: string | null): { text: string; color: string } {
-  if (status === "ANWESEND") return { text: "✓ Da", color: "#005f5b" };
-  if (status === "NICHT_DA") return { text: "✗ Nicht da", color: "#B00020" };
-  if (status === "KRANK") return { text: "🤒 Krank", color: "#7C5A0A" };
-  return { text: "offen", color: "#999999" };
+  if (status === "ANWESEND") return { text: "✓ Da", color: "var(--vfa-gruen-text)" };
+  if (status === "NICHT_DA") return { text: "✗ Nicht da", color: "var(--vfa-rot-text)" };
+  if (status === "KRANK") return { text: "🤒 Krank", color: "var(--vfa-text-2)" };
+  return { text: "offen", color: "var(--vfa-text-3)" };
 }
 
 export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] }) {
@@ -90,35 +100,34 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
-        <label style={{ display: "grid", gap: 4, flex: "1 1 200px", minWidth: 180 }}>
-          <span style={labelStyle}>Sortieren nach</span>
-          <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} style={inputStyle}>
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </label>
-        <label style={{ display: "grid", gap: 4, flex: "1 1 220px", minWidth: 200 }}>
-          <span style={labelStyle}>Suche (Kurs, Dozent, Teilnehmer)</span>
-          <input
-            type="text"
-            value={suche}
-            onChange={(e) => setSuche(e.target.value)}
-            placeholder="z. B. A2-2604 oder Göbel"
-            style={inputStyle}
+        <div style={{ flex: "1 1 200px", minWidth: 180 }}>
+          <AppSelect
+            label="Sortieren nach"
+            value={sortKey}
+            onChange={(v) => setSortKey((v || "neueste") as SortKey)}
+            options={SORT_OPTIONS}
           />
-        </label>
+        </div>
+        <div style={{ flex: "1 1 220px", minWidth: 200 }}>
+          <AppInput
+            label="Suche (Schulung, Dozent, Teilnehmer)"
+            value={suche}
+            onChange={setSuche}
+            placeholder="z. B. A2-2604 oder Göbel"
+            inputMode="search"
+          />
+        </div>
       </div>
 
       {sichtbar.length === 0 ? (
-        <div style={{ padding: "16px 18px", background: "#FFFFFF", border: "1px solid #EFEFEF", borderRadius: 12, color: "#888888", fontSize: 14 }}>
+        <div style={{ ...karteStil, padding: "16px 18px", color: "var(--vfa-text-2)", fontSize: "var(--t-basis)" }}>
           Keine Schulungen gefunden.
         </div>
       ) : (
         sichtbar.map((kurs) => (
           <details
             key={kurs.id}
-            style={{ background: "#FFFFFF", border: "1px solid #EFEFEF", borderRadius: 12, opacity: kurs.vergangen ? 0.55 : 1 }}
+            style={{ ...karteStil, opacity: kurs.vergangen ? 0.55 : 1 }}
           >
             <summary
               style={{
@@ -133,9 +142,9 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
               }}
             >
               <div style={{ minWidth: 0 }}>
-                <span style={{ fontWeight: 800, fontSize: 15.5, color: TEAL }}>{kurs.code}</span>
-                <span style={{ color: "#666666", fontSize: 13.5, marginLeft: 10 }}>{kurs.title}</span>
-                <div style={{ fontSize: 12.5, color: "#888888", marginTop: 3 }}>
+                <span style={{ fontWeight: 700, fontSize: "var(--t-gross)", color: "var(--vfa-gruen-text)" }}>{kurs.code}</span>
+                <span style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", marginLeft: 10 }}>{kurs.title}</span>
+                <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-2)", marginTop: 3 }}>
                   📅 {kurs.datumText || "–"}
                   {kurs.ort ? <> · 📍 {kurs.ort.split(",")[0]}</> : null}
                   {kurs.dozenten.length > 0 && <> · 👤 {kurs.dozenten.join(", ")}</>}
@@ -145,20 +154,20 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
                 <CountPill label="Teilnehmer" value={kurs.teilnehmer.length} strong />
                 <CountPill label="App" value={kurs.enrollments.length} />
                 {kurs.teilnehmer.some((t) => t.attendanceStatus) && (
-                  <div style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(0,120,115,0.08)", border: "1px solid rgba(0,120,115,0.25)", fontSize: 12, fontWeight: 800, color: "#005f5b", whiteSpace: "nowrap" }}>
+                  <div style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(0,120,115,0.08)", border: "1px solid rgba(0,120,115,0.25)", fontSize: "var(--t-label)", fontWeight: 800, color: "var(--vfa-gruen-text)", whiteSpace: "nowrap" }}>
                     {kurs.teilnehmer.filter((t) => t.attendanceStatus === "ANWESEND").length}/{kurs.teilnehmer.length} anwesend
                   </div>
                 )}
               </div>
             </summary>
 
-            <div style={{ borderTop: "1px solid #F0F0F0", padding: "12px 18px 16px", display: "grid", gap: 14 }}>
+            <div style={{ borderTop: "1px solid var(--vfa-linie-2)", padding: "12px 18px 16px", display: "grid", gap: 14 }}>
               <div>
-                <div style={{ fontSize: 11.5, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                <div className="etikett" style={{ marginBottom: 6 }}>
                   Website-Anmeldungen ({kurs.teilnehmer.length})
                 </div>
                 {kurs.teilnehmer.length === 0 ? (
-                  <div style={{ color: "#999999", fontSize: 13.5 }}>Noch keine Anmeldungen.</div>
+                  <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)" }}>Noch keine Anmeldungen.</div>
                 ) : (
                   <div style={{ display: "grid", gap: 4 }}>
                     {[...kurs.teilnehmer]
@@ -167,20 +176,20 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
                         const att = attendanceLabel(p.attendanceStatus);
                         const angemeldet = formatAnmeldung(p.angemeldetAm);
                         return (
-                          <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 10px", background: "#FAFAF8", border: "1px solid #F0F0F0", borderRadius: 8, fontSize: 13.5, flexWrap: "wrap" }}>
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 10px", background: "var(--vfa-karte-2)", border: "1px solid var(--vfa-linie-2)", borderRadius: 8, fontSize: "var(--t-klein)", flexWrap: "wrap" }}>
                             <span style={{ minWidth: 0 }}>
-                              <span style={{ fontWeight: 700, color: "#1F1F1F" }}>
+                              <span style={{ fontWeight: 700, color: "var(--vfa-text)" }}>
                                 {p.name}
-                                {p.firma && <span style={{ color: "#999999", fontWeight: 500 }}> · {p.firma}</span>}
-                                {p.email && <span style={{ color: "#B0B0B0", fontWeight: 500 }}> · {p.email}</span>}
+                                {p.firma && <span style={{ color: "var(--vfa-text-3)", fontWeight: 500 }}> · {p.firma}</span>}
+                                {p.email && <span style={{ color: "var(--vfa-text-3)", fontWeight: 500 }}> · {p.email}</span>}
                               </span>
                               {angemeldet && (
-                                <span style={{ display: "block", color: "#AAAAAA", fontWeight: 600, fontSize: 12, marginTop: 2 }}>
+                                <span style={{ display: "block", color: "var(--vfa-text-3)", fontWeight: 600, fontSize: "var(--t-label)", marginTop: 2 }}>
                                   🗓 angemeldet am {angemeldet}
                                 </span>
                               )}
                             </span>
-                            <span style={{ fontWeight: 800, color: att.color, fontSize: 12.5, whiteSpace: "nowrap" }}>{att.text}</span>
+                            <span style={{ fontWeight: 800, color: att.color, fontSize: "var(--t-label)", whiteSpace: "nowrap" }}>{att.text}</span>
                           </div>
                         );
                       })}
@@ -189,17 +198,17 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
               </div>
 
               <div>
-                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#7C5A0A", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                <div className="etikett" style={{ marginBottom: 6 }}>
                   App-Anmeldungen ({kurs.enrollments.length})
                 </div>
                 {kurs.enrollments.length === 0 ? (
-                  <div style={{ color: "#999999", fontSize: 13.5 }}>Keine App-Anmeldungen.</div>
+                  <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)" }}>Keine App-Anmeldungen.</div>
                 ) : (
                   <div style={{ display: "grid", gap: 4 }}>
                     {kurs.enrollments.map((e, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 10px", background: "#FFFBEE", border: "1px solid rgba(255,193,0,0.25)", borderRadius: 8, fontSize: 13.5, flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: 700, color: "#1F1F1F" }}>{e.name}</span>
-                        <span style={{ fontWeight: 700, color: "#7C5A0A", fontSize: 12.5 }}>{e.status}</span>
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 10px", background: "rgba(255,193,0,0.12)", border: "1px solid rgba(255,193,0,0.25)", borderRadius: 8, fontSize: "var(--t-klein)", flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 700, color: "var(--vfa-text)" }}>{e.name}</span>
+                        <span style={{ fontWeight: 700, color: "var(--vfa-text-2)", fontSize: "var(--t-label)" }}>{e.status}</span>
                       </div>
                     ))}
                   </div>
@@ -208,16 +217,16 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
 
               {kurs.signatureLists.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                  <div className="etikett" style={{ marginBottom: 6 }}>
                     Unterschriebene Liste{kurs.signatureLists.length > 1 ? "n" : ""} ({kurs.signatureLists.length})
                   </div>
                   <div style={{ display: "grid", gap: 4 }}>
                     {kurs.signatureLists.map((sh) => (
-                      <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "7px 10px", background: "#F3F6F5", border: "1px solid #D6E0DF", borderRadius: 8, fontSize: 13.5, flexWrap: "wrap" }}>
-                        <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: TEAL, fontWeight: 700, textDecoration: "none" }}>
+                      <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "7px 10px", background: "var(--vfa-karte-2)", border: "1px solid var(--vfa-linie)", borderRadius: 8, fontSize: "var(--t-klein)", flexWrap: "wrap" }}>
+                        <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "var(--vfa-gruen-text)", fontWeight: 700, textDecoration: "none" }}>
                           📄 Liste · {sh.pageCount} {sh.pageCount === 1 ? "Seite" : "Seiten"}
                         </a>
-                        <span style={{ fontSize: 12, color: "#888888" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
+                        <span style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-2)" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
                       </div>
                     ))}
                   </div>
@@ -231,37 +240,16 @@ export default function AdminSchulungenClient({ kurse }: { kurse: AdminKurs[] })
   );
 }
 
-const labelStyle: React.CSSProperties = {
-  fontSize: 11.5,
-  fontWeight: 800,
-  color: TEAL,
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: "9px 12px",
-  borderRadius: 10,
-  border: "1px solid #D4D4D4",
-  background: "#FFFFFF",
-  color: "#1F1F1F",
-  fontSize: 14,
-  fontWeight: 600,
-  outlineColor: TEAL,
-  width: "100%",
-  boxSizing: "border-box",
-};
-
 function CountPill({ label, value, strong = false }: { label: string; value: number; strong?: boolean }) {
   return (
     <div style={{
       padding: "6px 12px",
       borderRadius: 999,
-      background: strong ? "rgba(0,120,115,0.08)" : "#F4F4F2",
-      border: strong ? "1px solid rgba(0,120,115,0.25)" : "1px solid #E6E6E6",
-      fontSize: 12,
+      background: strong ? "rgba(0,120,115,0.08)" : "var(--vfa-karte-2)",
+      border: strong ? "1px solid rgba(0,120,115,0.25)" : "1px solid var(--vfa-linie)",
+      fontSize: "var(--t-label)",
       fontWeight: 800,
-      color: strong ? TEAL : "#666666",
+      color: strong ? "var(--vfa-gruen-text)" : "var(--vfa-text-2)",
       whiteSpace: "nowrap",
     }}>
       {value} {label}

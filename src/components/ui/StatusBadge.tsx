@@ -5,6 +5,8 @@ type StatusBadgeProps = {
   variant?: StatusBadgeVariant;
 };
 
+// Petrol und Gelb als Chip-FLÄCHE bleiben fest (Marke in beiden Modi); alles
+// andere Token. Schrift auf Staffelmaß 13/700 (Launch-Runde 05.09.2026).
 export default function StatusBadge({
   children,
   variant = "default",
@@ -18,8 +20,8 @@ export default function StatusBadge({
         border: getBorder(variant),
         background: getBackground(variant),
         color: getColor(variant),
-        fontSize: 13,
-        fontWeight: 800,
+        fontSize: "var(--t-klein)",
+        fontWeight: 700,
         lineHeight: 1.2,
         letterSpacing: "0.04em",
         textTransform: "uppercase",

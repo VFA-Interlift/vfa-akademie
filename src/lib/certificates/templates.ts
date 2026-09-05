@@ -3,7 +3,8 @@ import { CertificateKind } from "@prisma/client";
 export type CertificateTemplateConfig = {
   code: string;
   label: string;
-  kind: CertificateKind;
+  /** null: Kurs bekannt, aber (noch) ohne App-Vorlage — dann verspricht der Kalender nichts. */
+  kind: CertificateKind | null;
   templateFileName: string;
   pdfTemplateFileName?: string;
   isVdiCertificate: boolean;
@@ -48,7 +49,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   ARB: {
     code: "ARB",
-    label: "Grundlegende Sicherheitsanforderungen fuer Arbeiten an Aufzugsanlagen",
+    label: "Grundlegende Sicherheitsanforderungen für Arbeiten an Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "ARB_TN-Zert.docx",
     pdfTemplateFileName: "ARB_TN-Zert App.pdf",
@@ -57,7 +58,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   AZUBI: {
     code: "AZUBI",
-    label: "VFA-Einfuehrungsseminar / Welcome Azubis",
+    label: "VFA-Einführungsseminar / Welcome Azubis",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "AZUBI_TN-Best.docx",
     pdfTemplateFileName: "AZUBI_Teilnahmebestätigung App.pdf",
@@ -84,7 +85,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   DGUV: {
     code: "DGUV",
-    label: "Fachkunde im eingeschraenkten Aufgabengebiet nach DGUV 309-011",
+    label: "Fachkunde im eingeschränkten Aufgabengebiet nach DGUV 309-011",
     kind: "CERTIFICATE",
     templateFileName: "DGUV-TN-Zert.docx",
     pdfTemplateFileName: "DGUV-TN-Zert. App.pdf",
@@ -102,7 +103,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   EFK2: {
     code: "EFK2",
-    label: "Elektrofachkraft fuer festgelegte Taetigkeiten im Aufzugbau",
+    label: "Elektrofachkraft für festgelegte Tätigkeiten im Aufzugbau",
     kind: "CERTIFICATE",
     templateFileName: "EFK2-Zertifikat_neu.docx",
     pdfTemplateFileName: "EFK2-Zertifikat App.pdf",
@@ -127,7 +128,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
    */
   EFK1: {
     code: "EFK1",
-    label: "Elektrofachkraft fuer festgelegte Taetigkeiten im Aufzugbau",
+    label: "Elektrofachkraft für festgelegte Tätigkeiten im Aufzugbau",
     kind: "CERTIFICATE",
     templateFileName: "EFK2-Zertifikat_neu.docx",
     pdfTemplateFileName: "EFK2-Zertifikat App.pdf",
@@ -136,7 +137,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   EINST: {
     code: "EINST",
-    label: "Aufzuege fuer Einsteiger",
+    label: "Aufzüge für Einsteiger",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "EINST-Online_Teilnahmebestaetigung.docx",
     pdfTemplateFileName: "EINST-Online_Teilnahmebestätigung App.pdf",
@@ -145,7 +146,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   FPFW: {
     code: "FPFW",
-    label: "Fachkundige Person fuer die Befreiung von Personen aus Aufzugsanlagen",
+    label: "Fachkundige Person für die Befreiung von Personen aus Aufzugsanlagen",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "FPFW-Teilnahmebest.docx",
     pdfTemplateFileName: "FPFW-Teilnahmebest. App.pdf",
@@ -163,7 +164,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   GEF: {
     code: "GEF",
-    label: "Fachkundige Person fuer die Erstellung von Gefaehrdungsbeurteilungen",
+    label: "Fachkundige Person für die Erstellung von Gefährdungsbeurteilungen",
     kind: "CERTIFICATE",
     templateFileName: "GEF-TN-Zert_neu.docx",
     pdfTemplateFileName: "GEF-TN-Zert._neu App.pdf",
@@ -217,7 +218,7 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
 
   PLG: {
     code: "PLG",
-    label: "Aufzugsplanung als Teil der Gebaeudeplanung",
+    label: "Aufzugsplanung als Teil der Gebäudeplanung",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "PLG_neue_TN-Best.docx",
     pdfTemplateFileName: "PLG TN-Best App.pdf",
@@ -241,17 +242,23 @@ export const CERTIFICATE_TEMPLATES: Record<string, CertificateTemplateConfig> = 
     isVdiCertificate: false,
   },
 
+  /**
+   * SICH hat keine App-Vorlage (nur die Rohfassung unter pdf-vorlagen/private),
+   * der Zertifikatslauf übersprang jeden Teilnehmer still — während der
+   * Kurskalender „Zertifikat“ als Abschluss auswies. Bis eine Vorlage in
+   * pdf-vorlagen/ liegt und in PDF_COORDS steht: kind null (05.09.2026).
+   */
   SICH: {
     code: "SICH",
-    label: "Fachkundige Person fuer DGUV V3-Messungen an Aufzugsanlagen",
-    kind: "CERTIFICATE",
+    label: "Fachkundige Person für DGUV V3-Messungen an Aufzugsanlagen",
+    kind: null,
     templateFileName: "SICH_TN-Zert.docx",
     isVdiCertificate: false,
   },
 
   SON: {
     code: "SON",
-    label: "Sonderanlagen: Feuerwehr-, Lasten- und Glasaufzuege",
+    label: "Sonderanlagen: Feuerwehr-, Lasten- und Glasaufzüge",
     kind: "ATTENDANCE_CONFIRMATION",
     templateFileName: "SON-TN-Bestaetigung.docx",
     pdfTemplateFileName: "SON-TN-Bestätigung App.pdf",

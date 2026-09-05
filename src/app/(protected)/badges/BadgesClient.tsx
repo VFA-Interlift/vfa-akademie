@@ -1,5 +1,11 @@
 "use client";
 
+import AppButton from "@/components/ui/AppButton";
+import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
+
+// Petrol als Fläche (Chip „Aktuell", SVG-Siegel) — als Textfarbe gilt das
+// Token var(--vfa-gruen-text), damit der Dunkelmodus aufhellen kann.
 const VFA_GREEN = "#007873";
 const VFA_YELLOW = "#FFC100";
 
@@ -58,7 +64,7 @@ function achievementConfigs(completedCount: number, vdiCompleted: string[]): Bad
       key: "vdi-reihe",
       title: "VDI-Reihe",
       sublabel: "A1 · A2 · B · C",
-      footnote: vdiDone >= 4 ? "Komplett abgeschlossen" : `${vdiDone} / 4 Kurse`,
+      footnote: vdiDone >= 4 ? "Komplett abgeschlossen" : `${vdiDone} / 4 Schulungen`,
       earned: vdiDone >= 4,
       color: "#0B4F4B",
       accent: VFA_GREEN,
@@ -194,18 +200,7 @@ export default function BadgesClient({
 
   return (
     <div style={{ display: "grid", gap: 28 }}>
-      <div
-        style={{
-          padding: "18px 22px",
-          background: "var(--vfa-karte)",
-          border: "1px solid var(--vfa-linie)",
-          borderRadius: 14,
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          flexWrap: "wrap",
-        }}
-      >
+      <AppCard style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <div
           style={{
             width: 50,
@@ -217,44 +212,34 @@ export default function BadgesClient({
             alignItems: "center",
             justifyContent: "center",
             fontSize: 22,
-            color: VFA_GREEN,
+            color: "var(--vfa-gruen-text)",
             flexShrink: 0,
           }}
         >
           ★
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 12, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Dein aktueller Status
-          </div>
-          <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 750, color: VFA_GREEN, marginTop: 2 }}>
+          <div className="etikett">Dein aktueller Status</div>
+          <h2 className="balance" style={{ margin: "2px 0 0", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
             {earnedRank ? earnedRank.title : "Kein Rang"} · {credits.toLocaleString("de-DE")} Credits
-          </div>
-          <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>
+          </h2>
+          <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 2 }}>
             {earnedAchievements} von {achievements.length} Auszeichnungen freigeschaltet
           </div>
         </div>
-      </div>
+      </AppCard>
 
       <BadgeSection title="Ränge" subtitle="Steigen mit deinen Credits" badges={ranks} highlightKey={earnedRank?.key} />
 
       <BadgeSection title="Auszeichnungen" subtitle="Für absolvierte Schulungen" badges={achievements} />
 
-      <div
-        style={{
-          padding: "14px 18px",
-          background: "var(--vfa-karte-2)",
-          border: "1px solid var(--vfa-linie)",
-          borderRadius: 10,
-          fontSize: 13,
-          color: "var(--vfa-text-2)",
-          lineHeight: 1.6,
-        }}
-      >
+      {/* „Badges" ist der Oberbegriff für Ränge und Auszeichnungen; beide
+          Auszeichnungs-Formate stehen dran, weil es beide Knöpfe gibt (05.09.2026). */}
+      <Meldung art="hinweis">
         Freigeschaltete Badges lassen sich herunterladen – z. B. für LinkedIn,
-        E-Mail-Signaturen oder die eigene Website. Ränge kommen als PNG, die
-        übrigen Auszeichnungen als SVG.
-      </div>
+        E-Mail-Signaturen oder die eigene Website. Ränge kommen als PNG,
+        Auszeichnungen als SVG oder PNG.
+      </Meldung>
     </div>
   );
 }
@@ -273,10 +258,8 @@ function BadgeSection({
   return (
     <div style={{ display: "grid", gap: 14 }}>
       <div>
-        <div style={{ fontSize: 12, fontWeight: 800, color: VFA_GREEN, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          {title}
-        </div>
-        <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>{subtitle}</div>
+        <h2 className="etikett" style={{ margin: 0 }}>{title}</h2>
+        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 2 }}>{subtitle}</div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
@@ -327,8 +310,8 @@ function BadgeSection({
                       right: 8,
                       background: VFA_GREEN,
                       color: "#FFF",
-                      fontSize: 10,
-                      fontWeight: 800,
+                      fontSize: "var(--t-label)",
+                      fontWeight: 700,
                       letterSpacing: "0.06em",
                       padding: "3px 7px",
                       borderRadius: 999,
@@ -342,30 +325,29 @@ function BadgeSection({
               {/* Beim echten Schild stehen Credits/Status nicht im Bild → als Caption darunter. */}
               {isImage && (
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: badge.color, letterSpacing: "0.04em" }}>
+                  {/* Rangfarbe nur im Schild; die dunklen Töne wären im Dunkelmodus unlesbar (05.09.2026) */}
+                  <div style={{ fontSize: "var(--t-label)", fontWeight: 700, color: "var(--vfa-text-2)", letterSpacing: "0.04em" }}>
                     {badge.sublabel.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--vfa-text-3)", marginTop: 2 }}>{badge.footnote}</div>
+                  <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", marginTop: 2 }}>{badge.footnote}</div>
                 </div>
               )}
 
+              {/* Download-Knöpfe als AppButton, untereinander — nebeneinander passten
+                  zwei Pillen nicht in eine 150-px-Kachel (05.09.2026). */}
               {badge.earned && (
                 isImage ? (
-                  <button
-                    type="button"
-                    onClick={() => downloadBadge(badge, "png")}
-                    style={{ ...downloadButtonStyle(badge.accent, "#FFFFFF", true), width: "100%" }}
-                  >
+                  <AppButton onClick={() => downloadBadge(badge, "png")} fullWidth ariaLabel={`${badge.title} als PNG herunterladen`}>
                     ↓ PNG
-                  </button>
+                  </AppButton>
                 ) : (
-                  <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                    <button type="button" onClick={() => downloadBadge(badge, "svg")} style={downloadButtonStyle(badge.accent, badge.color, false)}>
-                      ↓ SVG
-                    </button>
-                    <button type="button" onClick={() => downloadBadge(badge, "png")} style={downloadButtonStyle(badge.accent, "#FFFFFF", true)}>
+                  <div style={{ width: "100%", display: "grid", gap: 6 }}>
+                    <AppButton onClick={() => downloadBadge(badge, "png")} fullWidth ariaLabel={`${badge.title} als PNG herunterladen`}>
                       ↓ PNG
-                    </button>
+                    </AppButton>
+                    <AppButton variant="secondary" onClick={() => downloadBadge(badge, "svg")} fullWidth ariaLabel={`${badge.title} als SVG herunterladen`}>
+                      ↓ SVG
+                    </AppButton>
                   </div>
                 )
               )}
@@ -375,18 +357,4 @@ function BadgeSection({
       </div>
     </div>
   );
-}
-
-function downloadButtonStyle(accent: string, color: string, filled: boolean): React.CSSProperties {
-  return {
-    padding: "9px 0",
-    borderRadius: 999,
-    border: `1px solid ${accent}`,
-    background: filled ? accent : "transparent",
-    color,
-    fontSize: 11,
-    fontWeight: 700,
-    cursor: "pointer",
-    letterSpacing: "0.02em",
-  };
 }

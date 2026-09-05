@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
+import StatusBadge from "@/components/ui/StatusBadge";
 import PdfAnsichtLink from "@/components/PdfAnsichtLink";
 
+// Petrol nur noch für Flächen und Linien; als Textfarbe gilt das Token
+// --vfa-gruen-text, damit der Dunkelmodus aufhellen kann (Launch-Runde 05.09.2026).
 const TEAL = "#007873";
+const GRUEN_TEXT = "var(--vfa-gruen-text)";
 
 export type DozentKurs = {
   id: string;
@@ -46,10 +52,13 @@ export type DozentKurs = {
   }[];
 };
 
-const STATUS_OPTIONS: { value: string; label: string; color: string; bg: string }[] = [
-  { value: "ANWESEND", label: "✓ Da", color: "#005f5b", bg: "rgba(0,120,115,0.12)" },
-  { value: "NICHT_DA", label: "✗ Nicht da", color: "#B00020", bg: "rgba(176,0,32,0.10)" },
-  { value: "KRANK", label: "🤒 Krank", color: "#7C5A0A", bg: "rgba(255,193,0,0.15)" },
+// Gewählter Status in Token-Farben (Dunkelmodus). „Krank" folgt dem Gelb-Muster
+// von StatusBadge warning: dunkler Text auf gelbem Schein, weil Gelb als
+// Schrift auf hellem Grund nicht lesbar wäre (05.09.2026).
+const STATUS_OPTIONS: { value: string; label: string; color: string; bg: string; border: string }[] = [
+  { value: "ANWESEND", label: "✓ Da", color: GRUEN_TEXT, bg: "rgba(0,120,115,0.12)", border: GRUEN_TEXT },
+  { value: "NICHT_DA", label: "✗ Nicht da", color: "var(--vfa-rot-text)", bg: "rgba(176,0,32,0.10)", border: "var(--vfa-rot-text)" },
+  { value: "KRANK", label: "🤒 Krank", color: "var(--vfa-text)", bg: "rgba(255,193,0,0.25)", border: "#FFC100" },
 ];
 
 // Organisations-/Logistik-Felder. Werden künftig automatisch aus der
@@ -62,7 +71,15 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "feedback", label: "Feedback" },
 ];
 
-const linkStyle: React.CSSProperties = { color: TEAL, fontWeight: 700, wordBreak: "break-all" };
+const linkStyle: React.CSSProperties = { color: GRUEN_TEXT, fontWeight: 700, wordBreak: "break-all" };
+
+// PdfAnsichtLink ist ein eigener Knopf (öffnet das PDF in der App) und lässt
+// sich nicht in AppButton hüllen — deshalb bekommt er hier genau die Maße von
+// AppButton primary (05.09.2026).
+const pdfKnopfStyle: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 42, padding: "10px 22px",
+  borderRadius: 999, background: TEAL, color: "#FFFFFF", fontSize: 14, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase",
+};
 
 // Rendert Fließtext und macht URLs, E-Mail-Adressen (mailto:) und Telefonnummern
 // (tel:) klickbar – praktisch für den Ansprechpartner-Block am Handy.
@@ -134,15 +151,6 @@ function formatUploadDate(iso: string): string {
   return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(d);
 }
 
-const labelHead: React.CSSProperties = {
-  fontSize: 11.5,
-  fontWeight: 800,
-  color: TEAL,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-  marginBottom: 8,
-};
-
 export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(kurse.length === 1 ? kurse[0].id : null);
   const [tab, setTab] = useState<TabKey>("infos");
@@ -159,6 +167,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
     return initial;
   });
   const [uploadingKursId, setUploadingKursId] = useState<string | null>(null);
+  const dateiFeldRef = useRef<HTMLInputElement>(null);
 
   function openKurs(id: string) {
     setSelectedId(id);
@@ -221,7 +230,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
   async function setAttendance(participantId: string, newStatus: string | null) {
     const previous = status[participantId] ?? null;
-    // Nochmal antippen = zurück auf „offen".
+    // Nochmal antippen = zurück auf „offen“.
     const next = previous === newStatus ? null : newStatus;
 
     setStatus((s) => ({ ...s, [participantId]: next }));
@@ -244,11 +253,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
     }
   }
 
-  const errorBanner = error ? (
-    <div style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(176,0,32,0.3)", background: "rgba(176,0,32,0.07)", color: "#B00020", fontWeight: 700, fontSize: 13 }}>
-      {error}
-    </div>
-  ) : null;
+  const errorBanner = error ? <Meldung art="fehler">{error}</Meldung> : null;
 
   const selected = selectedId ? kurse.find((k) => k.id === selectedId) ?? null : null;
 
@@ -264,27 +269,19 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
         <button
           type="button"
           onClick={() => setSelectedId(null)}
-          style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: TEAL, fontWeight: 800, fontSize: 14, cursor: "pointer", padding: "2px 0" }}
+          style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: GRUEN_TEXT, fontWeight: 700, fontSize: "var(--t-klein)", cursor: "pointer", padding: "2px 0" }}
         >
           ← Zurück zur Übersicht
         </button>
 
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <div style={{ fontSize: "clamp(18px, 5vw, 22px)", fontWeight: 800, color: TEAL, lineHeight: 1.2 }}>{selected.code}</div>
-            {selected.rolle === "HOSPITATION" && (
-              <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
-                Hospitation
-              </span>
-            )}
-            {selected.vergangen && (
-              <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#5B6B69", background: "#EDEFEE", border: "1px solid #D6DAD9", borderRadius: 999, padding: "3px 9px" }}>
-                Vergangen
-              </span>
-            )}
+            <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: GRUEN_TEXT, lineHeight: "var(--lh-eng)" }}>{selected.code}</h2>
+            {selected.rolle === "HOSPITATION" && <StatusBadge variant="warning">Hospitation</StatusBadge>}
+            {selected.vergangen && <StatusBadge>Vergangen</StatusBadge>}
           </div>
-          <div style={{ fontSize: 14, color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.4 }}>{selected.title}</div>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 13, color: "var(--vfa-text-2)", fontWeight: 600 }}>
+          <div style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.4 }}>{selected.title}</div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", fontWeight: 600 }}>
             <span>📅 {selected.datumText}</span>
             {selected.ort && <span>📍 {selected.ort.split(",")[0]}</span>}
             <span>👥 {selected.participants.length} Teilnehmer{selected.participants.length > 0 ? ` · ${anwesend} anwesend` : ""}</span>
@@ -294,7 +291,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
         {errorBanner}
 
         {/* Tab-Leiste */}
-        <div style={{ display: "flex", gap: 4, borderBottom: "1px solid #E6E6E6", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--vfa-linie)", overflowX: "auto" }}>
           {TABS.map((t) => {
             const active = tab === t.key;
             return (
@@ -302,7 +299,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                style={{ padding: "9px 16px", border: "none", background: "transparent", borderBottom: active ? `2px solid ${TEAL}` : "2px solid transparent", color: active ? TEAL : "#888888", fontWeight: 800, fontSize: 14, cursor: "pointer", marginBottom: -1, whiteSpace: "nowrap" }}
+                style={{ padding: "9px 16px", border: "none", background: "transparent", borderBottom: active ? `2px solid ${GRUEN_TEXT}` : "2px solid transparent", color: active ? GRUEN_TEXT : "var(--vfa-text-3)", fontWeight: 700, fontSize: "var(--t-basis)", cursor: "pointer", marginBottom: -1, whiteSpace: "nowrap" }}
               >
                 {t.label}
                 {t.key === "teilnehmer" && selected.participants.length > 0 ? ` (${selected.participants.length})` : ""}
@@ -316,20 +313,20 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
           {tab === "infos" && (
             selected.orga.length > 0 ? (
               <div style={{ display: "grid", gap: 14 }}>
-                <div style={labelHead}>Organisation & Logistik</div>
+                <div className="etikett">Organisation & Logistik</div>
                 {selected.orga.map((o) => {
                   const text = o.text?.trim() || "";
                   return (
                     <div key={o.id} style={{ border: "1px solid var(--vfa-linie-2)", borderRadius: 12, background: "var(--vfa-karte-2)", overflow: "hidden" }}>
                       <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)" }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
-                        <div style={{ fontSize: 11.5, color: "var(--vfa-text-3)", marginTop: 3 }}>
+                        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>{o.subject || "Orga-Info"}</div>
+                        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 3 }}>
                           {o.fromAddress ? `${o.fromAddress} · ` : ""}{o.receivedText}
                         </div>
                       </div>
                       <div style={{ padding: "12px 14px" }}>
                         {text && (
-                          <div style={{ fontSize: 13.5, color: "var(--vfa-text)", lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          <div style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", lineHeight: "var(--lh-weit)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                             {renderTextWithLinks(text)}
                           </div>
                         )}
@@ -346,14 +343,14 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                         {o.files.length > 0 && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: text || o.images.length > 0 ? 12 : 0 }}>
                             {o.files.map((f) => (
-                              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--vfa-linie)", background: "var(--vfa-karte)", color: "var(--vfa-text)", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+                              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--vfa-linie)", background: "var(--vfa-karte)", color: "var(--vfa-text)", fontSize: "var(--t-klein)", fontWeight: 700, textDecoration: "none" }}>
                                 📄 {f.filename}
                               </a>
                             ))}
                           </div>
                         )}
                         {!text && o.images.length === 0 && o.files.length === 0 && (
-                          <div style={{ fontSize: 12.5, color: "#AAAAAA", fontStyle: "italic" }}>Kein Inhalt in dieser Mail.</div>
+                          <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", fontStyle: "italic" }}>Kein Inhalt in dieser Mail.</div>
                         )}
                       </div>
                     </div>
@@ -362,19 +359,19 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               </div>
             ) : (
               <div>
-                <div style={labelHead}>Organisation & Logistik</div>
+                <div className="etikett" style={{ marginBottom: 8 }}>Organisation & Logistik</div>
                 <div
                   style={{
                     padding: "16px 18px",
-                    border: "1px dashed #D9D9D9",
+                    border: "1px dashed var(--vfa-linie)",
                     borderRadius: 12,
-                    background: "#FBFBF9",
+                    background: "var(--vfa-karte-2)",
                   }}
                 >
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--vfa-text-2)" }}>
-                    Für diesen Kurs liegen noch keine Orga-Infos vor.
+                  <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text-2)" }}>
+                    Für diese Schulung liegen noch keine Orga-Infos vor.
                   </div>
-                  <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 6, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 6, lineHeight: "var(--lh-weit)" }}>
                     Sobald die Organisations- oder Bestätigungsmail zur Schulung eintrifft,
                     steht sie hier im Wortlaut — mit allem, was darin zu Hotel, Anreise,
                     Ansprechpartner und Ablauf steht. Bis dahin gelten die Angaben aus
@@ -390,39 +387,41 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               {/* Unterschriebene Teilnehmerliste (Foto-Upload → PDF) — oben */}
               <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <div style={labelHead}>Unterschriebene Liste</div>
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 34, padding: "7px 14px", borderRadius: 999, background: uploading ? "#8FBDBA" : TEAL, color: "#FFFFFF", fontSize: 12.5, fontWeight: 800, cursor: uploading ? "wait" : "pointer" }}>
+                  <div className="etikett">Unterschriebene Liste</div>
+                  {/* Das Dateifeld bleibt unsichtbar; der AppButton öffnet es. */}
+                  <AppButton onClick={() => dateiFeldRef.current?.click()} disabled={uploading}>
                     {uploading ? "Lädt hoch …" : "📷 Liste hochladen"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      disabled={uploading}
-                      onChange={(e) => {
-                        const f = e.target.files;
-                        if (f && f.length) uploadSignatureList(selected, f);
-                        e.currentTarget.value = "";
-                      }}
-                      style={{ display: "none" }}
-                    />
-                  </label>
+                  </AppButton>
+                  <input
+                    ref={dateiFeldRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files;
+                      if (f && f.length) uploadSignatureList(selected, f);
+                      e.currentTarget.value = "";
+                    }}
+                    style={{ display: "none" }}
+                  />
                 </div>
 
                 {sheetList.length === 0 ? (
-                  <div style={{ fontSize: 12.5, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
                     Noch keine Liste hochgeladen. Fotografiere die unterschriebene Teilnehmerliste – mehrere Seiten möglich, sie werden zu einem PDF zusammengefasst.
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 6 }}>
                     {sheetList.map((sh) => (
                       <div key={sh.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 11px", borderRadius: 10, border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)", flexWrap: "wrap" }}>
-                        <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: TEAL, fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
+                        <a href={sh.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: GRUEN_TEXT, fontWeight: 700, fontSize: "var(--t-klein)", textDecoration: "none" }}>
                           📄 Liste · {sh.pageCount} {sh.pageCount === 1 ? "Seite" : "Seiten"}
                         </a>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 11, color: "var(--vfa-text-3)" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
+                          <span style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)" }}>{sh.uploadedByName} · {sh.uploadedText}</span>
                           {sh.mine && (
-                            <button type="button" onClick={() => deleteSignatureList(selected.id, sh.id)} style={{ background: "none", border: "none", color: "#B00020", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}>
+                            <button type="button" onClick={() => deleteSignatureList(selected.id, sh.id)} style={{ background: "none", border: "none", color: "var(--vfa-rot-text)", fontSize: "var(--t-klein)", fontWeight: 700, cursor: "pointer", padding: 0 }}>
                               Entfernen
                             </button>
                           )}
@@ -436,14 +435,14 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
               {/* Website-Anmeldungen / Anwesenheit — darunter */}
               <div style={{ borderTop: "1px solid var(--vfa-linie-2)", paddingTop: 14 }}>
                 {selected.participants.length === 0 ? (
-                  <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
+                  <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
                     Noch keine Website-Anmeldungen für diese Schulung.
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 11.5, fontWeight: 700, color: "var(--vfa-text-3)", marginBottom: 4, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: "var(--t-label)", fontWeight: 700, color: "var(--vfa-text-3)", marginBottom: 4, flexWrap: "wrap" }}>
                       <span style={{ fontWeight: 600 }}>Antippen: Da / Nicht da / Krank</span>
-                      <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
+                      <span style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>{done}/{selected.participants.length} erfasst</span>
                     </div>
 
                     {selected.participants.map((p) => {
@@ -453,7 +452,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                           key={p.id}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "7px 11px", borderRadius: 10, border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)", flexWrap: "wrap" }}
                         >
-                          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--vfa-text)", minWidth: 100 }}>{p.name}</div>
+                          <div style={{ fontWeight: 700, fontSize: "var(--t-basis)", color: "var(--vfa-text)", minWidth: 100 }}>{p.name}</div>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                             {STATUS_OPTIONS.map((opt) => {
                               const active = current === opt.value;
@@ -463,7 +462,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                                   type="button"
                                   disabled={savingId === p.id}
                                   onClick={() => setAttendance(p.id, opt.value)}
-                                  style={{ minHeight: 40, padding: "9px 15px", borderRadius: 999, border: active ? `1.5px solid ${opt.color}` : "1px solid #D9D9D9", background: active ? opt.bg : "#FFFFFF", color: active ? opt.color : "#777777", fontSize: 13, fontWeight: 800, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
+                                  style={{ minHeight: 40, padding: "9px 15px", borderRadius: 999, border: active ? `1.5px solid ${opt.border}` : "1px solid var(--vfa-linie)", background: active ? opt.bg : "var(--vfa-karte)", color: active ? opt.color : "var(--vfa-text-2)", fontSize: "var(--t-klein)", fontWeight: 700, cursor: savingId === p.id ? "wait" : "pointer", opacity: savingId === p.id ? 0.6 : 1 }}
                                 >
                                   {opt.label}
                                 </button>
@@ -482,21 +481,21 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
           {tab === "feedback" && (
             selected.feedback ? (
               <div>
-                <div style={labelHead}>Feedback-Auswertung</div>
-                <p style={{ margin: "0 0 12px", fontSize: 13.5, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
-                  {selected.feedback.count} Rückmeldung{selected.feedback.count === 1 ? "" : "en"} liegen vor.
+                <div className="etikett" style={{ marginBottom: 8 }}>Feedback-Auswertung</div>
+                <p style={{ margin: "0 0 12px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
+                  {selected.feedback.count === 1 ? "1 Rückmeldung liegt vor." : `${selected.feedback.count} Rückmeldungen liegen vor.`}
                 </p>
                 <PdfAnsichtLink
                   url={`/api/dozent/feedback/pdf?trainingId=${selected.feedback.trainingId}`}
                   titel="Feedback-Auswertung"
                   dateiname="feedback-auswertung.pdf"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, padding: "11px 20px", borderRadius: 999, background: TEAL, color: "#FFFFFF", fontSize: 13.5, fontWeight: 800, letterSpacing: "0.04em" }}
+                  style={pdfKnopfStyle}
                 >
                   📄 Feedback-Auswertung ansehen
                 </PdfAnsichtLink>
               </div>
             ) : (
-              <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
                 Noch keine Feedback-Abgaben für diese Schulung.
               </div>
             )
@@ -510,21 +509,13 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
   const upcoming = kurse.filter((k) => !k.vergangen);
   const past = kurse.filter((k) => k.vergangen);
 
-  const sectionHead: React.CSSProperties = {
-    fontSize: 13,
-    fontWeight: 800,
-    color: TEAL,
-    textTransform: "uppercase",
-    letterSpacing: "0.07em",
-  };
-
   const renderKursCard = (kurs: DozentKurs) => {
     const anwesend = kurs.participants.filter((p) => (status[p.id] ?? null) === "ANWESEND").length;
     const istVergangen = kurs.vergangen;
-    const codeColor = istVergangen ? "#5B6B69" : TEAL;
+    const codeColor = istVergangen ? "var(--vfa-text-3)" : GRUEN_TEXT;
 
     return (
-      <AppCard key={kurs.id} accent={istVergangen ? "none" : "green"} style={{ padding: 0, overflow: "hidden", opacity: istVergangen ? 0.9 : 1 }}>
+      <AppCard key={kurs.id} style={{ padding: 0, overflow: "hidden", opacity: istVergangen ? 0.9 : 1 }}>
         <button
           type="button"
           onClick={() => openKurs(kurs.id)}
@@ -533,41 +524,37 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "center" }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 750, color: codeColor, lineHeight: 1.25 }}>
+                <div style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: codeColor, lineHeight: "var(--lh-eng)" }}>
                   {kurs.code}
                 </div>
-                {kurs.rolle === "HOSPITATION" && (
-                  <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#7C5A0A", background: "rgba(255,193,0,0.15)", border: "1px solid rgba(255,176,0,0.45)", borderRadius: 999, padding: "3px 9px" }}>
-                    Hospitation
-                  </span>
-                )}
+                {kurs.rolle === "HOSPITATION" && <StatusBadge variant="warning">Hospitation</StatusBadge>}
               </div>
-              <div style={{ fontSize: 13, color: "var(--vfa-text-2)", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 12.5, color: "var(--vfa-text-2)", fontWeight: 600 }}>
+              <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 3, lineHeight: 1.4 }}>{kurs.title}</div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", fontWeight: 600 }}>
                 <span>📅 {kurs.datumText}</span>
                 {kurs.ort && <span>📍 {kurs.ort.split(",")[0]}</span>}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: codeColor, lineHeight: 1 }}>
+                <div style={{ fontSize: "var(--t-titel)", fontWeight: 750, color: codeColor, lineHeight: 1 }}>
                   {kurs.participants.length}
                 </div>
-                <div style={{ fontSize: 10.5, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   Teilnehmer
                 </div>
                 {!istVergangen && kurs.participants.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#005f5b", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "var(--t-label)", color: GRUEN_TEXT, fontWeight: 700, marginTop: 4, whiteSpace: "nowrap" }}>
                     {anwesend} anwesend
                   </div>
                 )}
                 {istVergangen && kurs.feedback && (
-                  <div style={{ fontSize: 11, color: "#5B6B69", fontWeight: 800, marginTop: 4, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", fontWeight: 700, marginTop: 4, whiteSpace: "nowrap" }}>
                     {kurs.feedback.count} Feedback
                   </div>
                 )}
               </div>
-              <div style={{ color: istVergangen ? "#9AA6A4" : TEAL, fontSize: 24, fontWeight: 900, lineHeight: 1 }}>›</div>
+              <div style={{ color: codeColor, fontSize: "var(--t-titel)", fontWeight: 700, lineHeight: 1 }}>›</div>
             </div>
           </div>
         </button>
@@ -580,9 +567,9 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
       {errorBanner}
 
       <div style={{ display: "grid", gap: 10 }}>
-        <div style={sectionHead}>Bevorstehend ({upcoming.length})</div>
+        <div className="etikett">Bevorstehend ({upcoming.length})</div>
         {upcoming.length === 0 ? (
-          <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
+          <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
             Aktuell keine bevorstehenden Schulungen.
           </div>
         ) : (
@@ -592,7 +579,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
 
       {past.length > 0 && (
         <div style={{ display: "grid", gap: 10 }}>
-          <div style={{ ...sectionHead, color: "#8A8A8A" }}>Vergangen ({past.length})</div>
+          <div className="etikett" style={{ color: "var(--vfa-text-3)" }}>Vergangen ({past.length})</div>
           {past.map(renderKursCard)}
         </div>
       )}

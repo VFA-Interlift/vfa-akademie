@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 
-const STAR_ACTIVE = "#FFB000";
-const STAR_INACTIVE = "#D9D9D4";
+// VFA-Gelb wie das Token --vfa-yellow; leere Sterne über Token, damit sie im
+// Dunkelmodus nicht hell auf der dunklen Karte stehen (Launch-Runde 05.09.2026).
+const STAR_ACTIVE = "#FFC100";
+const STAR_INACTIVE = "var(--vfa-linie)";
+const STAR_INACTIVE_RAND = "var(--vfa-grey)";
 
 type StarRatingProps = {
   value: number; // 0 = noch nicht bewertet
@@ -61,7 +64,7 @@ export default function StarRating({ value, onChange, disabled = false }: StarRa
               <path
                 d="M12 2.5l2.95 5.98 6.6.96-4.78 4.66 1.13 6.57L12 17.56l-5.9 3.1 1.13-6.57L2.45 9.44l6.6-.96L12 2.5z"
                 fill={filled ? STAR_ACTIVE : STAR_INACTIVE}
-                stroke={filled ? STAR_ACTIVE : "#C7C7C2"}
+                stroke={filled ? STAR_ACTIVE : STAR_INACTIVE_RAND}
                 strokeWidth="0.5"
                 strokeLinejoin="round"
               />
@@ -70,7 +73,7 @@ export default function StarRating({ value, onChange, disabled = false }: StarRa
         );
       })}
 
-      <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 700, color: value ? "var(--vfa-text)" : "var(--vfa-text-3)", minWidth: 64 }}>
+      <span style={{ marginLeft: 8, fontSize: "var(--t-klein)", fontWeight: 700, color: value ? "var(--vfa-text)" : "var(--vfa-text-3)", minWidth: 64 }}>
         {value ? `${value} / 5` : "keine Wahl"}
       </span>
     </div>

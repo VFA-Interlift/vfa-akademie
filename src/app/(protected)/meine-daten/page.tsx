@@ -43,6 +43,7 @@ export default async function MeineDatenPage() {
       companyCity: true,
       companyCountry: true,
       position: true,
+      isInstructor: true,
     },
   });
 
@@ -52,10 +53,14 @@ export default async function MeineDatenPage() {
 
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+      {/* Formularbreite 720 wie Einstellungen (Launch-Runde 05.09.2026). */}
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <PageHeader title="Meine Daten" showTitle={true} />
 
         <MeineDatenForm
+          // Dozenten: Der Name entscheidet über den Zugriff auf ihre Kurse,
+          // deshalb pflegt ihn nur der Admin (Befund f06-1, 05.09.2026).
+          namePflegtAdmin={user.isInstructor}
           initial={{
             email: user.email ?? "",
             name: user.name ?? "",

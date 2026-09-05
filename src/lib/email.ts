@@ -216,7 +216,7 @@ Von: ${name} (${params.fromUserEmail})
 
 ${params.message}
 
-Antworten geht direkt per „Antworten" an ${params.fromUserEmail}.`,
+Antworten geht direkt per „Antworten“ an ${params.fromUserEmail}.`,
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
         <div style="height:5px;background:#FFC100;margin-bottom:24px"></div>
@@ -225,7 +225,7 @@ Antworten geht direkt per „Antworten" an ${params.fromUserEmail}.`,
         <p style="margin:0 0 6px;font-size:14px;color:#555555"><strong>Von:</strong> ${escapeHtml(name)} (${escapeHtml(params.fromUserEmail)})</p>
         <div style="margin-top:16px;padding:16px;background:#F6F6F4;border:1px solid #E6E6E6;border-radius:8px;font-size:15px;line-height:1.6;color:#1F1F1F;white-space:pre-wrap">${escapeHtml(params.message)}</div>
         <div style="margin-top:24px;padding-top:16px;border-top:1px solid #E6E6E6;font-size:13px;color:#888888">
-          Antworten geht direkt per „Antworten" an ${escapeHtml(params.fromUserEmail)}.
+          Antworten geht direkt per „Antworten“ an ${escapeHtml(params.fromUserEmail)}.
         </div>
       </div>
     `,
@@ -305,7 +305,7 @@ Hallo${greetingName ? greetingName : ""}, hier eine Erinnerung an deine bevorste
 ${params.trainingTitle}
 Datum: ${params.dateText}${params.location ? `\nOrt: ${params.location}` : ""}
 
-Erinnerungen kannst du in der App unter „Einstellungen → Benachrichtigungen" abschalten.
+Erinnerungen kannst du in der App unter „Einstellungen → Benachrichtigungen“ abschalten.
 
 VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
     html: reminderHtml({
@@ -380,16 +380,23 @@ export async function sendCertificateReadyEmail(params: {
       ? ` Dir wurden ${params.credits} Credits gutgeschrieben.`
       : "";
 
+  // Das Genus hängt an der Art: „Deine Teilnahmebestätigung“, aber „Dein
+  // Zertifikat“ / „Dein VDI-Zertifikat“. Vorher stand fest „Deine“ (05.09.2026).
+  const weiblich = /bestätigung$/i.test(params.artLabel.trim());
+  const dein = weiblich ? "Deine" : "Dein";
+  const deinKlein = weiblich ? "deine" : "dein";
+  const pronomen = weiblich ? "sie" : "es";
+
   await resend.emails.send({
     from: FROM,
     to: params.to,
     replyTo: REPLY_TO,
     subject: `${params.artLabel} bereit: ${params.trainingTitle}`,
-    text: `Deine ${params.artLabel} liegt bereit
+    text: `${dein} ${params.artLabel} liegt bereit
 
-Hallo${anrede}, für "${params.trainingTitle}" ist deine ${params.artLabel} fertig.${creditsSatz}
+Hallo${anrede}, für „${params.trainingTitle}“ ist ${deinKlein} ${params.artLabel} fertig.${creditsSatz}
 
-Du findest sie in der App unter "Meine Zertifikate":
+Du findest ${pronomen} in der App unter „Meine Zertifikate“:
 ${APP_URL}/meine-zertifikate
 
 VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
@@ -398,12 +405,12 @@ VFA-Akademie · Diese E-Mail wurde automatisch generiert.`,
         <div style="height:5px;background:#FFC100;margin-bottom:28px"></div>
 
         <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#1F1F1F;letter-spacing:-0.01em">
-          Deine ${escapeHtml(params.artLabel)} liegt bereit
+          ${dein} ${escapeHtml(params.artLabel)} liegt bereit
         </h1>
 
         <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#444444">
           Hallo${escapeHtml(anrede)}, für <strong>${escapeHtml(params.trainingTitle)}</strong>
-          ist deine ${escapeHtml(params.artLabel)} fertig.${escapeHtml(creditsSatz)}
+          ist ${deinKlein} ${escapeHtml(params.artLabel)} fertig.${escapeHtml(creditsSatz)}
         </p>
 
         <a
@@ -491,7 +498,7 @@ function reminderHtml(p: {
           <tr><td style="padding:20px 32px;background:#FAFAF9;border-top:1px solid #ECECEC;font-family:Arial,Helvetica,sans-serif">
             <div style="font-size:13px;font-weight:700;color:#555555">VFA-Akademie</div>
             <div style="font-size:12px;color:#999999;margin-top:2px;line-height:1.5">
-              Verband für Aufzugstechnik e.V.<br>
+              VFA-Akademie gGmbH<br>
               Diese E-Mail wurde automatisch versendet. Antworten erreichen uns unter ${REPLY_TO}.
             </div>
           </td></tr>
@@ -503,7 +510,7 @@ function reminderHtml(p: {
 }
 
 /**
- * Rueckmeldung aus der App-Testrunde. Geht an dieselbe Adresse wie das
+ * Rückmeldung aus der App-Testrunde. Geht an dieselbe Adresse wie das
  * allgemeine Feedback, ist aber im Betreff als Testrunde erkennbar.
  */
 export async function sendAppTestFeedbackEmail(params: {
@@ -543,14 +550,14 @@ export async function sendAppTestFeedbackEmail(params: {
     to,
     replyTo: params.fromUserEmail,
     subject: `Testrunde: ${name} bewertet die App mit ${params.overallRating} von 5`,
-    text: `Rueckmeldung aus der App-Testrunde
+    text: `Rückmeldung aus der App-Testrunde
 
 Von: ${name} (${params.fromUserEmail})
 Gesamtzufriedenheit: ${params.overallRating} von 5
 
 ${zeilenText}
 
-Antworten geht direkt per „Antworten" an ${params.fromUserEmail}.`,
+Antworten geht direkt per „Antworten“ an ${params.fromUserEmail}.`,
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1F1F1F">
         <div style="height:5px;background:#FFC100;margin-bottom:24px"></div>
@@ -559,7 +566,7 @@ Antworten geht direkt per „Antworten" an ${params.fromUserEmail}.`,
         <p style="margin:0 0 20px;font-size:14px;color:#555555"><strong>Gesamtzufriedenheit:</strong> ${params.overallRating} von 5</p>
         <div style="padding:16px;background:#F6F6F4;border:1px solid #E6E6E6;border-radius:8px">${zeilenHtml}</div>
         <div style="margin-top:24px;padding-top:16px;border-top:1px solid #E6E6E6;font-size:13px;color:#888888">
-          Antworten geht direkt per „Antworten" an ${escapeHtml(params.fromUserEmail)}.
+          Antworten geht direkt per „Antworten“ an ${escapeHtml(params.fromUserEmail)}.
         </div>
       </div>
     `,

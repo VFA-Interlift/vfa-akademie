@@ -4,21 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Offline — VFA-Akademie</title>
+  <!-- Dunkelmodus wie in layout.tsx: Schalter der App, gemerkt in localStorage
+       "vfa-dunkel"; die Geräte-Einstellung spielt keine Rolle (05.09.2026). -->
+  <script>try{if(localStorage.getItem("vfa-dunkel")==="1")document.documentElement.classList.add("dunkel")}catch(e){}</script>
   <style>
-    :root { color-scheme: light; }
+    /* Farbwerte wie die Token in globals.css, weil die Seite ohne die App geladen wird. */
+    :root {
+      color-scheme: light;
+      --vfa-light: #f7f7f4;
+      --vfa-text: #1f1f1f;
+      --vfa-text-2: #666666;
+    }
+    html.dunkel {
+      color-scheme: dark;
+      --vfa-light: #101615;
+      --vfa-text: #edf1f0;
+      --vfa-text-2: #b4bfbd;
+    }
     body {
       margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      background: #f7f7f4; color: #1f1f1f;
+      background: var(--vfa-light); color: var(--vfa-text);
       font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
       padding: 24px; box-sizing: border-box;
     }
     .box { max-width: 340px; text-align: center; }
     .logo { width: 56px; height: 56px; border-radius: 14px; background: #007873; margin: 0 auto 20px;
       display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 22px; }
-    h1 { font-size: 20px; margin: 0 0 10px; }
-    p { color: #5f6663; font-size: 15px; line-height: 1.6; margin: 0 0 22px; }
+    h1 { font-size: 22px; font-weight: 750; line-height: 1.2; margin: 0 0 10px; }
+    p { color: var(--vfa-text-2); font-size: 15px; line-height: 1.6; margin: 0 0 22px; }
     button {
-      border: none; background: #007873; color: #fff; font-weight: 800; font-size: 14px;
+      border: none; background: #007873; color: #fff; font-weight: 700; font-size: 15px;
       padding: 12px 24px; border-radius: 999px; cursor: pointer;
     }
   </style>
@@ -27,7 +42,7 @@
   <div class="box">
     <div class="logo">VFA</div>
     <h1>Keine Verbindung</h1>
-    <p>Die VFA-Akademie App braucht gerade eine Internetverbindung. Sobald du wieder online bist, tippe auf Erneut versuchen.</p>
+    <p>Die VFA-Akademie App braucht gerade eine Internetverbindung. Sobald du wieder online bist, tippe auf „Erneut versuchen“.</p>
     <button onclick="location.reload()">Erneut versuchen</button>
   </div>
 </body>

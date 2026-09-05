@@ -3,23 +3,32 @@
 import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import PdfOverlay from "@/components/PdfOverlay";
+import AppButton from "@/components/ui/AppButton";
+
+type KnopfVariante = NonNullable<React.ComponentProps<typeof AppButton>["variant"]>;
 
 /**
  * Link auf ein PDF, der es in der App oeffnet (Vollbild mit X zurueck) statt
  * den Nutzer in den Download zu schicken. Fuer alles, was bisher ein rohes
  * <a href="/api/...pdf"> war. Laedt erst beim Antippen.
+ *
+ * Mit `knopf` wird statt des nackten Textlinks ein AppButton der genannten
+ * Variante gezeigt (Launch-Runde 05.09.2026) — so bleibt der Ansehen-Knopf
+ * bei den eigenen Nachweisen im Baukasten, ohne die Pille nachzubauen.
  */
 export default function PdfAnsichtLink({
   url,
   titel,
   dateiname,
   style,
+  knopf,
   children,
 }: {
   url: string;
   titel: string;
   dateiname: string;
   style?: CSSProperties;
+  knopf?: KnopfVariante;
   children: ReactNode;
 }) {
   const [ansicht, setAnsicht] = useState<string | null>(null);
@@ -45,24 +54,33 @@ export default function PdfAnsichtLink({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={oeffnen}
-        style={{
-          border: "none",
-          background: "transparent",
-          padding: 0,
-          font: "inherit",
-          cursor: laedt ? "wait" : "pointer",
-          opacity: laedt ? 0.6 : 1,
-          ...style,
-        }}
-      >
-        {children}
-      </button>
+      {knopf ? (
+        <AppButton variant={knopf} onClick={oeffnen} disabled={laedt}>
+          {children}
+        </AppButton>
+      ) : (
+        <button
+          type="button"
+          onClick={oeffnen}
+          style={{
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            font: "inherit",
+            cursor: laedt ? "wait" : "pointer",
+            opacity: laedt ? 0.6 : 1,
+            ...style,
+          }}
+        >
+          {children}
+        </button>
+      )}
 
+      {/* Bewusst kein Meldung-Kasten (05.09.2026): Der Text steht in einer
+          Tabellenzeile neben dem Link (Meine Schulungen, Dozentenbereich),
+          eine Box würde die Zeile sprengen. Farbe und Größe aus den Token. */}
       {fehler && (
-        <span style={{ color: "#B00020", fontSize: 12, fontWeight: 700 }}>
+        <span style={{ color: "var(--vfa-rot-text)", fontSize: "var(--t-klein)", fontWeight: 700 }}>
           Konnte nicht geöffnet werden.
         </span>
       )}

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { formatEnrollmentStatus } from "@/lib/trainings/format";
@@ -10,8 +11,6 @@ import { fetchWixKurse, kursDozentenOf, kursLocationOf, parseKursBlocks, type Wi
 import AdminSchulungenClient, { type AdminKurs } from "./AdminSchulungenClient";
 
 export const dynamic = "force-dynamic";
-
-const TEAL = "#007873";
 
 function participantKurscode(raw: unknown): string {
   if (raw && typeof raw === "object" && "kurscode" in raw) {
@@ -61,16 +60,18 @@ export default async function AdminSchulungenPage() {
   for (const t of dbTrainings) {
     const code = String(t.code ?? "").toUpperCase();
     if (!code || t.enrollments.length === 0) continue;
-    enrollmentsByCode.set(
-      code,
-      t.enrollments.map((e) => ({
+    // Gleicher Kurscode bei zwei Schulungen: Listen zusammenführen statt
+    // überschreiben, sonst verschwinden die Anmeldungen der ersten (05.09.2026).
+    enrollmentsByCode.set(code, [
+      ...(enrollmentsByCode.get(code) ?? []),
+      ...t.enrollments.map((e) => ({
         name:
           [e.user.firstName, e.user.lastName].filter(Boolean).join(" ").trim() ||
           e.user.name ||
           e.user.email,
         status: formatEnrollmentStatus(e.status),
-      }))
-    );
+      })),
+    ]);
   }
 
   // Unterschriebene Teilnehmerlisten (Dozenten-Uploads) je Kurscode.
@@ -96,12 +97,31 @@ export default async function AdminSchulungenPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Rang der Anwesenheit: gepflegte Zeile schlägt ungepflegte, „anwesend“ schlägt alles.
+  const rang = (status: string | null) => (status === "ANWESEND" ? 2 : status ? 1 : 0);
+
   const kurse: AdminKurs[] = wixKurse.map((kurs) => {
     const code = kurs.kurscode.trim().toUpperCase();
     const blocks = parseKursBlocks(kurs.startdatum);
     const start = blocks[0]?.date ?? null;
     const last = blocks[blocks.length - 1];
     const end = last ? (last.endDate ?? last.date) : null;
+
+    const zeilen = participants.filter((p) => code && participantKurscode(p.raw) === code);
+
+    // Doppelte Website-Anmeldungen derselben Person je E-Mail zusammenfassen —
+    // dieselbe Regel wie im Dozentenbereich (dozent/page.tsx, 20.08.2026), sonst
+    // zählt der Admin mehr Teilnehmer und eine andere Anwesenheitsquote als der
+    // Dozent (05.09.2026). Ohne E-Mail wird nichts zusammengefasst.
+    const jeMail = new Map<string, (typeof zeilen)[number]>();
+    for (const p of zeilen) {
+      const key = p.email?.toLowerCase();
+      if (!key) continue;
+      const bisher = jeMail.get(key);
+      if (!bisher || rang(p.attendanceStatus) > rang(bisher.attendanceStatus)) {
+        jeMail.set(key, p);
+      }
+    }
 
     return {
       id: kurs.id,
@@ -112,8 +132,11 @@ export default async function AdminSchulungenPage() {
       vergangen: end ? end < today : false,
       ort: kursLocationOf(kurs),
       dozenten: kursDozentenOf(kurs),
-      teilnehmer: participants
-        .filter((p) => code && participantKurscode(p.raw) === code)
+      teilnehmer: zeilen
+        .filter((p) => {
+          const key = p.email?.toLowerCase();
+          return !key || jeMail.get(key) === p;
+        })
         .map((p) => ({
           name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || p.participantText,
           firma: p.company,
@@ -130,25 +153,25 @@ export default async function AdminSchulungenPage() {
 
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 14 }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <PageHeader backHref="/admin" backLabel="Adminbereich" title="Schulungen & Teilnehmer" showTitle />
 
-        <AnimatedSection delayMs={40}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <StatBox label="Schulungen (Website)" value={wixKurse.length} />
-            <StatBox label="Website-Anmeldungen" value={totalTeilnehmer} />
-          </div>
-        </AnimatedSection>
-
-        {websiteError ? (
-          <AppCard>
-            <div style={{ color: "#B00020", fontWeight: 700 }}>Website nicht erreichbar – bitte später erneut versuchen.</div>
-          </AppCard>
-        ) : (
-          <AnimatedSection delayMs={80}>
-            <AdminSchulungenClient kurse={kurse} />
+        <div style={{ display: "grid", gap: 14 }}>
+          <AnimatedSection delayMs={40}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+              <StatBox label="Schulungen (Website)" value={wixKurse.length} />
+              <StatBox label="Website-Anmeldungen" value={totalTeilnehmer} />
+            </div>
           </AnimatedSection>
-        )}
+
+          {websiteError ? (
+            <Meldung art="fehler">Website nicht erreichbar – bitte später erneut versuchen.</Meldung>
+          ) : (
+            <AnimatedSection delayMs={80}>
+              <AdminSchulungenClient kurse={kurse} />
+            </AnimatedSection>
+          )}
+        </div>
       </div>
     </main>
   );
@@ -156,9 +179,9 @@ export default async function AdminSchulungenPage() {
 
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ padding: "14px 16px", background: "#FFFFFF", border: "1px solid #EFEFEF", borderRadius: 12 }}>
-      <div style={{ fontSize: 26, fontWeight: 900, color: TEAL, lineHeight: 1 }}>{value.toLocaleString("de-DE")}</div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>{label}</div>
-    </div>
+    <AppCard style={{ padding: "14px 16px" }}>
+      <div className="etikett">{label}</div>
+      <div className="kennzahl" style={{ marginTop: 4 }}>{value.toLocaleString("de-DE")}</div>
+    </AppCard>
   );
 }

@@ -367,8 +367,13 @@ function sanitize(input: string): string {
   let out = "";
   for (const ch of String(input ?? "")) {
     const cp = ch.codePointAt(0)!;
-    if (cp <= 0xff || CP1252_EXTRA.has(cp)) out += ch;
-    else out += ""; // nicht darstellbare Zeichen (Sterne, Emojis) entfernen
+    // Steuerzeichen (0x00–0x1F, 0x7F–0x9F) lässt WinAnsi nicht zu, pdf-lib
+    // bricht daran ab (Befund f11-8, 05.09.2026). Zeilenumbrüche bleiben und
+    // werden unten zu Leerzeichen, Tabulator wird gleich eines.
+    if (cp === 0x09) out += " ";
+    else if (cp === 0x0a || cp === 0x0d) out += ch;
+    else if ((cp >= 0x20 && cp <= 0x7e) || (cp >= 0xa0 && cp <= 0xff) || CP1252_EXTRA.has(cp)) out += ch;
+    // alles andere (Steuerzeichen, Sterne, Emojis) entfernen
   }
   return out.replace(/\r\n|\r/g, " ").replace(/\n/g, " ").replace(/ {2,}/g, " ").trim();
 }

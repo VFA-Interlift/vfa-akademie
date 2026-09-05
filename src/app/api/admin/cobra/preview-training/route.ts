@@ -98,6 +98,12 @@ function deriveCredits(training: IncomingCobraTraining) {
     };
   }
 
+  // YLD vor der Inhouse-Regel — derselbe Zweig wie im Sync (sync-trainings.ts,
+  // Tobi 12.08.2026). Vorher zeigte die Vorschau 0 Credits, der Sync vergab 200 (05.09.2026).
+  if (code.startsWith("YLD")) {
+    return { credits: 200, automatic: true, reason: "YLD", label: "Young Leadership Day." };
+  }
+
   if (isInhouseOrManual(code, title)) {
     return {
       credits: 0,

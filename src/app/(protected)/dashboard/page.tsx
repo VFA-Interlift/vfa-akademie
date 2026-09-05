@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
@@ -194,10 +195,12 @@ export default async function DashboardPage() {
           <AnimatedSection delayMs={100}>
             <div style={{ padding: "16px 18px", background: "#007873", borderRadius: 14, display: "grid", gap: 6 }}>
               <Link href="/meine-schulungen" style={{ textDecoration: "none", display: "grid", gap: 6 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                {/* Etikett und Kartentitel in der Staffel; Weiß bleibt, weil
+                    die Kachel in beiden Modi Petrol ist. */}
+                <div style={{ fontSize: "var(--t-label)", fontWeight: 700, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   Nächste Schulung
                 </div>
-                <div style={{ fontSize: "clamp(15px, 4vw, 18px)", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.25 }}>
+                <div style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "#FFFFFF", lineHeight: "var(--lh-eng)" }}>
                   {nextTraining.training.code?.trim() || nextTraining.training.title}
                 </div>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 2 }}>
@@ -241,9 +244,7 @@ export default async function DashboardPage() {
             <AppCard accent="green" style={{ height: "100%" }}>
               <div style={{ display: "grid", gap: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                  <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    Mein Status
-                  </div>
+                  <div className="etikett">Mein Status</div>
                 </div>
 
                 <AnimatedProgressCircle
@@ -292,48 +293,35 @@ export default async function DashboardPage() {
           <AnimatedSection delayMs={200} style={{ height: "100%" }}>
             <AppCard accent="yellow" style={{ height: "100%" }}>
               <div style={{ display: "grid", gap: 14 }}>
-                <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  Mein Überblick
-                </div>
+                <div className="etikett">Mein Überblick</div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <StatBox label="Meine bevorstehenden Schulungen" value={enrollmentCount} />
                   <StatBox label="Zertifikate" value={certCount} />
                   <StatBox label="Mein Rang" value={rank.label} />
-                  <StatBox label="Mitglied seit" value={new Date(user.createdAt).getFullYear()} />
+                  {/* „Dabei seit“: der Wert ist die Kontoanlage in der App,
+                      nicht die Verbandsmitgliedschaft (Launch-Runde 05.09.2026). */}
+                  <StatBox label="Dabei seit" value={new Date(user.createdAt).getFullYear()} />
                 </div>
 
                 {enrollmentCount === 0 ? (
                   <div
                     style={{
                       padding: "12px 14px",
-                      background: "#FFF6E0",
+                      background: "rgba(255,193,0,0.12)",
                       border: "1px solid #FFC100",
                       borderRadius: 10,
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: "#1F1F1F", fontSize: 14 }}>
+                    <div style={{ fontWeight: 700, color: "var(--vfa-text)", fontSize: "var(--t-basis)" }}>
                       Noch keine Schulung geplant
                     </div>
-                    <div style={{ color: "#666666", fontSize: 13, marginTop: 3, lineHeight: 1.5 }}>
+                    <div style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", marginTop: 3, lineHeight: "var(--lh-weit)" }}>
                       Im Kurskalender findest du alle kommenden Termine samt Preisen.
                     </div>
-                    <Link
-                      href="/kurskalender"
-                      style={{
-                        display: "inline-block",
-                        marginTop: 10,
-                        padding: "8px 16px",
-                        borderRadius: 999,
-                        background: "#007873",
-                        color: "#FFFFFF",
-                        fontWeight: 800,
-                        fontSize: 13,
-                        textDecoration: "none",
-                      }}
-                    >
-                      Kurse entdecken →
-                    </Link>
+                    <div style={{ marginTop: 10 }}>
+                      <AppButton href="/kurskalender">Schulungen entdecken →</AppButton>
+                    </div>
                   </div>
                 ) : null}
 
@@ -349,17 +337,15 @@ export default async function DashboardPage() {
         <AnimatedSection delayMs={260}>
           <AppCard>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-              <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                Credit-Ranking
-              </div>
-              <Link href="/leaderboard" style={secondaryLinkStyle}>
+              <div className="etikett">Ranking</div>
+              <AppButton href="/leaderboard" variant="secondary">
                 Zum Ranking
-              </Link>
+              </AppButton>
             </div>
 
             {!rankingFirst ? (
-              <div style={{ color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
-                Noch keine Teilnehmer im Ranking – sammle die ersten Credits!
+              <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
+                Noch keine Teilnehmer im Ranking. Sammle die ersten Credits!
               </div>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
@@ -380,15 +366,16 @@ export default async function DashboardPage() {
                       highlight
                     />
                   ) : (
-                    <div style={{ color: "var(--vfa-text-3)", fontSize: 13, lineHeight: 1.5, padding: "10px 12px", background: "var(--vfa-karte-2)", borderRadius: 10, border: "1px solid #EFEFEF" }}>
-                      Du bist noch nicht im Ranking – sammle deine ersten Credits.
+                    <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)", padding: "10px 12px", background: "var(--vfa-karte-2)", borderRadius: 10, border: "1px solid var(--vfa-linie-2)" }}>
+                      Du bist noch nicht im Ranking. Sammle deine ersten Credits.
                     </div>
                   )
                 )}
-                <div style={{ fontSize: 13, color: "var(--vfa-text-2)", padding: "8px 12px", background: "rgba(0,120,115,0.05)", borderRadius: 10, border: "1px solid rgba(0,120,115,0.15)" }}>
-                  Median aller Teilnehmer: <strong style={{ color: "#007873" }}>{rankingMedian.toLocaleString("de-DE")} Cr.</strong>
+                {/* „Credits“ ausgeschrieben statt „Cr.“ — ein Begriff je Sache (05.09.2026). */}
+                <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", padding: "8px 12px", background: "rgba(0,120,115,0.05)", borderRadius: 10, border: "1px solid rgba(0,120,115,0.15)" }}>
+                  Median aller Teilnehmer: <strong style={{ color: "var(--vfa-gruen-text)" }}>{rankingMedian.toLocaleString("de-DE")} Credits</strong>
                   {user.creditsTotal > 0 && user.creditsTotal !== rankingMedian && (
-                    <> · du liegst {Math.abs(user.creditsTotal - rankingMedian).toLocaleString("de-DE")} Cr. {user.creditsTotal > rankingMedian ? "darüber" : "darunter"}</>
+                    <> · du liegst {Math.abs(user.creditsTotal - rankingMedian).toLocaleString("de-DE")} Credits {user.creditsTotal > rankingMedian ? "darüber" : "darunter"}</>
                   )}
                 </div>
               </div>
@@ -449,7 +436,7 @@ function RankingRow({
   return (
     <div
       style={{
-        border: highlight ? "1px solid rgba(0,120,115,0.3)" : "1px solid #EFEFEF",
+        border: highlight ? "1px solid rgba(0,120,115,0.3)" : "1px solid var(--vfa-linie-2)",
         background: highlight ? "rgba(0,120,115,0.05)" : "var(--vfa-karte-2)",
         padding: "12px 14px",
         borderRadius: 10,
@@ -459,15 +446,15 @@ function RankingRow({
         alignItems: "center",
       }}
     >
-      <div style={{ width: 36, height: 36, borderRadius: "50%", background: rankColor, color: "#FFFFFF", fontWeight: 900, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", background: rankColor, color: "#FFFFFF", fontWeight: 800, fontSize: "var(--t-klein)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {rankLabel}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
         <div style={{ color: "var(--vfa-text)", fontSize: 15, fontWeight: 700, lineHeight: 1.25, minWidth: 0 }}>
           {name}
         </div>
-        <div style={{ color: "#007873", fontWeight: 800, fontSize: 14, whiteSpace: "nowrap" }}>
-          {credits.toLocaleString("de-DE")} Cr.
+        <div style={{ color: "var(--vfa-gruen-text)", fontWeight: 800, fontSize: "var(--t-basis)", whiteSpace: "nowrap" }}>
+          {credits.toLocaleString("de-DE")} Credits
         </div>
       </div>
     </div>
@@ -485,12 +472,10 @@ function StatBox({ label, value, wide }: { label: string; value: string | number
         gridColumn: wide ? "1 / -1" : undefined,
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+      <div className="etikett" style={{ marginBottom: 4 }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 900, color: "var(--vfa-text)", lineHeight: 1.1 }}>
-        {value}
-      </div>
+      <div className="kennzahl">{value}</div>
     </div>
   );
 }
@@ -555,19 +540,6 @@ const heroChipStyle: CSSProperties = {
   textDecoration: "none",
 };
 
-const secondaryLinkStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "6px 14px",
-  borderRadius: 999,
-  background: "transparent",
-  color: "#007873",
-  fontWeight: 700,
-  fontSize: 13,
-  textDecoration: "none",
-  border: "1px solid #007873",
-};
-
 const socialLinkStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -575,16 +547,16 @@ const socialLinkStyle: CSSProperties = {
   width: 34,
   height: 34,
   borderRadius: 999,
-  color: "#B0B0B0",
+  color: "var(--vfa-text-3)",
   textDecoration: "none",
 };
 
 const linkStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  color: "#007873",
+  color: "var(--vfa-gruen-text)",
   fontWeight: 700,
-  fontSize: 13,
+  fontSize: "var(--t-klein)",
   textDecoration: "none",
   letterSpacing: "0.01em",
 };

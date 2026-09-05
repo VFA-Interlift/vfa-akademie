@@ -30,10 +30,15 @@ export type AusstellenErgebnis = {
   skippedAbsent: number;
   skippedNoTemplate: number;
   skippedCollision: number;
+  /** Teilnehmer, bei denen die Datenbank einen Fehler warf (protokolliert, Lauf lief weiter). */
+  fehler: number;
   createdCertificates: number;
   awardedCredits: number;
   empfaenger: AuszustellenderEmpfaenger[];
 };
+
+/** Ein zweiter Lauf hat die widerrufene Zeile im selben Moment schon wieder ausgestellt. */
+class WiederausstellungKollision extends Error {}
 
 export async function zertifikateAusstellen(
   now: Date,
@@ -52,10 +57,15 @@ export async function zertifikateAusstellen(
   );
 
   // Lesen läuft ausserhalb jeder Transaktion — nichts wird hier geschrieben.
+  // Neben Anmeldungen ohne Zertifikat auch die mit WIDERRUFENEM Zertifikat:
+  // Die REVOKED-Zeile bleibt am Enrollment hängen (@unique enrollmentId), und
+  // ohne diesen Zweig war ein irrtümlich widerrufenes Zertifikat nie wieder
+  // ausstellbar — obwohl der Widerruf den Zielstatus ATTENDED ausdrücklich
+  // anbietet (Befund 05.09.2026).
   const enrollments = await prisma.enrollment.findMany({
     where: {
       status: { in: ["CONFIRMED", "ATTENDED", "COMPLETED"] },
-      certificate: null,
+      OR: [{ certificate: null }, { certificate: { status: "REVOKED" } }],
       training: {
         // Abgesagte Kurse stellen keine Zertifikate mehr aus.
         cancelledAt: null,
@@ -73,6 +83,7 @@ export async function zertifikateAusstellen(
       training: {
         select: { title: true, code: true, certificateKind: true, creditsAward: true },
       },
+      certificate: { select: { id: true, status: true } },
     },
   });
 
@@ -83,6 +94,7 @@ export async function zertifikateAusstellen(
     skippedAbsent: absentEnrollmentIds.size,
     skippedNoTemplate: 0,
     skippedCollision: 0,
+    fehler: 0,
     createdCertificates: 0,
     awardedCredits: 0,
     empfaenger: [],
@@ -100,24 +112,49 @@ export async function zertifikateAusstellen(
     }
 
     const credits = enrollment.training.creditsAward;
+    const widerrufenes =
+      enrollment.certificate?.status === "REVOKED" ? enrollment.certificate : null;
 
     try {
       // Eine kleine Transaktion je Teilnehmer: entweder Zertifikat, Credits und
       // Statuswechsel zusammen — oder für diesen einen nichts.
       await prisma.$transaction(async (tx) => {
-        const certificate = await tx.certificate.create({
-          data: {
-            userId: enrollment.userId,
-            trainingId: enrollment.trainingId,
-            enrollmentId: enrollment.id,
-            title: enrollment.training.title,
-            credits,
-            code: enrollment.training.code,
-            certificateKind: enrollment.training.certificateKind,
-            note: "Automatisch nach Schulungsabschluss erstellt.",
-          },
-          select: { id: true },
-        });
+        let certificateId: string;
+
+        if (widerrufenes) {
+          // Widerrufene Zeile wieder auf ISSUED heben statt neu anlegen. Der
+          // Statusfilter im where ist der Schutz gegen zwei gleichzeitige
+          // Läufe — wie die P2002-Kollision beim Anlegen.
+          const wieder = await tx.certificate.updateMany({
+            where: { id: widerrufenes.id, status: "REVOKED" },
+            data: {
+              status: "ISSUED",
+              issuedAt: now,
+              title: enrollment.training.title,
+              credits,
+              code: enrollment.training.code,
+              certificateKind: enrollment.training.certificateKind,
+              note: "Nach Widerruf erneut ausgestellt.",
+            },
+          });
+          if (wieder.count === 0) throw new WiederausstellungKollision();
+          certificateId = widerrufenes.id;
+        } else {
+          const certificate = await tx.certificate.create({
+            data: {
+              userId: enrollment.userId,
+              trainingId: enrollment.trainingId,
+              enrollmentId: enrollment.id,
+              title: enrollment.training.title,
+              credits,
+              code: enrollment.training.code,
+              certificateKind: enrollment.training.certificateKind,
+              note: "Automatisch nach Schulungsabschluss erstellt.",
+            },
+            select: { id: true },
+          });
+          certificateId = certificate.id;
+        }
 
         if (credits > 0) {
           await tx.creditTransaction.create({
@@ -127,12 +164,18 @@ export async function zertifikateAusstellen(
               type: "AWARD",
               reason: "CERTIFICATE_ISSUED",
               trainingId: enrollment.trainingId,
-              certificateId: certificate.id,
+              // Bei der Wiederausstellung BEWUSST ohne certificateId: Das Feld
+              // ist @unique, und die AWARD-Buchung der ersten Ausstellung
+              // belegt es bereits (dieselbe Falle wie beim Widerruf). Die
+              // Zuordnung steht dann in meta.
+              ...(widerrufenes ? {} : { certificateId }),
               meta: {
                 kind: "CERTIFICATE_AUTO_CREDITS",
                 enrollmentId: enrollment.id,
+                certificateId,
                 trainingCode: enrollment.training.code,
                 certificateKind: enrollment.training.certificateKind,
+                ...(widerrufenes ? { nachWiderruf: true } : {}),
                 ...(opts?.adminId ? { generatedByAdminId: opts.adminId } : {}),
               },
             },
@@ -158,13 +201,24 @@ export async function zertifikateAusstellen(
       // Kollision am @unique(enrollmentId): der Cron und der Admin-Knopf haben
       // dieselbe Zeile gleichzeitig gegriffen. Nur diese überspringen.
       if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
+        error instanceof WiederausstellungKollision ||
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002")
       ) {
         ergebnis.skippedCollision += 1;
         continue;
       }
-      throw error;
+      // Jeder andere Fehler (Konto zwischenzeitlich gelöscht, kurzer
+      // Verbindungsabbruch) betrifft nur diesen einen Teilnehmer. Vorher flog
+      // er nach oben: Der Lauf brach ab, und die in diesem Lauf schon
+      // angelegten Zertifikate bekamen nie ihre Mail (Befund 05.09.2026).
+      console.error("ZERTIFIKAT_AUSSTELLEN_FEHLER", {
+        enrollmentId: enrollment.id,
+        trainingCode: enrollment.training.code,
+        error,
+      });
+      ergebnis.fehler += 1;
+      continue;
     }
 
     ergebnis.createdCertificates += 1;

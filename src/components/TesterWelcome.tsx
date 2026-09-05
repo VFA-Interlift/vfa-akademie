@@ -27,6 +27,9 @@ export default function TesterWelcome({
   const [begruessungOffen, setBegruessungOffen] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // localStorage gibt es erst nach dem Einhängen; derselbe Weg wie in
+    // BottomNav (Lint-Ausnahme, 05.09.2026).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBegruessungOffen(window.localStorage.getItem(STORAGE_KEY) !== "1");
   }, []);
 
@@ -65,7 +68,7 @@ export default function TesterWelcome({
             height: 28,
             border: "none",
             background: "transparent",
-            color: "#007873",
+            color: "var(--vfa-gruen-text)",
             fontSize: 20,
             lineHeight: 1,
             cursor: "pointer",
@@ -74,12 +77,12 @@ export default function TesterWelcome({
           ×
         </button>
 
-        <h2 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 800, color: "#007873" }}>
+        <h2 style={{ margin: "0 0 8px", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
           {anrede} schön, dass du dabei bist!
         </h2>
 
         <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
-          Du gehörst zu den Ersten, die die VFA-Akademie App ausprobieren. Sie bündelt
+          Du gehörst zu den Ersten, die die VFA-Akademie-App ausprobieren. Sie bündelt
           deine Schulungen, Zertifikate und Credits an einer Stelle.
         </p>
 
@@ -96,7 +99,7 @@ export default function TesterWelcome({
 
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--vfa-text-2)" }}>
           {feedbackGesendet ? "Ist dir seitdem noch etwas aufgefallen? Unter " : "Probier die App erst in Ruhe aus. Danach findest du unter "}
-          <Link href="/einstellungen" style={{ color: "#007873", fontWeight: 700 }}>
+          <Link href="/einstellungen" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>
             Einstellungen
           </Link>
           {feedbackGesendet
@@ -120,12 +123,13 @@ export default function TesterWelcome({
         background: "rgba(0,120,115,0.06)",
         border: "1px solid rgba(0,120,115,0.22)",
         borderRadius: 12,
-        fontSize: 14,
+        fontSize: 15,
+        lineHeight: 1.55,
         color: "var(--vfa-text-2)",
       }}
     >
       Deine Rückmeldung zur Testrunde fehlt noch — der Fragebogen liegt unter{" "}
-      <Link href="/einstellungen" style={{ color: "#007873", fontWeight: 700 }}>
+      <Link href="/einstellungen" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>
         Einstellungen
       </Link>
       .

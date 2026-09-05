@@ -86,7 +86,8 @@ export async function GET(req: Request) {
 
     for (const submission of training.submissions) {
       const row: Record<string, string | number> = {
-        date: new Date(submission.createdAt).toLocaleString("de-DE"),
+        // Feste Zeitzone: Vercel läuft in UTC, sonst stünden die Abgaben ein bis zwei Stunden zu früh.
+        date: new Date(submission.createdAt).toLocaleString("de-DE", { timeZone: "Europe/Berlin" }),
         name: submission.anonymous ? "(anonym)" : submission.participantName ?? "",
       };
       for (const q of training.questions) {

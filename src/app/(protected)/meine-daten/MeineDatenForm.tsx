@@ -7,6 +7,7 @@ import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import AppTextarea from "@/components/ui/AppTextarea";
 import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 type FormState = {
@@ -27,7 +28,33 @@ type FormState = {
   position: string;
 };
 
-export default function MeineDatenForm({ initial }: { initial: FormState }) {
+/** Abschnittskopf einer Karte: Etikett nach Kanon plus Chip rechts. */
+function Abschnitt({ titel, chip }: { titel: string; chip: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 16,
+        alignItems: "center",
+        flexWrap: "wrap",
+        marginBottom: 14,
+      }}
+    >
+      <div className="etikett">{titel}</div>
+      {chip}
+    </div>
+  );
+}
+
+export default function MeineDatenForm({
+  initial,
+  namePflegtAdmin = false,
+}: {
+  initial: FormState;
+  /** Dozenten ändern ihren Namen nicht selbst — er steuert den Kurszugriff. */
+  namePflegtAdmin?: boolean;
+}) {
   const [f, setF] = useState<FormState>(initial);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -127,326 +154,252 @@ export default function MeineDatenForm({ initial }: { initial: FormState }) {
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
-      <AppCard accent="none">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 16,
-            alignItems: "center",
-            flexWrap: "wrap",
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: "#007873",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Persönliche Daten
-          </div>
-
-          <StatusBadge variant="yellow">Profil</StatusBadge>
-        </div>
-
-        <div style={{ display: "grid", gap: 14 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 14,
-            }}
-          >
-            <AppInput
-              label="Vorname"
-              value={f.firstName}
-              placeholder="Max"
-              name="given-name"
-              autoComplete="given-name"
-              onChange={(value) => setField("firstName", value)}
-            />
-
-            <AppInput
-              label="Nachname"
-              value={f.lastName}
-              placeholder="Mustermann"
-              name="family-name"
-              autoComplete="family-name"
-              onChange={(value) => setField("lastName", value)}
-            />
-          </div>
-
-          <AppInput
-            label="E-Mail"
-            value={f.email}
-            placeholder="max@firma.de"
-            type="email"
-            name="email"
-            autoComplete="email"
-            inputMode="email"
-            onChange={(value) => setField("email", value)}
-          />
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 14,
-            }}
-          >
-            <AppInput
-              label="Geburtsdatum (TT.MM.JJJJ)"
-              value={f.birthDate}
-              placeholder="31.01.1990"
-              onChange={(value) => setField("birthDate", value)}
-            />
-
-            <AppInput
-              label="Telefon"
-              value={f.phone}
-              placeholder="+49 170 1234567"
-              type="tel"
-              name="tel"
-              autoComplete="tel"
-              inputMode="tel"
-              onChange={(value) => setField("phone", value)}
-            />
-          </div>
-
-          <AppSelect
-            label="Geschlecht / Anrede"
-            value={f.gender}
-            onChange={(value) => setField("gender", value)}
-            placeholder="Bitte auswählen"
-            options={[
-              { value: "weiblich", label: "weiblich" },
-              { value: "männlich", label: "männlich" },
-              { value: "divers", label: "divers" },
-              { value: "keine Angabe", label: "keine Angabe" },
-            ]}
-          />
-        </div>
-      </AppCard>
-
-      <AppCard accent="none">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 16,
-            alignItems: "center",
-            flexWrap: "wrap",
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: "#007873",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Firmendaten
-          </div>
-
-          <StatusBadge>Firma</StatusBadge>
-        </div>
-
-        <div style={{ display: "grid", gap: 14 }}>
-          <AppInput
-            label="Firmenname"
-            value={f.company}
-            placeholder="Firma GmbH"
-            onChange={(value) => setField("company", value)}
-          />
-
-          <AppInput
-            label="Funktion / Position"
-            value={f.position}
-            placeholder="Technischer Leiter"
-            onChange={(value) => setField("position", value)}
-          />
-
-          <AppInput
-            label="Straße und Hausnummer"
-            value={f.companyStreet}
-            placeholder="Musterstraße 12"
-            onChange={(value) => setField("companyStreet", value)}
-          />
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: 14,
-            }}
-          >
-            <AppInput
-              label="PLZ"
-              value={f.companyZip}
-              placeholder="20537"
-              onChange={(value) => setField("companyZip", value)}
-            />
-
-            <AppInput
-              label="Ort"
-              value={f.companyCity}
-              placeholder="Hamburg"
-              onChange={(value) => setField("companyCity", value)}
-            />
-          </div>
-
-          <AppInput
-            label="Land"
-            value={f.companyCountry}
-            placeholder="Deutschland"
-            onChange={(value) => setField("companyCountry", value)}
-          />
-
-          <AppTextarea
-            label="Firmenadresse Zusatz / Bemerkung"
-            value={f.companyAddress}
-            placeholder="Optional, z. B. Postfach, Standort, Abteilung"
-            rows={3}
-            onChange={(value) => setField("companyAddress", value)}
-          />
-        </div>
-      </AppCard>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
+      {/* Als Formular, damit Enter im Feld speichert (Befund f03-14, 05.09.2026). */}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!loading) void save();
         }}
+        style={{ display: "grid", gap: 18 }}
       >
-        <AppButton onClick={save} disabled={loading} variant="primary">
-          {loading ? "Speichern..." : "Speichern"}
-        </AppButton>
+        <AppCard accent="none">
+          <Abschnitt titel="Persönliche Daten" chip={<StatusBadge variant="yellow">Profil</StatusBadge>} />
 
-        {msg && (
-          <div
-            style={{
-              padding: "10px 14px",
-              border: success ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)",
-              background: success ? "rgba(0,120,115,0.08)" : "rgba(176,0,32,0.08)",
-              color: success ? "#007873" : "#B00020",
-              fontWeight: 800,
-            }}
-          >
-            {msg}
-          </div>
-        )}
-      </div>
-
-      <AppCard accent="none">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 16,
-            alignItems: "center",
-            flexWrap: "wrap",
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: "#007873",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Passwort ändern
-          </div>
-          <StatusBadge>Sicherheit</StatusBadge>
-        </div>
-
-        <div style={{ display: "grid", gap: 14 }}>
-          <AppInput
-            label="Aktuelles Passwort"
-            value={pwCurrent}
-            placeholder="Dein bisheriges Passwort"
-            type="password"
-            onChange={setPwCurrent}
-          />
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 14,
-            }}
-          >
-            <AppInput
-              label="Neues Passwort"
-              value={pwNew}
-              placeholder="Mindestens 10 Zeichen"
-              type="password"
-              onChange={setPwNew}
-            />
-            <AppInput
-              label="Passwort bestätigen"
-              value={pwConfirm}
-              placeholder="Passwort wiederholen"
-              type="password"
-              onChange={setPwConfirm}
-            />
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <AppButton
-              onClick={changePassword}
-              disabled={pwLoading || !pwCurrent || !pwNew || !pwConfirm}
-              variant="primary"
+          <div style={{ display: "grid", gap: 14 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 14,
+              }}
             >
-              {pwLoading ? "Wird gespeichert..." : "Passwort speichern"}
-            </AppButton>
-            {pwMsg && (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  border: pwSuccess ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)",
-                  background: pwSuccess ? "rgba(0,120,115,0.08)" : "rgba(176,0,32,0.08)",
-                  color: pwSuccess ? "#007873" : "#B00020",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  borderRadius: 4,
-                }}
-              >
-                {pwMsg}
+              <AppInput
+                label="Vorname"
+                value={f.firstName}
+                placeholder="Max"
+                name="given-name"
+                autoComplete="given-name"
+                disabled={namePflegtAdmin}
+                onChange={(value) => setField("firstName", value)}
+              />
+
+              <AppInput
+                label="Nachname"
+                value={f.lastName}
+                placeholder="Mustermann"
+                name="family-name"
+                autoComplete="family-name"
+                disabled={namePflegtAdmin}
+                onChange={(value) => setField("lastName", value)}
+              />
+            </div>
+
+            {namePflegtAdmin && (
+              <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
+                Dein Name wird vom Admin gepflegt. Stimmt etwas nicht, melde dich bei der Akademie.
               </div>
             )}
-          </div>
-        </div>
-      </AppCard>
 
-      <div className="logout-mobile-only">
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: "/login" })}
+            <AppInput
+              label="E-Mail"
+              value={f.email}
+              placeholder="max@firma.de"
+              type="email"
+              name="email"
+              autoComplete="email"
+              inputMode="email"
+              onChange={(value) => setField("email", value)}
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 14,
+              }}
+            >
+              <AppInput
+                label="Geburtsdatum (TT.MM.JJJJ)"
+                value={f.birthDate}
+                placeholder="31.01.1990"
+                onChange={(value) => setField("birthDate", value)}
+              />
+
+              <AppInput
+                label="Telefon"
+                value={f.phone}
+                placeholder="+49 170 1234567"
+                type="tel"
+                name="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                onChange={(value) => setField("phone", value)}
+              />
+            </div>
+
+            <AppSelect
+              label="Geschlecht / Anrede"
+              value={f.gender}
+              onChange={(value) => setField("gender", value)}
+              placeholder="Bitte auswählen"
+              options={[
+                { value: "weiblich", label: "weiblich" },
+                { value: "männlich", label: "männlich" },
+                { value: "divers", label: "divers" },
+                { value: "keine Angabe", label: "keine Angabe" },
+              ]}
+            />
+          </div>
+        </AppCard>
+
+        <AppCard accent="none">
+          <Abschnitt titel="Firmendaten" chip={<StatusBadge>Firma</StatusBadge>} />
+
+          <div style={{ display: "grid", gap: 14 }}>
+            <AppInput
+              label="Firmenname"
+              value={f.company}
+              placeholder="Firma GmbH"
+              onChange={(value) => setField("company", value)}
+            />
+
+            <AppInput
+              label="Funktion / Position"
+              value={f.position}
+              placeholder="Technischer Leiter"
+              onChange={(value) => setField("position", value)}
+            />
+
+            <AppInput
+              label="Straße und Hausnummer"
+              value={f.companyStreet}
+              placeholder="Musterstraße 12"
+              onChange={(value) => setField("companyStreet", value)}
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gap: 14,
+              }}
+            >
+              <AppInput
+                label="PLZ"
+                value={f.companyZip}
+                placeholder="20537"
+                onChange={(value) => setField("companyZip", value)}
+              />
+
+              <AppInput
+                label="Ort"
+                value={f.companyCity}
+                placeholder="Hamburg"
+                onChange={(value) => setField("companyCity", value)}
+              />
+            </div>
+
+            <AppInput
+              label="Land"
+              value={f.companyCountry}
+              placeholder="Deutschland"
+              onChange={(value) => setField("companyCountry", value)}
+            />
+
+            <AppTextarea
+              label="Firmenadresse Zusatz / Bemerkung"
+              value={f.companyAddress}
+              placeholder="Optional, z. B. Postfach, Standort, Abteilung"
+              rows={3}
+              onChange={(value) => setField("companyAddress", value)}
+            />
+          </div>
+        </AppCard>
+
+        <div
           style={{
-            width: "100%",
-            padding: "14px 16px",
-            borderRadius: 999,
-            border: "1px solid var(--vfa-linie)",
-            background: "var(--vfa-karte-2)",
-            color: "var(--vfa-text-2)",
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: "0.04em",
-            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
           }}
         >
+          <AppButton type="submit" disabled={loading} variant="primary">
+            {loading ? "Speichern …" : "Speichern"}
+          </AppButton>
+
+          {msg && (
+            <Meldung art={success ? "erfolg" : "fehler"} style={{ flex: "1 1 240px" }}>
+              {msg}
+            </Meldung>
+          )}
+        </div>
+      </form>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!pwLoading && pwCurrent && pwNew && pwConfirm) void changePassword();
+        }}
+      >
+        <AppCard accent="none">
+          <Abschnitt titel="Passwort ändern" chip={<StatusBadge>Sicherheit</StatusBadge>} />
+
+          <div style={{ display: "grid", gap: 14 }}>
+            <AppInput
+              label="Aktuelles Passwort"
+              value={pwCurrent}
+              placeholder="Dein bisheriges Passwort"
+              type="password"
+              autoComplete="current-password"
+              onChange={setPwCurrent}
+            />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 14,
+              }}
+            >
+              <AppInput
+                label="Neues Passwort"
+                value={pwNew}
+                placeholder="Mindestens 10 Zeichen"
+                type="password"
+                autoComplete="new-password"
+                onChange={setPwNew}
+              />
+              <AppInput
+                label="Passwort bestätigen"
+                value={pwConfirm}
+                placeholder="Passwort wiederholen"
+                type="password"
+                autoComplete="new-password"
+                onChange={setPwConfirm}
+              />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <AppButton
+                type="submit"
+                disabled={pwLoading || !pwCurrent || !pwNew || !pwConfirm}
+                variant="primary"
+              >
+                {pwLoading ? "Wird gespeichert …" : "Passwort speichern"}
+              </AppButton>
+              {pwMsg && (
+                <Meldung art={pwSuccess ? "erfolg" : "fehler"} style={{ flex: "1 1 240px" }}>
+                  {pwMsg}
+                </Meldung>
+              )}
+            </div>
+          </div>
+        </AppCard>
+      </form>
+
+      <div className="logout-mobile-only">
+        <AppButton variant="secondary" fullWidth onClick={() => signOut({ callbackUrl: "/login" })}>
           Abmelden
-        </button>
+        </AppButton>
       </div>
     </div>
   );

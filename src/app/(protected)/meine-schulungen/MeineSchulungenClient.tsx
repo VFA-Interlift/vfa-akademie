@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import StatusBadge from "@/components/ui/StatusBadge";
 import PdfAnsichtLink from "@/components/PdfAnsichtLink";
 import {
   formatDateRange,
@@ -11,7 +13,7 @@ import {
   formatVenueLines,
   getDisplayTrainingTitle,
   formatEnrollmentStatus,
-  enrollmentStatusColor,
+  enrollmentStatusVariant,
 } from "@/lib/trainings/format";
 import type { TrainingRecommendation } from "@/lib/trainings/recommendations";
 
@@ -50,16 +52,18 @@ export default function MeineSchulungenClient({
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span aria-hidden="true" style={{
                 flex: "none", width: 30, height: 30, borderRadius: 9,
-                background: "rgba(0,120,115,0.10)", color: "#007873",
-                display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800,
+                background: "rgba(0,120,115,0.10)", color: "var(--vfa-gruen-text)",
+                display: "grid", placeItems: "center", fontSize: "var(--t-gross)", fontWeight: 800,
               }}>i</span>
               <div style={{ minWidth: 0 }}>
+                {/* „bevorstehende": darunter kann die Liste bisheriger
+                    Teilnahmen stehen — „zugeordnet" widersprach ihr. */}
                 <div style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
-                  Keine Schulung zugeordnet
+                  Keine bevorstehende Schulung
                 </div>
                 <p style={{ marginTop: 3, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: 1.5 }}>
                   Im{" "}
-                  <Link href="/kurskalender" style={{ color: "#007873", fontWeight: 700 }}>
+                  <Link href="/kurskalender" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>
                     Kurskalender
                   </Link>{" "}
                   findest du alle kommenden Termine.
@@ -81,17 +85,16 @@ export default function MeineSchulungenClient({
   // automatisch (Cron) in Zertifikate umgewandelt (Enrollment → CERTIFICATE_ISSUED)
   // und erscheinen dann unter „Meine Zertifikate".
   const visible = trainings.filter((t) => new Date(t.endDate ?? t.date) >= today);
-  // Abgesagte Kurse zaehlen nicht zu den moeglichen Credits.
-  const totalCredits = visible.reduce(
-    (sum, t) => sum + (t.cancelledAt ? 0 : t.creditsAward),
-    0
-  );
+  // Abgesagte Kurse bleiben in der Liste sichtbar, zaehlen aber weder als
+  // bevorstehend (wie im Dashboard) noch zu den moeglichen Credits.
+  const nichtAbgesagt = visible.filter((t) => !t.cancelledAt);
+  const totalCredits = nichtAbgesagt.reduce((sum, t) => sum + t.creditsAward, 0);
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <AnimatedSection delayMs={0}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-          <SummaryBox label="Bevorstehende Schulungen" value={visible.length} />
+          <SummaryBox label="Bevorstehende Schulungen" value={nichtAbgesagt.length} />
           <SummaryBox label="Mögliche Credits" value={totalCredits} />
         </div>
       </AnimatedSection>
@@ -99,10 +102,10 @@ export default function MeineSchulungenClient({
       {visible.length === 0 ? (
         <AnimatedSection delayMs={80}>
           <AppCard>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#007873" }}>
+            <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
               Aktuell sind keine bevorstehenden Schulungen geplant.
-            </div>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
+            </h2>
+            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: 1.5 }}>
               Abgeschlossene Schulungen findest du unter &bdquo;Meine Zertifikate&ldquo;.
             </p>
           </AppCard>
@@ -119,9 +122,7 @@ export default function MeineSchulungenClient({
             // der Kurs bleibt sichtbar, damit niemand umsonst anreist.
             const abgesagt = Boolean(training.cancelledAt);
             const statusLabel = abgesagt ? "Abgesagt" : formatEnrollmentStatus(training.status);
-            const statusStyle = abgesagt
-              ? { bg: "rgba(176,0,32,0.10)", color: "var(--vfa-rot-text)", border: "1px solid rgba(176,0,32,0.28)" }
-              : enrollmentStatusColor(training.status);
+            const statusVariant = abgesagt ? "danger" : enrollmentStatusVariant(training.status);
 
             return (
               <AnimatedSection key={training.id} delayMs={Math.min(80 + index * 50, 400)}>
@@ -143,36 +144,27 @@ export default function MeineSchulungenClient({
                     <div style={{ padding: "18px 20px", display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 18, alignItems: "start" }}>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
-                          <span style={{
-                            display: "inline-flex", alignItems: "center",
-                            padding: "3px 10px", borderRadius: 999,
-                            fontSize: 11, fontWeight: 700,
-                            background: statusStyle.bg,
-                            color: statusStyle.color,
-                            border: statusStyle.border,
-                          }}>
-                            {statusLabel}
-                          </span>
+                          <StatusBadge variant={statusVariant}>{statusLabel}</StatusBadge>
                         </div>
 
-                        <h2 style={{ margin: 0, color: "#007873", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: 1.2, maxWidth: 520 }}>
+                        <h2 style={{ margin: 0, color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: 1.2, maxWidth: 520 }}>
                           {displayTitle}
                         </h2>
 
-                        <div style={{ marginTop: 12, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "var(--vfa-text-2)", fontWeight: 600 }}>
+                        <div style={{ marginTop: 12, display: "flex", gap: 14, flexWrap: "wrap", fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", fontWeight: 600 }}>
                           <span>📅 {dateText}</span>
                           {addressLines.length > 0 && <span>📍 {addressLines[0]}</span>}
                         </div>
                       </div>
 
                       <div style={{ minWidth: 80, display: "grid", justifyItems: "end", alignContent: "start", gap: 4, paddingTop: 2 }}>
-                        <div style={{ color: "#007873", fontWeight: 800, fontSize: "clamp(20px, 4vw, 26px)", lineHeight: 1, textAlign: "right" }}>
+                        <div style={{ color: "var(--vfa-gruen-text)", fontWeight: 800, fontSize: "var(--t-zahl)", lineHeight: 1, textAlign: "right" }}>
                           {training.creditsAward}
                         </div>
-                        <div style={{ color: "var(--vfa-text-3)", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "right" }}>
+                        <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-label)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", textAlign: "right" }}>
                           Credits
                         </div>
-                        <div style={{ marginTop: 8, color: "#007873", fontSize: 22, fontWeight: 900, lineHeight: 1, transition: "transform 180ms ease", transform: isOpen ? "rotate(180deg)" : "none" }}>
+                        <div style={{ marginTop: 8, color: "var(--vfa-gruen-text)", fontSize: 22, fontWeight: 800, lineHeight: 1, transition: "transform 180ms ease", transform: isOpen ? "rotate(180deg)" : "none" }}>
                           {isOpen ? "−" : "+"}
                         </div>
                       </div>
@@ -191,51 +183,23 @@ export default function MeineSchulungenClient({
 
                         <div style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap" }}>
                           {!abgesagt && (
-                          <a
-                            href={`/api/trainings/${training.id}/calendar`}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 8,
-                              padding: "11px 18px",
-                              borderRadius: 10,
-                              background: "#007873",
-                              color: "#FFFFFF",
-                              fontSize: 14,
-                              fontWeight: 800,
-                              textDecoration: "none",
-                              border: "none",
-                            }}
-                          >
-                            <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>📅</span>
-                            Zum Kalender hinzufügen
-                          </a>
+                            <AppButton href={`/api/trainings/${training.id}/calendar`} external>
+                              <span aria-hidden="true">📅</span>
+                              Zum Kalender hinzufügen
+                            </AppButton>
                           )}
                           {/* Route zum Schulungsort — öffnet die Karten-App;
                               der Google-Link funktioniert auf iPhone und
                               Android gleichermaßen. */}
                           {!abgesagt && addressLines.length > 0 && (
-                            <a
+                            <AppButton
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(", "))}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 8,
-                                padding: "11px 18px",
-                                borderRadius: 10,
-                                background: "transparent",
-                                color: "#007873",
-                                fontSize: 14,
-                                fontWeight: 800,
-                                textDecoration: "none",
-                                border: "1px solid #007873",
-                              }}
+                              external
+                              variant="ghost"
                             >
-                              <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>🗺️</span>
+                              <span aria-hidden="true">🗺️</span>
                               Route
-                            </a>
+                            </AppButton>
                           )}
                         </div>
                       </div>
@@ -274,65 +238,64 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
   return (
     <AnimatedSection delayMs={120}>
       <div style={{ marginTop: 8 }}>
-        <div style={{ color: "#007873", fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          Bisherige Teilnahmen
-        </div>
-        <div style={{ color: "var(--vfa-text-3)", fontSize: 13, marginTop: 2, marginBottom: 10 }}>
-          {trainings.length} {trainings.length === 1 ? "Schulung" : "Schulungen"} · {credits} Credits gesammelt
+        <div className="etikett">Bisherige Teilnahmen</div>
+        <div style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", marginTop: 2, marginBottom: 10 }}>
+          {trainings.length} {trainings.length === 1 ? "Schulung" : "Schulungen"} · {credits.toLocaleString("de-DE")} Credits gesammelt
         </div>
 
         <AppCard style={{ padding: 0, overflow: "hidden" }}>
-          {sichtbar.map((t, i) => (
-            <div
-              key={`${t.id}-${t.date}`}
-              style={{
-                display: "flex", gap: 12, alignItems: "baseline", justifyContent: "space-between",
-                padding: "12px 16px",
-                borderTop: i === 0 ? "none" : "1px solid var(--vfa-linie-2)",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: "var(--vfa-text)", fontSize: 14 }}>
-                  {getDisplayTrainingTitle(t)}
+          {sichtbar.map((t, i) => {
+            const titel = getDisplayTrainingTitle(t);
+            // Der Kurscode ist meist schon der Titel — dann nicht noch einmal
+            // in der Metazeile (Befund f04-1, 05.09.2026).
+            const codeZusatz = t.code && t.code.trim() !== titel ? ` · ${t.code.trim()}` : "";
+            return (
+              <div
+                key={`${t.id}-${t.date}`}
+                style={{
+                  display: "flex", gap: 12, alignItems: "baseline", justifyContent: "space-between",
+                  padding: "12px 16px",
+                  borderTop: i === 0 ? "none" : "1px solid var(--vfa-linie-2)",
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: "var(--vfa-text)", fontSize: "var(--t-basis)" }}>
+                    {titel}
+                  </div>
+                  <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", marginTop: 2 }}>
+                    {formatDateRange(t.date, t.endDate)}
+                    {codeZusatz}
+                  </div>
                 </div>
-                <div style={{ color: "var(--vfa-text-3)", fontSize: 12, marginTop: 2 }}>
-                  {formatDateRange(t.date, t.endDate)}
-                  {t.code ? ` · ${t.code}` : ""}
-                </div>
-              </div>
 
-              <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
-                {t.cancelledAt ? (
-                  <span style={{
-                    color: "var(--vfa-rot-text)", fontWeight: 800, fontSize: 11, whiteSpace: "nowrap",
-                    textTransform: "uppercase", letterSpacing: "0.06em",
-                  }}>
-                    Abgesagt
-                  </span>
-                ) : (
-                  <>
-                    {t.certificateId ? (
-                      <PdfAnsichtLink
-                        url={`/api/certificates/${t.certificateId}/download`}
-                        titel={getDisplayTrainingTitle(t)}
-                        dateiname="nachweis.pdf"
-                        style={{ color: "#007873", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}
-                      >
-                        Nachweis ansehen
-                      </PdfAnsichtLink>
-                    ) : null}
-                    {/* "+X" nur bei ausgestelltem Zertifikat — vorher ist nichts gutgeschrieben,
-                        und die Zeilen muessen zur Summe oben passen (20.08.2026). */}
-                    {t.certificateId && t.creditsAward > 0 ? (
-                      <span style={{ color: "#007873", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>
-                        +{t.creditsAward}
-                      </span>
-                    ) : null}
-                  </>
-                )}
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
+                  {t.cancelledAt ? (
+                    <StatusBadge variant="danger">Abgesagt</StatusBadge>
+                  ) : (
+                    <>
+                      {t.certificateId ? (
+                        <PdfAnsichtLink
+                          url={`/api/certificates/${t.certificateId}/download`}
+                          titel={titel}
+                          dateiname="nachweis.pdf"
+                          style={{ color: "var(--vfa-gruen-text)", fontSize: "var(--t-klein)", fontWeight: 700, whiteSpace: "nowrap" }}
+                        >
+                          Nachweis ansehen
+                        </PdfAnsichtLink>
+                      ) : null}
+                      {/* "+X" nur bei ausgestelltem Zertifikat — vorher ist nichts gutgeschrieben,
+                          und die Zeilen muessen zur Summe oben passen (20.08.2026). */}
+                      {t.certificateId && t.creditsAward > 0 ? (
+                        <span style={{ color: "var(--vfa-gruen-text)", fontWeight: 800, fontSize: "var(--t-klein)", whiteSpace: "nowrap" }}>
+                          +{t.creditsAward}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {trainings.length > 5 ? (
             <button
@@ -340,7 +303,7 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
               onClick={() => setAlleZeigen(!alleZeigen)}
               style={{
                 width: "100%", padding: "11px 16px", border: "none", borderTop: "1px solid var(--vfa-linie-2)",
-                background: "var(--vfa-karte-2)", color: "#007873", fontWeight: 800, fontSize: 13, cursor: "pointer",
+                background: "var(--vfa-karte-2)", color: "var(--vfa-gruen-text)", fontWeight: 700, fontSize: "var(--t-klein)", cursor: "pointer",
               }}
             >
               {alleZeigen ? "Weniger anzeigen" : `Alle ${trainings.length} anzeigen`}
@@ -359,10 +322,8 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
     <AnimatedSection delayMs={120}>
       <div style={{ display: "grid", gap: 10, marginTop: 8 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            Empfohlen für dich
-          </div>
-          <div style={{ fontSize: 13, color: "var(--vfa-text-3)", marginTop: 2 }}>
+          <div className="etikett">Empfohlen für dich</div>
+          <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 2 }}>
             Dein nächster Schritt in der VFA-Weiterbildung
           </div>
         </div>
@@ -370,18 +331,18 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
         {recommendations.map((rec) => (
           <AppCard key={rec.prefix} accent="yellow">
             <div style={{ display: "grid", gap: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--vfa-text-2)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <div style={{ fontSize: "var(--t-label)", fontWeight: 700, color: "var(--vfa-text-2)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 ★ {rec.reason}
               </div>
-              <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.25 }}>
+              <h2 className="balance" style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: 1.25 }}>
                 {rec.title}
-              </div>
+              </h2>
               <div className="text-2zeilen" style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: 1.5 }}>
                 {rec.description}
               </div>
 
               {rec.nextTraining ? (
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13, color: "var(--vfa-text-2)", fontWeight: 600, marginTop: 2 }}>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", fontWeight: 600, marginTop: 2 }}>
                   <span>
                     📅 Nächster Termin: {formatDateRange(rec.nextTraining.date, rec.nextTraining.endDate)}
                     {rec.nextTraining.code ? ` (${rec.nextTraining.code})` : ""}
@@ -392,33 +353,13 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
                   })()}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: "var(--vfa-text-3)", fontStyle: "italic" }}>
-                  Termine folgen – schau im Kurskalender vorbei.
+                <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", fontStyle: "italic" }}>
+                  Termine folgen. Schau im Kurskalender vorbei.
                 </div>
               )}
 
               <div style={{ marginTop: 4 }}>
-                <Link
-                  href="/kurskalender"
-                  className="vfa-btn"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    minHeight: 40,
-                    padding: "9px 18px",
-                    borderRadius: 999,
-                    background: "#007873",
-                    color: "#FFFFFF",
-                    fontSize: 13,
-                    fontWeight: 800,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                    textDecoration: "none",
-                  }}
-                >
-                  Zum Kurskalender →
-                </Link>
+                <AppButton href="/kurskalender">Zum Kurskalender →</AppButton>
               </div>
             </div>
           </AppCard>
@@ -428,15 +369,14 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
   );
 }
 
+// Dieselbe Kachelform wie die StatBox des Dashboards (Launch-Runde 05.09.2026).
 function SummaryBox({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte)", padding: "14px 16px", borderRadius: 12 }}>
-      <div style={{ color: "#007873", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+    <div style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)" }}>
+      <div className="etikett" style={{ marginBottom: 4 }}>
         {label}
       </div>
-      <div style={{ color: "var(--vfa-text)", fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>
-        {value.toLocaleString("de-DE")}
-      </div>
+      <div className="kennzahl">{value.toLocaleString("de-DE")}</div>
     </div>
   );
 }
@@ -444,10 +384,10 @@ function SummaryBox({ label, value }: { label: string; value: number }) {
 function Info({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 12, fontWeight: 850, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
+      <div className="etikett" style={{ marginBottom: 3 }}>
         {label}
       </div>
-      <div style={{ color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)", lineHeight: 1.45, fontSize: 14, fontStyle: muted ? "italic" : "normal", overflowWrap: "anywhere" }}>
+      <div style={{ color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)", lineHeight: "var(--lh-weit)", fontSize: "var(--t-basis)", fontStyle: muted ? "italic" : "normal", overflowWrap: "anywhere" }}>
         {value}
       </div>
     </div>
@@ -457,13 +397,13 @@ function Info({ label, value, muted = false }: { label: string; value: string; m
 function AddressInfo({ lines }: { lines: string[] }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 12, fontWeight: 850, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
+      <div className="etikett" style={{ marginBottom: 3 }}>
         Adresse
       </div>
       {lines.length === 0 ? (
-        <div style={{ color: "var(--vfa-text-3)", lineHeight: 1.45, fontSize: 14, fontStyle: "italic" }}>Noch nicht hinterlegt</div>
+        <div style={{ color: "var(--vfa-text-3)", lineHeight: "var(--lh-weit)", fontSize: "var(--t-basis)", fontStyle: "italic" }}>Noch nicht hinterlegt</div>
       ) : (
-        <div style={{ color: "var(--vfa-text)", lineHeight: 1.45, fontSize: 14 }}>
+        <div style={{ color: "var(--vfa-text)", lineHeight: "var(--lh-weit)", fontSize: "var(--t-basis)" }}>
           {lines.map((line) => <div key={line}>{line}</div>)}
         </div>
       )}

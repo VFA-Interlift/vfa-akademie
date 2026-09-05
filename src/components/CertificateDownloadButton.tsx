@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import PdfOverlay from "@/components/PdfOverlay";
+import AppButton from "@/components/ui/AppButton";
+import Meldung from "@/components/ui/Meldung";
 
 type DownloadErrorResponse = {
   ok?: false;
@@ -19,6 +21,10 @@ export default function CertificateDownloadButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  // Eigener Zustand statt Wortsuche im Text: Vorher wurden Fehler ohne
+  // Schlüsselwort („Bitte melde dich an …“) grün wie ein Erfolg gezeigt
+  // (Befund d07-35, 05.09.2026).
+  const [istFehler, setIstFehler] = useState(false);
   const [ansicht, setAnsicht] = useState<{ url: string; dateiname: string } | null>(null);
 
   // Blob-URL freigeben, sobald die Ansicht zu ist (und beim Abbau der Komponente).
@@ -28,9 +34,15 @@ export default function CertificateDownloadButton({
     };
   }, [ansicht]);
 
+  function fehler(text: string) {
+    setIstFehler(true);
+    setMsg(text);
+  }
+
   async function downloadDocument() {
     setLoading(true);
     setMsg("");
+    setIstFehler(false);
 
     try {
       const res = await fetch(`/api/certificates/${certificateId}/download`, {
@@ -39,15 +51,14 @@ export default function CertificateDownloadButton({
       });
 
       if (!res.ok) {
-        const errorMessage = await getDownloadErrorMessage(res);
-        setMsg(errorMessage);
+        fehler(await getDownloadErrorMessage(res));
         return;
       }
 
       const blob = await res.blob();
 
       if (blob.size === 0) {
-        setMsg("Das Dokument ist leer und konnte nicht heruntergeladen werden.");
+        fehler("Das Dokument ist leer und konnte nicht heruntergeladen werden.");
         return;
       }
 
@@ -80,64 +91,24 @@ export default function CertificateDownloadButton({
 
       setMsg("Download gestartet.");
     } catch {
-      setMsg("Das Dokument konnte nicht geöffnet werden.");
+      fehler("Das Dokument konnte nicht geöffnet werden.");
     } finally {
       setLoading(false);
     }
   }
 
-  const isError =
-    msg.includes("fehlgeschlagen") ||
-    msg.includes("konnte") ||
-    msg.includes("nicht") ||
-    msg.includes("fehlt") ||
-    msg.includes("keine Berechtigung");
-
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      <button
-        type="button"
-        onClick={downloadDocument}
-        disabled={loading}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: 42,
-          padding: "10px 18px",
-          borderRadius: 999,
-          border: "none",
-          background: "#007873",
-          color: "#FFFFFF",
-          fontWeight: 800,
-          fontSize: 13,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          cursor: loading ? "not-allowed" : "pointer",
-          opacity: loading ? 0.65 : 1,
-          transition: "opacity 180ms ease, transform 180ms ease",
-        }}
-      >
-        {loading ? "Dokument wird erstellt..." : label}
-      </button>
+      <AppButton onClick={downloadDocument} disabled={loading}>
+        {loading ? "Dokument wird erstellt…" : label}
+      </AppButton>
 
-      {msg && (
-        <div
-          style={{
-            color: isError ? "#B00020" : "#007873",
-            fontSize: 13,
-            fontWeight: 800,
-            lineHeight: 1.4,
-          }}
-        >
-          {msg}
-        </div>
-      )}
+      {msg && <Meldung art={istFehler ? "fehler" : "erfolg"}>{msg}</Meldung>}
 
       {ansicht && (
         <PdfOverlay
           url={ansicht.url}
-          titel="Dein Nachweis"
+          titel="Dein Zertifikat"
           dateiname={ansicht.dateiname}
           onClose={() => {
             window.URL.revokeObjectURL(ansicht.url);
@@ -166,12 +137,8 @@ async function getDownloadErrorMessage(res: Response) {
     }
   }
 
-  const text = await res.text().catch(() => "");
-
-  if (text.trim()) {
-    return text;
-  }
-
+  // Kein JSON (HTML-Fehlerseite, Zeitüberschreitung des Hosters): nicht den
+  // rohen Seitentext zeigen (Befund f11-9, 05.09.2026).
   return "Download fehlgeschlagen.";
 }
 

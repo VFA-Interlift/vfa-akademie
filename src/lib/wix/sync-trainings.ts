@@ -81,6 +81,16 @@ async function offeneAnmeldungenNachziehen(): Promise<NachziehErgebnis> {
             create: { userId: user.id, trainingId: training.id, status: "CONFIRMED" },
             update: {},
           });
+          // Wie im Wix-Webhook: Eine neue Website-Anmeldung holt eine
+          // stornierte Einschreibung zurück (Befund 05.09.2026).
+          await prisma.enrollment.updateMany({
+            where: {
+              userId: user.id,
+              trainingId: training.id,
+              status: { in: ["CANCELLED", "NO_SHOW"] },
+            },
+            data: { status: "CONFIRMED" },
+          });
           eingeschrieben += 1;
         }
       }

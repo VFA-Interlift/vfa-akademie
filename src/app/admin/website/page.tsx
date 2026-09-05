@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
-
-const TEAL = "#007873";
 
 type SyncResult = {
   ok: boolean;
@@ -36,93 +36,66 @@ export default function AdminWebsitePage() {
 
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader backHref="/admin" backLabel="Adminbereich" title="Website-Synchronisation" showTitle />
 
-        <AppCard accent="green">
-          <div style={{ display: "grid", gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              So läuft die Verbindung zur Website
+        <div style={{ display: "grid", gap: 16 }}>
+          <AppCard accent="green">
+            <div style={{ display: "grid", gap: 10 }}>
+              <div className="etikett">So läuft die Verbindung zur Website</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: 1.7 }}>
+                <li><strong>Kurskalender & Dozenten:</strong> kommen live von der Website (höchstens fünf Minuten zwischengespeichert), kein Abgleich nötig.</li>
+                <li><strong>Anmeldungen:</strong> kommen sofort an, wenn jemand das Formular auf der Website absendet.</li>
+                <li><strong>App-Datenbank (für Anmeldungen, Zertifikate, Credits):</strong> wird mit dem Knopf unten aus den Website-Schulungen befüllt und aktualisiert.</li>
+              </ul>
             </div>
-            <ul style={{ margin: 0, paddingLeft: 18, color: "#444444", fontSize: 14, lineHeight: 1.7 }}>
-              <li><strong>Kurskalender & Dozenten:</strong> live von der Website (max. 5 Min Cache) – kein Sync nötig.</li>
-              <li><strong>Anmeldungen:</strong> kommen sofort per Webhook, wenn jemand das Formular absendet.</li>
-              <li><strong>App-Datenbank (für Anmeldungen, Zertifikate, Credits):</strong> wird mit dem Button unten aus den Website-Kursen befüllt bzw. aktualisiert.</li>
-            </ul>
-          </div>
-        </AppCard>
+          </AppCard>
 
-        <AppCard>
-          <div style={{ display: "grid", gap: 14 }}>
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#1F1F1F" }}>Kurse in die App-DB übernehmen</div>
-              <p style={{ margin: "6px 0 0", color: "#666666", fontSize: 14, lineHeight: 1.6 }}>
-                Übernimmt alle Schulungen aus dem Website-CMS in die App-Datenbank (Matching per
-                Kurscode, nichts wird gelöscht). Nach Änderungen an Kursen auf der Website hier
-                einmal klicken – oder einfach laufen lassen, neue Anmeldungen matchen automatisch.
-              </p>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={runSync}
-                disabled={loading}
-                style={{
-                  minHeight: 46,
-                  padding: "12px 26px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: loading ? "#8CBFBC" : TEAL,
-                  color: "#FFFFFF",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  cursor: loading ? "wait" : "pointer",
-                }}
-              >
-                {loading ? "Synchronisiert…" : "↺ Jetzt von der Website synchronisieren"}
-              </button>
-            </div>
-
-            {result && (
-              <div
-                style={{
-                  padding: "14px 16px",
-                  borderRadius: 10,
-                  border: result.ok ? "1px solid rgba(0,120,115,0.3)" : "1px solid rgba(176,0,32,0.3)",
-                  background: result.ok ? "rgba(0,120,115,0.06)" : "rgba(176,0,32,0.06)",
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  color: result.ok ? "#005f5b" : "#B00020",
-                }}
-              >
-                {result.ok ? (
-                  <>
-                    <strong>Fertig:</strong> {result.received} Kurse von der Website gelesen ·{" "}
-                    {result.created} neu angelegt · {result.updated} aktualisiert
-                    {result.skipped && result.skipped.length > 0 && (
-                      <> · {result.skipped.length} übersprungen ({result.skipped.map((s) => s.kurscode).join(", ")})</>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <strong>Fehler:</strong> {result.message || result.error || "Unbekannter Fehler"}
-                  </>
-                )}
+          <AppCard>
+            <div style={{ display: "grid", gap: 14 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>Schulungen in die App-Datenbank übernehmen</h2>
+                <p style={{ margin: "6px 0 0", color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
+                  Übernimmt alle Schulungen von der Website in die App-Datenbank (Zuordnung über den
+                  Kurscode, nichts wird gelöscht). Nach Änderungen an Schulungen auf der Website hier
+                  einmal klicken. Neue Anmeldungen werden automatisch zugeordnet.
+                </p>
               </div>
-            )}
-          </div>
-        </AppCard>
 
-        <AppCard accent="none">
-          <div style={{ fontSize: 13, color: "#888888", lineHeight: 1.6 }}>
-            Der frühere Cobra-Sync ist weiterhin unter{" "}
-            <a href="/admin/cobra" style={{ color: TEAL, fontWeight: 700 }}>/admin/cobra</a>{" "}
-            erreichbar, wird aber nicht mehr für den Kalender genutzt.
-          </div>
-        </AppCard>
+              <div>
+                <AppButton onClick={runSync} disabled={loading}>
+                  {loading ? "Synchronisiert …" : "Jetzt von der Website synchronisieren"}
+                </AppButton>
+              </div>
+
+              {result && (
+                <Meldung art={result.ok ? "erfolg" : "fehler"}>
+                  {result.ok ? (
+                    <>
+                      <strong>Fertig:</strong> {result.received} Schulungen von der Website gelesen ·{" "}
+                      {result.created} neu angelegt · {result.updated} aktualisiert
+                      {result.skipped && result.skipped.length > 0 && (
+                        <> · {result.skipped.length} übersprungen ({result.skipped.map((s) => s.kurscode).join(", ")})</>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <strong>Fehler:</strong> {result.message || result.error || "Unbekannter Fehler"}
+                    </>
+                  )}
+                </Meldung>
+              )}
+            </div>
+          </AppCard>
+
+          <AppCard accent="none">
+            <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
+              Der frühere Cobra-Abgleich ist weiterhin unter{" "}
+              <a href="/admin/cobra" style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}>/admin/cobra</a>{" "}
+              erreichbar, wird aber nicht mehr für den Kalender genutzt.
+            </div>
+          </AppCard>
+        </div>
       </div>
     </main>
   );

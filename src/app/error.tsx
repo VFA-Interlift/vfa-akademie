@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useEffect } from "react";
+import AppButton from "@/components/ui/AppButton";
 
 /**
  * Auffangseite für Fehler in Server- und Client-Komponenten. Ohne sie zeigt
@@ -16,6 +17,12 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Die Seite greift auch auf Login und Registrierung. „Problem melden“ führt
+  // in die Einstellungen, die ohne Sitzung zur Anmeldung umleiten — deshalb
+  // bekommen Ausgeloggte stattdessen die Adresse (Befund d01-27, 05.09.2026).
+  const { status } = useSession();
+  const angemeldet = status === "authenticated";
+
   useEffect(() => {
     console.error("APP_ERROR", error);
   }, [error]);
@@ -31,42 +38,53 @@ export default function Error({
       }}
     >
       <div style={{ maxWidth: 480, textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 800,
-            color: "#FFC100",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-          }}
-        >
-          Da ist etwas schiefgegangen
-        </div>
+        <div className="etikett">Da ist etwas schiefgegangen</div>
 
         <h1
           style={{
             margin: "10px 0 12px",
-            fontSize: "clamp(26px, 6vw, 34px)",
-            fontWeight: 800,
+            fontSize: "var(--t-titel)",
+            fontWeight: 750,
             color: "var(--vfa-text)",
             letterSpacing: "-0.02em",
-            lineHeight: 1.15,
+            lineHeight: "var(--lh-eng)",
           }}
         >
           Diese Seite ließ sich nicht laden
         </h1>
 
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#666666" }}>
-          Versuch es bitte noch einmal. Bleibt der Fehler, sag uns kurz Bescheid.
-          Wir kümmern uns darum.
+        <p
+          style={{
+            margin: 0,
+            fontSize: "var(--t-basis)",
+            lineHeight: "var(--lh-weit)",
+            color: "var(--vfa-text-2)",
+          }}
+        >
+          Versuch es bitte noch einmal.{" "}
+          {angemeldet ? (
+            <>Bleibt der Fehler, sag uns kurz Bescheid. Wir kümmern uns darum.</>
+          ) : (
+            <>
+              Bleibt der Fehler, schreib uns kurz an{" "}
+              <a
+                href="mailto:info@vfa-interlift.de"
+                style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}
+              >
+                info@vfa-interlift.de
+              </a>
+              .
+            </>
+          )}
         </p>
 
         {error.digest && (
           <p
             style={{
               margin: "18px 0 0",
-              fontSize: 12,
-              color: "#999999",
+              fontSize: "var(--t-klein)",
+              color: "var(--vfa-text-3)",
+              // Monospace bleibt: eine Kennung liest sich so leichter ab.
               fontFamily: "ui-monospace, monospace",
             }}
           >
@@ -83,42 +101,15 @@ export default function Error({
             marginTop: 28,
           }}
         >
-          <button
-            type="button"
-            onClick={reset}
-            style={{
-              minHeight: 46,
-              padding: "12px 26px",
-              borderRadius: 999,
-              background: "#007873",
-              color: "#FFFFFF",
-              fontWeight: 700,
-              fontSize: 15,
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Noch einmal versuchen
-          </button>
+          <AppButton onClick={reset}>Noch einmal versuchen</AppButton>
 
-          <Link
-            href="/einstellungen"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              minHeight: 46,
-              padding: "12px 22px",
-              borderRadius: 999,
-              background: "transparent",
-              color: "var(--vfa-text)",
-              fontWeight: 600,
-              fontSize: 15,
-              textDecoration: "none",
-              border: "1px solid #DEDEDE",
-            }}
-          >
-            Problem melden
-          </Link>
+          {/* Der Anker #feedback setzt voraus, dass die Feedback-Karte unter
+              Einstellungen die id trägt (offene Frage an die Werkstatt). */}
+          {angemeldet && (
+            <AppButton href="/einstellungen#feedback" variant="ghost">
+              Problem melden
+            </AppButton>
+          )}
         </div>
       </div>
     </main>

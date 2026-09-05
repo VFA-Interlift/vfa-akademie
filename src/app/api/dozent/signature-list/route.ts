@@ -136,10 +136,15 @@ export async function DELETE(req: Request) {
   if (!sheet) return fail("NOT_FOUND", 404);
   if (sheet.uploadedById !== me.id) return fail("FORBIDDEN", 403);
 
+  // Erst die Datei, dann die Zeile: Scheitert der Blob-Store, bleibt die Zeile
+  // stehen, damit der Dozent es erneut versuchen kann — sonst läge ein PDF mit
+  // Unterschriften und Klarnamen verwaist und unauffindbar im Speicher
+  // (Befund f12-25, 05.09.2026).
   try {
     await del(sheet.fileUrl);
-  } catch {
-    // Blob-Löschung fehlgeschlagen – Row trotzdem entfernen, Datei ist verwaist.
+  } catch (fehler) {
+    console.error("SIGNATURE_LIST_BLOB_DELETE_ERROR", sheet.id, fehler);
+    return fail("BLOB_DELETE_FAILED", 502);
   }
   await prisma.signedParticipantList.delete({ where: { id: sheet.id } });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 
 /**
  * Einmaliger Glückwunsch-Moment beim Rangaufstieg.
@@ -45,6 +46,9 @@ export default function RangAufstieg({
       const neuStufe = RANG_STUFEN[rangKey] ?? 0;
 
       if (alt !== null && RANG_STUFEN[alt] !== undefined && neuStufe > RANG_STUFEN[alt]) {
+        // Der alte Stand liegt im localStorage und ist erst nach dem
+        // Einhängen lesbar (Lint-Ausnahme wie in BottomNav, 05.09.2026).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMitKonfetti(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
         setSichtbar(true);
       }
@@ -116,23 +120,9 @@ export default function RangAufstieg({
           Du hast den Rang{" "}
           <strong style={{ color: rangFarbe }}>{rangLabel}</strong> erreicht.
         </p>
-        <button
-          type="button"
-          onClick={() => setSichtbar(false)}
-          style={{
-            marginTop: 20,
-            padding: "11px 28px",
-            borderRadius: 999,
-            border: "none",
-            background: "#007873",
-            color: "#FFFFFF",
-            fontSize: 14,
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          Weiter
-        </button>
+        <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
+          <AppButton onClick={() => setSichtbar(false)}>Weiter</AppButton>
+        </div>
       </div>
     </div>
   );

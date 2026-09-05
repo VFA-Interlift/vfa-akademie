@@ -4,17 +4,44 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 
+// Untertitel im Kopf = Bandtitel der Seite. Vollständig für jede Route unter
+// src/app (Launch-Runde 05.09.2026); vorher fielen sieben Seiten auf
+// „Schulungen · Zertifikate“ zurück. Die Suche läuft mit startsWith von oben
+// nach unten — Unterseiten des Adminbereichs stehen deshalb vor „/admin“.
 const PAGE_LABELS: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/meine-schulungen": "Meine Schulungen",
   "/meine-zertifikate": "Meine Zertifikate",
   "/kompetenzpass": "Kompetenzpass",
   "/meine-daten": "Meine Daten",
+  "/meine-credits": "Meine Credits",
   "/kurskalender": "Kurskalender",
-  "/feedback": "Feedback",
+  "/training": "Schulungsdetail",
+  "/feedback": "Feedback zur Schulung",
+  "/badges": "Badges",
+  "/leaderboard": "Ranking",
+  "/einstellungen": "Einstellungen",
+  "/dozent": "Dozentenbereich",
+  "/app-test": "Rückmeldung zur App",
+  "/admin/app-test": "Rückmeldung zur App",
+  "/admin/cobra": "Cobra/WebConnect",
+  "/admin/credits": "Credits verwalten",
   "/admin/feedback": "Feedback-Auswertung",
-  "/admin": "Administration",
+  "/admin/import": "Historie importieren",
+  "/admin/schulungen": "Schulungen & Teilnehmer",
+  "/admin/trainings": "Schulungen in der App-DB",
+  "/admin/users": "Nutzer verwalten",
+  "/admin/website": "Website-Synchronisation",
+  "/admin": "Adminbereich",
+  "/impressum": "Impressum",
+  "/datenschutz": "Datenschutz",
+  "/login": "Anmelden",
+  "/register": "Konto erstellen",
+  "/forgot-password": "Passwort vergessen",
+  "/reset-password": "Neues Passwort",
+  "/e-mail-bestaetigen": "E-Mail bestätigen",
 };
 
 type MeResponse =
@@ -29,20 +56,23 @@ type MeResponse =
       isInstructor: boolean;
     };
 
+// Petrol und Gelb als FLÄCHE (Credits-Chip, gelbe Linie, Menü-Hervorhebung)
+// bleiben fest — als Textfarbe gilt das Token var(--vfa-gruen-text).
 const VFA_GREEN = "#007873";
 const VFA_YELLOW = "#FFC100";
-const VFA_GREY = "#C7C7C7";
 
-// Seiten mit eigenem Brand-Layout (Login/Registrierung etc.) – dort soll der
-// globale Header nicht erscheinen.
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
-
-// Impressum und Datenschutz bringen im (rechtliches)-Layout ihre eigene feste
-// Zurück-Leiste mit — sie ist dort der einzige Kopf. Vorher lugte für
-// Ausgeloggte (z. B. Datenschutz-Link vor der Registrierung) der globale
-// Header als Reststreifen mit angeschnittenem Logo darunter hervor
-// (20.08.2026).
-const RECHTLICHE_ROUTEN = ["/impressum", "/datenschutz"];
+// Der Kopf erscheint seit der Launch-Runde (05.09.2026) auf JEDER Seite, auch
+// auf der Anmeldefamilie und auf Impressum/Datenschutz — Tobis Auftrag: „das
+// Design auf jeder Seite gleich, auch der Header oben, beim Einloggen, beim
+// Registrieren“. Einzige Ausnahme: Die „Anmelden“-Pille rechts entfällt auf
+// den fünf Seiten, zu denen sie führen würde.
+const ANMELDE_SEITEN = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/e-mail-bestaetigen",
+];
 
 export default function HeaderClient() {
   const { status } = useSession();
@@ -176,12 +206,13 @@ export default function HeaderClient() {
   // Hide the mobile header as soon as we know a session exists (status), not
   // only after the /api/me fetch resolves – otherwise the header flashes briefly
   // on top before the bottom nav takes over on app start.
+  // globals.css blendet die Klasse nur unter body.has-bottom-nav aus — wo es
+  // keine untere Leiste gibt, bleibt der Kopf auch eingeloggt stehen.
   const hideMobileHeader = status === "authenticated" || status === "loading";
 
-  const ohneGlobalenHeader = [...AUTH_ROUTES, ...RECHTLICHE_ROUTEN].some(
+  const anmeldeSeite = ANMELDE_SEITEN.some(
     (r) => pathname === r || pathname.startsWith(`${r}/`)
   );
-  if (ohneGlobalenHeader) return null;
 
   return (
     <header
@@ -193,7 +224,7 @@ export default function HeaderClient() {
         right: 0,
         zIndex: 2000,
         background: "var(--vfa-karte)",
-        borderBottom: `1px solid ${VFA_GREY}`,
+        borderBottom: "1px solid var(--vfa-linie)",
         boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
       }}
     >
@@ -208,7 +239,10 @@ export default function HeaderClient() {
       <div
         style={{
           minHeight: 72,
-          padding: "8px 18px",
+          // Seitlich mindestens so weit einrücken, wie das Gerät im Querformat
+          // für die Aussparung meldet (05.09.2026).
+          padding:
+            "8px max(18px, env(safe-area-inset-right, 0px)) 8px max(18px, env(safe-area-inset-left, 0px))",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -222,7 +256,7 @@ export default function HeaderClient() {
             alignItems: "center",
             gap: 10,
             textDecoration: "none",
-            color: VFA_GREEN,
+            color: "var(--vfa-gruen-text)",
             minWidth: 0,
           }}
           onClick={() => setMenuOpen(false)}
@@ -241,9 +275,9 @@ export default function HeaderClient() {
           <div style={{ lineHeight: 1.15, minWidth: 0 }}>
             <div
               style={{
-                fontSize: 17,
+                fontSize: "var(--t-gross)",
                 fontWeight: 700,
-                color: VFA_GREEN,
+                color: "var(--vfa-gruen-text)",
                 letterSpacing: "-0.01em",
                 whiteSpace: "nowrap",
               }}
@@ -285,11 +319,12 @@ export default function HeaderClient() {
                 minWidth: 42,
                 height: 42,
                 borderRadius: 999,
-                border: `1px solid ${VFA_GREY}`,
+                border: "1px solid var(--vfa-linie)",
+                // Gelb ist gelb in beiden Modi, das Zeichen darauf fest dunkel.
                 background: menuOpen ? VFA_YELLOW : "var(--vfa-karte-2)",
-                color: "var(--vfa-text)",
-                fontWeight: 900,
-                fontSize: 20,
+                color: menuOpen ? "#1F1F1F" : "var(--vfa-text)",
+                fontWeight: 700,
+                fontSize: "var(--t-titel)",
                 cursor: "pointer",
                 lineHeight: 1,
               }}
@@ -297,22 +332,7 @@ export default function HeaderClient() {
               ☰
             </button>
           ) : (
-            <Link
-              href="/login"
-              style={{
-                padding: "10px 16px",
-                borderRadius: 999,
-                background: VFA_GREEN,
-                color: "#FFFFFF",
-                fontWeight: 800,
-                fontSize: 13,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                textDecoration: "none",
-              }}
-            >
-              Login
-            </Link>
+            !anmeldeSeite && <AppButton href="/login">Anmelden</AppButton>
           )}
         </div>
       </div>
@@ -320,7 +340,7 @@ export default function HeaderClient() {
       {isLoggedIn && menuOpen && (
         <div
           style={{
-            borderTop: "1px solid #E6E6E6",
+            borderTop: "1px solid var(--vfa-linie)",
             background: "var(--vfa-karte)",
             padding: "14px 18px 18px",
           }}
@@ -337,28 +357,18 @@ export default function HeaderClient() {
               style={{
                 padding: "12px 14px",
                 borderRadius: 10,
-                border: "1px solid #EBEBEB",
+                border: "1px solid var(--vfa-linie)",
                 background: "var(--vfa-karte-2)",
                 color: "var(--vfa-text)",
               }}
             >
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: "var(--vfa-text-2)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Angemeldet als
-              </div>
+              <div className="etikett">Angemeldet als</div>
 
               <div
                 style={{
                   marginTop: 4,
-                  fontWeight: 800,
-                  color: VFA_GREEN,
+                  fontWeight: 700,
+                  color: "var(--vfa-gruen-text)",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -428,7 +438,7 @@ export default function HeaderClient() {
               </MenuLink>
 
               <MenuLink href="/badges" onClick={() => setMenuOpen(false)}>
-                Auszeichnungen
+                Badges
               </MenuLink>
 
               <MenuLink href="/leaderboard" onClick={() => setMenuOpen(false)}>
@@ -454,30 +464,18 @@ export default function HeaderClient() {
                   onClick={() => setMenuOpen(false)}
                   variant="yellow"
                 >
-                  Admin
+                  Adminbereich
                 </MenuLink>
               )}
             </nav>
 
-            <button
-              type="button"
+            <AppButton
+              variant="secondary"
+              fullWidth
               onClick={() => signOut({ callbackUrl: "/login" })}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 999,
-                border: `1px solid ${VFA_GREY}`,
-                background: "var(--vfa-karte-2)",
-                color: "var(--vfa-text)",
-                fontWeight: 800,
-                fontSize: 13,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                cursor: "pointer",
-              }}
             >
-              Logout
-            </button>
+              Abmelden
+            </AppButton>
           </div>
         </div>
       )}
@@ -485,6 +483,10 @@ export default function HeaderClient() {
   );
 }
 
+// Menü-Pillen in den Maßen von AppButton (42/14/700, Versalien); die Optik —
+// Petrol-Schrift auf eingelassener Fläche, volle Breite in der Rasterzelle —
+// bleibt, deshalb kein AppButton-Import. Farben als Token statt #F4F4F4 und
+// #C7C7C7 (Launch-Runde 05.09.2026).
 function MenuLink({
   href,
   children,
@@ -507,13 +509,13 @@ function MenuLink({
         minHeight: 42,
         padding: "10px 14px",
         borderRadius: 999,
-        border: variant === "yellow" ? "none" : `1px solid ${VFA_GREY}`,
-        background: variant === "yellow" ? VFA_YELLOW : "#F4F4F4",
-        color: variant === "yellow" ? "#1F1F1F" : VFA_GREEN,
-        fontSize: 13,
-        fontWeight: 800,
+        border: variant === "yellow" ? "none" : "1px solid var(--vfa-linie)",
+        background: variant === "yellow" ? VFA_YELLOW : "var(--vfa-karte-2)",
+        color: variant === "yellow" ? "#1F1F1F" : "var(--vfa-gruen-text)",
+        fontSize: 14,
+        fontWeight: 700,
         textTransform: "uppercase",
-        letterSpacing: "0.06em",
+        letterSpacing: "0.05em",
         textDecoration: "none",
         whiteSpace: "nowrap",
       }}

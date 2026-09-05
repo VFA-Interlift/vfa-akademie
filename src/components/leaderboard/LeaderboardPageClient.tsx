@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Meldung from "@/components/ui/Meldung";
 
 type LeaderboardData = {
   participants: number;
@@ -13,6 +14,7 @@ type LeaderboardResponse =
   | ({ ok: true } & LeaderboardData)
   | { ok: false; error: string };
 
+// Petrol nur als Fläche (Rangkreis); als Textfarbe gilt var(--vfa-gruen-text).
 const TEAL = "#007873";
 
 export default function LeaderboardPageClient() {
@@ -51,20 +53,16 @@ export default function LeaderboardPageClient() {
   }, []);
 
   if (loading) {
-    return <div style={{ color: "var(--vfa-text-3)", fontSize: 14, padding: "4px 0" }}>Wird geladen...</div>;
+    return <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", padding: "4px 0" }}>Wird geladen…</div>;
   }
 
   if (msg || !data) {
-    return (
-      <div style={{ padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(176,0,32,0.28)", background: "rgba(176,0,32,0.08)", color: "#B00020", fontWeight: 700, fontSize: 14 }}>
-        {msg || "Ranking konnte nicht geladen werden."}
-      </div>
-    );
+    return <Meldung art="fehler">{msg || "Ranking konnte nicht geladen werden."}</Meldung>;
   }
 
   if (!data.first || data.participants === 0) {
     return (
-      <div style={{ color: "var(--vfa-text-2)", fontSize: 14 }}>
+      <div style={{ color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
         Noch keine Teilnehmer im Ranking – sammle die ersten Credits!
       </div>
     );
@@ -75,11 +73,11 @@ export default function LeaderboardPageClient() {
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Credit-Ranking · {data.participants.toLocaleString("de-DE")} Teilnehmer
+      <div className="etikett">
+        Ranking · {data.participants.toLocaleString("de-DE")} Teilnehmer
       </div>
 
-      {/* Platz 1 (anonym) */}
+      {/* Platz 1 (anonym) — Gold als Fläche mit fest dunkler Schrift, wie die Gelb-Regel */}
       <RankRow
         rankLabel="1"
         rankStyle={{ background: "#D4AF37", color: "#1F1F1F", border: "1px solid #B8921F" }}
@@ -92,7 +90,7 @@ export default function LeaderboardPageClient() {
 
       {/* Trenner, wenn dazwischen Plätze liegen */}
       {!iAmFirst && data.me.rank !== null && data.me.rank > 2 && (
-        <div style={{ textAlign: "center", color: "#C0C0C0", fontWeight: 900, letterSpacing: "0.3em", lineHeight: 0.6 }}>
+        <div style={{ textAlign: "center", color: "var(--vfa-text-3)", fontWeight: 800, letterSpacing: "0.3em", lineHeight: 0.6 }}>
           ⋮
         </div>
       )}
@@ -109,22 +107,20 @@ export default function LeaderboardPageClient() {
             highlight
           />
         ) : (
-          <div style={{ padding: "14px 16px", borderRadius: 12, background: "#F7F7F4", border: "1px solid #E6E6E6", color: "#666666", fontSize: 14, lineHeight: 1.55 }}>
+          <Meldung art="hinweis">
             Du bist noch nicht im Ranking – sammle deine ersten Credits über Schulungen und Feedback.
-          </div>
+          </Meldung>
         )
       )}
 
-      {/* Median-Vergleich */}
+      {/* Median-Vergleich: Etikett oben, Kennzahl darunter (Kanon 05.09.2026) */}
       <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(0,120,115,0.06)", border: "1px solid rgba(0,120,115,0.2)", display: "grid", gap: 4 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: TEAL, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          Median aller Teilnehmer
-        </div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: "var(--vfa-text)" }}>
+        <div className="etikett">Median aller Teilnehmer</div>
+        <div className="kennzahl">
           {data.median.toLocaleString("de-DE")} Credits
         </div>
         {data.me.credits > 0 && (
-          <div style={{ fontSize: 13, color: diffToMedian >= 0 ? "#005f5b" : "#7C5A0A", fontWeight: 700 }}>
+          <div style={{ fontSize: "var(--t-klein)", color: diffToMedian >= 0 ? "var(--vfa-gruen-text)" : "var(--vfa-text-2)", fontWeight: 700 }}>
             {diffToMedian === 0
               ? "Du liegst genau im Mittelfeld."
               : diffToMedian > 0
@@ -134,7 +130,7 @@ export default function LeaderboardPageClient() {
         )}
       </div>
 
-      <div style={{ fontSize: 12, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
+      <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", lineHeight: "var(--lh-weit)" }}>
         Aus Datenschutzgründen werden keine Namen angezeigt – du siehst den Spitzenreiter, deine eigene Platzierung und den Median.
       </div>
     </div>
@@ -167,8 +163,8 @@ function RankRow({
         alignItems: "center",
         padding: "12px 14px",
         borderRadius: 12,
-        background: highlight ? "rgba(0,120,115,0.06)" : "#FFFFFF",
-        border: highlight ? "1px solid rgba(0,120,115,0.3)" : "1px solid #EFEFEF",
+        background: highlight ? "rgba(0,120,115,0.06)" : "var(--vfa-karte-2)",
+        border: highlight ? "1px solid rgba(0,120,115,0.3)" : "1px solid var(--vfa-linie-2)",
       }}
     >
       <div
@@ -178,8 +174,8 @@ function RankRow({
           borderRadius: 999,
           display: "grid",
           placeItems: "center",
-          fontWeight: 900,
-          fontSize: 15,
+          fontWeight: 800,
+          fontSize: "var(--t-basis)",
           ...rankStyle,
         }}
       >
@@ -189,21 +185,19 @@ function RankRow({
       <div style={{ minWidth: 0 }}>
         <div
           style={{
-            color: "#1F1F1F",
-            fontSize: 15,
+            color: "var(--vfa-text)",
+            fontSize: "var(--t-basis)",
             fontWeight: 800,
-            // „Unkenntlicher" Spitzenreiter: Name bewusst verwischt darstellen.
-            filter: anonymous ? "blur(0px)" : undefined,
             letterSpacing: anonymous ? "0.04em" : undefined,
           }}
         >
           {anonymous ? "🏆 Anonym" : title}
         </div>
-        <div style={{ color: "#999999", fontSize: 12, fontWeight: 600, marginTop: 1 }}>{subtitle}</div>
+        <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-label)", fontWeight: 600, marginTop: 1 }}>{subtitle}</div>
       </div>
 
-      <div style={{ color: TEAL, fontWeight: 900, fontSize: 15, whiteSpace: "nowrap" }}>
-        {credits.toLocaleString("de-DE")} Cr.
+      <div style={{ color: "var(--vfa-gruen-text)", fontWeight: 800, fontSize: "var(--t-basis)", whiteSpace: "nowrap" }}>
+        {credits.toLocaleString("de-DE")} Credits
       </div>
     </div>
   );

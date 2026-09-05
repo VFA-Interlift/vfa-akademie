@@ -114,9 +114,12 @@ export async function POST(req: Request) {
         },
       });
 
+      // angewendet mitgeben: Die Oberfläche meldete sonst den angeforderten
+      // Betrag, auch wenn auf 0 gekappt wurde (Befund f03-4, 05.09.2026).
       return {
         creditTxId: creditTx.id,
         creditsTotal,
+        angewendet,
       };
     });
 

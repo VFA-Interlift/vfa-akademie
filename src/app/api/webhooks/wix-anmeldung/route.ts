@@ -95,19 +95,25 @@ export async function POST(req: Request) {
   // Anwesenden. Deshalb: bestehende Zeile derselben E-Mail am selben Training
   // aktualisieren statt eine neue anzulegen; die gepflegte Anwesenheit bleibt
   // dabei unangetastet (20.08.2026).
-  const vorhandene =
-    training && email
-      ? await prisma.cobraTrainingParticipant.findFirst({
-          where: {
-            participantType: "WIX_WEBSITE",
-            trainingId: training.id,
-            email,
-            NOT: { cobraParticipantId: stagingId },
-          },
-          orderBy: { createdAt: "asc" },
-          select: { id: true },
-        })
-      : null;
+  //
+  // Ist der Kurs noch nicht in der App (Anmeldung vor dem nächtlichen
+  // Wix-Sync), wird über den Kurscode im Rohdatensatz eingegrenzt — sonst
+  // entstand genau in diesem Fall doch eine zweite Zeile, die das Nachziehen
+  // später beide an denselben Kurs hängte (Befund 05.09.2026).
+  const vorhandene = email
+    ? await prisma.cobraTrainingParticipant.findFirst({
+        where: {
+          participantType: "WIX_WEBSITE",
+          email,
+          NOT: { cobraParticipantId: stagingId },
+          ...(training
+            ? { trainingId: training.id }
+            : { trainingId: null, raw: { path: ["kurscode"], equals: kurscode } }),
+        },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      })
+    : null;
 
   if (vorhandene) {
     await prisma.cobraTrainingParticipant.update({
@@ -174,6 +180,19 @@ export async function POST(req: Request) {
         where: { userId_trainingId: { userId: user.id, trainingId: training.id } },
         create: { userId: user.id, trainingId: training.id, status: "CONFIRMED" },
         update: {},
+      });
+      // Wer sich nach einer Stornierung (Admin) oder einem Widerruf erneut
+      // über die Website anmeldet, ist wieder verbindlich dabei. Vorher blieb
+      // der Status CANCELLED/NO_SHOW stehen, obwohl die Antwort enrolled: true
+      // sagte — kein Zertifikat, keine Erinnerung (Befund 05.09.2026). Andere
+      // Status (etwa CERTIFICATE_ISSUED) bleiben unangetastet.
+      await prisma.enrollment.updateMany({
+        where: {
+          userId: user.id,
+          trainingId: training.id,
+          status: { in: ["CANCELLED", "NO_SHOW"] },
+        },
+        data: { status: "CONFIRMED" },
       });
       enrolled = true;
     }

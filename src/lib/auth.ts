@@ -120,6 +120,42 @@ export const authOptions: NextAuthOptions = {
         token.email = authUser.email;
         token.role = authUser.role;
         token.name = authUser.name;
+        return token;
+      }
+
+      // Bei jedem Aufruf frisch aus der Datenbank (Befund f05-1, 05.09.2026):
+      // Die E-Mail stand sonst nur vom Login im Token, 30 Tage lang. Nach einem
+      // bestätigten Adresswechsel suchten alle Routen den Nutzer weiter unter
+      // der alten Adresse und liefen ins Leere — und wurde die alte Adresse
+      // später neu registriert, gehörte die alte Sitzung plötzlich dem neuen
+      // Konto. Fehlt der Nutzer, wird die Sitzung geleert: Ohne E-Mail lassen
+      // Layouts und Routen niemanden hinein.
+      if (typeof token.id === "string") {
+        try {
+          const aktuell = await prisma.user.findUnique({
+            where: { id: token.id },
+            select: { email: true, role: true, name: true, firstName: true, lastName: true },
+          });
+
+          if (!aktuell) {
+            delete token.id;
+            delete token.role;
+            token.email = null;
+            token.name = null;
+            return token;
+          }
+
+          token.email = aktuell.email.trim().toLowerCase();
+          token.role = aktuell.role;
+          token.name =
+            [aktuell.firstName, aktuell.lastName].filter(Boolean).join(" ").trim() ||
+            aktuell.name ||
+            aktuell.email;
+        } catch (fehler) {
+          // Datenbank kurz nicht erreichbar: Token unverändert lassen, sonst
+          // flöge bei jedem Schluckauf die ganze Sitzung raus.
+          console.error("JWT_REFRESH_ERROR", fehler);
+        }
       }
 
       return token;
@@ -142,5 +178,11 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/login",
+    // Ohne diese Einträge lieferte NextAuth englische Standardseiten
+    // („Sign Out“, „Check your email“), obwohl die App sie nie braucht
+    // (Befund f13-14). Der normale Abmeldeweg (signOut per POST) bleibt.
+    signOut: "/login",
+    error: "/login",
+    verifyRequest: "/login",
   },
 };

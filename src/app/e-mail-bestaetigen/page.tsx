@@ -3,6 +3,10 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import AppButton from "@/components/ui/AppButton";
+import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Anforderung = {
   /** "registrierung" = neues Konto; "adresswechsel" = bestehendes Konto zieht um. */
@@ -12,13 +16,25 @@ type Anforderung = {
   angefordertAm: string;
 };
 
+/**
+ * Kontext eines Fehlers — er bestimmt den angebotenen Ausweg:
+ *  - "konto": Es gibt ein Konto, der Weg führt zur Anmeldung.
+ *  - "registrierung": Die Registrierung ist sicher verfallen, also neu registrieren.
+ *  - "unbekannt": Der Link ist nicht (mehr) bekannt. Meist wurde er schon
+ *    benutzt (zweites Gerät, Mailprogramm, Zurück-Taste) — dann ist die
+ *    Anmeldung der richtige Weg, nicht die Neu-Registrierung, die mit
+ *    „bereits registriert“ scheitert (Befund f01-8, 05.09.2026).
+ *  - "netz": Die Prüfung kam nicht durch; der Link bleibt gültig (Befund f01-20).
+ */
+type FehlerKontext = "registrierung" | "konto" | "unbekannt" | "netz";
+
 type Stand =
   | { art: "laedt" }
   | { art: "nachfragen"; anforderung: Anforderung }
   | { art: "bestaetigt" }
   | { art: "laeuft" }
   | { art: "fertig"; uebernommen: number }
-  | { art: "fehler"; text: string; kontext: "registrierung" | "konto" };
+  | { art: "fehler"; text: string; kontext: FehlerKontext };
 
 function zeitpunkt(iso: string) {
   try {
@@ -41,7 +57,7 @@ function Inhalt() {
       : {
           art: "fehler",
           text: "In der Adresse fehlt der Bestätigungsschlüssel.",
-          kontext: "registrierung",
+          kontext: "unbekannt",
         }
   );
   // Fürs Fehlerbild: Ein gescheiterter Adresswechsel braucht den Weg zur
@@ -81,7 +97,16 @@ function Inhalt() {
         setStand({ art: "bestaetigt" });
       })
       .catch(() => {
-        if (!abgebrochen) setStand({ art: "bestaetigt" });
+        // Netzfehler: Der Link ist wahrscheinlich in Ordnung — vorher lief die
+        // Seite hier in den Einlöseversuch und riet am Ende zur
+        // Neu-Registrierung (Befund f01-20).
+        if (!abgebrochen) {
+          setStand({
+            art: "fehler",
+            text: "Der Link ließ sich gerade nicht prüfen. Bitte lade die Seite neu.",
+            kontext: "netz",
+          });
+        }
       });
 
     return () => {
@@ -117,49 +142,79 @@ function Inhalt() {
           kontext:
             data.kontext === "konto" || herkunft === "adresswechsel"
               ? "konto"
-              : "registrierung",
+              : data.kontext === "registrierung"
+                ? "registrierung"
+                : "unbekannt",
         });
       }
     } catch {
       setStand({
         art: "fehler",
-        text: "Die Bestätigung ließ sich nicht abschließen.",
-        kontext: herkunft === "adresswechsel" ? "konto" : "registrierung",
+        text: "Die Bestätigung ließ sich nicht abschließen. Bitte lade die Seite neu und versuch es noch einmal.",
+        kontext: "netz",
       });
     }
   }
 
   if (stand.art === "laedt" || stand.art === "bestaetigt") {
-    return <p style={TEXT}>Einen Moment …</p>;
+    return <p style={UNTERTITEL}>Einen Moment …</p>;
   }
 
   if (stand.art === "laeuft") {
-    return <p style={TEXT}>Adresse wird bestätigt …</p>;
+    return <p style={UNTERTITEL}>Adresse wird bestätigt …</p>;
   }
 
   if (stand.art === "fehler") {
     return (
       <>
-        <h1 style={TITEL}>Das hat nicht geklappt</h1>
-        <p style={TEXT}>{stand.text}</p>
-        {stand.kontext === "konto" ? (
-          // Hier existiert ein Konto — eine Neu-Registrierung wäre der falsche
-          // Weg (sie scheitert an der vergebenen Adresse oder legt ein
-          // Zweitkonto an).
-          <Link href="/login" style={KNOPF}>
-            Zur Anmeldung
-          </Link>
-        ) : (
-          <>
-            <p style={TEXT}>
-              Bestätigungslinks gelten 24 Stunden. Ist deiner älter, registriere dich
-              bitte noch einmal.
-            </p>
-            <Link href="/register" style={KNOPF}>
-              Zur Registrierung
-            </Link>
-          </>
-        )}
+        <p style={UNTERTITEL}>Das hat nicht geklappt.</p>
+        <AppCard>
+          <div style={{ display: "grid", gap: 18 }}>
+            <Meldung art="fehler">{stand.text}</Meldung>
+
+            {stand.kontext === "netz" && (
+              <AppButton onClick={() => window.location.reload()} variant="primary" fullWidth>
+                Seite neu laden
+              </AppButton>
+            )}
+
+            {stand.kontext === "konto" && (
+              // Hier existiert ein Konto — eine Neu-Registrierung wäre der
+              // falsche Weg (sie scheitert an der vergebenen Adresse oder
+              // legt ein Zweitkonto an).
+              <AppButton href="/login" variant="primary" fullWidth>
+                Zur Anmeldung
+              </AppButton>
+            )}
+
+            {stand.kontext === "registrierung" && (
+              <>
+                <p style={KARTENTEXT}>
+                  Bestätigungslinks gelten 24 Stunden. Ist deiner älter, registriere dich
+                  bitte noch einmal.
+                </p>
+                <AppButton href="/register" variant="primary" fullWidth>
+                  Zur Registrierung
+                </AppButton>
+              </>
+            )}
+
+            {stand.kontext === "unbekannt" && (
+              <>
+                <p style={KARTENTEXT}>
+                  Hast du den Link schon benutzt, melde dich einfach an. Bestätigungslinks
+                  gelten 24 Stunden; ist deiner älter, registriere dich bitte noch einmal.
+                </p>
+                <AppButton href="/login" variant="primary" fullWidth>
+                  Zur Anmeldung
+                </AppButton>
+                <AppButton href="/register" variant="secondary" fullWidth>
+                  Zur Registrierung
+                </AppButton>
+              </>
+            )}
+          </div>
+        </AppCard>
       </>
     );
   }
@@ -169,112 +224,125 @@ function Inhalt() {
     const wechsel = anforderung.typ === "adresswechsel";
     return (
       <>
-        <h1 style={TITEL}>Bist du das?</h1>
-        <p style={TEXT}>
+        <p style={UNTERTITEL}>
           {wechsel
             ? "Ein bestehendes VFA-Akademie-Konto möchte künftig diese E-Mail-Adresse " +
               "als Anmeldeadresse verwenden. Warst du das nicht, schließ die Seite " +
-              "einfach — dann bleibt alles beim Alten."
+              "einfach, dann bleibt alles beim Alten."
             : "Zu diesem Link gehört die folgende Registrierung. Stimmt sie nicht, " +
-              "schließ die Seite einfach — dann passiert nichts."}
+              "schließ die Seite einfach, dann passiert nichts."}
         </p>
+        <AppCard>
+          <div style={{ display: "grid", gap: 18 }}>
+            <h2 style={KARTENTITEL}>Bist du das?</h2>
 
-        <div
-          style={{
-            margin: "20px 0 8px",
-            padding: "16px 18px",
-            background: "#F7F7F4",
-            border: "1px solid #E6E6E6",
-            borderRadius: 12,
-            textAlign: "left",
-            fontSize: 15,
-            lineHeight: 1.7,
-            color: "var(--vfa-text)",
-          }}
-        >
-          <div>
-            <strong>Name:</strong> {anforderung.name}
-          </div>
-          <div>
-            <strong>{wechsel ? "Neue E-Mail:" : "E-Mail:"}</strong> {anforderung.email}
-          </div>
-          <div style={{ color: "#777777", fontSize: 14 }}>
-            angefordert am {zeitpunkt(anforderung.angefordertAm)} Uhr
-          </div>
-        </div>
+            {/* Token statt Festfarben: Der Kasten blieb im Dunkelmodus hell,
+                die Schrift darin wurde hell — unlesbar (Befund f01-4). */}
+            <div
+              style={{
+                padding: "14px 16px",
+                background: "var(--vfa-karte-2)",
+                border: "1px solid var(--vfa-linie)",
+                borderRadius: 10,
+                fontSize: "var(--t-basis)",
+                lineHeight: 1.7,
+                color: "var(--vfa-text)",
+              }}
+            >
+              <div>
+                <strong>Name:</strong> {anforderung.name}
+              </div>
+              <div>
+                <strong>{wechsel ? "Neue E-Mail:" : "E-Mail:"}</strong> {anforderung.email}
+              </div>
+              <div style={{ color: "var(--vfa-text-3)", fontSize: 13 }}>
+                angefordert am {zeitpunkt(anforderung.angefordertAm)} Uhr
+              </div>
+            </div>
 
-        <button type="button" onClick={einloesen} style={{ ...KNOPF, border: "none", cursor: "pointer" }}>
-          {wechsel ? "Ja, neue Adresse bestätigen" : "Ja, Konto anlegen"}
-        </button>
+            <AppButton onClick={einloesen} variant="primary" fullWidth>
+              {wechsel ? "Ja, neue Adresse bestätigen" : "Ja, Konto anlegen"}
+            </AppButton>
+          </div>
+        </AppCard>
       </>
     );
   }
 
   return (
     <>
-      <h1 style={TITEL}>Adresse bestätigt</h1>
-      <p style={TEXT}>
-        {herkunft === "adresswechsel"
-          ? "Danke. Dein Konto läuft ab jetzt unter der neuen Adresse — melde dich damit an."
-          : "Danke. Du kannst dich jetzt anmelden."}
-        {stand.uebernommen > 0
-          ? ` ${stand.uebernommen === 1 ? "Eine Schulung wurde" : `${stand.uebernommen} Schulungen wurden`} deinem Konto zugeordnet.`
-          : ""}
-      </p>
-      <Link href="/login" style={KNOPF}>
-        Zur Anmeldung
-      </Link>
+      <p style={UNTERTITEL}>Danke, deine Adresse ist bestätigt.</p>
+      <AppCard>
+        <div style={{ display: "grid", gap: 18 }}>
+          <Meldung art="erfolg">
+            {herkunft === "adresswechsel"
+              ? "Dein Konto läuft ab jetzt unter der neuen Adresse. Melde dich damit an."
+              : "Du kannst dich jetzt anmelden."}
+            {stand.uebernommen > 0
+              ? ` ${stand.uebernommen === 1 ? "Eine Schulung wurde" : `${stand.uebernommen} Schulungen wurden`} deinem Konto zugeordnet.`
+              : ""}
+          </Meldung>
+          <AppButton href="/login" variant="primary" fullWidth>
+            Zur Anmeldung
+          </AppButton>
+        </div>
+      </AppCard>
     </>
   );
 }
 
 export default function EmailBestaetigenPage() {
   return (
-    <main
-      style={{
-        minHeight: "70vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "48px 24px",
-      }}
-    >
-      <div style={{ maxWidth: 460, textAlign: "center" }}>
-        <Suspense fallback={<p style={TEXT}>Einen Moment …</p>}>
+    <main className="page-main">
+      <div style={{ maxWidth: 420, margin: "0 auto" }}>
+        <PageHeader title="E-Mail bestätigen" />
+
+        <Suspense fallback={<p style={UNTERTITEL}>Einen Moment …</p>}>
           <Inhalt />
         </Suspense>
+
+        <p style={FUSSZEILE}>
+          <Link href="/login" style={FUSSLINK}>
+            Zurück zur Anmeldung
+          </Link>
+        </p>
       </div>
     </main>
   );
 }
 
-const TITEL: React.CSSProperties = {
-  margin: "0 0 12px",
-  fontSize: "clamp(26px, 6vw, 34px)",
-  fontWeight: 800,
-  color: "var(--vfa-text)",
-  letterSpacing: "-0.02em",
-  lineHeight: 1.15,
+const UNTERTITEL: React.CSSProperties = {
+  margin: "0 0 20px",
+  fontSize: "var(--t-basis)",
+  lineHeight: "var(--lh-weit)",
+  color: "var(--vfa-text-2)",
 };
 
-const TEXT: React.CSSProperties = {
-  margin: "0 0 12px",
-  fontSize: 15,
-  lineHeight: 1.6,
-  color: "#666666",
-};
-
-const KNOPF: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 46,
-  padding: "12px 26px",
-  borderRadius: 999,
-  background: "#007873",
-  color: "#FFFFFF",
+const KARTENTITEL: React.CSSProperties = {
+  margin: 0,
+  fontSize: "var(--t-gross)",
   fontWeight: 700,
-  fontSize: 15,
-  textDecoration: "none",
-  marginTop: 16,
+  lineHeight: "var(--lh-eng)",
+  color: "var(--vfa-gruen-text)",
+};
+
+const KARTENTEXT: React.CSSProperties = {
+  margin: 0,
+  fontSize: "var(--t-basis)",
+  lineHeight: "var(--lh-weit)",
+  color: "var(--vfa-text)",
+};
+
+const FUSSZEILE: React.CSSProperties = {
+  marginTop: 20,
+  textAlign: "center",
+  fontSize: 13,
+  color: "var(--vfa-text-2)",
+};
+
+const FUSSLINK: React.CSSProperties = {
+  color: "var(--vfa-gruen-text)",
+  fontWeight: 700,
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
 };

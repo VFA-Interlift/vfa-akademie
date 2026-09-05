@@ -36,16 +36,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { id },
-    select: { certificate: { select: { id: true } } },
+    select: { certificate: { select: { id: true, status: true } } },
   });
   if (!enrollment) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
 
   // Ein storniertes/abwesendes Enrollment, das schon ein Zertifikat trägt, ist
   // ein Widerspruch. Der Rückbau (Zertifikat widerrufen + Credits zurück) läuft
   // über den eigenen Widerruf-Weg — hier weisen wir darauf hin, statt still ein
-  // Zertifikat einer nicht besuchten Schulung stehen zu lassen.
+  // Zertifikat einer nicht besuchten Schulung stehen zu lassen. Ein bereits
+  // widerrufenes Zertifikat bleibt als Zeile hängen und zählt hier nicht
+  // (Befund f12-1, 05.09.2026).
   if (
     enrollment.certificate &&
+    enrollment.certificate.status !== "REVOKED" &&
     (status === "CANCELLED" || status === "NO_SHOW")
   ) {
     return NextResponse.json(
@@ -63,7 +66,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const updated = await prisma.enrollment.update({
       where: { id },
-      data: { status, attended: status === "ATTENDED" },
+      // attended bleibt bei COMPLETED/CERTIFICATE_ISSUED wahr — der
+      // Zertifikatslauf schreibt diese Status selbst mit attended: true
+      // (Befund f06-13, 05.09.2026).
+      data: {
+        status,
+        attended: status === "ATTENDED" || status === "COMPLETED" || status === "CERTIFICATE_ISSUED",
+      },
       include: {
         user: { select: { email: true, firstName: true, lastName: true, name: true } },
         training: { select: { title: true, code: true } },

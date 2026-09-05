@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { RechtlichesKopf } from "../Rueckweg";
+import { ABSCHNITT, LINK, LISTE, TEXT, TITEL, UNTERTITEL } from "../stil";
 
 export const metadata: Metadata = {
   title: "Datenschutz – VFA-Akademie",
@@ -12,51 +14,34 @@ export const metadata: Metadata = {
  * (Betrieb, Datenbank, Dateispeicher) und Resend (Mailversand), außerdem ob ein
  * Datenschutzbeauftragter benannt ist. Beides ist hier bewusst offen gelassen
  * statt geraten.
+ *
+ * Launch-Runde 05.09.2026: Push-Mitteilungen ergänzt (PushAbo je Gerät,
+ * Zustellung über den Push-Dienst des Geräteherstellers), Aufbewahrung an die
+ * tatsächliche Kontolöschung angeglichen (Zertifikate hängen per Cascade am
+ * Konto, siehe api/me/delete), Kopf und Stile wie überall.
  */
-const ABSCHNITT: React.CSSProperties = { marginTop: 32 };
-const TITEL: React.CSSProperties = {
-  fontSize: 15,
-  fontWeight: 800,
-  color: "#007873",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-  marginBottom: 8,
-};
-const TEXT: React.CSSProperties = { fontSize: 15, lineHeight: 1.7, color: "#333333", margin: "0 0 12px" };
-const LISTE: React.CSSProperties = { ...TEXT, paddingLeft: 20 };
-
 export default function DatenschutzPage() {
   return (
     <article>
-      <h1
-        style={{
-          fontSize: "clamp(28px, 6vw, 38px)",
-          fontWeight: 800,
-          letterSpacing: "-0.02em",
-          margin: "0 0 8px",
-          color: "#1F1F1F",
-        }}
-      >
-        Datenschutzerklärung
-      </h1>
-      <p style={{ ...TEXT, color: "#888888" }}>
+      <RechtlichesKopf title="Datenschutz" />
+      <p style={UNTERTITEL}>
         Information nach Art. 13 und 14 DSGVO für die App der VFA-Akademie
       </p>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Verantwortliche</div>
+        <h2 className="etikett" style={TITEL}>Verantwortliche</h2>
         <p style={TEXT}>
           VFA-Akademie gGmbH, Süderstraße 282, 20537 Hamburg
           <br />
           Telefon +49 40 8000473-0, E-Mail{" "}
-          <a href="mailto:info@vfa-interlift.de" style={{ color: "#007873" }}>
+          <a href="mailto:info@vfa-interlift.de" style={LINK}>
             info@vfa-interlift.de
           </a>
         </p>
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Welche Daten wir verarbeiten</div>
+        <h2 className="etikett" style={TITEL}>Welche Daten wir verarbeiten</h2>
         <p style={TEXT}>Bei der Registrierung und im Profil:</p>
         <ul style={LISTE}>
           <li>Name, E-Mail-Adresse und Passwort (nur als nicht rückrechenbarer Prüfwert gespeichert)</li>
@@ -70,11 +55,12 @@ export default function DatenschutzPage() {
           <li>Rückmeldungen zu besuchten Schulungen</li>
           <li>selbst hochgeladene Nachweise über Weiterbildungen</li>
           <li>Zeitpunkt der letzten Anmeldung</li>
+          <li>bei eingeschalteten Push-Mitteilungen: ein Abo je Gerät (Adresse beim Push-Dienst und zwei technische Schlüssel)</li>
         </ul>
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Woher die Daten stammen</div>
+        <h2 className="etikett" style={TITEL}>Woher die Daten stammen</h2>
         <p style={TEXT}>
           Neben deinen eigenen Eingaben erhalten wir Anmeldedaten aus dem
           Anmeldeformular auf vfa-interlift.de und aus der Verbandsverwaltung. Stimmt
@@ -84,7 +70,7 @@ export default function DatenschutzPage() {
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Wozu und auf welcher Grundlage</div>
+        <h2 className="etikett" style={TITEL}>Wozu und auf welcher Grundlage</h2>
         <ul style={LISTE}>
           <li>
             <strong>Durchführung der Schulung und Ausstellung der Nachweise</strong> —
@@ -95,8 +81,9 @@ export default function DatenschutzPage() {
             Abs. 1 lit. c DSGVO (rechtliche Verpflichtung)
           </li>
           <li>
-            <strong>Erinnerungen vor einer Schulung</strong> — Art. 6 Abs. 1 lit. f
-            DSGVO. Du kannst sie jederzeit unter Einstellungen abschalten.
+            <strong>Erinnerungen vor einer Schulung</strong> per E-Mail oder
+            Push-Mitteilung — Art. 6 Abs. 1 lit. f DSGVO. Du kannst sie jederzeit
+            unter Einstellungen abschalten.
           </li>
           <li>
             <strong>Rückmeldungen zu Schulungen und Credits</strong> — Art. 6 Abs. 1
@@ -106,21 +93,36 @@ export default function DatenschutzPage() {
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Ranking</div>
+        <h2 className="etikett" style={TITEL}>Push-Mitteilungen</h2>
         <p style={TEXT}>
-          Das Ranking zeigt ausschließlich anonyme Werte: den ersten Platz ohne Namen,
-          deine eigene Platzierung und den Mittelwert aller Teilnehmenden. Andere
-          Personen sind dort nicht erkennbar.
+          Push-Mitteilungen sind standardmäßig aus. Schaltest du sie unter
+          Einstellungen ein, speichern wir für dieses Gerät ein Abo: die Adresse, die
+          der Push-Dienst dem Gerät zuweist, und zwei Schlüssel, mit denen die
+          Nachricht verschlüsselt wird. Die Zustellung läuft über den Push-Dienst des
+          Geräteherstellers (zum Beispiel Apple bei iPhone und iPad, Google bei Android). Dieser
+          Dienst sieht, dass eine Nachricht an das Gerät geht, nicht ihren Inhalt.
+          Du kannst die Mitteilungen jederzeit unter Einstellungen abschalten; das Abo
+          dieses Geräts wird dann gelöscht.
         </p>
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Wer die Daten sonst noch sieht</div>
+        <h2 className="etikett" style={TITEL}>Ranking</h2>
+        <p style={TEXT}>
+          Das Ranking zeigt ausschließlich anonyme Werte: den ersten Platz ohne Namen,
+          deine eigene Platzierung und den Median aller Teilnehmenden (den mittleren
+          Wert, nicht den Durchschnitt). Andere Personen sind dort nicht erkennbar.
+        </p>
+      </section>
+
+      <section style={ABSCHNITT}>
+        <h2 className="etikett" style={TITEL}>Wer die Daten sonst noch sieht</h2>
         <ul style={LISTE}>
           <li>
             <strong>Dozentinnen und Dozenten</strong> sehen die Teilnehmenden ihrer
-            eigenen Schulung und tragen dort die Anwesenheit ein. Rückmeldungen sehen
-            sie nur zusammengefasst.
+            eigenen Schulung und tragen dort die Anwesenheit ein. Unterschriebene
+            Anwesenheitslisten laden sie als Scan hoch; die Datei gehört zur
+            Schulungsdokumentation. Rückmeldungen sehen sie nur zusammengefasst.
           </li>
           <li>
             <strong>Die Geschäftsstelle</strong> verwaltet Konten, Schulungen und
@@ -130,25 +132,26 @@ export default function DatenschutzPage() {
             <strong>Technische Dienstleister</strong> im Auftrag: der Betreiber der
             Anwendung samt Datenbank und Dateispeicher sowie der Versanddienst für
             E-Mails. Beide verarbeiten die Daten weisungsgebunden in unserem Auftrag.
+            Push-Mitteilungen stellt zusätzlich der Push-Dienst des Geräteherstellers
+            zu (siehe oben).
           </li>
         </ul>
         <p style={TEXT}>Eine Weitergabe zu Werbezwecken findet nicht statt.</p>
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Wie lange wir speichern</div>
+        <h2 className="etikett" style={TITEL}>Wie lange wir speichern</h2>
         <p style={TEXT}>
-          Kontodaten bleiben gespeichert, solange dein Konto besteht. Zertifikate und
-          die zugehörigen Schulungsdaten bewahren wir darüber hinaus auf, weil sie den
-          Nachweis über eine erteilte Qualifikation belegen. Löschst du dein Konto,
-          werden Profil, Anmeldungen, Credits, Rückmeldungen und hochgeladene Nachweise
-          entfernt; die Teilnehmerlisten der durchgeführten Schulungen bleiben als
-          Kursdokumentation bestehen.
+          Kontodaten bleiben gespeichert, solange dein Konto besteht. Löschst du dein
+          Konto, werden Profil, Anmeldungen, Zertifikate, Credits, Rückmeldungen,
+          Push-Abos und hochgeladene Nachweise entfernt. Die Teilnehmerlisten der
+          durchgeführten Schulungen aus Anmeldeformular und Verbandsverwaltung bleiben
+          als Schulungsdokumentation bestehen; sie gehören nicht zum App-Konto.
         </p>
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Anmeldung und Sitzung</div>
+        <h2 className="etikett" style={TITEL}>Anmeldung und Sitzung</h2>
         <p style={TEXT}>
           Für die Anmeldung setzen wir ein technisch notwendiges Cookie, das deine
           Sitzung offen hält. Es ist für den Betrieb erforderlich und wird nicht zur
@@ -158,7 +161,7 @@ export default function DatenschutzPage() {
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Deine Rechte</div>
+        <h2 className="etikett" style={TITEL}>Deine Rechte</h2>
         <p style={TEXT}>
           Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
           Verarbeitung, Datenübertragbarkeit und Widerspruch gegen Verarbeitungen, die
@@ -176,8 +179,8 @@ export default function DatenschutzPage() {
       </section>
 
       <section style={ABSCHNITT}>
-        <div style={TITEL}>Stand</div>
-        <p style={TEXT}>August 2026</p>
+        <h2 className="etikett" style={TITEL}>Stand</h2>
+        <p style={TEXT}>September 2026</p>
       </section>
     </article>
   );

@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AppTextarea from "@/components/ui/AppTextarea";
+import Meldung from "@/components/ui/Meldung";
 import StarRating from "@/components/feedback/StarRating";
-import { FEEDBACK_CREDITS, type FeedbackSection } from "@/lib/feedback/forms";
+import { FEEDBACK_CREDITS, FEEDBACK_TEXT_MAX, type FeedbackSection } from "@/lib/feedback/forms";
 
 type AnswerValue = number | string | string[];
 
@@ -25,9 +27,47 @@ export default function FeedbackFormClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [handy, setHandy] = useState(false);
+
+  // Klebende Absendeleiste: `overflow-x: hidden` auf html/body macht das
+  // Wurzelelement zum Scrollbereich, sticky hängt dann daran statt am
+  // Fenster (gemessen in DashboardHero). Für diese Seite auf clip umstellen
+  // und beim Verlassen zurücknehmen; am Handy liegt die Leiste über der
+  // 76 px hohen unteren Menüleiste (Befund f07-5, 05.09.2026).
+  useEffect(() => {
+    const html = document.documentElement;
+    const vorherHtml = html.style.overflowX;
+    const vorherBody = document.body.style.overflowX;
+    html.style.overflowX = "clip";
+    document.body.style.overflowX = "clip";
+
+    const abfrage = window.matchMedia("(max-width: 759px)");
+    const setzen = () => setHandy(abfrage.matches);
+    setzen();
+    abfrage.addEventListener("change", setzen);
+
+    return () => {
+      html.style.overflowX = vorherHtml;
+      document.body.style.overflowX = vorherBody;
+      abfrage.removeEventListener("change", setzen);
+    };
+  }, []);
 
   function setAnswer(key: string, value: AnswerValue) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // Abgewählter Stern: Schlüssel entfernen statt 0 zu speichern — der Server
+  // wies 0 als ungültige Bewertung zurück (Befund f03-1, 05.09.2026).
+  function setRating(key: string, value: number) {
+    setAnswers((prev) => {
+      if (value < 1) {
+        const rest = { ...prev };
+        delete rest[key];
+        return rest;
+      }
+      return { ...prev, [key]: value };
+    });
   }
 
   function toggleMulti(key: string, option: string) {
@@ -40,13 +80,19 @@ export default function FeedbackFormClient({
     });
   }
 
+  function fehlerZeigen(text: string) {
+    setError(text);
+    // Die Fehlerkarte steht oben, der Knopf ganz unten — ohne Scroll blieb
+    // die Meldung am Handy unsichtbar (Befund f03-2, 05.09.2026).
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function handleSubmit() {
     setError(null);
 
     const overall = answers["allgemeineZufriedenheit"];
     if (typeof overall !== "number" || overall < 1) {
-      setError("Bitte bewerte mindestens deine allgemeine Zufriedenheit (Pflichtfeld).");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      fehlerZeigen("Bitte bewerte mindestens deine allgemeine Zufriedenheit (Pflichtfeld).");
       return;
     }
 
@@ -61,11 +107,11 @@ export default function FeedbackFormClient({
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         if (data.error === "ALREADY_SUBMITTED") {
-          setError("Für diese Schulung wurde bereits Feedback abgegeben.");
+          fehlerZeigen("Für diese Schulung wurde bereits Feedback abgegeben.");
         } else if (data.error === "INVALID_ANSWERS") {
-          setError("Einige Angaben sind ungültig. Bitte prüfe deine Eingaben.");
+          fehlerZeigen("Einige Angaben sind ungültig. Bitte prüfe deine Eingaben.");
         } else {
-          setError("Das Feedback konnte nicht gespeichert werden. Bitte später erneut versuchen.");
+          fehlerZeigen("Das Feedback konnte nicht gespeichert werden. Bitte später erneut versuchen.");
         }
         setSubmitting(false);
         return;
@@ -74,7 +120,7 @@ export default function FeedbackFormClient({
       setDone(true);
       setTimeout(() => router.push("/meine-zertifikate"), 1800);
     } catch {
-      setError("Netzwerkfehler. Bitte später erneut versuchen.");
+      fehlerZeigen("Netzwerkfehler. Bitte später erneut versuchen.");
       setSubmitting(false);
     }
   }
@@ -85,10 +131,10 @@ export default function FeedbackFormClient({
         <AppCard>
           <div style={{ textAlign: "center", padding: "20px 8px" }}>
             <div style={{ fontSize: 44, lineHeight: 1 }}>★</div>
-            <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: "var(--t-titel)", fontWeight: 700 }}>
+            <h2 style={{ margin: "12px 0 6px", color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: "var(--lh-eng)" }}>
               Vielen Dank für dein Feedback!
             </h2>
-            <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: 16 }}>
+            <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: "var(--t-basis)" }}>
               Dir wurden <strong>+{FEEDBACK_CREDITS} Credits</strong> gutgeschrieben.
             </p>
           </div>
@@ -101,7 +147,7 @@ export default function FeedbackFormClient({
     <div style={{ display: "grid", gap: 12 }}>
       <AnimatedSection>
         <AppCard>
-          <p style={{ margin: "0 0 14px", color: "var(--vfa-text)", lineHeight: 1.6 }}>
+          <p style={{ margin: "0 0 14px", color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
             Deine Rückmeldung zur Schulung <strong>{trainingTitle}</strong>. Bewerte mit 1–5
             Sternen. Nur die allgemeine Zufriedenheit ist Pflicht – alles andere ist freiwillig.
           </p>
@@ -113,38 +159,34 @@ export default function FeedbackFormClient({
               onChange={(e) => setAnonymous(e.target.checked)}
               style={{ width: 18, height: 18, accentColor: "#007873" }}
             />
-            <span style={{ fontSize: 15, color: "var(--vfa-text)", fontWeight: 600 }}>
+            <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600 }}>
               Anonym ausfüllen (dein Name erscheint nicht in der Auswertung)
             </span>
           </label>
         </AppCard>
       </AnimatedSection>
 
-      {error && (
-        <AppCard style={{ borderColor: "rgba(176,0,32,0.4)", background: "rgba(176,0,32,0.05)" }}>
-          <span style={{ color: "#B00020", fontWeight: 700 }}>{error}</span>
-        </AppCard>
-      )}
+      {error && <Meldung art="fehler">{error}</Meldung>}
 
       {sections.map((section, sIndex) => (
         <AnimatedSection key={section.title} delayMs={Math.min(80 + sIndex * 40, 360)}>
           <AppCard>
-            <h2 style={{ margin: "0 0 14px", color: "#007873", fontSize: "var(--t-gross)", fontWeight: 700 }}>
+            <h2 style={{ margin: "0 0 14px", color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: "var(--lh-eng)" }}>
               {section.title}
             </h2>
 
             <div style={{ display: "grid", gap: 18 }}>
               {section.questions.map((q) => (
                 <div key={q.key} style={{ display: "grid", gap: 8 }}>
-                  <span style={{ fontSize: 15, color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
+                  <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
                     {q.label}
-                    {q.required && <span style={{ color: "#B00020" }}> *</span>}
+                    {q.required && <span style={{ color: "var(--vfa-rot-text)" }}> *</span>}
                   </span>
 
                   {q.type === "rating" && (
                     <StarRating
                       value={typeof answers[q.key] === "number" ? (answers[q.key] as number) : 0}
-                      onChange={(v) => setAnswer(q.key, v)}
+                      onChange={(v) => setRating(q.key, v)}
                     />
                   )}
 
@@ -154,6 +196,7 @@ export default function FeedbackFormClient({
                       value={typeof answers[q.key] === "string" ? (answers[q.key] as string) : ""}
                       onChange={(v) => setAnswer(q.key, v)}
                       rows={3}
+                      maxLength={FEEDBACK_TEXT_MAX}
                     />
                   )}
 
@@ -167,7 +210,7 @@ export default function FeedbackFormClient({
                           onChange={() => setAnswer(q.key, option)}
                           style={{ width: 17, height: 17, accentColor: "#007873" }}
                         />
-                        <span style={{ fontSize: 14, color: "var(--vfa-text)" }}>{option}</span>
+                        <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)" }}>{option}</span>
                       </label>
                     ))}
 
@@ -182,7 +225,7 @@ export default function FeedbackFormClient({
                             onChange={() => toggleMulti(q.key, option)}
                             style={{ width: 17, height: 17, accentColor: "#007873", marginTop: 2 }}
                           />
-                          <span style={{ fontSize: 14, color: "var(--vfa-text)" }}>{option}</span>
+                          <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)" }}>{option}</span>
                         </label>
                       );
                     })}
@@ -196,35 +239,16 @@ export default function FeedbackFormClient({
       <div
         style={{
           position: "sticky",
-          bottom: 0,
+          bottom: handy ? "calc(76px + env(safe-area-inset-bottom, 0px))" : 0,
           padding: "12px 0",
           // Auslauf aus dem Seitengrund-Token statt festem Hell, sonst steht im
           // Dunkelmodus ein heller Balken über dem Knopf (20.08.2026)
           background: "linear-gradient(to top, var(--vfa-light) 70%, transparent)",
         }}
       >
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="vfa-btn"
-          style={{
-            width: "100%",
-            minHeight: 50,
-            borderRadius: 999,
-            border: "1px solid #007873",
-            background: "#007873",
-            color: "#FFFFFF",
-            fontSize: 15,
-            fontWeight: 800,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            cursor: submitting ? "not-allowed" : "pointer",
-            opacity: submitting ? 0.6 : 1,
-          }}
-        >
-          {submitting ? "Wird gesendet…" : `Feedback absenden (+${FEEDBACK_CREDITS} Credits)`}
-        </button>
+        <AppButton fullWidth onClick={handleSubmit} disabled={submitting}>
+          {submitting ? "Wird gesendet …" : `Feedback absenden (+${FEEDBACK_CREDITS} Credits)`}
+        </AppButton>
       </div>
     </div>
   );

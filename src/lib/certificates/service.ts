@@ -42,7 +42,13 @@ export async function getMyCertificates(
       userId: user.id,
       status: "ISSUED",
     },
+    // Zuerst nach Kursdatum: Nachgezogene Alt-Kurse bekommen ihr issuedAt alle
+    // am Tag des Ausstellungslaufs, die Historie stand sonst nach Kursjahr
+    // durcheinander (Befund 05.09.2026).
     orderBy: [
+      {
+        training: { date: "desc" },
+      },
       {
         issuedAt: "desc",
       },

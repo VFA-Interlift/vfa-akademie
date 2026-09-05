@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import AppButton from "@/components/ui/AppButton";
+
+// Adresse für die Fußzeile der Bildkarte — aus derselben Quelle wie die
+// Mail-Links (lib/email.ts), damit nach einem Domainwechsel nicht die alte
+// Vercel-Adresse auf jedem geteilten Bild steht (05.09.2026).
+const APP_HOST = (process.env.NEXT_PUBLIC_APP_URL || "https://vfa-akademie.vercel.app")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/$/, "");
 
 /**
  * Macht aus einem Zertifikat eine Bildkarte zum Teilen (LinkedIn, WhatsApp …).
@@ -126,7 +134,7 @@ export default function ZertifikatTeilen({
       // Fußzeile
       z.fillStyle = "rgba(255, 255, 255, 0.55)";
       z.font = `600 30px ${schrift}`;
-      z.fillText("vfa-akademie.vercel.app", 84, H - 62);
+      z.fillText(APP_HOST, 84, H - 62);
 
       const blob: Blob | null = await new Promise((erledigt) =>
         leinwand.toBlob(erledigt, "image/png")
@@ -138,11 +146,14 @@ export default function ZertifikatTeilen({
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [datei] })) {
         try {
           await navigator.share({ files: [datei], title: "Mein VFA-Zertifikat" });
-        } catch {
+          return;
+        } catch (fehler) {
           // Abbruch durch den Nutzer ist kein Fehler — und ausdruecklich auch
           // kein Grund, ihm das Bild ungefragt in die Downloads zu legen.
+          if (fehler instanceof Error && fehler.name === "AbortError") return;
+          // Alles andere (System lehnt ab, Nutzergeste abgelaufen): unten in
+          // den Download-Rückfall, statt still nichts zu tun (05.09.2026).
         }
-        return;
       }
 
       const adresse = URL.createObjectURL(blob);
@@ -157,29 +168,10 @@ export default function ZertifikatTeilen({
   }
 
   return (
-    <button
-      type="button"
-      onClick={teilen}
-      disabled={laeuft}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        minHeight: 42,
-        padding: "10px 18px",
-        borderRadius: 999,
-        background: "transparent",
-        color: "#007873",
-        border: "1px solid #007873",
-        fontSize: 14,
-        fontWeight: 800,
-        cursor: laeuft ? "wait" : "pointer",
-        opacity: laeuft ? 0.6 : 1,
-      }}
-    >
-      <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>↗</span>
-      {laeuft ? "Wird vorbereitet …" : "Teilen"}
-    </button>
+    <AppButton variant="ghost" onClick={teilen} disabled={laeuft}>
+      <span aria-hidden="true" style={{ lineHeight: 1 }}>↗</span>
+      {laeuft ? "Wird vorbereitet…" : "Teilen"}
+    </AppButton>
   );
 }
 

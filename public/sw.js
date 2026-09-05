@@ -11,7 +11,10 @@
  * Offline-Fallback-Seite; alles andere läuft übers Netz (network-only), mit
  * der Offline-Seite als Rückfall für fehlgeschlagene Seitenaufrufe.
  */
-const CACHE = "vfa-akademie-v1";
+// Bei jeder Änderung an offline.html hochzählen: Die Seite landet nur beim
+// Installieren im Cache, und ohne neue sw.js installiert der Browser nichts
+// neu (v2 am 05.09.2026: Offline-Seite dunkelmodus-tauglich).
+const CACHE = "vfa-akademie-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
@@ -43,7 +46,8 @@ self.addEventListener("fetch", (event) => {
 });
 
 /*
- * Web Push: Erinnerung am Vortag einer Schulung (Absender: /api/cron/reminders).
+ * Web Push: Erinnerung drei Tage vor einer Schulung (Absender: /api/cron/reminders,
+ * DAYS_BEFORE dort).
  * Der Server schickt JSON { titel, text, url }; ohne lesbare Daten zeigen wir
  * einen neutralen Hinweis. iOS zeigt Push nur für Apps, die auf dem
  * Home-Bildschirm liegen und in denen die Erinnerung aktiviert wurde.

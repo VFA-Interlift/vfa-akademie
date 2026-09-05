@@ -87,7 +87,14 @@ export async function POST(req: Request) {
     body,
     trainings.map((t) => t.code as string)
   );
-  if (!kurscode) return fail("NO_KURSCODE_FOUND", 422);
+  // Ohne Kurscode gibt es nichts zuzuordnen — aber mit 422 stellte Resend die
+  // Mail immer wieder zu, jedes Mal mit erneutem Nachladen und derselben
+  // Ablehnung. Deshalb wie beim Fremdabsender: quittieren und protokollieren
+  // (Befund 05.09.2026).
+  if (!kurscode) {
+    console.warn("RESEND_INBOUND_OHNE_KURSCODE", { from: fromRaw, subject });
+    return NextResponse.json({ ok: true, ignored: "NO_KURSCODE_FOUND" });
+  }
 
   const match = trainings.find((t) => (t.code ?? "").toUpperCase() === kurscode);
 

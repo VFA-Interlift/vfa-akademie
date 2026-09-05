@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Der Dark-Mode-Schalter in den Einstellungen.
@@ -10,16 +10,25 @@ import { useEffect, useState } from "react";
  * localStorage ("vfa-dunkel") und wird beim App-Start vom Inline-Skript in
  * layout.tsx vor dem ersten Zeichnen gesetzt; hier wird sie nur umgelegt.
  */
-export default function ThemaSchalter() {
-  const [dunkel, setDunkel] = useState(false);
+// Die Klasse am html-Element ist die Wahrheit; der Schalter liest sie als
+// externen Zustand, statt sie per setState in einem Effekt zu spiegeln
+// (ESLint react-hooks/set-state-in-effect, 05.09.2026). Beim Hydrieren gilt
+// „hell“ wie auf dem Server, danach der echte Wert.
+function klasseBeobachten(melden: () => void) {
+  const beobachter = new MutationObserver(melden);
+  beobachter.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => beobachter.disconnect();
+}
 
-  useEffect(() => {
-    setDunkel(document.documentElement.classList.contains("dunkel"));
-  }, []);
+export default function ThemaSchalter() {
+  const dunkel = useSyncExternalStore(
+    klasseBeobachten,
+    () => document.documentElement.classList.contains("dunkel"),
+    () => false
+  );
 
   function umlegen() {
     const neu = !dunkel;
-    setDunkel(neu);
     document.documentElement.classList.toggle("dunkel", neu);
     try {
       if (neu) window.localStorage.setItem("vfa-dunkel", "1");
@@ -53,7 +62,9 @@ export default function ThemaSchalter() {
           height: 30,
           borderRadius: 999,
           border: "none",
-          background: dunkel ? "#007873" : "#CFCFCF",
+          // Schiene über Token, Knopf fest weiß — dieselben Werte wie die
+          // E-Mail-Wippe in den Einstellungen (Befund d13-19, 05.09.2026).
+          background: dunkel ? "#007873" : "var(--vfa-grey)",
           cursor: "pointer",
           transition: "background 180ms ease",
         }}

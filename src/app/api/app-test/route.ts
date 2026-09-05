@@ -121,8 +121,12 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email;
 
-  if (!email || !istTester(email)) {
-    return NextResponse.json({ ok: false }, { status: 403 });
+  // Wie bei POST: nicht angemeldet (401) und kein Tester (403) getrennt.
+  if (!email) {
+    return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
+  }
+  if (!istTester(email)) {
+    return NextResponse.json({ ok: false, error: "KEIN_TESTER" }, { status: 403 });
   }
 
   const user = await prisma.user.findUnique({

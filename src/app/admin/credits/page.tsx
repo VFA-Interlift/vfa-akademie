@@ -5,6 +5,7 @@ import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
 import AppTextarea from "@/components/ui/AppTextarea";
+import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 
@@ -57,16 +58,22 @@ export default function AdminCreditsPage() {
         } else if (data.error === "FORBIDDEN") {
           showMessage("Du hast keine Berechtigung.");
         } else {
-          showMessage(data.error ?? "Fehler beim Speichern.");
+          showMessage("Fehler beim Speichern.");
         }
 
         return;
       }
 
-      if (amount > 0) {
-        showMessage(`${amount} Credits wurden erfolgreich vergeben.`, true);
+      // Gebuchten Betrag und neuen Saldo aus der Antwort nennen: Bei einem
+      // Abzug über den Saldo hinaus kappt der Server auf 0 und bucht nur den
+      // Rest (Befund f03-4, 05.09.2026).
+      const angewendet = typeof data.angewendet === "number" ? data.angewendet : amount;
+      const saldo = typeof data.creditsTotal === "number" ? ` Neuer Saldo: ${data.creditsTotal} Credits.` : "";
+      const gekappt = angewendet !== amount ? ` (angefordert waren ${Math.abs(amount)}, mehr war nicht auf dem Konto)` : "";
+      if (angewendet > 0) {
+        showMessage(`${angewendet} Credits wurden vergeben.${saldo}`, true);
       } else {
-        showMessage(`${Math.abs(amount)} Credits wurden erfolgreich abgezogen.`, true);
+        showMessage(`${Math.abs(angewendet)} Credits wurden abgezogen${gekappt}.${saldo}`, true);
       }
 
       setEmail("");
@@ -86,29 +93,11 @@ export default function AdminCreditsPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Credits verwalten"
-          description="Hier kannst du Credits manuell vergeben oder abziehen. Jede Änderung wird als Credit-Transaktion gespeichert."
-        />
-
-        {msg && (
-          <div
-            style={{
-              marginBottom: 18,
-              padding: "12px 14px",
-              border: msgOk
-                ? "1px solid #007873"
-                : "1px solid rgba(176,0,32,0.28)",
-              background: msgOk
-                ? "rgba(0,120,115,0.08)"
-                : "rgba(176,0,32,0.08)",
-              color: msgOk ? "#007873" : "#B00020",
-              fontWeight: 800,
-              lineHeight: 1.5,
-            }}
-          >
-            {msg}
-          </div>
-        )}
+        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Credits verwalten" />
+        {/* PageHeader zeigt description nicht an — der Satz steht deshalb hier. */}
+        <p style={{ margin: "0 0 20px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)" }}>
+          Hier kannst du Credits manuell vergeben oder abziehen. Jede Änderung wird als Credit-Transaktion gespeichert.
+        </p>
 
         <div style={{ display: "grid", gap: 16 }}>
           <AppCard accent="green">
@@ -126,10 +115,10 @@ export default function AdminCreditsPage() {
                 <h2
                   style={{
                     margin: 0,
-                    color: "#007873",
-                    fontSize: 24,
-                    fontWeight: 500,
-                    lineHeight: 1.3,
+                    color: "var(--vfa-gruen-text)",
+                    fontSize: "var(--t-gross)",
+                    fontWeight: 700,
+                    lineHeight: "var(--lh-eng)",
                   }}
                 >
                   Manuelle Credit-Buchung
@@ -139,8 +128,9 @@ export default function AdminCreditsPage() {
                   style={{
                     marginTop: 10,
                     marginBottom: 0,
-                    color: "#333333",
-                    lineHeight: 1.6,
+                    color: "var(--vfa-text-2)",
+                    fontSize: "var(--t-basis)",
+                    lineHeight: "var(--lh-weit)",
                     maxWidth: 720,
                   }}
                 >
@@ -155,7 +145,7 @@ export default function AdminCreditsPage() {
 
             <div style={{ display: "grid", gap: 14 }}>
               <AppInput
-                label="User E-Mail"
+                label="E-Mail des Nutzers"
                 value={email}
                 placeholder="max@firma.de"
                 type="email"
@@ -195,7 +185,7 @@ export default function AdminCreditsPage() {
                   variant={isNegative ? "danger" : "primary"}
                 >
                   {loading
-                    ? "Speichern..."
+                    ? "Speichern …"
                     : isNegative
                       ? "Credits abziehen"
                       : "Credits vergeben"}
@@ -213,6 +203,10 @@ export default function AdminCreditsPage() {
                   </StatusBadge>
                 )}
               </div>
+
+              {/* Die Meldung steht beim Knopf, nicht über dem Formular — am
+                  Handy lag sie sonst außerhalb des Bildes (Befund f03-15). */}
+              {msg && <Meldung art={msgOk ? "erfolg" : "fehler"}>{msg}</Meldung>}
             </div>
           </AppCard>
 
@@ -220,10 +214,10 @@ export default function AdminCreditsPage() {
             <h2
               style={{
                 margin: 0,
-                color: "#007873",
-                fontSize: 24,
-                fontWeight: 500,
-                lineHeight: 1.3,
+                color: "var(--vfa-gruen-text)",
+                fontSize: "var(--t-gross)",
+                fontWeight: 700,
+                lineHeight: "var(--lh-eng)",
               }}
             >
               Hinweis zur Credit-Logik
@@ -233,8 +227,9 @@ export default function AdminCreditsPage() {
               style={{
                 marginTop: 10,
                 marginBottom: 0,
-                color: "#333333",
-                lineHeight: 1.6,
+                color: "var(--vfa-text-2)",
+                fontSize: "var(--t-basis)",
+                lineHeight: "var(--lh-weit)",
               }}
             >
               Automatische Credits aus Schulungen werden erst vergeben, wenn ein

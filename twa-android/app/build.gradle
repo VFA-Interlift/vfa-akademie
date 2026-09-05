@@ -28,10 +28,12 @@ def twaManifest = [
     launcherName: 'VFA-Akademie', // The name shown on the Android Launcher.
     themeColor: '#007873', // The color used for the status bar.
     themeColorDark: '#007873', // The color used for the dark status bar.
-    navigationColor: '#007873', // The color used for the navigation bar.
-    navigationColorDark: '#007873', // The color used for the dark navbar.
-    navigationDividerColor: '#007873', // The navbar divider color.
-    navigationDividerColorDark: '#007873', // The dark navbar divider color.
+    // Untere Systemleiste in der Farbe der App-Leiste (.bottom-nav: var(--vfa-karte)),
+    // Trennlinie in var(--vfa-linie) — vorher stand ein Petrol-Balken darunter (05.09.2026).
+    navigationColor: '#FFFFFF', // The color used for the navigation bar.
+    navigationColorDark: '#1A2322', // The color used for the dark navbar.
+    navigationDividerColor: '#E6E6E6', // The navbar divider color.
+    navigationDividerColorDark: '#2B3837', // The dark navbar divider color.
     backgroundColor: '#F7F7F4', // The color used for the splash screen background.
     enableNotifications: true, // Set to true to enable notification delegation.
     // Every shortcut must include the following fields:

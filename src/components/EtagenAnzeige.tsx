@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 /**
  * Die Rangliste als Etagenanzeige — das Erkennungszeichen einer Aufzugs-App.
@@ -27,6 +27,18 @@ const GAP = 6;
 const KABINE_H = 34;
 const SCHACHT_B = 44;
 
+const SANFT_ABFRAGE = "(prefers-reduced-motion: reduce)";
+
+function abonniereSanft(melden: () => void) {
+  const abfrage = window.matchMedia(SANFT_ABFRAGE);
+  abfrage.addEventListener("change", melden);
+  return () => abfrage.removeEventListener("change", melden);
+}
+
+function liesSanft() {
+  return window.matchMedia(SANFT_ABFRAGE).matches;
+}
+
 export default function EtagenAnzeige({
   etagen,
   aktuellKey,
@@ -49,19 +61,17 @@ export default function EtagenAnzeige({
   const ziel = -(idxVonUnten * (ROW + GAP) + (ROW - KABINE_H) / 2 - 2);
 
   const [versatz, setVersatz] = useState(0);
-  const sanft = useRef(false);
+  // „Bewegung reduzieren" als abonnierter Wert statt Ref — ein Ref darf beim
+  // Rendern nicht gelesen werden (Lint-Regel react-hooks/refs, 05.09.2026).
+  const sanft = useSyncExternalStore(abonniereSanft, liesSanft, () => false);
 
   useEffect(() => {
-    sanft.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (sanft.current) {
-      setVersatz(ziel);
-      return;
-    }
     // Erst unten starten, im nächsten Rahmen losfahren — sonst gibt es keinen
-    // Übergang, weil der Browser Start und Ziel im selben Bild zeichnet.
-    const t = window.setTimeout(() => setVersatz(ziel), 350);
+    // Übergang, weil der Browser Start und Ziel im selben Bild zeichnet. Bei
+    // reduzierter Bewegung sofort ans Ziel.
+    const t = window.setTimeout(() => setVersatz(ziel), sanft ? 0 : 350);
     return () => window.clearTimeout(t);
-  }, [ziel]);
+  }, [ziel, sanft]);
 
   return (
     <div style={{ display: "grid", gap: 8 }}>
@@ -91,7 +101,7 @@ export default function EtagenAnzeige({
             {etagenNummer}
           </span>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--vfa-text-3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <span style={{ fontSize: "var(--t-label)", fontWeight: 700, color: "var(--vfa-text-3)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
           Deine Etage
         </span>
       </div>
@@ -143,7 +153,7 @@ export default function EtagenAnzeige({
               background: "#007873",
               boxShadow: "0 2px 8px rgba(0, 61, 58, 0.45)",
               transform: `translate3d(0, ${versatz}px, 0)`,
-              transition: sanft.current ? "none" : "transform 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              transition: sanft ? "none" : "transform 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
             {/* Türspalt und Lampe */}

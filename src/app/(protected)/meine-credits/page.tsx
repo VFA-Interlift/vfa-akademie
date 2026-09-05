@@ -5,6 +5,7 @@ import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import PageHeader from "@/components/ui/PageHeader";
+import Meldung from "@/components/ui/Meldung";
 
 type CreditTx = {
   id: string;
@@ -20,7 +21,7 @@ type CreditTx = {
 function reasonLabel(reason: string) {
   if (reason === "CERTIFICATE_ISSUED") return "Zertifikat ausgestellt";
   if (reason === "ADMIN_ADJUST") return "Admin-Korrektur";
-  if (reason === "TRAINING_CLAIM") return "Schulungs-Claim";
+  if (reason === "TRAINING_CLAIM") return "Schulungsteilnahme";
   if (reason === "FEEDBACK_SUBMITTED") return "Feedback-Belohnung";
   return reason;
 }
@@ -45,23 +46,24 @@ export default function MeineCreditsPage() {
 
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 860, margin: "0 auto" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader title="Meine Credits" showTitle />
 
         <AnimatedSection delayMs={60}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 20 }}>
-            <SummaryBox label="Credits gesamt" value={total} color="#007873" animate />
-            <SummaryBox label="Buchungen" value={txs.length} color="var(--vfa-text-2)" />
-            <SummaryBox label="Davon +" value={txs.filter((t) => t.amount > 0).length} color="#005f5b" />
+          {/* Drei Kästen in einer Reihe, auch am Handy (Launch-Runde 05.09.2026). */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 20 }}>
+            <SummaryBox label="Credits gesamt" value={total} animate />
+            <SummaryBox label="Buchungen" value={txs.length} />
+            <SummaryBox label="Gutschriften" value={txs.filter((t) => t.amount > 0).length} />
           </div>
         </AnimatedSection>
 
         {loading ? (
-          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: 14 }}>Wird geladen…</div></AppCard></AnimatedSection>
+          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-basis)" }}>Wird geladen …</div></AppCard></AnimatedSection>
         ) : error ? (
-          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-rot-text)", fontSize: 14 }}>{error}</div></AppCard></AnimatedSection>
+          <AnimatedSection delayMs={80}><Meldung art="fehler">{error}</Meldung></AnimatedSection>
         ) : txs.length === 0 ? (
-          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: 14 }}>Noch keine Credit-Buchungen vorhanden.</div></AppCard></AnimatedSection>
+          <AnimatedSection delayMs={80}><AppCard><div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-basis)" }}>Noch keine Credit-Buchungen vorhanden.</div></AppCard></AnimatedSection>
         ) : (
           <AnimatedSection delayMs={80}>
             <AppCard accent="green">
@@ -79,21 +81,21 @@ export default function MeineCreditsPage() {
                         alignItems: "center",
                         gap: 12,
                         padding: "13px 0",
-                        borderBottom: i < txs.length - 1 ? "1px solid #F0F0F0" : "none",
+                        borderBottom: i < txs.length - 1 ? "1px solid var(--vfa-linie-2)" : "none",
                         flexWrap: "wrap",
                       }}
                     >
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: "var(--vfa-text)", lineHeight: 1.2 }}>{title}</div>
-                        <div style={{ fontSize: 12, color: "var(--vfa-text-3)", marginTop: 3 }}>
+                        <div style={{ fontWeight: 700, fontSize: "var(--t-basis)", color: "var(--vfa-text)", lineHeight: "var(--lh-eng)" }}>{title}</div>
+                        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 3 }}>
                           {date} · {reasonLabel(tx.reason)}
                         </div>
                       </div>
                       <div style={{
-                        fontWeight: 800, fontSize: 18, lineHeight: 1, whiteSpace: "nowrap",
-                        color: isPos ? "#007873" : "#B00020",
+                        fontWeight: 800, fontSize: "var(--t-gross)", lineHeight: 1, whiteSpace: "nowrap",
+                        color: isPos ? "var(--vfa-gruen-text)" : "var(--vfa-rot-text)",
                       }}>
-                        {isPos ? "+" : ""}{tx.amount.toLocaleString("de-DE")} Cr.
+                        {isPos ? "+" : ""}{tx.amount.toLocaleString("de-DE")} Credits
                       </div>
                     </div>
                   );
@@ -107,13 +109,14 @@ export default function MeineCreditsPage() {
   );
 }
 
-function SummaryBox({ label, value, color, animate = false }: { label: string; value: number; color: string; animate?: boolean }) {
+/** Kennzahl-Kasten nach Kanon: Etikett oben, Zahl darunter (.etikett / .kennzahl). */
+function SummaryBox({ label, value, animate = false }: { label: string; value: number; animate?: boolean }) {
   return (
-    <div style={{ padding: "14px 16px", background: "var(--vfa-karte)", border: "1px solid var(--vfa-linie-2)", borderRadius: 12 }}>
-      <div style={{ fontSize: 26, fontWeight: 800, color, lineHeight: 1 }}>
+    <div style={{ padding: "14px 16px", background: "var(--vfa-karte)", border: "1px solid var(--vfa-linie-2)", borderRadius: 12, minWidth: 0 }}>
+      <div className="etikett">{label}</div>
+      <div className="kennzahl" style={{ marginTop: 4 }}>
         {animate ? <AnimatedNumber value={value} /> : value.toLocaleString("de-DE")}
       </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--vfa-text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4 }}>{label}</div>
     </div>
   );
 }

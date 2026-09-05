@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmailChangeEmail } from "@/lib/email";
+import { bremsePruefen } from "@/lib/bremse";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,9 @@ function parseGermanDate(value: string): Date | null {
 
   if (!trimmed) return null;
 
-  const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(trimmed);
+  // Auch „5.3.1990“ ist eindeutig — einstellige Tage und Monate zulassen
+  // (Befund f03-16, 05.09.2026).
+  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
   if (!match) return null;
 
   const day = Number(match[1]);
@@ -46,7 +49,8 @@ function parseGermanDate(value: string): Date | null {
 function cleanString(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
-  const trimmed = value.trim();
+  // Längenbegrenzung wie bei den anderen Routen (Befund f05-8, 05.09.2026).
+  const trimmed = value.trim().slice(0, 200);
   return trimmed ? trimmed : null;
 }
 
@@ -119,14 +123,38 @@ export async function PATCH(req: Request) {
       select: {
         id: true,
         email: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        isInstructor: true,
       },
     });
 
     if (!currentUser) {
       return NextResponse.json(
-        { ok: false, error: "User nicht gefunden." },
+        { ok: false, error: "Konto nicht gefunden." },
         { status: 404 }
       );
+    }
+
+    // Dozenten ändern ihren Namen nicht selbst: Der Dozentenbereich ordnet
+    // Kurse allein über den Namensabgleich zu, ein umbenannter Dozent bekäme
+    // die Kurse eines anderen (Befund f06-1, 05.09.2026). Unveränderte Werte
+    // dürfen mitgeschickt werden, nur eine Abweichung wird abgelehnt.
+    if (currentUser.isInstructor) {
+      const vornameNeu = "firstName" in body ? firstName : currentUser.firstName;
+      const nachnameNeu = "lastName" in body ? lastName : currentUser.lastName;
+      const nameNeu = !firstName && !lastName && "name" in body ? fallbackName : currentUser.name;
+      if (
+        vornameNeu !== currentUser.firstName ||
+        nachnameNeu !== currentUser.lastName ||
+        nameNeu !== currentUser.name
+      ) {
+        return NextResponse.json(
+          { ok: false, error: "Dein Name wird vom Admin gepflegt." },
+          { status: 403 }
+        );
+      }
     }
 
     if (email !== currentUser.email) {
@@ -148,6 +176,24 @@ export async function PATCH(req: Request) {
     }
 
     const emailChanged = email !== currentUser.email;
+
+    // Jeder Adresswechsel schickt eine Mail an eine frei wählbare Adresse —
+    // ohne Bremse ließe sich damit jede Adresse im Namen der Akademie
+    // beschicken (Befund f05-7, 05.09.2026). Vor dem Schreiben prüfen, damit
+    // nicht die übrigen Felder gespeichert sind und nur die Mail fehlt.
+    if (emailChanged) {
+      const bremse = bremsePruefen(`adresswechsel:${currentEmail}`, {
+        versuche: 3,
+        fensterSekunden: 3600,
+        sperreSekunden: 3600,
+      });
+      if (!bremse.erlaubt) {
+        return NextResponse.json(
+          { ok: false, error: "Zu viele Adresswechsel in kurzer Zeit. Bitte in einer Stunde erneut versuchen." },
+          { status: 429 }
+        );
+      }
+    }
 
     // Nur Felder schreiben, die der Client tatsächlich mitschickt. Sonst würde
     // ein PATCH, der nur die Telefonnummer ändert, alle übrigen Angaben

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import PageHeader from "@/components/ui/PageHeader";
+import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import LeaderboardPageClient from "@/components/leaderboard/LeaderboardPageClient";
 
@@ -17,19 +18,14 @@ export default async function LeaderboardPage() {
     <main className="page-main">
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         {/* Ohne AnimatedSection: Das Band muss wie auf allen Seiten bündig an
-            der Oberkante sitzen — die Einblend-Hülle verschob es (13.08.). */}
-        <PageHeader title="Credit-Ranking" showTitle={true} />
+            der Oberkante sitzen — die Einblend-Hülle verschob es (13.08.).
+            Ein Name überall: „Ranking" wie in Menü und Leiste (05.09.2026). */}
+        <PageHeader title="Ranking" />
 
         <AnimatedSection delayMs={60}>
-          <div style={{
-            padding: 20,
-            borderRadius: 14,
-            border: "1px solid #E8E8E8",
-            background: "var(--vfa-karte)",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-          }}>
+          <AppCard>
             <LeaderboardPageClient />
-          </div>
+          </AppCard>
         </AnimatedSection>
       </div>
     </main>

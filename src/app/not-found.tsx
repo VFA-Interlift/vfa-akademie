@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import AppButton from "@/components/ui/AppButton";
 
 export const dynamic = "force-dynamic";
 
@@ -23,34 +23,44 @@ export default async function NotFound() {
       }}
     >
       <div style={{ maxWidth: 460, textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 800,
-            color: "#FFC100",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-          }}
-        >
-          Seite nicht gefunden
-        </div>
+        <div className="etikett">Seite nicht gefunden</div>
 
         <h1
           style={{
             margin: "10px 0 12px",
-            fontSize: "clamp(26px, 6vw, 34px)",
-            fontWeight: 800,
+            fontSize: "var(--t-titel)",
+            fontWeight: 750,
             color: "var(--vfa-text)",
             letterSpacing: "-0.02em",
-            lineHeight: 1.15,
+            lineHeight: "var(--lh-eng)",
           }}
         >
           Diese Seite gibt es nicht
         </h1>
 
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#666666" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "var(--t-basis)",
+            lineHeight: "var(--lh-weit)",
+            color: "var(--vfa-text-2)",
+          }}
+        >
           Vielleicht hat sich in der Adresse ein Tippfehler eingeschlichen, oder
           die Seite wurde verschoben.
+          {!angemeldet && (
+            <>
+              {" "}
+              Kommst du nicht weiter, schreib uns kurz an{" "}
+              <a
+                href="mailto:info@vfa-interlift.de"
+                style={{ color: "var(--vfa-gruen-text)", fontWeight: 700 }}
+              >
+                info@vfa-interlift.de
+              </a>
+              .
+            </>
+          )}
         </p>
 
         <div
@@ -62,43 +72,16 @@ export default async function NotFound() {
             marginTop: 28,
           }}
         >
-          <Link
-            href={angemeldet ? "/dashboard" : "/"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              minHeight: 46,
-              padding: "12px 26px",
-              borderRadius: 999,
-              background: "#007873",
-              color: "#FFFFFF",
-              fontWeight: 700,
-              fontSize: 15,
-              textDecoration: "none",
-            }}
-          >
-            {angemeldet ? "Zum Dashboard" : "Zur Startseite"}
-          </Link>
+          <AppButton href={angemeldet ? "/dashboard" : "/login"}>
+            {angemeldet ? "Zum Dashboard" : "Anmelden"}
+          </AppButton>
 
+          {/* Der Anker #feedback setzt voraus, dass die Feedback-Karte unter
+              Einstellungen die id trägt (offene Frage an die Werkstatt). */}
           {angemeldet && (
-            <Link
-              href="/einstellungen"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                minHeight: 46,
-                padding: "12px 22px",
-                borderRadius: 999,
-                background: "transparent",
-                color: "var(--vfa-text)",
-                fontWeight: 600,
-                fontSize: 15,
-                textDecoration: "none",
-                border: "1px solid #DEDEDE",
-              }}
-            >
+            <AppButton href="/einstellungen#feedback" variant="ghost">
               Problem melden
-            </Link>
+            </AppButton>
           )}
         </div>
       </div>

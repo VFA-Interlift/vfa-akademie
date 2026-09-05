@@ -72,6 +72,9 @@ export default function AnimatedProgressCircle({
       }
     }
 
+    // Bei neuem Zielwert von vorn animieren; der Rücksprung auf 0 muss
+    // synchron vor dem ersten Bild passieren (Lint-Ausnahme, 05.09.2026).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnimatedPercent(0);
     setHasStarted(false);
 
@@ -130,7 +133,7 @@ export default function AnimatedProgressCircle({
             cy={circle.center}
             r={circle.radius}
             fill="none"
-            stroke="#E7E7E7"
+            stroke="var(--vfa-linie)"
             strokeWidth={STROKE_WIDTH}
           />
 
@@ -168,21 +171,23 @@ export default function AnimatedProgressCircle({
           <div
             style={{
               color: "var(--vfa-text-2)",
-              fontSize: 12,
-              fontWeight: 800,
+              fontSize: "var(--t-label)",
+              fontWeight: 700,
               textTransform: "uppercase",
-              letterSpacing: "0.06em",
+              letterSpacing: "0.05em",
             }}
           >
             Fortschritt
           </div>
 
+          {/* 42 px bleibt als bewusste Ausnahme der Staffel (Prozentzahl im
+              Ring, Kanon 05.09.2026); nur das Gewicht auf 800. */}
           <div
             style={{
               marginTop: 6,
               color,
               fontSize: 42,
-              fontWeight: 900,
+              fontWeight: 800,
               lineHeight: 1,
             }}
           >

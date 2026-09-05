@@ -3,10 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendFeedbackEmail } from "@/lib/email";
+import { bremsePruefen } from "@/lib/bremse";
 
 export const dynamic = "force-dynamic";
 
-const CATEGORIES = ["Allgemein", "Fehler / Bug", "Idee / Wunsch", "Sonstiges"];
+/** Muss zur Liste in EinstellungenClient.tsx passen. */
+const CATEGORIES = ["Allgemein", "Fehler", "Idee / Wunsch", "Sonstiges"];
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
@@ -19,6 +21,17 @@ export async function POST(req: Request) {
 
   if (!email) {
     return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  // Jede Anfrage wird zur Mail an die Geschäftsstelle — ohne Bremse ließe
+  // sich das Postfach fluten (Befund f05-6, 05.09.2026).
+  const bremse = bremsePruefen(`feedback:${email.trim().toLowerCase()}`, {
+    versuche: 5,
+    fensterSekunden: 600,
+    sperreSekunden: 900,
+  });
+  if (!bremse.erlaubt) {
+    return NextResponse.json({ ok: false, error: "ZU_VIELE_VERSUCHE" }, { status: 429 });
   }
 
   const body = await req.json().catch(() => null);

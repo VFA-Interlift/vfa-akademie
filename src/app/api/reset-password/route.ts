@@ -20,7 +20,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { token, password } = await req.json();
+  // Ungefangen ergab ein kaputter Body 500 statt 400 (Befund f05-3).
+  const body = (await req.json().catch(() => null)) as
+    | { token?: unknown; password?: unknown }
+    | null;
+  const token = body?.token;
+  const password = body?.password;
 
   if (!token || !password || typeof token !== "string" || typeof password !== "string") {
     return NextResponse.json({ error: "Ungültige Anfrage." }, { status: 400 });

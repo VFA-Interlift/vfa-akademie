@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { currentPassword?: string; newPassword?: string };
+  let body: { currentPassword?: unknown; newPassword?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -39,7 +39,14 @@ export async function POST(req: Request) {
 
   const { currentPassword, newPassword } = body;
 
-  if (!currentPassword || !newPassword) {
+  // Auch den Typ prüfen: eine Zahl oder ein Objekt lief sonst in
+  // toLowerCase()/bcrypt.compare und kam als 500 zurück (05.09.2026).
+  if (
+    typeof currentPassword !== "string" ||
+    typeof newPassword !== "string" ||
+    !currentPassword ||
+    !newPassword
+  ) {
     return NextResponse.json({ error: "Bitte alle Felder ausfüllen." }, { status: 400 });
   }
 

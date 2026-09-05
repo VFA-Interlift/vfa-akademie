@@ -2,16 +2,20 @@
 
 import { useMemo, useRef, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
+import AppButton from "@/components/ui/AppButton";
+import AppInput from "@/components/ui/AppInput";
+import AppSelect from "@/components/ui/AppSelect";
+import Meldung from "@/components/ui/Meldung";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import PdfAnsichtLink from "@/components/PdfAnsichtLink";
 import { DOC_CATEGORIES, MAX_DOC_BYTES, type SerializableDocument } from "@/lib/documents/service";
 import { formatDate } from "@/lib/trainings/format";
 
-const TEAL = "#007873";
-
-type SortKey = "datum-neu" | "datum-alt" | "titel" | "kategorie";
+// Die Standardsortierung (neueste zuerst) ist der Platzhalter von AppSelect
+// (Wert ""); die drei anderen stehen als Optionen darunter (05.09.2026).
+type SortKey = "" | "datum-alt" | "titel" | "kategorie";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "datum-neu", label: "Datum (neueste zuerst)" },
   { value: "datum-alt", label: "Datum (älteste zuerst)" },
   { value: "titel", label: "Titel (A–Z)" },
   { value: "kategorie", label: "Kategorie (A–Z)" },
@@ -23,7 +27,7 @@ const ERROR_TEXT: Record<string, string> = {
   FILE_TOO_LARGE: "Datei ist zu groß (max. 4 MB).",
   EMPTY_FILE: "Die Datei ist leer.",
   MISSING_TITLE: "Bitte einen Titel angeben.",
-  UPLOAD_FAILED: "Upload fehlgeschlagen. Bitte erneut versuchen.",
+  UPLOAD_FAILED: "Hochladen fehlgeschlagen. Bitte erneut versuchen.",
 };
 
 function formatSize(bytes: number): string {
@@ -38,6 +42,12 @@ function fileKindLabel(type: string): string {
   return "Datei";
 }
 
+/** Dateiname für den Herunterladen-Knopf in der App-Ansicht. */
+function dateinameFuer(doc: SerializableDocument): string {
+  const endung = fileKindLabel(doc.fileType).toLowerCase();
+  return endung === "datei" ? doc.title : `${doc.title}.${endung}`;
+}
+
 export default function EigeneNachweise({ initialDocuments }: { initialDocuments: SerializableDocument[] }) {
   const [documents, setDocuments] = useState<SerializableDocument[]>(initialDocuments);
   const [title, setTitle] = useState("");
@@ -47,8 +57,9 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState("alle");
-  const [sortKey, setSortKey] = useState<SortKey>("datum-neu");
+  // "" = alle Kategorien (Platzhalter von AppSelect).
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const availableCategories = useMemo(() => {
@@ -58,7 +69,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
 
   const visibleDocuments = useMemo(() => {
     const filtered =
-      categoryFilter === "alle"
+      categoryFilter === ""
         ? documents
         : documents.filter((d) => (d.category ?? "") === categoryFilter);
 
@@ -105,7 +116,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
       const res = await fetch("/api/documents", { method: "POST", body });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError(ERROR_TEXT[data.error] ?? "Upload fehlgeschlagen.");
+        setError(ERROR_TEXT[data.error] ?? "Hochladen fehlgeschlagen.");
         return;
       }
       setDocuments((prev) => [data.document, ...prev]);
@@ -144,11 +155,11 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
   return (
     <AnimatedSection delayMs={60}>
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
+        {/* Etikett statt zweiter Seitenüberschrift: Der Titel steht im Band,
+            der Tab heißt schon „Meine Nachweise“ (Launch-Runde 05.09.2026). */}
         <div style={{ marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: "var(--t-titel)", fontWeight: 700, color: "var(--vfa-text)" }}>
-            Meine Nachweise
-          </h2>
-          <p style={{ margin: "4px 0 0", color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.5 }}>
+          <div className="etikett">Meine Nachweise</div>
+          <p style={{ margin: "4px 0 0", color: "var(--vfa-text-2)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
             Eigene Weiterbildungen, Abschlüsse und externe Nachweise – alles an einem Ort.
           </p>
         </div>
@@ -156,71 +167,46 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
         {/* Upload-Formular */}
         <AppCard style={{ marginBottom: 16 }}>
           <form onSubmit={handleUpload} style={{ display: "grid", gap: 12 }}>
-            <Field label="Titel *">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="z. B. Sachkundenachweis Aufzugsmontage"
-                maxLength={200}
-                style={inputStyle}
-              />
-            </Field>
+            <AppInput
+              label="Titel *"
+              value={title}
+              onChange={setTitle}
+              placeholder="z. B. Sachkundenachweis Aufzugsmontage"
+            />
 
-            <Field label="Kategorie">
-              <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
-                {DOC_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </Field>
+            <AppSelect
+              label="Kategorie"
+              value={category}
+              onChange={setCategory}
+              options={DOC_CATEGORIES.map((c) => ({ value: c, label: c }))}
+              placeholder="Keine Kategorie"
+            />
 
-            <Field label="Aussteller (optional)">
-              <input
-                type="text"
-                value={issuer}
-                onChange={(e) => setIssuer(e.target.value)}
-                placeholder="z. B. TÜV Süd"
-                maxLength={200}
-                style={inputStyle}
-              />
-            </Field>
+            <AppInput
+              label="Aussteller (optional)"
+              value={issuer}
+              onChange={setIssuer}
+              placeholder="z. B. TÜV Süd"
+            />
 
-            <Field label="Datum (optional)">
-              <input
-                type="date"
-                value={issuedDate}
-                onChange={(e) => setIssuedDate(e.target.value)}
-                style={{ ...inputStyle, WebkitAppearance: "none", appearance: "none", height: 42 }}
-              />
-            </Field>
+            <AppInput label="Datum (optional)" type="date" value={issuedDate} onChange={setIssuedDate} />
 
             <Field label="Datei (PDF, JPG oder PNG · max. 4 MB)">
-              <input ref={fileRef} type="file" accept="application/pdf,image/jpeg,image/png" style={{ fontSize: 14 }} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/pdf,image/jpeg,image/png"
+                className="vfa-input"
+                style={dateiFeldStyle}
+              />
             </Field>
 
-            {error && (
-              <div style={{ color: "#B00020", fontSize: 13, fontWeight: 600 }}>{error}</div>
-            )}
+            {error && <Meldung art="fehler">{error}</Meldung>}
 
             <div>
-              <button
-                type="submit"
-                disabled={uploading}
-                style={{
-                  minHeight: 44,
-                  padding: "11px 22px",
-                  borderRadius: 10,
-                  border: "none",
-                  background: uploading ? "#8CBFBC" : TEAL,
-                  color: "#FFFFFF",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  cursor: uploading ? "default" : "pointer",
-                }}
-              >
-                {uploading ? "Wird hochgeladen…" : "↑ Nachweis hochladen"}
-              </button>
+              <AppButton type="submit" disabled={uploading}>
+                {uploading ? "Wird hochgeladen…" : "Nachweis hochladen"}
+              </AppButton>
             </div>
           </form>
         </AppCard>
@@ -229,32 +215,25 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
         {documents.length > 0 && (
           <AppCard style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <label style={{ display: "grid", gap: 5, flex: "1 1 150px", minWidth: 150 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--vfa-text-2)" }}>Kategorie</span>
-                <select
+              <div style={{ flex: "1 1 150px", minWidth: 150 }}>
+                <AppSelect
+                  label="Kategorie"
                   value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="alle">Alle Kategorien</option>
-                  {availableCategories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
+                  onChange={setCategoryFilter}
+                  options={availableCategories.map((c) => ({ value: c, label: c }))}
+                  placeholder="Alle Kategorien"
+                />
+              </div>
 
-              <label style={{ display: "grid", gap: 5, flex: "1 1 180px", minWidth: 180 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--vfa-text-2)" }}>Sortieren nach</span>
-                <select
+              <div style={{ flex: "1 1 180px", minWidth: 180 }}>
+                <AppSelect
+                  label="Sortieren nach"
                   value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as SortKey)}
-                  style={inputStyle}
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
+                  onChange={(v) => setSortKey(v as SortKey)}
+                  options={SORT_OPTIONS}
+                  placeholder="Datum (neueste zuerst)"
+                />
+              </div>
             </div>
           </AppCard>
         )}
@@ -262,13 +241,13 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
         {/* Liste */}
         {documents.length === 0 ? (
           <AppCard>
-            <div style={{ color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
               Noch keine eigenen Nachweise hochgeladen.
             </div>
           </AppCard>
         ) : visibleDocuments.length === 0 ? (
           <AppCard>
-            <div style={{ color: "var(--vfa-text-2)", fontSize: 14, lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
               Für diese Kategorie wurden keine Nachweise gefunden.
             </div>
           </AppCard>
@@ -280,46 +259,44 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{
-                        fontSize: 10, fontWeight: 800, letterSpacing: "0.06em",
-                        color: TEAL, background: "rgba(0,120,115,0.08)",
+                        fontSize: "var(--t-label)", fontWeight: 700, letterSpacing: "0.06em",
+                        color: "var(--vfa-gruen-text)", background: "rgba(0,120,115,0.08)",
                         border: "1px solid rgba(0,120,115,0.25)", borderRadius: 6, padding: "2px 7px",
                       }}>
                         {fileKindLabel(doc.fileType)}
                       </span>
-                      <span style={{ fontWeight: 800, fontSize: 15, color: "var(--vfa-text)", overflowWrap: "anywhere" }}>
+                      <h2 style={{
+                        margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: "var(--lh-eng)",
+                        color: "var(--vfa-gruen-text)", overflowWrap: "anywhere",
+                      }}>
                         {doc.title}
-                      </span>
+                      </h2>
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--vfa-text-3)", marginTop: 4, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 4, lineHeight: "var(--lh-weit)" }}>
                       {[doc.category, doc.issuer, doc.issuedDate ? formatDate(doc.issuedDate) : null, formatSize(doc.fileSize)]
                         .filter(Boolean)
                         .join(" · ")}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <a
-                      href={`/api/documents/${doc.id}/datei`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        padding: "8px 14px", borderRadius: 8, border: `1px solid ${TEAL}`,
-                        color: TEAL, fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap",
-                      }}
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    {/* In der App ansehen, mit X zurück (Tobis Vorgabe vom
+                        12.08.2026) — gilt auch für JPG und PNG, das iframe
+                        zeigt Bilder genauso. */}
+                    <PdfAnsichtLink
+                      url={`/api/documents/${doc.id}/datei`}
+                      titel={doc.title}
+                      dateiname={dateinameFuer(doc)}
+                      knopf="ghost"
                     >
                       Ansehen
-                    </a>
-                    <button
-                      type="button"
+                    </PdfAnsichtLink>
+                    <AppButton
+                      variant="danger"
                       onClick={() => handleDelete(doc.id)}
                       disabled={deletingId === doc.id}
-                      style={{
-                        padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(176,0,32,0.4)",
-                        background: "transparent", color: "#B00020", fontSize: 13, fontWeight: 700,
-                        cursor: "pointer", whiteSpace: "nowrap",
-                      }}
                     >
                       {deletingId === doc.id ? "…" : "Löschen"}
-                    </button>
+                    </AppButton>
                   </div>
                 </div>
               </AppCard>
@@ -331,23 +308,25 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
   );
 }
 
-const inputStyle: React.CSSProperties = {
+// Dateifeld mit den Maßen von AppInput (AppInput kennt type="file" nicht,
+// weil es einen Wert erwartet; der Dateiwähler hat keinen).
+const dateiFeldStyle: React.CSSProperties = {
   width: "100%",
   maxWidth: "100%",
   minWidth: 0,
   boxSizing: "border-box",
-  padding: "10px 12px",
+  padding: "11px 14px",
   borderRadius: 8,
   border: "1px solid var(--vfa-linie)",
-  fontSize: 14,
+  fontSize: 15,
   color: "var(--vfa-text)",
   background: "var(--vfa-karte)",
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: "grid", gap: 5 }}>
-      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--vfa-text-2)" }}>{label}</span>
+    <label style={{ display: "grid", gap: 6 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.01em", color: "var(--vfa-text-2)" }}>{label}</span>
       {children}
     </label>
   );

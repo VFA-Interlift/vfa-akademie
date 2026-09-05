@@ -3,6 +3,7 @@ import {
   formatCertificateKind,
   getCertificateTemplateFileNameByCode,
 } from "@/lib/certificates/templates";
+import { cleanTrainingTitle } from "@/lib/trainings/format";
 
 function formatDate(date: Date | null | undefined) {
   if (!date) return "";
@@ -296,13 +297,18 @@ export async function getCertificateDocumentData(certificateId: string) {
   const participantBirthDate = formatDate(certificate.user.birthDate);
   const issuedAt = formatDate(certificate.issuedAt);
 
+  // Der Titel kommt roh aus Wix, samt Zusätzen wie „(Ausgebucht)“. Auf der
+  // Urkunde (YLD schreibt ihn) und im Dateinamen hat das nichts zu suchen
+  // (Befund 05.09.2026).
+  const trainingTitle = cleanTrainingTitle(certificate.training.title) || certificate.training.title;
+
   return {
     certificate,
     templateFileName,
     fileBaseName: buildCertificateFileName({
       code,
       fullName,
-      title: certificate.training.title,
+      title: trainingTitle,
     }),
     data: {
       participantName: fullName,
@@ -310,7 +316,7 @@ export async function getCertificateDocumentData(certificateId: string) {
       participantLastName: lastName,
       participantBirthDate,
 
-      trainingTitle: certificate.training.title,
+      trainingTitle,
       trainingCode: code,
       trainingDateRange,
       trainingLocation,

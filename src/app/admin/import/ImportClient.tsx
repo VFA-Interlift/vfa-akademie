@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
 
 type Bericht = {
   schulungen: { gelesen: number; ohneDatum: number; mitTeilnehmern: number; neu: number; aktualisiert: number };
@@ -19,15 +21,47 @@ type Bericht = {
   beispiele: Array<{ cobraId: string; code: string; titel: string; start: string; teilnehmer: number }>;
 };
 
+type Modus = "vorschau" | "import";
+
+/** Lesbare Texte für die Fehlercodes der Import-Route; unbekannte Codes bleiben roh. */
+const FEHLERTEXTE: Record<string, string> = {
+  BEIDE_DATEIEN_NOETIG: "Bitte beide Dateien auswählen.",
+  INVALID_FORM: "Die Dateien konnten nicht übertragen werden.",
+  KEINE_SCHULUNGEN_ERKANNT: "In der Schulungsdatei wurde keine Schulung erkannt. Ist es der richtige Cobra-Export?",
+  KEINE_TEILNEHMER_ERKANNT: "In der Teilnehmerdatei wurde kein Teilnehmer erkannt. Ist es der richtige Cobra-Export?",
+  IMPORT_FEHLGESCHLAGEN: "Der Import ist fehlgeschlagen.",
+};
+
+// Wie AppInput, nur für Dateifelder — die gibt es dort nicht.
+const dateifeldStil: React.CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "11px 14px",
+  borderRadius: 8,
+  border: "1px solid var(--vfa-linie)",
+  background: "var(--vfa-karte)",
+  color: "var(--vfa-text)",
+  fontSize: 15,
+};
+
 export default function ImportClient() {
   const [schulungen, setSchulungen] = useState<File | null>(null);
   const [teilnehmer, setTeilnehmer] = useState<File | null>(null);
-  const [laeuft, setLaeuft] = useState(false);
+  // Welcher Lauf gerade arbeitet — damit nur der passende Knopf seinen Text wechselt.
+  const [laeuft, setLaeuft] = useState<Modus | null>(null);
   const [bericht, setBericht] = useState<Bericht | null>(null);
   const [geschrieben, setGeschrieben] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
 
-  async function senden(modus: "vorschau" | "import") {
+  // Neue Datei gewählt: die alte Vorschau gilt nicht mehr, der Import-Knopf
+  // darf erst nach einer neuen Vorschau wieder erscheinen.
+  function dateiWaehlen(setzer: (f: File | null) => void, datei: File | null) {
+    setzer(datei);
+    setBericht(null);
+    setGeschrieben(false);
+  }
+
+  async function senden(modus: Modus) {
     if (!schulungen || !teilnehmer) {
       setFehler("Bitte beide Dateien auswählen.");
       return;
@@ -41,7 +75,7 @@ export default function ImportClient() {
       if (!sicher) return;
     }
 
-    setLaeuft(true);
+    setLaeuft(modus);
     setFehler(null);
 
     const fd = new FormData();
@@ -51,9 +85,18 @@ export default function ImportClient() {
 
     try {
       const res = await fetch("/api/admin/import/cobra", { method: "POST", body: fd });
+      // Antwortet die Plattform statt der Route (zu große Datei, Zeitüberschreitung),
+      // kommt kein JSON — dann eine verständliche Meldung statt des Parser-Fehlers.
+      const istJson = (res.headers.get("content-type") ?? "").includes("application/json");
+      if (!istJson) {
+        setFehler(`Der Server hat nicht wie erwartet geantwortet (Status ${res.status}). Ist eine Datei zu groß?`);
+        setBericht(null);
+        return;
+      }
       const data = await res.json();
       if (!data.ok) {
-        setFehler(`${data.error}${data.details ? ": " + data.details : ""}`);
+        const text = FEHLERTEXTE[String(data.error)] ?? String(data.error);
+        setFehler(`${text}${data.details ? " (" + data.details + ")" : ""}`);
         setBericht(null);
       } else {
         setBericht(data.bericht);
@@ -62,79 +105,63 @@ export default function ImportClient() {
     } catch (e) {
       setFehler(e instanceof Error ? e.message : String(e));
     } finally {
-      setLaeuft(false);
+      setLaeuft(null);
     }
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <AppCard>
-        <h2 style={{ margin: "0 0 4px", fontSize: 17, fontWeight: 800 }}>Dateien auswählen</h2>
-        <p style={{ margin: "0 0 16px", color: "#666", fontSize: 14, lineHeight: 1.6 }}>
+        <h2 style={{ margin: "0 0 4px", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>Dateien auswählen</h2>
+        <p style={{ margin: "0 0 16px", color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
           Zwei Cobra-Exporte im Excel-Format. Die Schulungsdatei enthält ID, Titel, Start- und
           Enddatum, die Teilnehmerdatei die nach Schulung gruppierten Personen.
         </p>
 
-        <label style={{ display: "block", marginBottom: 12 }}>
-          <span style={{ display: "block", fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+        <label style={{ display: "grid", gap: 6, marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--vfa-text-2)", letterSpacing: "0.01em" }}>
             1. Schulungen (mit Datum)
           </span>
           <input
             type="file"
             accept=".xlsx"
-            onChange={(e) => setSchulungen(e.target.files?.[0] ?? null)}
-            style={{ fontSize: 14 }}
+            className="vfa-input"
+            onChange={(e) => dateiWaehlen(setSchulungen, e.target.files?.[0] ?? null)}
+            style={dateifeldStil}
           />
         </label>
 
-        <label style={{ display: "block", marginBottom: 18 }}>
-          <span style={{ display: "block", fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+        <label style={{ display: "grid", gap: 6, marginBottom: 18 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--vfa-text-2)", letterSpacing: "0.01em" }}>
             2. Teilnehmer (nach Schulung gruppiert)
           </span>
           <input
             type="file"
             accept=".xlsx"
-            onChange={(e) => setTeilnehmer(e.target.files?.[0] ?? null)}
-            style={{ fontSize: 14 }}
+            className="vfa-input"
+            onChange={(e) => dateiWaehlen(setTeilnehmer, e.target.files?.[0] ?? null)}
+            style={dateifeldStil}
           />
         </label>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
-            onClick={() => senden("vorschau")}
-            disabled={laeuft}
-            style={{
-              padding: "10px 18px", fontWeight: 800, fontSize: 14, cursor: laeuft ? "default" : "pointer",
-              border: "1px solid #007873", background: "#FFFFFF", color: "#007873", borderRadius: 8,
-            }}
-          >
-            {laeuft ? "Wird geprüft..." : "Vorschau"}
-          </button>
+          <AppButton variant="ghost" onClick={() => senden("vorschau")} disabled={laeuft !== null}>
+            {laeuft === "vorschau" ? "Wird geprüft …" : "Vorschau"}
+          </AppButton>
 
           {bericht && !geschrieben ? (
-            <button
-              onClick={() => senden("import")}
-              disabled={laeuft}
-              style={{
-                padding: "10px 18px", fontWeight: 800, fontSize: 14, cursor: laeuft ? "default" : "pointer",
-                border: "none", background: "#007873", color: "#FFFFFF", borderRadius: 8,
-              }}
-            >
-              Import jetzt ausführen
-            </button>
+            <AppButton variant="primary" onClick={() => senden("import")} disabled={laeuft !== null}>
+              {laeuft === "import" ? "Wird geschrieben …" : "Import jetzt ausführen"}
+            </AppButton>
           ) : null}
         </div>
       </AppCard>
 
-      {fehler ? (
-        <AppCard>
-          <div style={{ color: "#B00020", fontWeight: 700 }}>Fehler: {fehler}</div>
-        </AppCard>
-      ) : null}
+      {fehler ? <Meldung art="fehler">{fehler}</Meldung> : null}
 
       {bericht ? (
         <AppCard>
-          <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 800 }}>
+          <h2 style={{ margin: "0 0 12px", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
             {geschrieben ? "Import abgeschlossen" : "Vorschau — es wurde nichts geschrieben"}
           </h2>
 
@@ -151,10 +178,10 @@ export default function ImportClient() {
 
           {Object.keys(bericht.teilnehmer.uebersprungenNachArt).length > 0 ? (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+              <div className="etikett" style={{ marginBottom: 6 }}>
                 Übersprungen ({bericht.teilnehmer.uebersprungen}) — keine echten Teilnahmen
               </div>
-              <ul style={{ margin: 0, paddingLeft: 20, color: "#555", fontSize: 14, lineHeight: 1.7 }}>
+              <ul style={{ margin: 0, paddingLeft: 20, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: 1.7 }}>
                 {Object.entries(bericht.teilnehmer.uebersprungenNachArt).map(([art, n]) => (
                   <li key={art}>
                     {art}: {n}
@@ -165,28 +192,28 @@ export default function ImportClient() {
           ) : null}
 
           {bericht.warnungen.length > 0 ? (
-            <div style={{ marginBottom: 16, padding: "10px 12px", background: "#FFF6E0", border: "1px solid #FFC100", borderRadius: 8 }}>
+            <div style={{ marginBottom: 16, padding: "10px 12px", background: "rgba(255,193,0,0.12)", border: "1px solid var(--vfa-yellow)", borderRadius: 8 }}>
               {bericht.warnungen.map((w, i) => (
-                <div key={i} style={{ fontSize: 14, color: "#555", lineHeight: 1.6 }}>{w}</div>
+                <div key={i} style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>{w}</div>
               ))}
             </div>
           ) : null}
 
-          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Stichprobe</div>
+          <div className="etikett" style={{ marginBottom: 6 }}>Stichprobe</div>
           <div style={{ display: "grid", gap: 6 }}>
             {bericht.beispiele.map((b) => (
-              <div key={b.cobraId} style={{ fontSize: 13, color: "#555", fontFamily: "ui-monospace, monospace" }}>
+              <div key={b.cobraId} style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)" }}>
                 #{b.cobraId} · {b.start} · {b.code || "—"} · {b.titel} · {b.teilnehmer} TN
               </div>
             ))}
           </div>
 
           {geschrieben ? (
-            <p style={{ marginTop: 16, marginBottom: 0, fontSize: 14, color: "#555", lineHeight: 1.7 }}>
+            <p style={{ marginTop: 16, marginBottom: 0, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: 1.7 }}>
               Die Teilnehmer liegen jetzt in der App. Anmeldungen entstehen automatisch, sobald
               jemand mit der passenden E-Mail-Adresse seine Registrierung bestätigt. Für bereits
               registrierte Nutzer geschieht das nicht rückwirkend — dort hilft nur, die
-              Anmeldung im Nutzerbereich von Hand zu setzen.
+              Anmeldung unter „Nutzer verwalten“ von Hand zu setzen.
             </p>
           ) : null}
         </AppCard>
@@ -197,9 +224,9 @@ export default function ImportClient() {
 
 function Kennzahl({ label, wert }: { label: string; wert: number }) {
   return (
-    <div style={{ padding: "10px 12px", background: "#F7F7F7", borderRadius: 8 }}>
-      <div style={{ fontSize: 20, fontWeight: 800, color: "#1F1F1F" }}>{wert}</div>
-      <div style={{ fontSize: 12, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
+    <div style={{ padding: "10px 12px", background: "var(--vfa-karte-2)", borderRadius: 8 }}>
+      <div className="etikett">{label}</div>
+      <div className="kennzahl" style={{ marginTop: 4 }}>{wert}</div>
     </div>
   );
 }

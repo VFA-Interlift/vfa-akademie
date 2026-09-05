@@ -1,4 +1,5 @@
-import { CertificateKind } from "@prisma/client";
+import type { CertificateKind } from "@prisma/client";
+import { getCertificateKindByCode } from "@/lib/certificates/templates";
 import { cobraEndpointGet } from "@/lib/cobra/client";
 import { prisma } from "@/lib/prisma";
 
@@ -36,7 +37,7 @@ export type NormalizedTraining = {
   instructor: string | null;
   description: string | null;
   creditsAward: number;
-  certificateKind: CertificateKind;
+  certificateKind: CertificateKind | null;
   creditRule: CreditRule;
   warnings: string[];
 };
@@ -332,23 +333,6 @@ function deriveCredits(training: CobraTraining): CreditRule {
   };
 }
 
-function deriveCertificateKind(code: string): CertificateKind {
-  const normalizedCode = normalizeCode(code);
-
-  if (
-    normalizedCode.startsWith("A1") ||
-    normalizedCode.startsWith("A2") ||
-    normalizedCode.startsWith("B-") ||
-    normalizedCode === "B" ||
-    normalizedCode.startsWith("C-") ||
-    normalizedCode === "C"
-  ) {
-    return CertificateKind.VDI_CERTIFICATE;
-  }
-
-  return CertificateKind.ATTENDANCE_CONFIRMATION;
-}
-
 function normalizeTraining(training: CobraTraining): NormalizedTraining | null {
   const numericCobraId = cleanNumber(training["Schulungs-ID"] ?? training.ID);
   const code = normalizeCode(training.Schulungscode);
@@ -401,7 +385,10 @@ function normalizeTraining(training: CobraTraining): NormalizedTraining | null {
     instructor,
     description,
     creditsAward: creditRule.credits,
-    certificateKind: deriveCertificateKind(code),
+    // Dieselbe Quelle wie der Wix-Sync: Vorher kannte der Cobra-Weg nur die
+    // VDI-Kurse und setzte alles andere (auch DGUV, EFK, GEF) pauschal auf
+    // Teilnahmebestätigung — beide Läufe überschrieben sich (05.09.2026).
+    certificateKind: getCertificateKindByCode(code),
     creditRule,
     warnings,
   };

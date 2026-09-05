@@ -8,10 +8,11 @@ export const dynamic = "force-dynamic";
 // Admin: match existing users to Cobra participant records by email and create missing enrollments
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+  // Sitzung ohne E-Mail ist ein 401, kein 500 (05.09.2026).
+  if (!session?.user?.email) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
 
   const me = await prisma.user.findUnique({
-    where: { email: session.user.email!.toLowerCase() },
+    where: { email: session.user.email.trim().toLowerCase() },
     select: { role: true },
   });
   if (me?.role !== "ADMIN") return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });

@@ -1,24 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { signOut } from "next-auth/react";
 import AppCard from "@/components/ui/AppCard";
 import PushEinstellung from "@/components/PushEinstellung";
 import ThemaSchalter from "@/components/ThemaSchalter";
 import AppButton from "@/components/ui/AppButton";
+import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import AppTextarea from "@/components/ui/AppTextarea";
+import Meldung from "@/components/ui/Meldung";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 const APP_VERSION = "0.1.0";
 
+/** Muss zur Liste in src/app/api/feedback/route.ts passen. */
 const FEEDBACK_CATEGORIES = [
   "Allgemein",
-  "Fehler / Bug",
+  "Fehler",
   "Idee / Wunsch",
   "Sonstiges",
 ];
+
+/** Obergrenze der Route (/api/feedback lehnt längere Nachrichten ab). */
+const FEEDBACK_MAX = 5000;
 
 function SectionHeader({ title, badge }: { title: string; badge: string }) {
   return (
@@ -32,17 +37,7 @@ function SectionHeader({ title, badge }: { title: string; badge: string }) {
         marginBottom: 14,
       }}
     >
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 800,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-        }}
-      >
-        {title}
-      </div>
+      <div className="etikett">{title}</div>
       <StatusBadge>{badge}</StatusBadge>
     </div>
   );
@@ -89,27 +84,15 @@ function TestrundeCard({ feedbackGesendet }: { feedbackGesendet: boolean }) {
     <AppCard accent="none">
       <SectionHeader title="Rückmeldung zur Testrunde" badge="Testrunde" />
 
-      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
+      <p style={{ marginTop: 0, marginBottom: 14, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
         {feedbackGesendet
           ? "Deine Antworten sind angekommen — danke! Ist dir seitdem noch etwas aufgefallen, kannst du den Bogen erneut ausfüllen. Er ersetzt dann deine bisherigen Antworten."
           : "Zehn Fragen zu deinen Eindrücken, zwei bis drei Minuten. Pflicht ist nur die letzte. Füll ihn aus, wenn du dich in Ruhe umgesehen hast."}
       </p>
 
-      <Link
-        href="/app-test"
-        style={{
-          display: "inline-block",
-          padding: "10px 22px",
-          borderRadius: 999,
-          background: "#007873",
-          color: "#FFFFFF",
-          fontWeight: 800,
-          fontSize: 14,
-          textDecoration: "none",
-        }}
-      >
+      <AppButton href="/app-test" variant="primary">
         {feedbackGesendet ? "Rückmeldung ergänzen" : "Zum Fragebogen"}
-      </Link>
+      </AppButton>
     </AppCard>
   );
 }
@@ -124,7 +107,7 @@ function DatenschutzCard() {
   const [laeuft, setLaeuft] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  async function konventLoeschen() {
+  async function kontoLoeschen() {
     setLaeuft(true);
     setMsg(null);
     try {
@@ -140,6 +123,8 @@ function DatenschutzCard() {
           PASSWORT_FALSCH: "Das Passwort stimmt nicht.",
           PASSWORT_FEHLT: "Bitte gib dein Passwort ein.",
           ADMIN_KONTO: "Adminkonten können nur über einen anderen Admin gelöscht werden.",
+          // Die Route sperrt nach fünf Fehlversuchen für 15 Minuten.
+          ZU_VIELE_VERSUCHE: "Zu viele Versuche. Bitte in 15 Minuten erneut probieren.",
         };
         setMsg(texte[data.error] ?? "Löschen fehlgeschlagen.");
         return;
@@ -155,102 +140,66 @@ function DatenschutzCard() {
 
   return (
     <AppCard accent="none">
-      <SectionHeader title="Meine Daten" badge="Datenschutz" />
+      <SectionHeader title="Datenauskunft" badge="Datenschutz" />
 
-      <div style={{ fontSize: 14, color: "var(--vfa-text)", lineHeight: 1.6 }}>
+      <div style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
         Du kannst jederzeit alle zu deinem Konto gespeicherten Daten herunterladen —
         Profil, Anmeldungen, Zertifikate, Credits und Feedback.
       </div>
 
-      <a
-        href="/api/me/export"
-        style={{
-          display: "inline-block",
-          marginTop: 12,
-          padding: "10px 18px",
-          borderRadius: 999,
-          border: "1px solid #007873",
-          color: "#007873",
-          fontWeight: 800,
-          fontSize: 14,
-          textDecoration: "none",
-        }}
-      >
-        Daten herunterladen
-      </a>
+      <div style={{ marginTop: 12 }}>
+        {/* Kein href: Ein Link würde die Datei beim Vorladen schon anfordern.
+            Die Route liefert einen Download, deshalb reicht die Navigation. */}
+        <AppButton variant="ghost" onClick={() => window.location.assign("/api/me/export")}>
+          Daten herunterladen
+        </AppButton>
+      </div>
 
       <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--vfa-linie)" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)" }}>Konto löschen</div>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)" }}>Konto löschen</div>
+        <p style={{ margin: "6px 0 0", fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
           Dein Konto und alles daran Hängende wird endgültig entfernt: Anmeldungen,
           Zertifikate, Credits, Feedback und hochgeladene Nachweise. Die Teilnahmeunterlagen
           der Akademie zu besuchten Schulungen bleiben davon unberührt.
         </p>
 
         {!zeigeLoeschen ? (
-          <button
-            type="button"
-            onClick={() => setZeigeLoeschen(true)}
-            style={{
-              marginTop: 12,
-              padding: "10px 18px",
-              borderRadius: 999,
-              border: "1px solid #B00020",
-              background: "var(--vfa-karte)",
-              color: "#B00020",
-              fontWeight: 800,
-              fontSize: 14,
-              cursor: "pointer",
-            }}
-          >
-            Konto löschen …
-          </button>
+          <div style={{ marginTop: 12 }}>
+            <AppButton variant="danger" onClick={() => setZeigeLoeschen(true)}>
+              Konto löschen …
+            </AppButton>
+          </div>
         ) : (
-          <div style={{ marginTop: 12, display: "grid", gap: 10, maxWidth: 360 }}>
-            <label style={{ fontSize: 13, fontWeight: 700, color: "var(--vfa-text)" }}>
-              Zur Bestätigung dein Passwort
-              <input
-                type="password"
-                value={passwort}
-                onChange={(e) => setPasswort(e.target.value)}
-                autoComplete="current-password"
-                style={{
-                  width: "100%", marginTop: 4, padding: "10px 12px",
-                  border: "1px solid var(--vfa-linie)", borderRadius: 8, fontSize: 14,
-                }}
-              />
-            </label>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!laeuft && passwort) void kontoLoeschen();
+            }}
+            style={{ marginTop: 12, display: "grid", gap: 10, maxWidth: 360 }}
+          >
+            <AppInput
+              label="Zur Bestätigung dein Passwort"
+              type="password"
+              value={passwort}
+              autoComplete="current-password"
+              onChange={setPasswort}
+            />
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={konventLoeschen}
-                disabled={laeuft || !passwort}
-                style={{
-                  padding: "10px 18px", borderRadius: 999, border: "none",
-                  background: passwort ? "#B00020" : "#DDDDDD",
-                  color: "#FFFFFF", fontWeight: 800, fontSize: 14,
-                  cursor: laeuft || !passwort ? "default" : "pointer",
-                }}
-              >
+              <AppButton type="submit" variant="danger" disabled={laeuft || !passwort}>
                 {laeuft ? "Wird gelöscht …" : "Endgültig löschen"}
-              </button>
+              </AppButton>
 
-              <button
-                type="button"
+              <AppButton
+                variant="secondary"
                 onClick={() => { setZeigeLoeschen(false); setPasswort(""); setMsg(null); }}
-                style={{
-                  padding: "10px 18px", borderRadius: 999,
-                  border: "1px solid var(--vfa-linie)", background: "var(--vfa-karte)",
-                  color: "var(--vfa-text-2)", fontWeight: 700, fontSize: 14, cursor: "pointer",
-                }}
               >
                 Abbrechen
-              </button>
+              </AppButton>
             </div>
 
-            {msg ? <div style={{ color: "#B00020", fontSize: 13, fontWeight: 700 }}>{msg}</div> : null}
-          </div>
+            {msg ? <Meldung art="fehler">{msg}</Meldung> : null}
+          </form>
         )}
       </div>
     </AppCard>
@@ -260,7 +209,7 @@ function DatenschutzCard() {
 function NotificationsCard({ initial }: { initial: boolean }) {
   const [enabled, setEnabled] = useState(initial);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; art: "erfolg" | "fehler" } | null>(null);
 
   async function toggle() {
     const next = !enabled;
@@ -277,14 +226,14 @@ function NotificationsCard({ initial }: { initial: boolean }) {
 
       if (!res.ok) {
         setEnabled(!next);
-        setMsg("Konnte nicht gespeichert werden.");
+        setMsg({ text: "Konnte nicht gespeichert werden.", art: "fehler" });
         return;
       }
 
-      setMsg("Gespeichert.");
+      setMsg({ text: "Gespeichert.", art: "erfolg" });
     } catch {
       setEnabled(!next);
-      setMsg("Konnte nicht gespeichert werden.");
+      setMsg({ text: "Konnte nicht gespeichert werden.", art: "fehler" });
     } finally {
       setSaving(false);
     }
@@ -296,10 +245,10 @@ function NotificationsCard({ initial }: { initial: boolean }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center" }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
+          <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3 }}>
             Erinnerung vor Schulungen
           </div>
-          <div style={{ fontSize: 13, color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.5 }}>
+          <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 4, lineHeight: 1.5 }}>
             Du bekommst 3 Tage vor einer Schulung, für die du angemeldet bist, eine
             E-Mail-Erinnerung.
           </div>
@@ -319,7 +268,8 @@ function NotificationsCard({ initial }: { initial: boolean }) {
             height: 30,
             borderRadius: 999,
             border: "none",
-            background: enabled ? "#007873" : "#CFCFCF",
+            // Schiene und Knopf wie beim ThemaSchalter (Befund d13-19, 05.09.2026).
+            background: enabled ? "#007873" : "var(--vfa-grey)",
             cursor: saving ? "not-allowed" : "pointer",
             transition: "background 180ms ease",
             opacity: saving ? 0.7 : 1,
@@ -333,7 +283,7 @@ function NotificationsCard({ initial }: { initial: boolean }) {
               width: 24,
               height: 24,
               borderRadius: "50%",
-              background: "var(--vfa-karte)",
+              background: "#FFFFFF",
               boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
               transition: "left 180ms ease",
             }}
@@ -342,14 +292,14 @@ function NotificationsCard({ initial }: { initial: boolean }) {
       </div>
 
       {msg && (
-        <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#007873" }}>
-          {msg}
-        </div>
+        <Meldung art={msg.art} role="status" style={{ marginTop: 12 }}>
+          {msg.text}
+        </Meldung>
       )}
 
       {/* Push aufs Handy — zusätzlich zur E-Mail, je Gerät aktivierbar. */}
       <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--vfa-linie-2)" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3, marginBottom: 8 }}>
+        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", lineHeight: 1.3, marginBottom: 8 }}>
           Mitteilung aufs Handy
         </div>
         <PushEinstellung />
@@ -387,7 +337,11 @@ function FeedbackCard() {
 
       if (!res.ok || !data?.ok) {
         setSuccess(false);
-        setMsg("Feedback konnte nicht gesendet werden. Bitte später erneut versuchen.");
+        setMsg(
+          data?.error === "ZU_VIELE_VERSUCHE"
+            ? "Zu viele Nachrichten in kurzer Zeit. Bitte in 15 Minuten erneut versuchen."
+            : "Feedback konnte nicht gesendet werden. Bitte später erneut versuchen."
+        );
         return;
       }
 
@@ -403,10 +357,10 @@ function FeedbackCard() {
   }
 
   return (
-    <AppCard accent="none">
+    <AppCard id="feedback" accent="none">
       <SectionHeader title="Feedback geben" badge="Feedback" />
 
-      <p style={{ marginTop: 0, marginBottom: 14, fontSize: 14, color: "var(--vfa-text-2)", lineHeight: 1.6 }}>
+      <p style={{ marginTop: 0, marginBottom: 14, fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
         Fehler gefunden, Idee oder Wunsch? Schreib uns – wir lesen jede Nachricht.
       </p>
 
@@ -421,29 +375,21 @@ function FeedbackCard() {
         <AppTextarea
           label="Deine Nachricht"
           value={message}
-          placeholder="Beschreibe dein Feedback so genau wie möglich..."
+          placeholder="Beschreibe dein Feedback so genau wie möglich …"
           rows={5}
+          maxLength={FEEDBACK_MAX}
           onChange={setMessage}
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <AppButton onClick={submit} disabled={loading} variant="primary">
-            {loading ? "Wird gesendet..." : "Feedback senden"}
+            {loading ? "Wird gesendet …" : "Feedback senden"}
           </AppButton>
 
           {msg && (
-            <div
-              style={{
-                padding: "10px 14px",
-                border: success ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)",
-                background: success ? "rgba(0,120,115,0.08)" : "rgba(176,0,32,0.08)",
-                color: success ? "#007873" : "#B00020",
-                fontWeight: 800,
-                fontSize: 14,
-              }}
-            >
+            <Meldung art={success ? "erfolg" : "fehler"} style={{ flex: "1 1 240px" }}>
               {msg}
-            </div>
+            </Meldung>
           )}
         </div>
       </div>
@@ -456,7 +402,7 @@ function AppInfoCard() {
     <AppCard accent="none">
       <SectionHeader title="App-Info" badge="Info" />
 
-      <div style={{ display: "grid", gap: 10, fontSize: 14, color: "var(--vfa-text)", lineHeight: 1.6 }}>
+      <div style={{ display: "grid", gap: 10, fontSize: "var(--t-basis)", color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
         <InfoRow label="App" value="VFA-Akademie" />
         <InfoRow label="Version" value={APP_VERSION} />
         <InfoRow label="Veranstalter" value="VFA-Akademie gGmbH" />
@@ -488,24 +434,9 @@ function AppInfoCard() {
       </div>
 
       <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--vfa-linie)" }}>
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          style={{
-            width: "100%",
-            padding: "14px 16px",
-            borderRadius: 999,
-            border: "1px solid var(--vfa-linie)",
-            background: "var(--vfa-karte-2)",
-            color: "var(--vfa-text-2)",
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: "0.04em",
-            cursor: "pointer",
-          }}
-        >
+        <AppButton variant="secondary" fullWidth onClick={() => signOut({ callbackUrl: "/login" })}>
           Abmelden
-        </button>
+        </AppButton>
       </div>
     </AppCard>
   );
@@ -514,16 +445,14 @@ function AppInfoCard() {
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(90px, 120px) 1fr", gap: 12, alignItems: "baseline" }}>
-      <span style={{ fontSize: 12, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-        {label}
-      </span>
+      <span className="etikett">{label}</span>
       <span style={{ color: "var(--vfa-text)", overflowWrap: "anywhere" }}>{value}</span>
     </div>
   );
 }
 
 const linkStyle: React.CSSProperties = {
-  color: "#007873",
+  color: "var(--vfa-gruen-text)",
   fontWeight: 700,
   textDecoration: "none",
 };

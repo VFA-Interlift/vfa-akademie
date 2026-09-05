@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatInstructorName, isLikelyInhouse } from "@/lib/trainings/format";
 import {
   FEEDBACK_CREDITS,
+  FEEDBACK_TEXT_MAX,
   OVERALL_RATING_KEY,
   flattenQuestions,
   getFeedbackForm,
@@ -116,7 +117,7 @@ function validateAnswers(sections: FeedbackSection[], raw: unknown): FeedbackAns
       cleaned[q.key] = num;
     } else if (q.type === "text") {
       if (typeof value !== "string") return null;
-      const trimmed = value.trim().slice(0, 2000);
+      const trimmed = value.trim().slice(0, FEEDBACK_TEXT_MAX);
       if (trimmed) cleaned[q.key] = trimmed;
     } else if (q.type === "single") {
       if (typeof value !== "string" || !q.options?.includes(value)) return null;

@@ -28,30 +28,40 @@ function splitPersons(field: string): string[] {
     .filter(Boolean);
 }
 
+/** Name in Wörter zerlegen (Leerzeichen und Bindestrich trennen). */
+function woerter(value: string): string[] {
+  return normalizeName(value).split(/[\s-]+/).filter(Boolean);
+}
+
 /**
  * Prüft, ob der Nutzer in einem Dozentenfeld steht. Innerhalb einer einzelnen
- * Person wird bewusst weiterhin per Teilstring verglichen, damit Titel
- * ("Dr. Max Mustermann") und Doppelnamen nicht zu falschen Ablehnungen führen.
+ * Person werden ganze Wörter verglichen: Titel ("Dr. Max Mustermann") und
+ * Doppelnamen ("Meyer-Schmidt") bleiben Treffer, weil jedes Wort des Vor- und
+ * Nachnamens im Feld stehen muss — aber „Jan Meyer" trifft nicht mehr
+ * „Benjamin Meyer", wie es der frühere Teilstring-Vergleich tat (Befund
+ * f12-10, 05.09.2026).
  */
 export function isInstructorMatch(
   dozentField: string,
   identity: InstructorIdentity
 ): boolean {
   for (const person of splitPersons(dozentField)) {
-    const field = normalizeName(person);
-    if (!field) continue;
+    const feld = woerter(person);
+    if (feld.length === 0) continue;
+    const enthaelt = (parts: string[]) =>
+      parts.length > 0 && parts.every((part) => feld.includes(part));
 
     if (identity.firstName && identity.lastName) {
-      const first = normalizeName(identity.firstName);
-      const last = normalizeName(identity.lastName);
-      if (first && last && field.includes(first) && field.includes(last)) {
+      const first = woerter(identity.firstName);
+      const last = woerter(identity.lastName);
+      if (enthaelt(first) && enthaelt(last)) {
         return true;
       }
     }
 
     if (identity.name) {
-      const parts = normalizeName(identity.name).split(" ").filter(Boolean);
-      if (parts.length >= 2 && parts.every((part) => field.includes(part))) {
+      const parts = woerter(identity.name);
+      if (parts.length >= 2 && enthaelt(parts)) {
         return true;
       }
     }
@@ -86,12 +96,15 @@ export async function getInstructorKurscodes(
   return codes;
 }
 
-/** Kurscode aus dem Rohdatensatz einer Website-Anmeldung. */
+/**
+ * Kurscode aus dem Rohdatensatz einer Website-Anmeldung. Ersatzweise
+ * kurscodeAnzeige — so nimmt es auch der Webhook (wix-anmeldung, Z. 56);
+ * sonst hing eine Anmeldung am Training, war aber in keiner Liste sichtbar
+ * (Befund f12-22, 05.09.2026).
+ */
 export function participantKurscode(raw: unknown): string {
-  if (raw && typeof raw === "object" && "kurscode" in raw) {
-    return String((raw as { kurscode?: unknown }).kurscode ?? "")
-      .trim()
-      .toUpperCase();
-  }
-  return "";
+  if (!raw || typeof raw !== "object") return "";
+  const r = raw as { kurscode?: unknown; kurscodeAnzeige?: unknown };
+  const wert = typeof r.kurscode === "string" && r.kurscode.trim() ? r.kurscode : r.kurscodeAnzeige;
+  return String(wert ?? "").trim().toUpperCase();
 }

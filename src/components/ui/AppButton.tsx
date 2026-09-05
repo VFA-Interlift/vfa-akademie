@@ -10,11 +10,15 @@ type AppButtonProps = {
   disabled?: boolean;
   variant?: AppButtonVariant;
   fullWidth?: boolean;
+  /** Externer Link (Website, Karte, Kalenderdatei): öffnet in einem neuen Tab.
+      Vorher baute jede Seite dafür eine eigene Pille (Launch-Runde 05.09.2026). */
+  external?: boolean;
+  /** Beschriftung für Screenreader, wenn der Text allein nicht reicht. */
+  ariaLabel?: string;
 };
 
 const VFA_GREEN = "#007873";
 const VFA_YELLOW = "#FFC100";
-const VFA_GREY = "#C7C7C7";
 
 export default function AppButton({
   children,
@@ -24,19 +28,29 @@ export default function AppButton({
   disabled = false,
   variant = "primary",
   fullWidth = false,
+  external = false,
+  ariaLabel,
 }: AppButtonProps) {
   const style = getButtonStyle(variant, disabled, fullWidth);
 
+  if (href && external) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" style={style} className="vfa-btn" aria-label={ariaLabel}>
+        {children}
+      </a>
+    );
+  }
+
   if (href) {
     return (
-      <Link href={href} style={style} className="vfa-btn">
+      <Link href={href} style={style} className="vfa-btn" aria-label={ariaLabel}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} style={style} className="vfa-btn">
+    <button type={type} onClick={onClick} disabled={disabled} style={style} className="vfa-btn" aria-label={ariaLabel}>
       {children}
     </button>
   );
@@ -98,15 +112,17 @@ function getButtonStyle(
     return {
       ...base,
       background: "rgba(176,0,32,0.08)",
-      color: "#B00020",
+      color: "var(--vfa-rot-text)",
       border: "1px solid rgba(176,0,32,0.24)",
     };
   }
 
+  // ghost: Umriss-Knopf. Token statt Festfarben, damit er im Dunkelmodus
+  // lesbar bleibt (Launch-Runde 05.09.2026).
   return {
     ...base,
     background: "transparent",
-    color: VFA_GREEN,
-    border: `1px solid ${VFA_GREY}`,
+    color: "var(--vfa-gruen-text)",
+    border: "1px solid var(--vfa-grey)",
   };
 }

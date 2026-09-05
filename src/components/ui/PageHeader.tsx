@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import BackButton from "@/components/BackButton";
 
@@ -20,7 +21,8 @@ type PageHeaderProps = {
  * Dashboard-Kopf (Streifen, Gelbschein) als kompaktes Band nur bis zur
  * Überschrift; die helle Fläche schiebt sich mit runden Ecken darüber
  * (globals.css, .seiten-kopf). Auf dem Handy läuft das Band bis unter die
- * Statusleiste — SafeTop entfällt auf diesen Seiten.
+ * Statusleiste und gibt der weißen Uhr den Grund — der Deckstreifen SafeTop
+ * ist seit dem 05.09.2026 überall aus.
  *
  * Beim Scrollen bewegt sich alles wie auf dem Dashboard (Tobis Ansage vom
  * 13.08.2026 abends): Die Überschrift zieht langsamer als der Inhalt davon
@@ -94,20 +96,21 @@ export default function PageHeader({
       </div>
 
       <div ref={inhaltRef} style={{ position: "relative" }}>
+        {/* Link statt <a>: ein natives <a> lud die ganze App neu (05.09.2026). */}
         {backHref && (
-          <a
+          <Link
             href={backHref}
             style={{
               display: "inline-block",
               marginBottom: 10,
               color: "rgba(255,255,255,0.85)",
-              fontSize: 13,
+              fontSize: "var(--t-klein)",
               fontWeight: 700,
               textDecoration: "none",
             }}
           >
             ← {backLabel}
-          </a>
+          </Link>
         )}
         {showBackButton && (
           <div style={{ marginBottom: 14 }}>

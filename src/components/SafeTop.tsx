@@ -5,35 +5,28 @@ import { usePathname } from "next/navigation";
 /**
  * Deckt den Bereich der Statusleiste ab, seit die Seite darunter durchläuft
  * (statusBarStyle "black-translucent" in layout.tsx). iOS zeichnet Uhr,
- * Empfang und Akku dort in Weiß — auf den hellen Seiten wären sie ohne diesen
- * Petrol-Grund unsichtbar. Auf Geräten ohne Aussparung ist die Höhe 0.
+ * Empfang und Akku dort in Weiß — auf hellen Seiten ohne eigenen dunklen
+ * Kopf wären sie ohne diesen Petrol-Grund unsichtbar. Auf Geräten ohne
+ * Aussparung ist die Höhe 0.
  *
- * Auf dem Dashboard entsteht der Streifen GAR NICHT — dort liegt der grüne
- * Kopf selbst unter der Uhr, und beim Scrollen soll nach Tobis Entscheidung
- * vom 13.08.2026 („Weg mit der Uhr") kein Balken über der hellen Fläche
- * stehen. usePathname wirkt schon beim Server-Rendern, es gibt also auch
- * keinen Augenblick beim Laden, in dem er kurz zu sehen wäre.
+ * Seit der Launch-Runde (05.09.2026) trägt jede Seite außer dem Dashboard
+ * das Petrol-Band aus PageHeader, und das Dashboard hat seinen eigenen
+ * grünen Kopf — beide reichen bis unter die Statusleiste und geben der Uhr
+ * selbst den Grund. Ein Deckstreifen darüber ergäbe wieder die bekannte
+ * Naht (plain Petrol über bewegtem Muster). Die Liste ist deshalb zur
+ * Ausnahmeliste geworden: Nur was hier steht, bekommt den Streifen noch.
+ * Sie ist leer; die Komponente bleibt, falls eine Seite ohne Band
+ * dazukommt. usePathname wirkt schon beim Server-Rendern, es gibt also
+ * keinen Augenblick beim Laden, in dem der Streifen kurz zu sehen wäre.
  */
-// Seiten, deren Kopf selbst bis unter die Statusleiste reicht: das Dashboard
-// (Parallax-Kopf) und alle Seiten mit dem Streifen-Band aus PageHeader. Dort
-// gibt das Band der Uhr den Grund; ein Deckstreifen darüber ergäbe wieder die
-// bekannte Naht (plain Petrol über bewegtem Muster). Der Kompetenzpass und
-// die Anmeldeseiten haben KEIN Band — dort bleibt der Streifen.
-const OHNE_STREIFEN = [
-  "/dashboard", "/meine-schulungen", "/meine-zertifikate", "/meine-credits",
-  "/meine-daten", "/kurskalender", "/badges", "/leaderboard", "/einstellungen",
-  "/feedback", "/training", "/dozent", "/app-test",
-];
+const MIT_STREIFEN: string[] = [];
 
 export default function SafeTop() {
   const pfad = usePathname();
 
-  // Die Admin-STARTSEITE hat kein Band (eigener Kopf) — nur die Unterseiten.
-  const bandSeite =
-    OHNE_STREIFEN.some((p) => pfad === p || pfad.startsWith(p + "/")) ||
-    pfad.startsWith("/admin/");
+  const streifenSeite = MIT_STREIFEN.some((p) => pfad === p || pfad.startsWith(p + "/"));
 
-  if (bandSeite) {
+  if (!streifenSeite) {
     return null;
   }
 

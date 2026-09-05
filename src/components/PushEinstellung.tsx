@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 
 /**
  * Schalter für die Push-Erinnerung („Morgen ist deine Schulung").
@@ -115,7 +116,7 @@ export default function PushEinstellung() {
     return (
       <p style={{ margin: 0, fontSize: 13, color: "var(--vfa-text-3)", lineHeight: 1.5 }}>
         Mitteilungen aufs Handy gehen auf diesem Gerät nicht. Auf dem iPhone
-        funktionieren sie nur, wenn die App über „Teilen → Zum Home-Bildschirm"
+        funktionieren sie nur, wenn die App über „Teilen → Zum Home-Bildschirm“
         installiert ist und von dort geöffnet wird.
       </p>
     );
@@ -139,25 +140,13 @@ export default function PushEinstellung() {
           ? "Dieses Gerät erinnert dich am Vortag deiner Schulung."
           : "Bekomme am Vortag deiner Schulung eine Mitteilung aufs Handy."}
       </p>
-      <button
-        type="button"
+      <AppButton
+        variant={aktiv ? "secondary" : "primary"}
         onClick={aktiv ? deaktivieren : aktivieren}
         disabled={arbeitet}
-        style={{
-          justifySelf: "start",
-          padding: "10px 20px",
-          borderRadius: 999,
-          border: aktiv ? "1px solid var(--vfa-linie)" : "none",
-          background: aktiv ? "transparent" : "#007873",
-          color: aktiv ? "var(--vfa-text-2)" : "#FFFFFF",
-          fontSize: 14,
-          fontWeight: 800,
-          cursor: arbeitet ? "wait" : "pointer",
-          opacity: arbeitet ? 0.6 : 1,
-        }}
       >
         {arbeitet ? "Einen Moment …" : aktiv ? "Erinnerung ausschalten" : "Erinnerung aktivieren"}
-      </button>
+      </AppButton>
     </div>
   );
 }

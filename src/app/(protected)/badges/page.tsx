@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import CloseButton from "@/components/CloseButton";
 import BadgesClient from "./BadgesClient";
 
 export const dynamic = "force-dynamic";
@@ -36,12 +35,10 @@ export default async function BadgesPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <AnimatedSection delayMs={0}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-            <PageHeader title="Badges" showTitle={true} />
-            <CloseButton fallbackHref="/kompetenzpass" />
-          </div>
-        </AnimatedSection>
+        {/* Band direkt im Container wie auf dem Ranking: Als Flex-Kind neben dem
+            früheren ×-Knopf und in der Einblend-Hülle wurde es am Handy gestaucht
+            und verschoben. Der Rückweg läuft über die untere Leiste (05.09.2026). */}
+        <PageHeader title="Badges" />
 
         <AnimatedSection delayMs={80}>
           <BadgesClient

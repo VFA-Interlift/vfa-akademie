@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
+import AppSelect from "@/components/ui/AppSelect";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import type { AdminQuestionStat } from "@/lib/feedback/evaluation";
 
@@ -66,7 +68,7 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
   if (trainings.length === 0) {
     return (
       <AppCard>
-        <p style={{ margin: 0, color: "#333333" }}>Es liegt noch kein Feedback vor.</p>
+        <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: "var(--t-basis)" }}>Es liegt noch kein Feedback vor.</p>
       </AppCard>
     );
   }
@@ -75,36 +77,18 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
     <div style={{ display: "grid", gap: 12 }}>
       <AnimatedSection>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 2, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <label style={{ display: "grid", gap: 4, minWidth: 220 }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Sortieren nach
-            </span>
-            <select
+          <div style={{ minWidth: 220 }}>
+            <AppSelect
+              label="Sortieren nach"
               value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              style={{
-                padding: "9px 12px",
-                borderRadius: 999,
-                border: "1px solid #C7C7C7",
-                background: "#FFFFFF",
-                color: "#1F1F1F",
-                fontSize: 14,
-                fontWeight: 700,
-                outlineColor: "#007873",
-              }}
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setSortKey((v || "recent") as SortKey)}
+              options={SORT_OPTIONS}
+            />
+          </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              style={pdfBtnStyle}
+            <AppButton
+              variant="primary"
               onClick={() =>
                 setPdf({
                   url: "/api/admin/feedback/export/pdf",
@@ -113,11 +97,11 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                 })
               }
             >
-              📄 Alles als PDF
-            </button>
-            <a href="/api/admin/feedback/export" style={exportBtnStyle} download>
-              ⬇ Alles als Excel
-            </a>
+              Alles als PDF
+            </AppButton>
+            <AppButton variant="secondary" href="/api/admin/feedback/export" external>
+              Alles als Excel
+            </AppButton>
           </div>
         </div>
       </AnimatedSection>
@@ -137,6 +121,7 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                   width: "100%",
                   border: "none",
                   background: "transparent",
+                  color: "inherit",
                   padding: "16px 20px",
                   cursor: "pointer",
                   textAlign: "left",
@@ -147,8 +132,8 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: "#1F1F1F" }}>{title}</div>
-                  <div style={{ fontSize: 13, color: "#888888", marginTop: 3 }}>
+                  <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>{title}</h2>
+                  <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 3 }}>
                     {training.responseCount} {training.responseCount === 1 ? "Antwort" : "Antworten"}
                     {" · "}
                     {training.formType === "INHOUSE" ? "Inhouse" : "Öffentlich"}
@@ -156,21 +141,20 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#FFB000", lineHeight: 1 }}>
+                    <div style={{ fontSize: "var(--t-titel)", fontWeight: 800, color: "var(--vfa-gruen-text)", lineHeight: 1 }}>
                       {training.overallAverage != null ? training.overallAverage.toFixed(1) : "–"}
                     </div>
-                    <div style={{ fontSize: 11, color: "#999999", fontWeight: 700 }}>Ø Gesamt</div>
+                    <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", fontWeight: 700 }}>Ø Gesamt</div>
                   </div>
-                  <span style={{ fontSize: 22, fontWeight: 900, color: "#007873" }}>{isOpen ? "−" : "+"}</span>
+                  <span style={{ fontSize: "var(--t-titel)", fontWeight: 700, color: "var(--vfa-gruen-text)" }}>{isOpen ? "−" : "+"}</span>
                 </div>
               </button>
 
               {isOpen && (
-                <div style={{ borderTop: "1px solid #E6E6E6", padding: "16px 20px 18px", background: "#FFFFFF" }}>
+                <div style={{ borderTop: "1px solid var(--vfa-linie)", padding: "16px 20px 18px", background: "var(--vfa-karte)" }}>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      style={pdfBtnStyle}
+                    <AppButton
+                      variant="primary"
                       onClick={() =>
                         setPdf({
                           url: `/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`,
@@ -179,15 +163,15 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                         })
                       }
                     >
-                      📄 Diese Schulung als PDF
-                    </button>
-                    <a
+                      Diese Schulung als PDF
+                    </AppButton>
+                    <AppButton
+                      variant="secondary"
                       href={`/api/admin/feedback/export?trainingId=${training.trainingId}`}
-                      style={exportBtnStyle}
-                      download
+                      external
                     >
-                      ⬇ Diese Schulung als Excel
-                    </a>
+                      Diese Schulung als Excel
+                    </AppButton>
                   </div>
 
                   <div style={{ display: "grid", gap: 10 }}>
@@ -211,6 +195,12 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * PDF-Ansicht als Vollbild-Overlay. Die dunkle Kopfleiste und der weiße
+ * Grund des Dokuments bleiben bewusst fest (05.09.2026): Das ist die
+ * Betrachter-Leiste über dem Dokument, kein Seiteninhalt — sie soll in beiden
+ * Farbmodi gleich aussehen wie ein PDF-Viewer.
+ */
 function PdfViewerModal({
   pdf,
   onClose,
@@ -268,31 +258,12 @@ function PdfViewerModal({
           color: "#FFFFFF",
         }}
       >
-        <div style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div style={{ flex: 1, minWidth: 0, fontSize: "var(--t-basis)", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {pdf.title}
         </div>
-        <button
-          type="button"
-          onClick={download}
-          disabled={downloading}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            minHeight: 38,
-            padding: "8px 16px",
-            borderRadius: 999,
-            border: "none",
-            background: "#007873",
-            color: "#FFFFFF",
-            fontSize: 13,
-            fontWeight: 800,
-            cursor: downloading ? "not-allowed" : "pointer",
-            opacity: downloading ? 0.6 : 1,
-          }}
-        >
-          {downloading ? "…" : "⬇ Download"}
-        </button>
+        <AppButton variant="primary" onClick={download} disabled={downloading}>
+          {downloading ? "…" : "Herunterladen"}
+        </AppButton>
         <button
           type="button"
           onClick={onClose}
@@ -323,15 +294,15 @@ function PdfViewerModal({
 
 function QuestionStatRow({ stat }: { stat: AdminQuestionStat }) {
   return (
-    <div style={{ paddingBottom: 10, borderBottom: "1px solid #F0F0F0" }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#1F1F1F", marginBottom: 4 }}>{stat.label}</div>
+    <div style={{ paddingBottom: 10, borderBottom: "1px solid var(--vfa-linie-2)" }}>
+      <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-text)", marginBottom: 4 }}>{stat.label}</div>
 
       {stat.type === "rating" && (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 18, fontWeight: 900, color: "#FFB000" }}>
+          <span style={{ fontSize: "var(--t-gross)", fontWeight: 800, color: "var(--vfa-gruen-text)" }}>
             {stat.average != null ? stat.average.toFixed(1) : "–"}
           </span>
-          <span style={{ fontSize: 12, color: "#999999" }}>
+          <span style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)" }}>
             {stat.ratingCount} {stat.ratingCount === 1 ? "Bewertung" : "Bewertungen"}
           </span>
         </div>
@@ -342,12 +313,12 @@ function QuestionStatRow({ stat }: { stat: AdminQuestionStat }) {
           {stat.optionCounts
             .filter((o) => o.count > 0)
             .map((o) => (
-              <div key={o.option} style={{ fontSize: 13, color: "#444444" }}>
+              <div key={o.option} style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)" }}>
                 <strong>{o.count}×</strong> {o.option}
               </div>
             ))}
           {stat.optionCounts.every((o) => o.count === 0) && (
-            <span style={{ fontSize: 13, color: "#aaaaaa" }}>keine Auswahl</span>
+            <span style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)" }}>keine Auswahl</span>
           )}
         </div>
       )}
@@ -355,20 +326,20 @@ function QuestionStatRow({ stat }: { stat: AdminQuestionStat }) {
       {stat.type === "text" && (
         <div style={{ display: "grid", gap: 4 }}>
           {stat.textAnswers.length === 0 ? (
-            <span style={{ fontSize: 13, color: "#aaaaaa" }}>keine Angaben</span>
+            <span style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)" }}>keine Angaben</span>
           ) : (
             stat.textAnswers.map((text, i) => (
               <div
                 key={i}
                 style={{
-                  fontSize: 13,
-                  color: "#444444",
-                  background: "#F7F7F4",
+                  fontSize: "var(--t-klein)",
+                  color: "var(--vfa-text-2)",
+                  background: "var(--vfa-karte-2)",
                   borderRadius: 8,
                   padding: "6px 10px",
                 }}
               >
-                „{text}"
+                „{text}“
               </div>
             ))
           )}
@@ -377,23 +348,3 @@ function QuestionStatRow({ stat }: { stat: AdminQuestionStat }) {
     </div>
   );
 }
-
-const exportBtnStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  minHeight: 38,
-  padding: "8px 16px",
-  borderRadius: 999,
-  background: "#1D6F42",
-  color: "#FFFFFF",
-  fontSize: 13,
-  fontWeight: 800,
-  letterSpacing: "0.03em",
-  textDecoration: "none",
-};
-
-const pdfBtnStyle: React.CSSProperties = {
-  ...exportBtnStyle,
-  background: "#007873",
-};

@@ -35,6 +35,12 @@ export const OVERALL_RATING_KEY = "allgemeineZufriedenheit";
 /** Credits, die pro abgegebenem Feedback gutgeschrieben werden. */
 export const FEEDBACK_CREDITS = 10;
 
+/**
+ * Obergrenze für Freitexte. Eine Quelle für Formular (maxLength) und Server
+ * (slice), damit nichts still verloren geht (Befund f03-3, 05.09.2026).
+ */
+export const FEEDBACK_TEXT_MAX = 2000;
+
 const SKRIPTFORM_OPTIONS = [
   "Ausschließlich digitales Skript (PDF)",
   "Digitales + ausgedrucktes Skript",
@@ -57,7 +63,7 @@ export const SCHULUNGSANGEBOTE = [
   "Elektrofachkraft für festgelegte Tätigkeiten im Aufzugbau - Auffrischung 1 Praxistag",
   "Gefährdungsbeurteilung",
   "Grundlegende Sicherheitsanforderungen für Arbeiten an Aufzügen (Jährliche Unterweisung)",
-  'Qualifizierung zur Beauftragten Person gem. BetrSichV (ehem. "Aufzugswärter")',
+  "Qualifizierung zur Beauftragten Person gem. BetrSichV (ehem. „Aufzugswärter“)",
   "Qualifizierung von Beschäftigten aufzugsfremder Unternehmen nach DGUV 309-011",
   "Inbetriebnahme von Aufzugsanlagen - kompakte Praxisschulung, 3 Tage",
   "Servicearbeiten an Aufzugsanlagen - kompakte Praxisschulung, 2 Tage",
@@ -79,7 +85,9 @@ export function getFeedbackForm(
   instructorNames: string[] = []
 ): FeedbackSection[] {
   const isInhouse = formType === "INHOUSE";
-  const dozent1 = instructorNames[0]?.trim() || "der Dozent/die Dozentin";
+  // Ohne hinterlegten Namen bekommen die Fragen einen eigenen, grammatisch
+  // passenden Wortlaut statt eines eingesetzten Platzhalters (Befund d14-22).
+  const dozent1 = instructorNames[0]?.trim() || "";
   const dozent2 = instructorNames[1]?.trim();
 
   const sections: FeedbackSection[] = [];
@@ -147,10 +155,18 @@ export function getFeedbackForm(
   });
 
   sections.push({
-    title: dozent2 ? `Dozent: ${dozent1}` : "Dozent",
+    title: dozent1 && dozent2 ? `Dozent: ${dozent1}` : "Dozent",
     questions: [
-      r("dozent1Fachwissen", `Das Fachwissen von ${dozent1} ist überzeugend.`),
-      r("dozent1Verstaendlich", `${dozent1} erklärt verständlich.`),
+      r(
+        "dozent1Fachwissen",
+        dozent1
+          ? `Das Fachwissen von ${dozent1} ist überzeugend.`
+          : "Das Fachwissen des Dozenten/der Dozentin ist überzeugend."
+      ),
+      r(
+        "dozent1Verstaendlich",
+        dozent1 ? `${dozent1} erklärt verständlich.` : "Der Dozent/die Dozentin erklärt verständlich."
+      ),
     ],
   });
 

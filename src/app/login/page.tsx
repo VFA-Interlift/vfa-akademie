@@ -1,19 +1,69 @@
 "use client";
 
 import Link from "next/link";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
+import Meldung from "@/components/ui/Meldung";
+import PageHeader from "@/components/ui/PageHeader";
+
+/**
+ * Nur ein eigener, relativer Pfad darf Ziel nach der Anmeldung sein — sonst
+ * könnte ein präparierter Link („?callbackUrl=https://…“ oder „//fremd.de“)
+ * nach dem Anmelden auf eine fremde Seite führen (Befund f02-1, 05.09.2026).
+ */
+function sicheresZiel(wert: string | null): string {
+  if (wert && /^\/(?![/\\])/.test(wert)) return wert;
+  return "/dashboard";
+}
 
 export default function LoginPage() {
+  return (
+    <main className="page-main">
+      <div style={{ maxWidth: 420, margin: "0 auto" }}>
+        <PageHeader title="Anmelden" />
+        <p style={UNTERTITEL}>Melde dich mit deinem VFA-Akademie-Konto an.</p>
+
+        {/* useSearchParams braucht eine Suspense-Hülle, sonst bricht der Bau. */}
+        <Suspense fallback={<div />}>
+          <LoginForm />
+        </Suspense>
+
+        <p style={FUSSZEILE}>
+          Noch kein Konto?{" "}
+          <Link href="/register" style={FUSSLINK}>
+            Jetzt registrieren
+          </Link>
+        </p>
+
+        {/* Impressum/Datenschutz stehen im SocialFooter (Root-Layout) —
+            die frühere Inline-Zeile stand doppelt darüber (Tobi, 13.08.). */}
+      </div>
+    </main>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const ziel = sicheresZiel(params.get("callbackUrl"));
+  const { data: session, status } = useSession();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Wer schon angemeldet ist, braucht kein Formular (Befund f02-3). Die
+  // E-Mail muss dabei sein: Eine geleerte Sitzung (Nutzer gelöscht, siehe
+  // lib/auth.ts) gilt sonst als angemeldet und liefe zwischen /login und
+  // /dashboard im Kreis.
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.email) router.replace(ziel);
+  }, [status, session?.user?.email, ziel, router]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -45,166 +95,54 @@ export default function LoginPage() {
           ? "Bitte bestätige zuerst deine E-Mail-Adresse. Den Link haben wir dir nach der Registrierung geschickt."
           : fehler.includes("ZU_VIELE_VERSUCHE")
             ? "Zu viele Anmeldeversuche. Bitte versuch es in einer Viertelstunde noch einmal."
-            : "Login fehlgeschlagen. Bitte E-Mail und Passwort prüfen."
+            : "Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen."
       );
       return;
     }
 
-    router.push("/dashboard");
+    router.push(ziel);
     router.refresh();
   }
 
   return (
-    <div className="auth-split">
-      <AuthBrandPanel />
+    <AppCard>
+      <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
+        <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" name="email" autoComplete="email" inputMode="email" onChange={setEmail} />
+        <AppInput label="Passwort" value={password} placeholder="Passwort eingeben" type="password" name="password" autoComplete="current-password" onChange={setPassword} />
 
-      <div className="auth-panel-right" style={{ padding: 0 }}>
-        <AuthMobileBanner />
-        <div style={{ width: "100%", maxWidth: 420, padding: "36px 24px" }} className="page-enter">
-          <h1
-            style={{
-              margin: "0 0 6px",
-              color: "var(--vfa-text)",
-              fontSize: "clamp(24px, 4vw, 32px)",
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
-              lineHeight: 1.1,
-            }}
-          >
-            Willkommen zurück
-          </h1>
-          <p style={{ margin: "0 0 28px", color: "#888888", fontSize: 15, lineHeight: 1.5 }}>
-            Melde dich mit deinem VFA-Akademie-Konto an.
-          </p>
-
-          <AppCard accent="none" style={{ padding: 28, borderRadius: 16 }}>
-            <form onSubmit={onSubmit} style={{ display: "grid", gap: 18 }}>
-              <AppInput label="E-Mail" value={email} placeholder="max@firma.de" type="email" name="email" autoComplete="email" inputMode="email" onChange={setEmail} />
-              <AppInput label="Passwort" value={password} placeholder="Passwort eingeben" type="password" name="password" autoComplete="current-password" onChange={setPassword} />
-
-              <div style={{ textAlign: "right", marginTop: -10 }}>
-                <Link href="/forgot-password" style={{ color: "#007873", fontSize: 13, fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
-                  Passwort vergessen?
-                </Link>
-              </div>
-
-              <AppButton type="submit" disabled={loading || !email.trim() || !password.trim()} variant="primary" fullWidth>
-                {loading ? "Einloggen..." : "Einloggen"}
-              </AppButton>
-
-              {msg && <ErrorBox>{msg}</ErrorBox>}
-            </form>
-          </AppCard>
-
-          <p style={{ marginTop: 20, textAlign: "center", color: "#888888", fontSize: 14 }}>
-            Noch kein Konto?{" "}
-            <Link href="/register" style={{ color: "#007873", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>
-              Jetzt registrieren
-            </Link>
-          </p>
-
-          {/* Impressum/Datenschutz stehen im SocialFooter (Root-Layout) —
-              die frühere Inline-Zeile stand doppelt darüber (Tobi, 13.08.). */}
+        <div style={{ textAlign: "right", marginTop: -10 }}>
+          <Link href="/forgot-password" style={{ color: "var(--vfa-gruen-text)", fontSize: 13, fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
+            Passwort vergessen?
+          </Link>
         </div>
-      </div>
-    </div>
+
+        <AppButton type="submit" disabled={loading || !email.trim() || !password.trim()} variant="primary" fullWidth>
+          {loading ? "Wird angemeldet …" : "Anmelden"}
+        </AppButton>
+
+        {msg && <Meldung art="fehler">{msg}</Meldung>}
+      </form>
+    </AppCard>
   );
 }
 
-function AuthMobileBanner() {
-  return (
-    <div className="auth-mobile-brand">
-      <img src="/logo.png" alt="VFA Logo" style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }} />
-      <div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em" }}>VFA-Akademie</div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 500, letterSpacing: "0.04em", marginTop: 1 }}>
-          SCHULUNGEN · ZERTIFIKATE
-        </div>
-      </div>
-    </div>
-  );
-}
+const UNTERTITEL: React.CSSProperties = {
+  margin: "0 0 20px",
+  fontSize: "var(--t-basis)",
+  lineHeight: "var(--lh-weit)",
+  color: "var(--vfa-text-2)",
+};
 
-function AuthBrandPanel() {
-  return (
-    <div className="auth-panel-left">
-      {/* Logo + title */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 32, width: "100%" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img src="/logo.png" alt="VFA Logo" style={{ width: 56, height: 56, objectFit: "contain" }} />
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em" }}>VFA-Akademie</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500, letterSpacing: "0.04em", marginTop: 2 }}>
-              VERBAND FÜR AUFZUGSTECHNIK
-            </div>
-          </div>
-        </div>
+const FUSSZEILE: React.CSSProperties = {
+  marginTop: 20,
+  textAlign: "center",
+  fontSize: 13,
+  color: "var(--vfa-text-2)",
+};
 
-        <div>
-          <div
-            style={{
-              width: 40,
-              height: 3,
-              background: "#FFC100",
-              borderRadius: 999,
-              marginBottom: 20,
-            }}
-          />
-          <p style={{ fontSize: 22, fontWeight: 700, color: "#FFFFFF", lineHeight: 1.35, letterSpacing: "-0.01em", margin: 0 }}>
-            Schulungen, Zertifikate und Credits — digital verwaltet.
-          </p>
-        </div>
-
-        {/* Feature list */}
-        <div style={{ display: "grid", gap: 14, marginTop: 8 }}>
-          {[
-            "Schulungen zentral verwalten",
-            "Zertifikate automatisch ausstellen",
-            "Credits & Ranking einsehen",
-          ].map((item) => (
-            <div key={item} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  background: "rgba(255,193,0,0.2)",
-                  border: "1px solid rgba(255,193,0,0.5)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: 11,
-                  color: "#FFC100",
-                  fontWeight: 800,
-                }}
-              >
-                ✓
-              </div>
-              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", fontWeight: 500 }}>{item}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ErrorBox({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        padding: "12px 14px",
-        borderRadius: 8,
-        border: "1px solid rgba(176,0,32,0.2)",
-        background: "rgba(176,0,32,0.05)",
-        color: "var(--vfa-rot-text)",
-        fontWeight: 600,
-        fontSize: 14,
-        lineHeight: 1.5,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
+const FUSSLINK: React.CSSProperties = {
+  color: "var(--vfa-gruen-text)",
+  fontWeight: 700,
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
+};

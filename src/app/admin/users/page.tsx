@@ -4,8 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
+import AppSelect from "@/components/ui/AppSelect";
+import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { formatEnrollmentStatus } from "@/lib/trainings/format";
 
 type AdminUser = {
   id: string;
@@ -39,23 +42,45 @@ type AdminEnrollment = {
   certificateStatus?: string | null;
 };
 
-const ENROLLMENT_STATUSES = [
-  { value: "PENDING", label: "Ausstehend" },
-  { value: "CONFIRMED", label: "Bestätigt" },
-  { value: "ATTENDED", label: "Teilgenommen" },
-  { value: "NO_SHOW", label: "Nicht erschienen" },
-  { value: "CANCELLED", label: "Storniert" },
-] as const;
+// Die fünf Status, die ein Admin von Hand setzt; die Bezeichnungen kommen aus
+// formatEnrollmentStatus, das auch COMPLETED und CERTIFICATE_ISSUED kennt —
+// vorher standen die als englischer Rohwert in der Liste (Befund f12-4).
+const ENROLLMENT_STATUSES = ["PENDING", "CONFIRMED", "ATTENDED", "NO_SHOW", "CANCELLED"] as const;
 
-function statusColor(status: string) {
-  if (status === "CONFIRMED") return { color: "#007873", bg: "rgba(0,120,115,0.08)", border: "1px solid rgba(0,120,115,0.25)" };
-  if (status === "ATTENDED") return { color: "#005f5b", bg: "rgba(0,120,115,0.14)", border: "1px solid rgba(0,120,115,0.35)" };
-  if (status === "CANCELLED" || status === "NO_SHOW") return { color: "#B00020", bg: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.22)" };
-  return { color: "#7C5A0A", bg: "rgba(255,193,0,0.10)", border: "1px solid rgba(255,193,0,0.35)" };
+function statusVariant(status: string): "success" | "danger" | "warning" {
+  if (status === "CONFIRMED" || status === "ATTENDED" || status === "COMPLETED" || status === "CERTIFICATE_ISSUED") return "success";
+  if (status === "CANCELLED" || status === "NO_SHOW") return "danger";
+  return "warning";
 }
 
-function statusLabel(status: string) {
-  return ENROLLMENT_STATUSES.find((s) => s.value === status)?.label ?? status;
+function rolleText(user: AdminUser) {
+  return user.role === "ADMIN" ? "Admin" : "Nutzer";
+}
+
+// Eine Übersetzung für alle Fehlercodes der Admin-Routen — vorher übersetzte
+// jede Aktion ihre eigenen und die Liste zeigte rohe Codes (Befund d17-28).
+const FEHLERTEXTE: Record<string, string> = {
+  UNAUTHENTICATED: "Du bist nicht eingeloggt.",
+  FORBIDDEN: "Du hast keine Berechtigung.",
+  USER_NOT_FOUND: "Nutzer wurde nicht gefunden.",
+  INVALID_USER_ID: "Ungültige Nutzer-ID.",
+  INVALID_EMAIL: "Bitte eine gültige E-Mail eingeben.",
+  INVALID_CREDITS: "Bitte eine ganze Zahl größer als 0 eingeben.",
+  CANNOT_DELETE_SELF: "Du kannst deinen eigenen Admin-Nutzer nicht löschen.",
+  ALREADY_ENROLLED: "Ist bereits in dieser Schulung eingetragen.",
+  TRAINING_NOT_FOUND: "Schulung nicht gefunden.",
+  TRAINING_CANCELLED: "Diese Schulung ist abgesagt — dort lässt sich niemand mehr eintragen.",
+  TRAINING_REQUIRED: "Bitte eine Schulung auswählen.",
+  NOT_FOUND: "Der Eintrag wurde nicht gefunden.",
+  INVALID_STATUS: "Ungültiger Status.",
+  ALREADY_REVOKED: "Dieses Zertifikat ist bereits zurückgezogen.",
+  INTERNAL_ERROR: "Serverfehler.",
+};
+
+function fehlerText(data: { error?: unknown; message?: unknown } | null, fallback: string) {
+  if (typeof data?.message === "string" && data.message) return data.message;
+  const code = typeof data?.error === "string" ? data.error : "";
+  return FEHLERTEXTE[code] ?? fallback;
 }
 
 type UsersResponse =
@@ -78,6 +103,17 @@ type SortMode =
   | "role_asc"
   | "lastlogin_desc";
 
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: "created_desc", label: "Registrierung: neueste zuerst" },
+  { value: "created_asc", label: "Registrierung: älteste zuerst" },
+  { value: "name_asc", label: "Name: A–Z" },
+  { value: "name_desc", label: "Name: Z–A" },
+  { value: "credits_desc", label: "Credits: höchste zuerst" },
+  { value: "credits_asc", label: "Credits: niedrigste zuerst" },
+  { value: "lastlogin_desc", label: "Zuletzt online: neueste zuerst" },
+  { value: "role_asc", label: "Rolle" },
+];
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
@@ -99,7 +135,7 @@ export default function AdminUsersPage() {
   const [enrollmentActionId, setEnrollmentActionId] = useState<string | null>(null);
 
   // Schulungsliste für das Nachtragen (einmal geladen, sobald ein Nutzer offen ist).
-  const [alleTrainings, setAlleTrainings] = useState<{ id: string; title: string; code: string | null; date: string }[]>([]);
+  const [alleTrainings, setAlleTrainings] = useState<{ id: string; title: string; code: string | null; date: string; cancelledAt: string | null }[]>([]);
   const [nachtragTrainingByUser, setNachtragTrainingByUser] = useState<Record<string, string>>({});
 
   async function ladeTrainings() {
@@ -123,35 +159,21 @@ export default function AdminUsersPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        const t = alleTrainings.find((x) => x.id === trainingId);
-        setEnrollmentsByUser((prev) => ({
-          ...prev,
-          [userId]: [
-            {
-              id: data.enrollmentId, status: "CONFIRMED", attended: false,
-              registeredAt: new Date().toISOString(),
-              training: { id: trainingId, title: t?.title ?? "", code: t?.code ?? null, date: t?.date ?? new Date().toISOString(), endDate: null, creditsAward: 0 },
-              hasCertificate: false, certificateId: null, certificateStatus: null,
-            },
-            ...(prev[userId] ?? []),
-          ],
-        }));
+        // Liste neu laden statt die Zeile lokal zu erfinden — die zeigte bis
+        // zum Neuladen „0 Credits“ (Befund f12-5, 05.09.2026).
+        await loadEnrollments(userId, true);
         setNachtragTrainingByUser((prev) => ({ ...prev, [userId]: "" }));
         showMessage("Teilnehmer in die Schulung eingetragen.", true);
       } else {
-        const texte: Record<string, string> = {
-          ALREADY_ENROLLED: "Ist bereits in dieser Schulung eingetragen.",
-          TRAINING_NOT_FOUND: "Schulung nicht gefunden.",
-        };
-        showMessage(texte[data.error] ?? "Fehler beim Eintragen.");
+        showMessage(fehlerText(data, "Fehler beim Eintragen."));
       }
     } catch { showMessage("Serverfehler."); }
     finally { setEnrollmentActionId(null); }
   }
 
-  async function loadEnrollments(userId: string) {
+  async function loadEnrollments(userId: string, erzwingen = false) {
     void ladeTrainings();
-    if (enrollmentsByUser[userId]) return;
+    if (!erzwingen && enrollmentsByUser[userId]) return;
     setEnrollmentsLoadingId(userId);
     try {
       const res = await fetch(`/api/admin/users/${userId}/enrollments`, { cache: "no-store" });
@@ -182,15 +204,16 @@ export default function AdminUsersPage() {
       });
       const data = await res.json();
       if (data.ok) {
+        const attended = newStatus === "ATTENDED" || newStatus === "COMPLETED" || newStatus === "CERTIFICATE_ISSUED";
         setEnrollmentsByUser((prev) => ({
           ...prev,
           [userId]: (prev[userId] ?? []).map((e) =>
-            e.id === enrollmentId ? { ...e, status: newStatus, attended: newStatus === "ATTENDED" } : e
+            e.id === enrollmentId ? { ...e, status: newStatus, attended } : e
           ),
         }));
-        showMessage(`Status auf "${statusLabel(newStatus)}" geändert.`, true);
+        showMessage(`Status auf „${formatEnrollmentStatus(newStatus)}“ geändert.`, true);
       } else {
-        showMessage(data.error ?? "Fehler beim Ändern des Status.");
+        showMessage(fehlerText(data, "Fehler beim Ändern des Status."));
       }
     } catch { showMessage("Serverfehler."); }
     finally { setEnrollmentActionId(null); }
@@ -219,7 +242,7 @@ export default function AdminUsersPage() {
         }));
         showMessage(`Zertifikat zurückgezogen, ${data.creditsZurueck} Credits zurückgebucht.`, true);
       } else {
-        showMessage(data.error ?? "Fehler beim Zurückziehen.");
+        showMessage(fehlerText(data, "Fehler beim Zurückziehen."));
       }
     } catch { showMessage("Serverfehler."); }
     finally { setEnrollmentActionId(null); }
@@ -230,9 +253,15 @@ export default function AdminUsersPage() {
     setMsgOk(ok);
   }
 
+  // Nachladen nach einer Aktion: Ladezustand zeigen, dann holen.
   async function loadUsers() {
     setLoadingUsers(true);
+    await nutzerHolen();
+  }
 
+  // Erstes Laden beim Öffnen — der Ladezustand steht da schon auf true, deshalb
+  // ohne vorheriges setState (react-hooks/set-state-in-effect, 05.09.2026).
+  async function nutzerHolen() {
     try {
       const res = await fetch("/api/admin/users", {
         cache: "no-store",
@@ -241,7 +270,7 @@ export default function AdminUsersPage() {
       const data = (await res.json()) as UsersResponse;
 
       if (!data.ok) {
-        showMessage(data.error ?? "USERS_LOAD_FAILED");
+        showMessage(fehlerText(data, "Nutzer konnten nicht geladen werden."));
         return;
       }
 
@@ -254,7 +283,9 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
-    loadUsers();
+    void nutzerHolen();
+    // Einmal beim Öffnen laden; die Funktion ändert sich nicht sinnvoll.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredAndSortedUsers = useMemo(() => {
@@ -263,11 +294,14 @@ export default function AdminUsersPage() {
     const filtered = !q
       ? users
       : users.filter((user) => {
+          // Rolle so suchen, wie sie angezeigt wird („Nutzer“, „Admin“,
+          // „Dozent“), nicht über den englischen Enum-Wert (Befund d17-30).
+          const rollen = [rolleText(user), user.isInstructor ? "Dozent" : ""].join(" ").toLowerCase();
           return (
             user.email.toLowerCase().includes(q) ||
             user.name.toLowerCase().includes(q) ||
             user.company.toLowerCase().includes(q) ||
-            user.role.toLowerCase().includes(q)
+            rollen.includes(q)
           );
         });
 
@@ -328,7 +362,7 @@ export default function AdminUsersPage() {
     if (!sicher) return;
 
     setActionLoadingId(user.id);
-    showMessage("Admin-Vergabe wird gestartet...", true);
+    showMessage("Admin-Vergabe wird gestartet …", true);
 
     try {
       const res = await fetch(`/api/admin/users/${user.id}/make-admin`, {
@@ -341,18 +375,7 @@ export default function AdminUsersPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        if (data?.error === "INVALID_USER_ID") {
-          showMessage("Ungültige Nutzer-ID.");
-        } else if (data?.error === "USER_NOT_FOUND") {
-          showMessage("Nutzer wurde nicht gefunden.");
-        } else if (data?.error === "UNAUTHENTICATED") {
-          showMessage("Du bist nicht eingeloggt.");
-        } else if (data?.error === "FORBIDDEN") {
-          showMessage("Du hast keine Berechtigung.");
-        } else {
-          showMessage(data?.error ?? "Admin-Vergabe fehlgeschlagen.");
-        }
-
+        showMessage(fehlerText(data, "Admin-Vergabe fehlgeschlagen."));
         return;
       }
 
@@ -371,8 +394,8 @@ export default function AdminUsersPage() {
     setActionLoadingId(user.id);
     showMessage(
       makeInstructor
-        ? "Dozentenstatus wird vergeben..."
-        : "Dozentenstatus wird entzogen...",
+        ? "Dozentenstatus wird vergeben …"
+        : "Dozentenstatus wird entzogen …",
       true
     );
 
@@ -387,18 +410,7 @@ export default function AdminUsersPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        if (data?.error === "INVALID_USER_ID") {
-          showMessage("Ungültige Nutzer-ID.");
-        } else if (data?.error === "USER_NOT_FOUND") {
-          showMessage("Nutzer wurde nicht gefunden.");
-        } else if (data?.error === "UNAUTHENTICATED") {
-          showMessage("Du bist nicht eingeloggt.");
-        } else if (data?.error === "FORBIDDEN") {
-          showMessage("Du hast keine Berechtigung.");
-        } else {
-          showMessage(data?.error ?? "Dozentenstatus konnte nicht geändert werden.");
-        }
-
+        showMessage(fehlerText(data, "Dozentenstatus konnte nicht geändert werden."));
         return;
       }
 
@@ -449,27 +461,19 @@ export default function AdminUsersPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        if (data?.error === "INVALID_EMAIL") {
-          showMessage("Bitte eine gültige E-Mail eingeben.");
-        } else if (data?.error === "INVALID_CREDITS") {
-          showMessage("Bitte eine ganze Zahl größer als 0 eingeben.");
-        } else if (data?.error === "USER_NOT_FOUND") {
-          showMessage("Nutzer wurde nicht gefunden.");
-        } else if (data?.error === "UNAUTHENTICATED") {
-          showMessage("Du bist nicht eingeloggt.");
-        } else if (data?.error === "FORBIDDEN") {
-          showMessage("Du hast keine Berechtigung.");
-        } else {
-          showMessage(data?.error ?? "Credits konnten nicht gespeichert werden.");
-        }
-
+        showMessage(fehlerText(data, "Credits konnten nicht gespeichert werden."));
         return;
       }
 
+      // Gebuchten Betrag und neuen Saldo aus der Antwort nennen: Bei einem
+      // Abzug über den Saldo hinaus kappt der Server auf 0 (Befund f12-6).
+      const angewendet = Math.abs(typeof data.angewendet === "number" ? data.angewendet : signedAmount);
+      const saldo = typeof data.creditsTotal === "number" ? ` Neuer Saldo: ${data.creditsTotal} Credits.` : "";
       if (direction === "add") {
-        showMessage(`${amount} Credits wurden an ${user.email} vergeben.`, true);
+        showMessage(`${angewendet} Credits wurden an ${user.email} vergeben.${saldo}`, true);
       } else {
-        showMessage(`${amount} Credits wurden bei ${user.email} abgezogen.`, true);
+        const gekappt = angewendet !== amount ? ` (angefordert waren ${amount}, mehr war nicht auf dem Konto)` : "";
+        showMessage(`${angewendet} Credits wurden bei ${user.email} abgezogen${gekappt}.${saldo}`, true);
       }
 
       setCreditAmountByUser((current) => ({
@@ -517,18 +521,7 @@ export default function AdminUsersPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        if (data?.error === "CANNOT_DELETE_SELF") {
-          showMessage("Du kannst deinen eigenen Admin-Nutzer nicht löschen.");
-        } else if (data?.error === "USER_NOT_FOUND") {
-          showMessage("Nutzer wurde nicht gefunden.");
-        } else if (data?.error === "UNAUTHENTICATED") {
-          showMessage("Du bist nicht eingeloggt.");
-        } else if (data?.error === "FORBIDDEN") {
-          showMessage("Du hast keine Berechtigung.");
-        } else {
-          showMessage(data?.error ?? "Nutzer konnte nicht gelöscht werden.");
-        }
-
+        showMessage(fehlerText(data, "Nutzer konnte nicht gelöscht werden."));
         return;
       }
 
@@ -543,31 +536,18 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <main className="page-main"
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Nutzer verwalten"
-          description="Profile prüfen, Credits bearbeiten, Rollen vergeben und Nutzer löschen."
-        />
+    <main className="page-main">
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Nutzer verwalten" />
+        {/* PageHeader zeigt description nicht an — der Satz steht deshalb hier. */}
+        <p style={{ margin: "0 0 20px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)" }}>
+          Profile prüfen, Credits bearbeiten, Rollen vergeben und Nutzer löschen.
+        </p>
 
         {msg && (
-          <div
-            style={{
-              marginBottom: 18,
-              padding: "12px 14px",
-              border: msgOk
-                ? "1px solid #007873"
-                : "1px solid rgba(176,0,32,0.28)",
-              background: msgOk
-                ? "rgba(0,120,115,0.08)"
-                : "rgba(176,0,32,0.08)",
-              color: msgOk ? "#007873" : "#B00020",
-              fontWeight: 800,
-              lineHeight: 1.5,
-            }}
-          >
+          <Meldung art={msgOk ? "erfolg" : "fehler"} style={{ marginBottom: 18 }}>
             {msg}
-          </div>
+          </Meldung>
         )}
 
         <AppCard accent="green">
@@ -585,10 +565,10 @@ export default function AdminUsersPage() {
               <h2
                 style={{
                   margin: 0,
-                  color: "#007873",
-                  fontSize: 24,
-                  fontWeight: 500,
-                  lineHeight: 1.3,
+                  color: "var(--vfa-gruen-text)",
+                  fontSize: "var(--t-gross)",
+                  fontWeight: 700,
+                  lineHeight: "var(--lh-eng)",
                 }}
               >
                 Registrierte Nutzer
@@ -598,8 +578,9 @@ export default function AdminUsersPage() {
                 style={{
                   marginTop: 10,
                   marginBottom: 0,
-                  color: "#333333",
-                  lineHeight: 1.6,
+                  color: "var(--vfa-text-2)",
+                  fontSize: "var(--t-basis)",
+                  lineHeight: "var(--lh-weit)",
                   maxWidth: 760,
                 }}
               >
@@ -628,52 +609,23 @@ export default function AdminUsersPage() {
               onChange={setSearch}
             />
 
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  color: "#007873",
-                  fontWeight: 800,
-                  marginBottom: 8,
-                  fontSize: 14,
-                }}
-              >
-                Sortieren nach
-              </label>
-
-              <select
-                value={sortMode}
-                onChange={(event) => setSortMode(event.target.value as SortMode)}
-                style={{
-                  width: "100%",
-                  minHeight: 44,
-                  border: "1px solid #C7C7C7",
-                  background: "#FFFFFF",
-                  color: "#1F1F1F",
-                  padding: "10px 12px",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  outline: "none",
-                }}
-              >
-                <option value="created_desc">Registrierung: neueste zuerst</option>
-                <option value="created_asc">Registrierung: älteste zuerst</option>
-                <option value="name_asc">Name: A-Z</option>
-                <option value="name_desc">Name: Z-A</option>
-                <option value="credits_desc">Credits: höchste zuerst</option>
-                <option value="credits_asc">Credits: niedrigste zuerst</option>
-                <option value="lastlogin_desc">Zuletzt online: neueste zuerst</option>
-                <option value="role_asc">Rolle</option>
-              </select>
-            </div>
+            {/* AppSelect führt immer eine leere Platzhalter-Option; die wird
+                hier ignoriert, weil eine Sortierung immer gesetzt ist. */}
+            <AppSelect
+              label="Sortieren nach"
+              value={sortMode}
+              placeholder="Sortierung wählen"
+              options={SORT_OPTIONS}
+              onChange={(value) => { if (value) setSortMode(value as SortMode); }}
+            />
           </div>
 
           {loadingUsers ? (
-            <div style={{ color: "#333333", lineHeight: 1.6 }}>
-              Nutzer werden geladen...
+            <div style={{ color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
+              Nutzer werden geladen …
             </div>
           ) : filteredAndSortedUsers.length === 0 ? (
-            <div style={{ color: "#333333", lineHeight: 1.6 }}>
+            <div style={{ color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
               Keine Nutzer gefunden.
             </div>
           ) : (
@@ -686,8 +638,8 @@ export default function AdminUsersPage() {
                   <div
                     key={user.id}
                     style={{
-                      border: "1px solid #EFEFEF",
-                      background: "#FFFFFF",
+                      border: "1px solid var(--vfa-linie)",
+                      background: "var(--vfa-karte)",
                       borderRadius: 12,
                       overflow: "hidden",
                     }}
@@ -711,6 +663,7 @@ export default function AdminUsersPage() {
                         background: "transparent",
                         cursor: "pointer",
                         textAlign: "left",
+                        color: "inherit",
                       }}
                     >
                       <div
@@ -724,10 +677,10 @@ export default function AdminUsersPage() {
                         <div style={{ minWidth: 0 }}>
                           <div
                             style={{
-                              color: "#007873",
-                              fontSize: 18,
-                              fontWeight: 800,
-                              lineHeight: 1.3,
+                              color: "var(--vfa-gruen-text)",
+                              fontSize: "var(--t-gross)",
+                              fontWeight: 700,
+                              lineHeight: "var(--lh-eng)",
                             }}
                           >
                             {user.name || "Ohne Namen"}
@@ -736,7 +689,8 @@ export default function AdminUsersPage() {
                           <div
                             style={{
                               marginTop: 4,
-                              color: "#333333",
+                              color: "var(--vfa-text-2)",
+                              fontSize: "var(--t-basis)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -749,10 +703,11 @@ export default function AdminUsersPage() {
 
                         <div
                           style={{
-                            color: "#007873",
-                            fontWeight: 900,
-                            fontSize: 24,
+                            color: "var(--vfa-gruen-text)",
+                            fontWeight: 700,
+                            fontSize: "var(--t-titel)",
                           }}
+                          aria-hidden
                         >
                           {isOpen ? "−" : "+"}
                         </div>
@@ -773,10 +728,10 @@ export default function AdminUsersPage() {
                       <div
                         style={{
                           padding: "0 14px 14px",
-                          borderTop: "1px solid #E6E6E6",
+                          borderTop: "1px solid var(--vfa-linie)",
                         }}
                       >
-                        <div style={{ display: "flex", borderBottom: "1px solid #E6E6E6", marginBottom: 16, gap: 0, overflowX: "auto", paddingTop: 14 }}>
+                        <div style={{ display: "flex", borderBottom: "1px solid var(--vfa-linie)", marginBottom: 16, gap: 0, overflowX: "auto", paddingTop: 14 }}>
                           {tabs.map((tab) => (
                             <button
                               key={tab.id}
@@ -789,12 +744,12 @@ export default function AdminUsersPage() {
                                 border: "none",
                                 borderBottom:
                                   activeTab === tab.id
-                                    ? "2px solid #007873"
+                                    ? "2px solid var(--vfa-gruen-text)"
                                     : "2px solid transparent",
                                 background: "transparent",
-                                color: activeTab === tab.id ? "#007873" : "#888888",
-                                fontWeight: activeTab === tab.id ? 800 : 600,
-                                fontSize: 13,
+                                color: activeTab === tab.id ? "var(--vfa-gruen-text)" : "var(--vfa-text-3)",
+                                fontWeight: activeTab === tab.id ? 700 : 600,
+                                fontSize: "var(--t-klein)",
                                 cursor: "pointer",
                                 whiteSpace: "nowrap",
                                 textTransform: "uppercase",
@@ -819,7 +774,7 @@ export default function AdminUsersPage() {
                           <StatusBadge
                             variant={user.role === "ADMIN" ? "yellow" : "default"}
                           >
-                            Rolle: {user.role}
+                            Rolle: {rolleText(user)}
                           </StatusBadge>
 
                           {user.isInstructor && (
@@ -867,91 +822,77 @@ export default function AdminUsersPage() {
 
                         {activeTab === "schulungen" && (
                         <div style={{ display: "grid", gap: 12 }}>
-                          <h3 style={{ margin: 0, color: "#007873", fontSize: 18, fontWeight: 700 }}>
-                            Schulungen & Status
+                          <h3 style={{ margin: 0, color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: "var(--lh-eng)" }}>
+                            Schulungen und Status
                           </h3>
 
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", padding: "10px 12px", borderRadius: 10, border: "1px dashed #CFCFCF", background: "#FCFCFB" }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: "#555555" }}>Nachtragen:</span>
-                            <select
-                              value={nachtragTrainingByUser[user.id] ?? ""}
-                              onChange={(e) => setNachtragTrainingByUser((prev) => ({ ...prev, [user.id]: e.target.value }))}
-                              style={{ flex: 1, minWidth: 160, padding: "7px 10px", borderRadius: 8, border: "1px solid #D4D4D4", fontSize: 13, background: "#FFFFFF" }}
-                            >
-                              <option value="">Schulung wählen…</option>
-                              {alleTrainings.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                  {(t.code?.trim() || t.title)} · {new Date(t.date).toLocaleDateString("de-DE")}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              type="button"
-                              disabled={enrollmentActionId === user.id || !nachtragTrainingByUser[user.id]}
+                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", padding: "12px 14px", borderRadius: 10, border: "1px dashed var(--vfa-linie)", background: "var(--vfa-karte-2)" }}>
+                            <div style={{ flex: 1, minWidth: 220 }}>
+                              <AppSelect
+                                label="Nachtragen"
+                                value={nachtragTrainingByUser[user.id] ?? ""}
+                                placeholder="Schulung wählen …"
+                                onChange={(value) => setNachtragTrainingByUser((prev) => ({ ...prev, [user.id]: value }))}
+                                options={alleTrainings.map((t) => ({
+                                  value: t.id,
+                                  label: `${t.code?.trim() || t.title} · ${formatDate(t.date)}${t.cancelledAt ? " · abgesagt" : ""}`,
+                                }))}
+                              />
+                            </div>
+                            <AppButton
                               onClick={() => enrollUser(user.id)}
-                              style={{
-                                padding: "7px 16px", borderRadius: 999, fontSize: 12, fontWeight: 800, border: "none",
-                                background: nachtragTrainingByUser[user.id] ? "#007873" : "#DDDDDD", color: "#FFFFFF",
-                                cursor: nachtragTrainingByUser[user.id] ? "pointer" : "default", opacity: enrollmentActionId === user.id ? 0.6 : 1,
-                              }}
+                              disabled={enrollmentActionId === user.id || !nachtragTrainingByUser[user.id]}
+                              variant="primary"
                             >
                               Eintragen
-                            </button>
+                            </AppButton>
                           </div>
                           {enrollmentsLoadingId === user.id ? (
-                            <div style={{ color: "#888888", fontSize: 13 }}>Wird geladen…</div>
+                            <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)" }}>Wird geladen …</div>
                           ) : (enrollmentsByUser[user.id] ?? []).length === 0 ? (
-                            <div style={{ color: "#888888", fontSize: 13 }}>Keine Schulungen zugeordnet.</div>
+                            <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)" }}>Keine Schulungen zugeordnet.</div>
                           ) : (
                             <div style={{ display: "grid", gap: 8 }}>
                               {(enrollmentsByUser[user.id] ?? []).map((enr) => {
-                                const sc = statusColor(enr.status);
                                 const title = enr.training.code?.trim() || enr.training.title;
-                                const date = new Date(enr.training.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+                                const zertifikat = enr.hasCertificate
+                                  ? " · Zertifikat vorhanden"
+                                  : enr.certificateStatus === "REVOKED"
+                                    ? " · Zertifikat zurückgezogen"
+                                    : "";
                                 return (
-                                  <div key={enr.id} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #EFEFEF", background: "#FAFAFA", display: "grid", gap: 8 }}>
+                                  <div key={enr.id} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid var(--vfa-linie)", background: "var(--vfa-karte-2)", display: "grid", gap: 10 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
                                       <div>
-                                        <div style={{ fontWeight: 700, fontSize: 14, color: "#1F1F1F", lineHeight: 1.2 }}>{title}</div>
-                                        <div style={{ fontSize: 12, color: "#888888", marginTop: 2 }}>{date} · {enr.training.creditsAward} Credits{enr.hasCertificate ? " · Zertifikat vorhanden" : ""}</div>
+                                        <div style={{ fontWeight: 700, fontSize: "var(--t-basis)", color: "var(--vfa-text)", lineHeight: "var(--lh-eng)" }}>{title}</div>
+                                        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-3)", marginTop: 2 }}>{formatDate(enr.training.date)} · {enr.training.creditsAward} Credits{zertifikat}</div>
                                       </div>
-                                      <span style={{ display: "inline-flex", padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: sc.border, whiteSpace: "nowrap" }}>
-                                        {statusLabel(enr.status)}
-                                      </span>
+                                      <StatusBadge variant={statusVariant(enr.status)}>
+                                        {formatEnrollmentStatus(enr.status)}
+                                      </StatusBadge>
                                     </div>
                                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                                       {ENROLLMENT_STATUSES.map((s) => (
-                                        <button
-                                          key={s.value}
-                                          type="button"
-                                          disabled={enr.status === s.value || enrollmentActionId === enr.id}
-                                          onClick={() => changeEnrollmentStatus(enr.id, user.id, s.value)}
-                                          style={{
-                                            padding: "4px 12px", borderRadius: 999, fontSize: 11, fontWeight: 700,
-                                            border: enr.status === s.value ? "1px solid #007873" : "1px solid #D8D8D8",
-                                            background: enr.status === s.value ? "#007873" : "#FFFFFF",
-                                            color: enr.status === s.value ? "#FFFFFF" : "#555555",
-                                            cursor: enr.status === s.value ? "default" : "pointer",
-                                            opacity: enrollmentActionId === enr.id ? 0.6 : 1,
-                                          }}
+                                        <AppButton
+                                          key={s}
+                                          disabled={enr.status === s || enrollmentActionId === enr.id}
+                                          onClick={() => changeEnrollmentStatus(enr.id, user.id, s)}
+                                          variant={enr.status === s ? "primary" : "secondary"}
                                         >
-                                          {s.label}
-                                        </button>
+                                          {formatEnrollmentStatus(s)}
+                                        </AppButton>
                                       ))}
                                     </div>
                                     {enr.certificateId ? (
-                                      <button
-                                        type="button"
-                                        disabled={enrollmentActionId === enr.certificateId}
-                                        onClick={() => revokeCertificate(enr.certificateId!, user.id)}
-                                        style={{
-                                          justifySelf: "start", padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 800,
-                                          border: "1px solid #B00020", background: "#FFFFFF", color: "#B00020",
-                                          cursor: "pointer", opacity: enrollmentActionId === enr.certificateId ? 0.6 : 1,
-                                        }}
-                                      >
-                                        Zertifikat zurückziehen
-                                      </button>
+                                      <div>
+                                        <AppButton
+                                          disabled={enrollmentActionId === enr.certificateId}
+                                          onClick={() => revokeCertificate(enr.certificateId!, user.id)}
+                                          variant="danger"
+                                        >
+                                          Zertifikat zurückziehen
+                                        </AppButton>
+                                      </div>
                                     ) : null}
                                   </div>
                                 );
@@ -971,9 +912,10 @@ export default function AdminUsersPage() {
                           <h3
                             style={{
                               margin: 0,
-                              color: "#007873",
-                              fontSize: 20,
-                              fontWeight: 500,
+                              color: "var(--vfa-gruen-text)",
+                              fontSize: "var(--t-gross)",
+                              fontWeight: 700,
+                              lineHeight: "var(--lh-eng)",
                             }}
                           >
                             Credits bearbeiten
@@ -1026,7 +968,7 @@ export default function AdminUsersPage() {
                               disabled={isLoading}
                               variant="primary"
                             >
-                              {isLoading ? "Speichern..." : "Credits vergeben"}
+                              {isLoading ? "Speichern …" : "Credits vergeben"}
                             </AppButton>
 
                             <AppButton
@@ -1034,7 +976,7 @@ export default function AdminUsersPage() {
                               disabled={isLoading}
                               variant="danger"
                             >
-                              {isLoading ? "Speichern..." : "Credits abziehen"}
+                              {isLoading ? "Speichern …" : "Credits abziehen"}
                             </AppButton>
                           </div>
                         </div>
@@ -1050,9 +992,10 @@ export default function AdminUsersPage() {
                           <h3
                             style={{
                               margin: 0,
-                              color: "#007873",
-                              fontSize: 20,
-                              fontWeight: 500,
+                              color: "var(--vfa-gruen-text)",
+                              fontSize: "var(--t-gross)",
+                              fontWeight: 700,
+                              lineHeight: "var(--lh-eng)",
                             }}
                           >
                             Rollen verwalten
@@ -1081,7 +1024,7 @@ export default function AdminUsersPage() {
                               variant={user.isInstructor ? "danger" : "primary"}
                             >
                               {isLoading
-                                ? "Speichern..."
+                                ? "Speichern …"
                                 : user.isInstructor
                                 ? "Dozentenstatus entziehen"
                                 : "Zum Dozenten machen"}
@@ -1091,13 +1034,13 @@ export default function AdminUsersPage() {
                           <p
                             style={{
                               margin: 0,
-                              color: "#666666",
-                              lineHeight: 1.6,
-                              fontSize: 14,
+                              color: "var(--vfa-text-2)",
+                              lineHeight: "var(--lh-weit)",
+                              fontSize: "var(--t-basis)",
                             }}
                           >
                             Der Dozentenstatus ist ein eigener Status, damit jemand
-                            gleichzeitig User, Admin und Dozent sein kann.
+                            gleichzeitig Nutzer, Admin und Dozent sein kann.
                           </p>
                         </div>
                         )}
@@ -1112,9 +1055,10 @@ export default function AdminUsersPage() {
                           <h3
                             style={{
                               margin: 0,
-                              color: "#B00020",
-                              fontSize: 20,
-                              fontWeight: 500,
+                              color: "var(--vfa-rot-text)",
+                              fontSize: "var(--t-gross)",
+                              fontWeight: 700,
+                              lineHeight: "var(--lh-eng)",
                             }}
                           >
                             Nutzer löschen
@@ -1123,9 +1067,9 @@ export default function AdminUsersPage() {
                           <p
                             style={{
                               margin: 0,
-                              color: "#333333",
-                              lineHeight: 1.6,
-                              fontSize: 14,
+                              color: "var(--vfa-text-2)",
+                              lineHeight: "var(--lh-weit)",
+                              fontSize: "var(--t-basis)",
                               maxWidth: 760,
                             }}
                           >
@@ -1141,7 +1085,7 @@ export default function AdminUsersPage() {
                               disabled={isLoading}
                               variant="danger"
                             >
-                              {isLoading ? "Löschen..." : "Nutzer löschen"}
+                              {isLoading ? "Löschen …" : "Nutzer löschen"}
                             </AppButton>
                           </div>
                         </div>
@@ -1167,20 +1111,11 @@ function getUserDisplayName(user: AdminUser) {
 function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div
-        style={{
-          color: "#007873",
-          fontSize: 12,
-          fontWeight: 800,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 3,
-        }}
-      >
+      <div className="etikett" style={{ marginBottom: 3 }}>
         {label}
       </div>
 
-      <div style={{ color: "#1F1F1F", fontWeight: 700 }}>{value}</div>
+      <div style={{ color: "var(--vfa-text)", fontWeight: 700 }}>{value}</div>
     </div>
   );
 }

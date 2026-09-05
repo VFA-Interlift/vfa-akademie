@@ -31,6 +31,10 @@ const SICHERHEITS_HEADER = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
+      // PdfOverlay zeigt Zertifikate und Feedback-PDFs als iframe mit einer
+      // blob:-Adresse (PdfAnsichtLink, CertificateDownloadButton). 'self' aus
+      // default-src deckt blob: nicht ab, Chrome ließe das iframe leer (05.09.2026).
+      "frame-src 'self' blob:",
       "font-src 'self' data:",
       "connect-src 'self' https://*.public.blob.vercel-storage.com",
       "frame-ancestors 'self'",
@@ -41,7 +45,16 @@ const SICHERHEITS_HEADER = [
   },
 ];
 
+// Antworten der API tragen Personenbezug (Profil, Ranking, Credits, Nutzerlisten)
+// und bekamen von Vercel „public, max-age=0, must-revalidate" ohne Vary: Cookie.
+// Deshalb für alle API-Routen privat und ohne Zwischenspeicher; ausgenommen ist
+// nur der ausdrücklich öffentliche Schulungskatalog (05.09.2026).
+const API_CACHE_HEADER = [{ key: "Cache-Control", value: "private, no-store" }];
+
 const nextConfig: NextConfig = {
+  // Kein „X-Powered-By: Next.js" in den Antworten (05.09.2026).
+  poweredByHeader: false,
+
   // Die Zertifikatsvorlagen liegen nicht mehr unter public/ (dort waren sie
   // öffentlich herunterladbar). Damit Vercel sie trotzdem mit ausliefert,
   // müssen sie hier ausdrücklich benannt werden — sonst findet der
@@ -57,7 +70,12 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
-    return [{ source: "/:path*", headers: SICHERHEITS_HEADER }];
+    return [
+      { source: "/:path*", headers: SICHERHEITS_HEADER },
+      // Alles unter /api außer /api/trainings/public (negativer Vorausblick,
+      // mit dem in Next gebündelten path-to-regexp geprüft).
+      { source: "/api/:path((?!trainings/public).*)", headers: API_CACHE_HEADER },
+    ];
   },
 };
 

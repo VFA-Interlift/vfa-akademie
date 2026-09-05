@@ -6,6 +6,12 @@ import { useEffect } from "react";
  * Letzte Auffangstelle: greift, wenn der Fehler im Wurzel-Layout selbst steckt.
  * Dann steht kein Layout mehr, deshalb bringt diese Seite html und body selbst
  * mit und verzichtet auf gemeinsame Bausteine.
+ *
+ * Bewusste Abweichung vom Kanon (05.09.2026): Ohne Wurzel-Layout ist auch
+ * globals.css nicht geladen — Token wie var(--vfa-text) und var(--t-titel)
+ * gibt es hier nicht, AppButton lässt sich nicht importieren. Die Werte sind
+ * deshalb fest, aber in den Maßen der Staffel (Titel 22/750, Text 15,
+ * Knopf 42/14 in Versalien wie AppButton).
  */
 export default function GlobalError({
   error,
@@ -43,17 +49,18 @@ export default function GlobalError({
             <h1
               style={{
                 margin: "0 0 12px",
-                fontSize: 28,
-                fontWeight: 800,
+                fontSize: 22,
+                fontWeight: 750,
                 letterSpacing: "-0.02em",
+                lineHeight: 1.2,
               }}
             >
               Die App ließ sich nicht laden
             </h1>
 
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#666666" }}>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: "#666666" }}>
               Bitte lade die Seite neu. Bleibt der Fehler, schreib uns kurz an{" "}
-              <a href="mailto:info@vfa-interlift.de" style={{ color: "#007873" }}>
+              <a href="mailto:info@vfa-interlift.de" style={{ color: "#007873", fontWeight: 700 }}>
                 info@vfa-interlift.de
               </a>
               .
@@ -63,7 +70,7 @@ export default function GlobalError({
               <p
                 style={{
                   margin: "18px 0 0",
-                  fontSize: 12,
+                  fontSize: 13,
                   color: "#999999",
                   fontFamily: "ui-monospace, monospace",
                 }}
@@ -77,14 +84,19 @@ export default function GlobalError({
               onClick={reset}
               style={{
                 marginTop: 28,
-                minHeight: 46,
-                padding: "12px 26px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 42,
+                padding: "10px 22px",
                 borderRadius: 999,
                 background: "#007873",
                 color: "#FFFFFF",
                 fontWeight: 700,
-                fontSize: 15,
-                border: "none",
+                fontSize: 14,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                border: "1px solid #007873",
                 cursor: "pointer",
               }}
             >

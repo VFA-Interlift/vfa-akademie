@@ -9,6 +9,11 @@ import { useEffect, useRef, useState } from "react";
  * überall — sonst wird Bewegung beliebig.
  *
  * Respektiert prefers-reduced-motion: dann steht der Zielwert sofort.
+ *
+ * Der Effekt hängt am Wert, nicht an []: Kommt der erste echte Wert erst nach
+ * dem ersten Rendern (z. B. 0 → 410), startet die Animation dann — vorher
+ * blieb die Zahl auf 0 stehen („Meine Credits“, Rundgang 05.09.2026). Spätere
+ * Änderungen werden ohne erneute Animation übernommen.
  */
 export default function AnimatedNumber({
   value,
@@ -23,19 +28,21 @@ export default function AnimatedNumber({
   const startedRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) {
-      // Spätere Wertänderungen ohne erneute Animation übernehmen.
-      setDisplay(value);
-      return;
-    }
-    startedRef.current = true;
+    // Noch kein Wert über 0: die Anzeige steht ohnehin auf 0, auf den ersten
+    // echten Wert warten.
+    if (value <= 0 && !startedRef.current) return;
 
     const reduziert =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduziert || value <= 0) {
-      setDisplay(value);
-      return;
+    // Schon animiert oder Bewegung reduziert: Wert direkt übernehmen (im
+    // nächsten Bild, damit kein Zustand synchron im Effekt gesetzt wird).
+    const sofort = startedRef.current || reduziert;
+    startedRef.current = true;
+
+    if (sofort) {
+      const id = window.requestAnimationFrame(() => setDisplay(value));
+      return () => window.cancelAnimationFrame(id);
     }
 
     let rafId = 0;
@@ -57,9 +64,7 @@ export default function AnimatedNumber({
       window.clearTimeout(timeoutId);
       window.cancelAnimationFrame(rafId);
     };
-    // Nur beim ersten Mount animieren.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [value, durationMs, delayMs]);
 
   return <>{display.toLocaleString("de-DE")}</>;
 }

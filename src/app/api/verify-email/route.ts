@@ -216,8 +216,13 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    // Ohne kontext: Der Link ist nirgends (mehr) bekannt. Der häufigste Grund
+    // ist ein zweiter Klick — nach dem Einlösen werden alle offenen
+    // Registrierungen der Adresse gelöscht (oben). Die Seite bietet dann die
+    // Anmeldung an statt zur Neu-Registrierung zu raten, die mit „bereits
+    // registriert“ scheitern würde (Befund f01-8, 05.09.2026).
     return NextResponse.json(
-      { ok: false, error: "Der Link ist ungültig oder abgelaufen." },
+      { ok: false, error: "Der Link ist ungültig, abgelaufen oder wurde schon benutzt." },
       { status: 400 }
     );
   }

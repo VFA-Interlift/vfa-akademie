@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AppTextarea from "@/components/ui/AppTextarea";
+import Meldung from "@/components/ui/Meldung";
 import StarRating from "@/components/feedback/StarRating";
 import { APP_TEST_FRAGEN, APP_TEST_TEXT_MAX, PFLICHT_FRAGE_ID } from "@/lib/app-test/fragen";
 
@@ -34,6 +36,19 @@ export default function AppTestClient({
 
   function setAnswer(id: string, wert: Antwort) {
     setAnswers((prev) => ({ ...prev, [id]: wert }));
+  }
+
+  // Abgewählter Stern: Schlüssel entfernen statt 0 zu speichern — wie im
+  // Schulungsfeedback (Befund f03-1, 05.09.2026). Die API verwirft 0 ohnehin.
+  function setSkala(id: string, wert: number) {
+    setAnswers((prev) => {
+      if (wert < 1) {
+        const rest = { ...prev };
+        delete rest[id];
+        return rest;
+      }
+      return { ...prev, [id]: wert };
+    });
   }
 
   function toggleMulti(id: string, option: string) {
@@ -88,10 +103,10 @@ export default function AppTestClient({
         <AppCard>
           <div style={{ textAlign: "center", padding: "20px 8px" }}>
             <div style={{ fontSize: 44, lineHeight: 1 }}>★</div>
-            <h2 style={{ margin: "12px 0 6px", color: "#007873", fontSize: 24, fontWeight: 800 }}>
+            <h2 style={{ margin: "12px 0 6px", color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)", fontWeight: 700, lineHeight: "var(--lh-eng)" }}>
               Danke für deine Rückmeldung!
             </h2>
-            <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: 16, lineHeight: 1.6 }}>
+            <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
               Deine Antworten sind angekommen. Wenn dir später noch etwas auffällt,
               kannst du den Bogen einfach noch einmal ausfüllen.
             </p>
@@ -105,13 +120,13 @@ export default function AppTestClient({
     <div style={{ display: "grid", gap: 12 }}>
       <AnimatedSection>
         <AppCard>
-          <p style={{ margin: 0, color: "var(--vfa-text)", lineHeight: 1.6 }}>
+          <p style={{ margin: 0, color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
             Zehn Fragen, zwei bis drei Minuten. Pflicht ist nur die letzte —
             alles andere ist freiwillig. Es gibt keine falschen Antworten:
             was dich stört, hilft uns am meisten.
           </p>
           {bereitsGesendet && (
-            <p style={{ margin: "12px 0 0", color: "var(--vfa-text-3)", fontSize: 14, lineHeight: 1.6 }}>
+            <p style={{ margin: "12px 0 0", color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", lineHeight: "var(--lh-weit)" }}>
               Du hast den Bogen schon einmal abgeschickt — deine bisherigen
               Antworten sind unten bereits eingetragen. Ändere oder ergänze
               einfach, was dir aufgefallen ist, und sende erneut.
@@ -120,33 +135,29 @@ export default function AppTestClient({
         </AppCard>
       </AnimatedSection>
 
-      {error && (
-        <AppCard style={{ borderColor: "rgba(176,0,32,0.4)", background: "rgba(176,0,32,0.05)" }}>
-          <span style={{ color: "#B00020", fontWeight: 700 }}>{error}</span>
-        </AppCard>
-      )}
+      {error && <Meldung art="fehler">{error}</Meldung>}
 
       {APP_TEST_FRAGEN.map((frage, i) => (
         <AnimatedSection key={frage.id} delayMs={Math.min(60 + i * 30, 360)}>
           <AppCard>
             <div style={{ display: "grid", gap: 10 }}>
-              <span style={{ fontSize: 15, color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
+              <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)", fontWeight: 600, lineHeight: 1.45 }}>
                 {frage.text}
-                {frage.id === PFLICHT_FRAGE_ID && <span style={{ color: "#B00020" }}> *</span>}
+                {frage.id === PFLICHT_FRAGE_ID && <span style={{ color: "var(--vfa-rot-text)" }}> *</span>}
               </span>
 
               {frage.typ === "skala" && (
                 <div style={{ display: "grid", gap: 6 }}>
                   <StarRating
                     value={typeof answers[frage.id] === "number" ? (answers[frage.id] as number) : 0}
-                    onChange={(v) => setAnswer(frage.id, v)}
+                    onChange={(v) => setSkala(frage.id, v)}
                   />
                   <div
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
                       maxWidth: 200,
-                      fontSize: 12,
+                      fontSize: "var(--t-label)",
                       color: "var(--vfa-text-3)",
                     }}
                   >
@@ -183,7 +194,7 @@ export default function AppTestClient({
                         }
                         style={{ width: 17, height: 17, accentColor: "#007873", marginTop: 2 }}
                       />
-                      <span style={{ fontSize: 14, color: "var(--vfa-text)" }}>{option}</span>
+                      <span style={{ fontSize: "var(--t-basis)", color: "var(--vfa-text)" }}>{option}</span>
                     </label>
                   );
                 })}
@@ -193,26 +204,9 @@ export default function AppTestClient({
       ))}
 
       <AnimatedSection>
-        <button
-          type="button"
-          onClick={absenden}
-          disabled={sending}
-          style={{
-            width: "100%",
-            padding: "14px 20px",
-            background: sending ? "#9AA0A6" : "#007873",
-            color: "#ffffff",
-            fontWeight: 800,
-            fontSize: 15,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            border: "none",
-            borderRadius: 999,
-            cursor: sending ? "default" : "pointer",
-          }}
-        >
+        <AppButton fullWidth onClick={absenden} disabled={sending}>
           {sending ? "Wird gesendet …" : "Rückmeldung absenden"}
-        </button>
+        </AppButton>
       </AnimatedSection>
     </div>
   );

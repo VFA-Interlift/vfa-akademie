@@ -15,14 +15,18 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "VFA-Akademie",
+  // Derselbe Satz wie im Manifest (manifest.ts) — vorher fehlte die
+  // Beschreibung im ausgelieferten HTML (Befund f10-9, 05.09.2026).
+  description: "Schulungen, Zertifikate und Credits – digital verwaltet.",
   applicationName: "VFA-Akademie",
   appleWebApp: {
     capable: true,
     // "black-translucent" legt die Seite unter die Statusleiste, sodass Farben
     // und Muster bis über die Aussparung des iPhones durchlaufen. Die Symbole
     // dort werden dann weiß gezeichnet — damit sie überall lesbar bleiben,
-    // liegt der Streifen .safe-top (globals.css) in Petrol darüber. Wer das
-    // eine ändert, muss das andere mitändern.
+    // gibt ihnen das Petrol-Band jeder Seite (PageHeader) den Grund; der
+    // frühere Deckstreifen .safe-top ist seit dem 05.09.2026 überall aus.
+    // Wer das eine ändert, muss das andere mitändern.
     statusBarStyle: "black-translucent",
     title: "VFA-Akademie",
   },
@@ -34,8 +38,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#007873",
   // Ohne viewport-fit=cover liefert env(safe-area-inset-top/-bottom) schlicht 0:
-  // der Streifen .safe-top wäre unsichtbar, die Seiten hielten keinen Platz
-  // unter der Uhr frei, und die Bottom-Nav ignorierte den Home-Indikator.
+  // das Band liefe nicht bis unter die Uhr, die Seiten hielten keinen Platz
+  // dafür frei, und die Bottom-Nav ignorierte den Home-Indikator.
   // Gehört zwingend zu statusBarStyle "black-translucent" (siehe metadata).
   viewportFit: "cover",
   // Zoom ist AUS — Tobis Entscheidung vom 13.08.2026 („ich möchte nicht,

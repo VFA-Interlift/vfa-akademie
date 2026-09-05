@@ -30,10 +30,12 @@ export default function AppInput({
 }: AppInputProps) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
+      {/* Label 13/600 gedämpft, Feld Radius 8 und 15px — dieselben Maße wie
+          AppSelect und AppTextarea (Kanon der Launch-Runde 05.09.2026). */}
       <span
         style={{
           color: "var(--vfa-text-2)",
-          fontSize: 13,
+          fontSize: "var(--t-klein)",
           fontWeight: 600,
           letterSpacing: "0.01em",
         }}
@@ -61,7 +63,7 @@ export default function AppInput({
           border: "1px solid var(--vfa-linie)",
           background: disabled ? "var(--vfa-karte-2)" : "var(--vfa-karte)",
           color: "var(--vfa-text)",
-          fontSize: 15,
+          fontSize: "var(--t-basis)",
           opacity: disabled ? 0.7 : 1,
           transition: "border-color 120ms ease",
           // iOS rendert input[type=date] als natives Control mit fester

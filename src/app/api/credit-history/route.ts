@@ -15,10 +15,13 @@ export async function GET() {
   });
   if (!user) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
 
+  // Ohne Deckel: Meine Credits zählt aus dieser Liste „Buchungen“ und
+  // „Davon +“ — mit take: 100 stimmten die Zahlen ab der 101. Buchung nicht
+  // mehr. Je Nutzer entsteht eine Buchung pro Schulung oder Zertifikat, die
+  // Liste bleibt also klein (05.09.2026).
   const txs = await prisma.creditTransaction.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
-    take: 100,
     include: {
       training: { select: { title: true, code: true } },
       certificate: { select: { title: true } },

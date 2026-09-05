@@ -67,7 +67,7 @@ export function bewerteFrische(
     label = `Auffrischung in ${monateBisAblauf} Mon.`;
   } else {
     status = "gruen";
-    label = "aktuell";
+    label = "Aktuell";
   }
 
   return { status, fristMonate, ablaufDatum, monateBisAblauf, label };

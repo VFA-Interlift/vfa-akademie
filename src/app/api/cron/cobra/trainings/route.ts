@@ -8,14 +8,6 @@ function fail(error: string, status = 400, details?: unknown) {
   return NextResponse.json({ ok: false, error, details }, { status });
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
-}
-
 function isAuthorized(req: Request) {
   const cronSecret = process.env.CRON_SECRET;
 
@@ -65,12 +57,10 @@ export async function GET(req: Request) {
       );
     }
 
+    // Fehlertext nur ins Protokoll: Prisma-Meldungen nennen Tabellen und Hosts.
+    console.error("COBRA_TRAININGS_SYNC_FAILED", error);
     return NextResponse.json(
-      {
-        ok: false,
-        error: "COBRA_TRAININGS_SYNC_FAILED",
-        message: getErrorMessage(error),
-      },
+      { ok: false, error: "COBRA_TRAININGS_SYNC_FAILED" },
       { status: 500 }
     );
   }

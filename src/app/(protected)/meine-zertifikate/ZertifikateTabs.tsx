@@ -72,8 +72,8 @@ function TabButton({
         borderRadius: 8,
         background: active ? TEAL : "transparent",
         color: active ? "#FFFFFF" : "var(--vfa-text-2)",
-        fontWeight: 800,
-        fontSize: 13.5,
+        fontWeight: 700,
+        fontSize: "var(--t-klein)",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
@@ -85,13 +85,13 @@ function TabButton({
       <span style={{ whiteSpace: "nowrap" }}>{label}</span>
       <span
         style={{
-          fontSize: 11,
-          fontWeight: 800,
+          fontSize: "var(--t-label)",
+          fontWeight: 700,
           minWidth: 20,
           padding: "1px 6px",
           borderRadius: 999,
           background: active ? "rgba(255,255,255,0.22)" : "rgba(0,120,115,0.10)",
-          color: active ? "#FFFFFF" : TEAL,
+          color: active ? "#FFFFFF" : "var(--vfa-gruen-text)",
         }}
       >
         {count}

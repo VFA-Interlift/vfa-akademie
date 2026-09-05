@@ -56,12 +56,20 @@ export async function GET(req: Request) {
     }
   }
 
-  const evaluation = await getAdminFeedbackEvaluation(trainingId);
-  if (evaluation.length === 0) {
-    return NextResponse.json({ ok: false, error: "NO_FEEDBACK" }, { status: 404 });
+  // Auswertung und Rendern mit Protokollzeile: Ohne sie blieb bei einem
+  // Fehler nur die generische 500-Seite und die Ursache war nicht zu finden
+  // (Befund f05-14, 05.09.2026).
+  let pdf: Uint8Array;
+  try {
+    const evaluation = await getAdminFeedbackEvaluation(trainingId);
+    if (evaluation.length === 0) {
+      return NextResponse.json({ ok: false, error: "NO_FEEDBACK" }, { status: 404 });
+    }
+    pdf = await renderFeedbackReportPdf(evaluation);
+  } catch (fehler) {
+    console.error("DOZENT_FEEDBACK_PDF_ERROR", trainingId, fehler);
+    return NextResponse.json({ ok: false, error: "FEEDBACK_PDF_FAILED" }, { status: 500 });
   }
-
-  const pdf = await renderFeedbackReportPdf(evaluation);
   const safeName = (training.code?.trim() || training.title).replace(/[^\w-]+/g, "_");
 
   return new NextResponse(Buffer.from(pdf), {
@@ -69,6 +77,9 @@ export async function GET(req: Request) {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="feedback-${safeName}.pdf"`,
+      // Personenbezogene Auswertung mit Freitexten — nicht zwischenspeichern,
+      // wie bei den übrigen Dateirouten (Befund f05-13, 05.09.2026).
+      "Cache-Control": "no-store",
     },
   });
 }

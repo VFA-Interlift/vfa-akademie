@@ -28,6 +28,9 @@ export default function CreditsZuwachs({
       if (alt !== null) {
         const vorher = Number(alt);
         if (Number.isFinite(vorher) && credits > vorher) {
+          // Der alte Stand liegt im localStorage und ist erst nach dem
+          // Einhängen lesbar (Lint-Ausnahme wie in BottomNav, 05.09.2026).
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setZuwachs(credits - vorher);
         }
       }
@@ -56,7 +59,7 @@ export default function CreditsZuwachs({
           borderRadius: 999,
           background: "rgba(0, 120, 115, 0.10)",
           border: "1px solid rgba(0, 120, 115, 0.25)",
-          color: "#007873",
+          color: "var(--vfa-gruen-text)",
           fontSize: 13,
           fontWeight: 800,
           animation: "pageFadeUp 600ms cubic-bezier(0.22, 1, 0.36, 1) both",

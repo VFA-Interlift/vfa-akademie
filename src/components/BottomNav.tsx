@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
 
 const MAIN_TABS = [
   { href: "/dashboard", label: "Home", icon: IconHome },
@@ -59,6 +58,9 @@ export default function BottomNav() {
     try {
       window.localStorage.setItem(`vfa-zert-gesehen:${zertStand.email}`, String(zertStand.anzahl));
     } catch {}
+    // Der Punkt erlischt genau beim Betreten der Seite — das ist der Zweck
+    // dieses Effekts, kein versehentlicher Kaskadenrender.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setZertNeu(false);
   }, [pathname, zertStand]);
 
@@ -78,13 +80,22 @@ export default function BottomNav() {
     pathname.startsWith("/leaderboard") ||
     pathname.startsWith("/meine-credits") ||
     pathname.startsWith("/einstellungen") ||
+    pathname.startsWith("/app-test") ||
     pathname.startsWith("/admin");
+
+  // Unterseiten gehören zum Tab, von dem aus man sie erreicht: das
+  // Schulungsdetail zu „Schulungen“, das Feedback zu „Zertifikate“ — vorher
+  // war dort kein Tab markiert (Befund d19-21, 05.09.2026).
+  const tabAktiv = (href: string) =>
+    pathname.startsWith(href) ||
+    (href === "/meine-schulungen" && pathname.startsWith("/training")) ||
+    (href === "/meine-zertifikate" && pathname.startsWith("/feedback"));
 
   return (
     <>
       <nav className="bottom-nav" aria-label="Navigation">
         {MAIN_TABS.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
+          const active = tabAktiv(href);
           return (
             <Link key={href} href={href} className={`bottom-nav-item${active ? " active" : ""}`}>
               <span style={{ position: "relative", display: "inline-flex" }}>
@@ -117,7 +128,7 @@ export default function BottomNav() {
 
             <div className="mehr-items">
               <SheetLink href="/meine-daten" active={pathname.startsWith("/meine-daten")} onClick={() => setSheetOpen(false)}>
-                <IconPerson active={false} /> Profil
+                <IconPerson active={false} /> Meine Daten
               </SheetLink>
 
               <SheetLink href="/kompetenzpass" active={pathname.startsWith("/kompetenzpass")} onClick={() => setSheetOpen(false)}>
@@ -162,20 +173,20 @@ export default function BottomNav() {
                   display: "flex",
                   gap: 16,
                   padding: "4px 6px 10px",
-                  fontSize: 13,
+                  fontSize: "var(--t-klein)",
                 }}
               >
                 <Link
                   href="/impressum"
                   onClick={() => setSheetOpen(false)}
-                  style={{ color: "#888888", textDecoration: "none", fontWeight: 600 }}
+                  style={{ color: "var(--vfa-text-3)", textDecoration: "none", fontWeight: 600 }}
                 >
                   Impressum
                 </Link>
                 <Link
                   href="/datenschutz"
                   onClick={() => setSheetOpen(false)}
-                  style={{ color: "#888888", textDecoration: "none", fontWeight: 600 }}
+                  style={{ color: "var(--vfa-text-3)", textDecoration: "none", fontWeight: 600 }}
                 >
                   Datenschutz
                 </Link>

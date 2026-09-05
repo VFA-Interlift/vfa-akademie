@@ -7,8 +7,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatCertificateKind } from "@/lib/certificates/templates";
-import { formatInstructorName } from "@/lib/trainings/format";
-import QRCode from "qrcode";
+import { cleanTrainingTitle, formatInstructorName } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
 
@@ -40,25 +39,20 @@ export default async function TrainingPage({
     if (!eigeneAnmeldung) redirect("/meine-schulungen");
   }
 
-  const training = await prisma.training.findUnique({
-    where: { id },
-    include: {
-      tokens: {
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-    },
-  });
+  // Der QR-Block samt Token-Abfrage ist seit der Launch-Runde (05.09.2026)
+  // weg: Er zeigte auf eine Route /scan, die es in der App nicht gibt, und
+  // erklärte sich mit einem Bau-Hinweis über „Testprozesse".
+  const training = await prisma.training.findUnique({ where: { id } });
 
   if (!training) {
     return (
       <main className="page-main">
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <PageHeader
-            title="Schulung nicht gefunden"
-            description="Diese Schulung existiert nicht oder wurde gelöscht."
-          />
+        <div style={{ maxWidth: 980, margin: "0 auto" }}>
+          <PageHeader title="Schulung nicht gefunden" />
+
+          <p style={{ margin: "0 0 20px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
+            Diese Schulung existiert nicht oder wurde gelöscht.
+          </p>
 
           <AppButton href="/meine-schulungen" variant="primary">
             Zurück zu meinen Schulungen
@@ -68,30 +62,16 @@ export default async function TrainingPage({
     );
   }
 
-  const claimToken = training.tokens[0];
-  const tokenValue = claimToken?.token ?? "";
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  const qrData = `${appUrl}/scan?token=${encodeURIComponent(tokenValue)}`;
-
-  const qrImage = tokenValue
-    ? await QRCode.toDataURL(qrData, { width: 280, margin: 1 })
-    : null;
+  const zeitraum =
+    training.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+    (training.endDate
+      ? ` bis ${training.endDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+      : "");
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--vfa-karte-2)",
-        padding: "40px 24px",
-      }}
-    >
+    <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <PageHeader
-          title={training.title}
-          description="Hier findest du die Details zu deiner Schulung. Nach Abschluss wird automatisch die passende Teilnahmebestätigung oder das passende Zertifikat erstellt."
-        />
+        <PageHeader title={cleanTrainingTitle(training.title)} />
 
         <div style={{ display: "grid", gap: 16 }}>
           <AppCard accent="green">
@@ -108,10 +88,10 @@ export default async function TrainingPage({
                 <h2
                   style={{
                     margin: 0,
-                    color: "#007873",
+                    color: "var(--vfa-gruen-text)",
                     fontSize: "var(--t-gross)",
                     fontWeight: 700,
-                    lineHeight: 1.3,
+                    lineHeight: "var(--lh-eng)",
                   }}
                 >
                   Schulungsdetails
@@ -139,20 +119,8 @@ export default async function TrainingPage({
                 </div>
               </div>
 
-              <div
-                style={{
-                  fontSize: 14,
-                  color: "var(--vfa-text)",
-                  textAlign: "right",
-                  minWidth: 180,
-                }}
-              >
-                <strong>Zeitraum</strong>
-                <br />
-                {training.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                {training.endDate
-                  ? ` bis ${training.endDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`
-                  : ""}
+              <div style={{ textAlign: "right", minWidth: 180 }}>
+                <Info label="Zeitraum" value={zeitraum} />
               </div>
             </div>
 
@@ -193,120 +161,15 @@ export default async function TrainingPage({
                   borderTop: "1px solid var(--vfa-linie)",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: "#007873",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    marginBottom: 6,
-                  }}
-                >
+                <div className="etikett" style={{ marginBottom: 6 }}>
                   Inhalte
                 </div>
 
-                <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>
+                <div style={{ color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
                   {training.description}
                 </div>
               </div>
             )}
-          </AppCard>
-
-          <AppCard>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 18,
-                alignItems: "flex-start",
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ maxWidth: 540 }}>
-                <h2
-                  style={{
-                    margin: 0,
-                    color: "#007873",
-                    fontSize: "var(--t-gross)",
-                    fontWeight: 700,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  Teilnahme / QR-Code
-                </h2>
-
-                <p
-                  style={{
-                    marginTop: 10,
-                    marginBottom: 0,
-                    color: "var(--vfa-text)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  Dieser QR-Code kann für Übergangs- oder Testprozesse genutzt
-                  werden. Die finale Teilnahme- und Zertifikatslogik läuft später
-                  automatisch über die Schulungsdaten.
-                </p>
-
-                {claimToken?.expiresAt && (
-                  <div style={{ marginTop: 14 }}>
-                    <StatusBadge>
-                      Gültig bis:{" "}
-                      {claimToken.expiresAt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                    </StatusBadge>
-                  </div>
-                )}
-              </div>
-
-              {!qrImage ? (
-                <div
-                  style={{
-                    minWidth: 240,
-                    padding: 16,
-                    border: "1px solid var(--vfa-linie)",
-                    background: "var(--vfa-karte-2)",
-                    color: "var(--vfa-text)",
-                  }}
-                >
-                  Kein QR-Code vorhanden.
-                </div>
-              ) : (
-                <div
-                  style={{
-                    border: "1px solid var(--vfa-linie)",
-                    padding: 16,
-                    background: "var(--vfa-karte-2)",
-                    maxWidth: 330,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 800,
-                      color: "#007873",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      marginBottom: 10,
-                    }}
-                  >
-                    QR-Code für Teilnehmer
-                  </div>
-
-                  <img
-                    src={qrImage}
-                    alt="QR Code"
-                    style={{
-                      display: "block",
-                      width: 280,
-                      height: 280,
-                      background: "var(--vfa-karte)",
-                      border: "1px solid var(--vfa-linie)",
-                    }}
-                  />
-                </div>
-              )}
-            </div>
           </AppCard>
 
           <div>
@@ -323,20 +186,11 @@ export default async function TrainingPage({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 800,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 4,
-        }}
-      >
+      <div className="etikett" style={{ marginBottom: 4 }}>
         {label}
       </div>
 
-      <div style={{ color: "var(--vfa-text)", lineHeight: 1.5 }}>{value}</div>
+      <div style={{ color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>{value}</div>
     </div>
   );
 }

@@ -34,15 +34,6 @@ function guessCategory(code: string | null, title: string) {
   return "Schwerpunkte";
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
-}
-
-
 /**
  * Primärquelle: die Kurse der Website (Wix-CMS „Schulungen") — dort werden
  * Termine und Orte gepflegt. Credits werden über den Kurscode aus der
@@ -159,11 +150,13 @@ export async function GET() {
       trainings,
     });
   } catch (error: unknown) {
+    // Die Route ist ohne Anmeldung erreichbar: Fehlertexte von Prisma oder
+    // Wix gehören ins Protokoll, nicht in die Antwort (05.09.2026).
+    console.error("PUBLIC_TRAININGS_LOAD_FAILED", error);
     return NextResponse.json(
       {
         ok: false,
         error: "PUBLIC_TRAININGS_LOAD_FAILED",
-        details: getErrorMessage(error),
       },
       { status: 500 }
     );

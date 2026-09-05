@@ -5,28 +5,31 @@ import { sendPasswordResetEmail } from "@/lib/email";
 import { absender, bremsePruefen } from "@/lib/bremse";
 
 export async function POST(req: NextRequest) {
-  // Fünf Anforderungen je Absender in zehn Minuten. Ohne Bremse ließe sich das
-  // Postfach eines Nutzers mit Reset-Mails fluten.
-  const bremse = bremsePruefen(`forgot:${absender(req)}`, {
-    versuche: 5,
-    fensterSekunden: 600,
-    sperreSekunden: 900,
-  });
-
-  if (!bremse.erlaubt) {
-    return NextResponse.json(
-      { error: "Zu viele Anfragen. Bitte versuch es später noch einmal." },
-      { status: 429 }
-    );
-  }
-
-  const { email } = await req.json();
+  // Ungefangen ergab ein kaputter Body 500 statt 400 (Befund f05-2).
+  const body = (await req.json().catch(() => null)) as { email?: unknown } | null;
+  const email = body?.email;
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Ungültige Anfrage." }, { status: 400 });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+
+  // Ohne Bremse ließe sich das Postfach eines Nutzers mit Reset-Mails fluten.
+  // Zwei Zähler wie bei der Registrierung (Befund f01-10, 05.09.2026): je
+  // Absender 30 in zehn Minuten (Firmen-NAT, Schulungs-WLAN), je Absender UND
+  // Adresse fünf — das schützt das einzelne Postfach.
+  const ip = absender(req);
+  const fenster = { fensterSekunden: 600, sperreSekunden: 900 };
+  const bremseNetz = bremsePruefen(`forgot:${ip}`, { versuche: 30, ...fenster });
+  const bremseAdresse = bremsePruefen(`forgot:${ip}:${normalizedEmail}`, { versuche: 5, ...fenster });
+
+  if (!bremseNetz.erlaubt || !bremseAdresse.erlaubt) {
+    return NextResponse.json(
+      { error: "Zu viele Anfragen. Bitte versuch es später noch einmal." },
+      { status: 429 }
+    );
+  }
 
   // Always return success to not reveal whether an account exists
   const user = await prisma.user.findUnique({

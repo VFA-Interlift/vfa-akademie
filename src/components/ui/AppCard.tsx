@@ -3,6 +3,8 @@ type AppCardProps = {
   as?: "div" | "section" | "article";
   style?: React.CSSProperties;
   accent?: "none" | "yellow" | "green";
+  /** Sprungziel, z. B. /einstellungen#feedback (Launch-Runde 05.09.2026). */
+  id?: string;
 };
 
 const VFA_GREEN = "#007873";
@@ -16,11 +18,13 @@ export default function AppCard({
   // nichts mehr hervor. Gelb bleibt für die eine Karte je Seite, die
   // Aufmerksamkeit verdient (accent="yellow" dort ausdrücklich setzen).
   accent = "none",
+  id,
 }: AppCardProps) {
   const Component = as;
 
   return (
     <Component
+      id={id}
       style={{
         position: "relative",
         padding: 18,

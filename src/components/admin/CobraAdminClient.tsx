@@ -1,209 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatInstructorName } from "@/lib/trainings/format";
-
-type CobraTraining = {
-  cobraId: number | null;
-  caption: string | null;
-  code: string | null;
-  title: string | null;
-  date: string | null;
-  endDate: string | null;
-  location: string | null;
-  instructor: string | null;
-  instructors: string[];
-  description: string | null;
-  raw?: Record<string, unknown> | null;
-};
-
-type TrainingsResponse =
-  | {
-      ok: true;
-      source: "cobra";
-      endpoint: string;
-      count: number;
-      trainings: CobraTraining[];
-    }
-  | {
-      ok: false;
-      error: string;
-      message?: string;
-      details?: unknown;
-    };
-
-type PreviewResponse =
-  | {
-      ok: true;
-      mode: "PREVIEW_ONLY";
-      action: "CREATE_NEW" | "UPDATE_EXISTING_BY_CODE";
-      cobra: {
-        cobraId: number;
-        code: string;
-        title: string;
-        date: string;
-        endDate: string | null;
-        location: string | null;
-        instructor: string | null;
-        description: string | null;
-      };
-      app: {
-        exists: boolean;
-        existingTraining: {
-          id: string;
-          title: string;
-          code: string | null;
-          date: string;
-          endDate: string | null;
-          location: string | null;
-          instructor: string | null;
-          description: string | null;
-          creditsAward: number;
-          certificateKind: string;
-        } | null;
-      };
-      proposed: {
-        title: string;
-        code: string;
-        date: string;
-        endDate: string | null;
-        location: string | null;
-        instructor: string | null;
-        description: string | null;
-        creditsAward: number;
-        creditRule: {
-          credits: number;
-          automatic: boolean;
-          reason: string;
-          label: string;
-        };
-      };
-      warnings: string[];
-    }
-  | {
-      ok: false;
-      error: string;
-      message?: string;
-      details?: unknown;
-    };
-
-type PreviewState = {
-  loading: boolean;
-  error: string;
-  data: PreviewResponse | null;
-};
-
-function formatDateTime(value: string | null) {
-  if (!value) return "—";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function getCoursePrefix(code: string | null) {
-  const cleanCode = String(code ?? "").trim();
-
-  if (!cleanCode) {
-    return "SONSTIGE";
-  }
-
-  const match = cleanCode.match(/^[A-Za-zÄÖÜäöüß0-9/]+/);
-
-  return match?.[0]?.toUpperCase() ?? cleanCode.toUpperCase();
-}
-
-function searchText(training: CobraTraining) {
-  return [
-    training.cobraId,
-    training.caption,
-    training.code,
-    training.title,
-    training.date,
-    training.endDate,
-    training.location,
-    training.instructor,
-    training.description,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-}
-
-function getTrainingTimestamp(training: CobraTraining) {
-  if (!training.date) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  const timestamp = new Date(training.date).getTime();
-
-  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
-}
-
-/**
- * A training counts as "past" once its end (or its start, if no end) is before
- * the start of today. Past trainings are auto-moved into the collapsed archive.
- */
-function isPastTraining(training: CobraTraining, cutoff: number) {
-  const reference = training.endDate ?? training.date;
-
-  if (!reference) {
-    return false;
-  }
-
-  const timestamp = new Date(reference).getTime();
-
-  if (Number.isNaN(timestamp)) {
-    return false;
-  }
-
-  return timestamp < cutoff;
-}
-
-function getPreviewKey(cobraId: number | null) {
-  return String(cobraId ?? "unknown");
-}
-
-/**
- * Show the clean instructor name(s). Each Cobra "Dozent" value is parsed to just
- * the person's name; only if parsing yields nothing do we fall back to the raw
- * value so the admin can still diagnose unexpected data ("—" if truly empty).
- */
-function formatInstructorNames(
-  values: string[] | null | undefined,
-  fallback: string | null | undefined
-) {
-  const list =
-    values && values.length > 0
-      ? values
-      : fallback
-        ? fallback.split("|")
-        : [];
-
-  const cleaned = list
-    .map((value) => formatInstructorName(value))
-    .filter((name) => name && name !== "Noch nicht hinterlegt");
-
-  if (cleaned.length > 0) {
-    return cleaned.join(", ");
-  }
-
-  const raw = list
-    .map((value) => value.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-
-  return raw.length > 0 ? raw.join(" · ") : "—";
-}
+import AppButton from "@/components/ui/AppButton";
+import AppCard from "@/components/ui/AppCard";
+import AppInput from "@/components/ui/AppInput";
+import Meldung from "@/components/ui/Meldung";
+import { CobraFelder, SectionLabel, SummaryBox, TrainingCard } from "./CobraTrainingCard";
+import {
+  getPreviewKey,
+  getTrainingTimestamp,
+  isPastTraining,
+  searchText,
+  type CobraTraining,
+  type PreviewResponse,
+  type PreviewState,
+  type TrainingsResponse,
+} from "./cobra-typen";
 
 export default function CobraAdminClient() {
   const [trainings, setTrainings] = useState<CobraTraining[]>([]);
@@ -317,7 +129,17 @@ export default function CobraAdminClient() {
         setCertOk(false);
         return;
       }
-      setCertMsg(`Fertig. Geprüfte Zuordnungen: ${data.checkedEnrollments}. Zertifikate erstellt: ${data.createdCertificates}. Vergebene Credits: ${data.awardedCredits}.`);
+      // Auch sagen, warum Zuordnungen leer ausgingen — sonst bleibt „12 geprüft,
+      // 3 erstellt“ ein Rätsel (05.09.2026).
+      const uebersprungen = [
+        data.skippedAbsent ? `${data.skippedAbsent} nicht anwesend` : "",
+        data.skippedNoTemplate ? `${data.skippedNoTemplate} ohne Vorlage` : "",
+        data.skippedCollision ? `${data.skippedCollision} mit Nummernkollision` : "",
+      ].filter(Boolean);
+      setCertMsg(
+        `Fertig. Geprüfte Zuordnungen: ${data.checkedEnrollments}. Zertifikate erstellt: ${data.createdCertificates}. Vergebene Credits: ${data.awardedCredits}.` +
+          (uebersprungen.length > 0 ? ` Übersprungen: ${uebersprungen.join(", ")}.` : "")
+      );
       setCertOk(true);
     } catch {
       setCertMsg("Serverfehler.");
@@ -424,16 +246,12 @@ export default function CobraAdminClient() {
     }
   }
 
+  const sampleRaw =
+    trainings.find((training) => training.raw && Object.keys(training.raw).length > 0)?.raw ?? null;
+
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      <section
-        style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E6E6",
-          padding: 18,
-          boxShadow: "0 10px 28px rgba(0,0,0,0.04)",
-        }}
-      >
+      <AppCard as="section">
         <div
           style={{
             display: "grid",
@@ -444,7 +262,7 @@ export default function CobraAdminClient() {
         >
           <SummaryBox
             label="Status"
-            value={loadingTrainings ? "Wird geprüft..." : trainingError ? "Fehler" : "Verbunden"}
+            value={loadingTrainings ? "Wird geprüft …" : trainingError ? "Fehler" : "Verbunden"}
             tone={!loadingTrainings && !trainingError ? "green" : trainingError ? "error" : "default"}
           />
           <SummaryBox
@@ -452,7 +270,7 @@ export default function CobraAdminClient() {
             value={loadingTrainings ? "…" : trainings.length.toLocaleString("de-DE")}
           />
           <SummaryBox
-            label="Schulungen in App-DB"
+            label="Schulungen in der App-Datenbank"
             value={dbTrainingCount !== null ? dbTrainingCount.toLocaleString("de-DE") : "…"}
             tone={
               dbTrainingCount !== null && trainings.length > 0 && dbTrainingCount < trainings.length
@@ -467,190 +285,73 @@ export default function CobraAdminClient() {
         </div>
 
         {dbTrainingCount !== null && trainings.length > 0 && dbTrainingCount < trainings.length && (
-          <div style={{ marginBottom: 14, padding: "10px 14px", border: "1px solid rgba(176,0,32,0.28)", background: "rgba(176,0,32,0.06)", color: "#B00020", fontSize: 13, fontWeight: 800, lineHeight: 1.5 }}>
-            Cobra liefert {trainings.length} Schulungen, aber nur {dbTrainingCount} sind in der App-DB.
-            Trainings ohne Cobra-ID, Code, Titel oder Datum werden beim Sync übersprungen.
-            Schulungen aus der Liste &quot;Prüfen&quot; → dort siehst du den Status.
-          </div>
+          <Meldung art="fehler" style={{ marginBottom: 14 }}>
+            Cobra liefert {trainings.length} Schulungen, aber nur {dbTrainingCount} sind in der App-Datenbank.
+            Schulungen ohne Cobra-ID, Kurscode, Titel oder Datum werden beim Abgleich übersprungen.
+            Klicke bei einer Schulung auf „Prüfen“, dort siehst du den Status.
+          </Meldung>
         )}
 
         <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>
-              Automatische Synchronisation
-            </div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1F1F1F", letterSpacing: "-0.01em" }}>
+            <div className="etikett" style={{ marginBottom: 6 }}>Cobra-Abgleich</div>
+            <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
               Schulungsdaten aus Cobra
             </h2>
-            <p style={{ marginTop: 8, marginBottom: 0, color: "#555555", lineHeight: 1.6, fontSize: 14 }}>
-              Schulungen und Teilnehmer werden täglich automatisch aus Cobra/WebConnect synchronisiert.
-              Zertifikate entstehen automatisch am Tag nach Schulungsende. Mit &bdquo;Jetzt synchronisieren&ldquo;
-              überträgst du Änderungen (z. B. einen neuen Dozenten) sofort in die App-DB und damit in den Kalender.
+            <p style={{ marginTop: 8, marginBottom: 0, color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)", fontSize: "var(--t-basis)" }}>
+              Der Abgleich mit Cobra/WebConnect läuft nicht mehr automatisch; die Schulungen kommen
+              täglich von der Website. Zertifikate entstehen automatisch am Tag nach Schulungsende.
+              Mit „Jetzt synchronisieren“ überträgst du Änderungen aus Cobra (z. B. einen neuen
+              Dozenten) sofort in die App-Datenbank.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={() => void syncTrainings()}
-              disabled={syncLoading}
-              style={{
-                minHeight: 40, padding: "9px 16px", borderRadius: 999,
-                border: "1px solid #007873", background: "#007873", color: "#FFFFFF",
-                fontWeight: 900, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.07em",
-                cursor: syncLoading ? "not-allowed" : "pointer", opacity: syncLoading ? 0.65 : 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {syncLoading ? "Synchronisiere..." : "Jetzt synchronisieren"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void generateCertificates()}
-              disabled={certLoading}
-              style={{
-                minHeight: 40, padding: "9px 16px", borderRadius: 999,
-                border: "1px solid #007873", background: "#FFFFFF", color: "#007873",
-                fontWeight: 900, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.07em",
-                cursor: certLoading ? "not-allowed" : "pointer", opacity: certLoading ? 0.65 : 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {certLoading ? "Läuft..." : "Zertifikate erstellen"}
-            </button>
+            <AppButton variant="primary" onClick={() => void syncTrainings()} disabled={syncLoading}>
+              {syncLoading ? "Synchronisiere …" : "Jetzt synchronisieren"}
+            </AppButton>
+            <AppButton variant="ghost" onClick={() => void generateCertificates()} disabled={certLoading}>
+              {certLoading ? "Läuft …" : "Zertifikate erstellen"}
+            </AppButton>
           </div>
         </div>
 
         {syncMsg && (
-          <div style={{ marginTop: 10, padding: "10px 14px", border: syncOk ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)", background: syncOk ? "rgba(0,120,115,0.06)" : "rgba(176,0,32,0.06)", color: syncOk ? "#007873" : "#B00020", fontWeight: 800, lineHeight: 1.5, fontSize: 13 }}>
+          <Meldung art={syncOk ? "erfolg" : "fehler"} style={{ marginTop: 10 }}>
             {syncMsg}
-          </div>
+          </Meldung>
         )}
 
         {certMsg && (
-          <div style={{ marginTop: 10, padding: "10px 14px", border: certOk ? "1px solid #007873" : "1px solid rgba(176,0,32,0.28)", background: certOk ? "rgba(0,120,115,0.06)" : "rgba(176,0,32,0.06)", color: certOk ? "#007873" : "#B00020", fontWeight: 800, lineHeight: 1.5, fontSize: 13 }}>
+          <Meldung art={certOk ? "erfolg" : "fehler"} style={{ marginTop: 10 }}>
             {certMsg}
-          </div>
+          </Meldung>
         )}
 
-        <div
-          style={{
-            marginTop: 14,
-            padding: "12px 14px",
-            border: "1px solid rgba(0,120,115,0.22)",
-            background: "rgba(0,120,115,0.06)",
-            color: "#333333",
-            lineHeight: 1.6,
-            fontSize: 14,
-          }}
-        >
-          Cron-Zeiten: Schulungen 00:10 UTC · Teilnehmer 00:15 UTC · Zertifikate 00:05 UTC (täglich)
-        </div>
+        {/* Die echten Läufe aus vercel.json (05.09.2026): Website-Schulungen 00:05 UTC,
+            Zertifikate 00:20 UTC. Einen Cobra-Lauf gibt es nicht. */}
+        <Meldung art="hinweis" style={{ marginTop: 14 }}>
+          Automatische Läufe, täglich nachts: Schulungen von der Website um 00:05 Uhr UTC (nach
+          deutscher Zeit ein bis zwei Stunden später), Zertifikate um 00:20 Uhr UTC. Ein Abgleich
+          mit Cobra läuft nicht automatisch, nur über „Jetzt synchronisieren“.
+        </Meldung>
 
-        {/* Diagnose: alle Felder, die Cobra liefert – z.B. um das Inhouse/Öffentlich-Kennzeichen zu finden */}
+        {/* Diagnose: alle Felder, die Cobra liefert – z. B. um das Inhouse/Öffentlich-Kennzeichen zu finden */}
         <div style={{ marginTop: 14 }}>
-          <button
-            type="button"
-            onClick={() => setShowFields((value) => !value)}
-            style={{
-              minHeight: 36,
-              padding: "8px 14px",
-              borderRadius: 999,
-              border: "1px solid #C7C7C7",
-              background: "#FFFFFF",
-              color: "#007873",
-              fontWeight: 800,
-              fontSize: 12,
-              cursor: "pointer",
-            }}
-          >
+          <AppButton variant="ghost" onClick={() => setShowFields((value) => !value)}>
             {showFields ? "Cobra-Felder ausblenden" : "Cobra-Felder anzeigen (Diagnose)"}
-          </button>
+          </AppButton>
 
-          {showFields &&
-            (() => {
-              const sampleRaw =
-                trainings.find(
-                  (training) =>
-                    training.raw && Object.keys(training.raw).length > 0
-                )?.raw ?? null;
-
-              if (!sampleRaw) {
-                return (
-                  <div style={{ marginTop: 10, color: "#888888", fontSize: 13 }}>
-                    Keine Felddaten verfügbar.
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  style={{
-                    marginTop: 10,
-                    border: "1px solid #E6E6E6",
-                    background: "#FAFAFA",
-                    padding: 12,
-                    display: "grid",
-                    gap: 6,
-                    fontSize: 13,
-                  }}
-                >
-                  <div style={{ color: "#555555", marginBottom: 4, lineHeight: 1.5 }}>
-                    Felder einer Beispiel-Schulung aus Cobra. Sag mir den Feldnamen
-                    für &bdquo;öffentlich/inhouse&ldquo; und welcher Wert was bedeutet &ndash; dann
-                    filtere ich den Kalender automatisch.
-                  </div>
-                  {Object.entries(sampleRaw).map(([key, value]) => (
-                    <div
-                      key={key}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "minmax(120px, 220px) 1fr",
-                        gap: 10,
-                        alignItems: "start",
-                      }}
-                    >
-                      <span style={{ fontWeight: 800, color: "#007873", overflowWrap: "anywhere" }}>
-                        {key}
-                      </span>
-                      <span style={{ color: "#1F1F1F", overflowWrap: "anywhere" }}>
-                        {formatRawValue(value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+          {showFields && <CobraFelder raw={sampleRaw} />}
         </div>
 
         <div style={{ marginTop: 16 }}>
-          <label
-            style={{
-              display: "grid",
-              gap: 7,
-              color: "#007873",
-              fontWeight: 900,
-              fontSize: 14,
-            }}
-          >
-            Suche
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="z. B. A1-2701, EFK, Dozent, ID..."
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                minHeight: 44,
-                border: "1px solid #C7C7C7",
-                background: "#FFFFFF",
-                color: "#1F1F1F",
-                padding: "10px 12px",
-                fontSize: 15,
-                fontWeight: 700,
-                outline: "none",
-              }}
-            />
-          </label>
+          <AppInput
+            label="Suche"
+            value={query}
+            onChange={setQuery}
+            placeholder="z. B. A1-2701, EFK, Dozent, ID …"
+            inputMode="search"
+          />
         </div>
 
         {loadingTrainings ? (
@@ -658,38 +359,21 @@ export default function CobraAdminClient() {
             style={{
               marginTop: 18,
               marginBottom: 0,
-              color: "#333333",
-              lineHeight: 1.6,
+              color: "var(--vfa-text)",
+              fontSize: "var(--t-basis)",
+              lineHeight: "var(--lh-weit)",
             }}
           >
-            Cobra-Schulungen werden geladen...
+            Cobra-Schulungen werden geladen …
           </p>
         ) : trainingError ? (
-          <div
-            style={{
-              marginTop: 18,
-              padding: "12px 14px",
-              border: "1px solid rgba(176,0,32,0.28)",
-              background: "rgba(176,0,32,0.08)",
-              color: "#B00020",
-              fontWeight: 800,
-              lineHeight: 1.5,
-            }}
-          >
+          <Meldung art="fehler" style={{ marginTop: 18 }}>
             {trainingError}
-          </div>
+          </Meldung>
         ) : filteredTrainings.length === 0 ? (
-          <div
-            style={{
-              marginTop: 18,
-              padding: "12px 14px",
-              border: "1px solid #E6E6E6",
-              color: "#333333",
-              lineHeight: 1.6,
-            }}
-          >
+          <Meldung art="hinweis" style={{ marginTop: 18 }}>
             Keine Cobra-Schulung zur Suche gefunden.
-          </div>
+          </Meldung>
         ) : (
           <div style={{ marginTop: 18, display: "grid", gap: 18 }}>
             {/* Bevorstehende & laufende Schulungen */}
@@ -703,10 +387,11 @@ export default function CobraAdminClient() {
                 <div
                   style={{
                     padding: "12px 14px",
-                    border: "1px dashed #D5D5D5",
-                    color: "#888888",
-                    lineHeight: 1.6,
-                    fontSize: 14,
+                    border: "1px dashed var(--vfa-grey)",
+                    borderRadius: 12,
+                    color: "var(--vfa-text-2)",
+                    lineHeight: "var(--lh-weit)",
+                    fontSize: "var(--t-basis)",
                   }}
                 >
                   Keine bevorstehenden Schulungen
@@ -739,28 +424,29 @@ export default function CobraAdminClient() {
                     width: "100%",
                     minHeight: 48,
                     padding: "12px 16px",
-                    border: "1px solid #E6E6E6",
-                    background: "#FAFAFA",
+                    border: "1px solid var(--vfa-linie)",
+                    borderRadius: 14,
+                    background: "var(--vfa-karte-2)",
                     cursor: "pointer",
                     textAlign: "left",
                   }}
                 >
                   <span
                     style={{
-                      fontSize: 12,
-                      fontWeight: 900,
-                      color: "#666666",
+                      fontSize: "var(--t-label)",
+                      fontWeight: 700,
+                      color: "var(--vfa-text-2)",
                       textTransform: "uppercase",
-                      letterSpacing: "0.08em",
+                      letterSpacing: "0.05em",
                     }}
                   >
                     Archiv · vergangene Schulungen ({pastTrainings.length.toLocaleString("de-DE")})
                   </span>
                   <span
                     style={{
-                      color: "#007873",
-                      fontSize: 20,
-                      fontWeight: 900,
+                      color: "var(--vfa-gruen-text)",
+                      fontSize: "var(--t-gross)",
+                      fontWeight: 700,
                       lineHeight: 1,
                       transform: showArchive ? "rotate(180deg)" : "rotate(0deg)",
                       transition: "transform 180ms ease",
@@ -784,348 +470,7 @@ export default function CobraAdminClient() {
             )}
           </div>
         )}
-      </section>
+      </AppCard>
     </div>
   );
-}
-
-function SectionLabel({ title, count }: { title: string; count: number }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        fontSize: 12,
-        fontWeight: 900,
-        color: "#007873",
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-      }}
-    >
-      <span>{title}</span>
-      <span
-        style={{
-          padding: "2px 9px",
-          borderRadius: 999,
-          background: "rgba(0,120,115,0.10)",
-          color: "#007873",
-          fontSize: 12,
-          fontWeight: 900,
-        }}
-      >
-        {count.toLocaleString("de-DE")}
-      </span>
-    </div>
-  );
-}
-
-function TrainingCard({
-  training,
-  previewState,
-  onPreview,
-  muted = false,
-}: {
-  training: CobraTraining;
-  previewState: PreviewState | undefined;
-  onPreview: () => void;
-  muted?: boolean;
-}) {
-  return (
-    <article
-      style={{
-        border: "1px solid #E6E6E6",
-        background: muted ? "#FBFBFB" : "#FFFFFF",
-        padding: 14,
-        display: "grid",
-        gap: 10,
-        opacity: muted ? 0.85 : 1,
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto",
-          gap: 14,
-          alignItems: "start",
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              color: "#007873",
-              fontWeight: 900,
-              fontSize: 20,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {training.code ??
-              cleanTrainingTitle(training.title) ??
-              training.caption}
-          </div>
-
-          <div
-            style={{
-              marginTop: 4,
-              color: "#333333",
-              lineHeight: 1.5,
-              fontSize: 14,
-            }}
-          >
-            Cobra-ID {training.cobraId ?? "—"} · {getCoursePrefix(training.code)}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onPreview}
-          disabled={!training.cobraId || previewState?.loading}
-          style={{
-            minHeight: 38,
-            padding: "8px 14px",
-            borderRadius: 999,
-            border: "1px solid #007873",
-            background: "#FFFFFF",
-            color: "#007873",
-            fontWeight: 900,
-            fontSize: 12,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            cursor:
-              !training.cobraId || previewState?.loading
-                ? "not-allowed"
-                : "pointer",
-            opacity: !training.cobraId || previewState?.loading ? 0.55 : 1,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {previewState?.loading ? "Prüfe..." : "Prüfen"}
-        </button>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-          gap: 10,
-          fontSize: 14,
-          lineHeight: 1.5,
-        }}
-      >
-        <Info label="Start" value={formatDateTime(training.date)} />
-        <Info label="Ende" value={formatDateTime(training.endDate)} />
-        <Info label="Ort" value={training.location ?? "—"} />
-        <Info
-          label="Dozent"
-          value={formatInstructorNames(training.instructors, training.instructor)}
-        />
-      </div>
-
-      {previewState?.error && (
-        <div
-          style={{
-            padding: "10px 12px",
-            border: "1px solid rgba(176,0,32,0.28)",
-            background: "rgba(176,0,32,0.08)",
-            color: "#B00020",
-            fontWeight: 800,
-            lineHeight: 1.5,
-          }}
-        >
-          {previewState.error}
-        </div>
-      )}
-
-      {previewState?.data?.ok && <PreviewBox preview={previewState.data} />}
-    </article>
-  );
-}
-
-function SummaryBox({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "green" | "error";
-}) {
-  const borderColor =
-    tone === "green"
-      ? "1px solid rgba(0,120,115,0.25)"
-      : tone === "error"
-        ? "1px solid rgba(176,0,32,0.25)"
-        : "1px solid #E6E6E6";
-  const bgColor =
-    tone === "green"
-      ? "rgba(0,120,115,0.06)"
-      : tone === "error"
-        ? "rgba(176,0,32,0.06)"
-        : "#FFFFFF";
-  const textColor =
-    tone === "green" ? "#007873" : tone === "error" ? "#B00020" : "#1F1F1F";
-
-  return (
-    <div style={{ border: borderColor, background: bgColor, padding: "14px 16px" }}>
-      <div
-        style={{
-          color: "#007873",
-          fontSize: 12,
-          fontWeight: 850,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ color: textColor, fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function PreviewBox({
-  preview,
-}: {
-  preview: Extract<PreviewResponse, { ok: true }>;
-}) {
-  const isNew = preview.action === "CREATE_NEW";
-
-  return (
-    <div
-      style={{
-        border: "1px solid #FFC100",
-        background: "rgba(255,193,0,0.08)",
-        padding: 14,
-        display: "grid",
-        gap: 10,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <strong style={{ color: "#007873", fontSize: 16 }}>App-Abgleich</strong>
-
-        <span
-          style={{
-            padding: "6px 10px",
-            borderRadius: 999,
-            background: isNew ? "#007873" : "#FFC100",
-            color: isNew ? "#FFFFFF" : "#1F1F1F",
-            fontWeight: 900,
-            fontSize: 12,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-          }}
-        >
-          {isNew ? "Neue Schulung" : "Bestehende Schulung"}
-        </span>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 10,
-          fontSize: 14,
-          lineHeight: 1.5,
-        }}
-      >
-        <Info label="Kürzel" value={preview.proposed.code} />
-        <Info label="Titel" value={cleanTrainingTitle(preview.proposed.title)} />
-        <Info
-          label="Credits"
-          value={`${preview.proposed.creditsAward} Credits`}
-        />
-        <Info label="Regel" value={preview.proposed.creditRule.label} />
-      </div>
-
-      {preview.app.exists && preview.app.existingTraining && (
-        <div
-          style={{
-            padding: "10px 12px",
-            border: "1px solid #E6E6E6",
-            background: "#FFFFFF",
-            color: "#1F1F1F",
-            lineHeight: 1.5,
-          }}
-        >
-          Passende App-Schulung gefunden:{" "}
-          <strong>
-            {preview.app.existingTraining.code ??
-              preview.app.existingTraining.title}
-          </strong>
-        </div>
-      )}
-
-      {preview.warnings.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gap: 6,
-            color: "#B00020",
-            fontWeight: 800,
-            lineHeight: 1.5,
-          }}
-        >
-          {preview.warnings.map((warning) => (
-            <div key={warning}>Hinweis: {warning}</div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ minWidth: 0 }}>
-      <div
-        style={{
-          color: "#777777",
-          fontWeight: 800,
-          fontSize: 12,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 2,
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          color: "#1F1F1F",
-          fontWeight: 700,
-          overflowWrap: "anywhere",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function cleanTrainingTitle(value: string | null | undefined) {
-  if (!value) return "—";
-
-  return value
-    .replace(/\s*\([^)]*\)\s*/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function formatRawValue(value: unknown) {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
 }

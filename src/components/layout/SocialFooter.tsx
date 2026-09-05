@@ -1,13 +1,15 @@
 import Link from "next/link";
 
+// Nur Token: Die Fußzeile steht unter jeder Seite und war im Dunkelmodus ein
+// heller Streifen mit dunkelgrauem Text (Launch-Runde 05.09.2026).
 export default function SocialFooter() {
   return (
     <footer
       style={{
         marginTop: "auto",
         padding: "18px 24px 22px",
-        borderTop: "1px solid #E6E6E6",
-        background: "#F7F7F4",
+        borderTop: "1px solid var(--vfa-linie)",
+        background: "var(--vfa-light)",
       }}
     >
       <div
@@ -19,8 +21,8 @@ export default function SocialFooter() {
           alignItems: "center",
           gap: 12,
           flexWrap: "wrap",
-          color: "#555555",
-          fontSize: 13,
+          color: "var(--vfa-text-2)",
+          fontSize: "var(--t-klein)",
         }}
       >
         <a
@@ -28,8 +30,8 @@ export default function SocialFooter() {
           target="_blank"
           rel="noreferrer"
           style={{
-            color: "#007873",
-            fontWeight: 800,
+            color: "var(--vfa-gruen-text)",
+            fontWeight: 700,
             textDecoration: "none",
           }}
         >
@@ -43,8 +45,8 @@ export default function SocialFooter() {
           target="_blank"
           rel="noreferrer"
           style={{
-            color: "#007873",
-            fontWeight: 800,
+            color: "var(--vfa-gruen-text)",
+            fontWeight: 700,
             textDecoration: "none",
           }}
         >
@@ -53,13 +55,19 @@ export default function SocialFooter() {
 
         <span aria-hidden="true">·</span>
 
-        <Link href="/impressum" style={{ color: "#555555", fontWeight: 700, textDecoration: "none" }}>
+        <Link
+          href="/impressum"
+          style={{ color: "var(--vfa-text-2)", fontWeight: 700, textDecoration: "none" }}
+        >
           Impressum
         </Link>
 
         <span aria-hidden="true">·</span>
 
-        <Link href="/datenschutz" style={{ color: "#555555", fontWeight: 700, textDecoration: "none" }}>
+        <Link
+          href="/datenschutz"
+          style={{ color: "var(--vfa-text-2)", fontWeight: 700, textDecoration: "none" }}
+        >
           Datenschutz
         </Link>
       </div>

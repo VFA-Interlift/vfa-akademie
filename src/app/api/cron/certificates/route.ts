@@ -4,14 +4,12 @@ import { formatCertificateKind } from "@/lib/certificates/templates";
 import { sendCertificateReadyEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+// Viele Teilnehmer heißt viele kleine Transaktionen plus eine Mail je Empfänger;
+// am Standardlimit bräche Vercel mitten im Lauf hart ab (Befund 05.09.2026).
+export const maxDuration = 300;
 
 function fail(error: string, status = 400) {
   return NextResponse.json({ ok: false, error }, { status });
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  return String(error);
 }
 
 function isAuthorized(req: Request) {
@@ -73,8 +71,10 @@ export async function GET(req: Request) {
       triggeredAt: now.toISOString(),
     });
   } catch (error: unknown) {
+    // Fehlertext nur ins Protokoll: Prisma-Meldungen nennen Tabellen und Hosts.
+    console.error("CERTIFICATE_GENERATION_FAILED", error);
     return NextResponse.json(
-      { ok: false, error: "CERTIFICATE_GENERATION_FAILED", details: getErrorMessage(error) },
+      { ok: false, error: "CERTIFICATE_GENERATION_FAILED" },
       { status: 500 }
     );
   }

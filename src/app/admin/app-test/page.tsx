@@ -36,8 +36,8 @@ export default async function AdminAppTestPage() {
         <div style={{ display: "grid", gap: 12 }}>
           <AnimatedSection>
             <AppCard>
-              <p style={{ margin: 0, color: "#333333", lineHeight: 1.6 }}>
-                <strong style={{ color: "#007873" }}>
+              <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
+                <strong style={{ color: "var(--vfa-gruen-text)" }}>
                   {rueckmeldungen.length} von {anzahlTester()}
                 </strong>{" "}
                 Testerinnen und Testern haben den Bogen abgeschickt. Jede
@@ -50,7 +50,7 @@ export default async function AdminAppTestPage() {
           {rueckmeldungen.length === 0 && (
             <AnimatedSection delayMs={60}>
               <AppCard>
-                <p style={{ margin: 0, color: "#333333" }}>
+                <p style={{ margin: 0, color: "var(--vfa-text)", fontSize: "var(--t-basis)" }}>
                   Es ist noch keine Rückmeldung eingegangen.
                 </p>
               </AppCard>
@@ -78,19 +78,19 @@ export default async function AdminAppTestPage() {
                         alignItems: "baseline",
                         gap: 10,
                         flexWrap: "wrap",
-                        borderBottom: "1px solid #EFEFEF",
+                        borderBottom: "1px solid var(--vfa-linie)",
                         paddingBottom: 10,
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#1F1F1F" }}>{name}</div>
-                        <div style={{ fontSize: 13, color: "#888888" }}>{r.user.email}</div>
+                        <h2 style={{ margin: 0, fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>{name}</h2>
+                        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)" }}>{r.user.email}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 15, fontWeight: 800, color: "#007873" }}>
+                        <div style={{ fontSize: "var(--t-basis)", fontWeight: 700, color: "var(--vfa-gruen-text)" }}>
                           {sterne(r.overallRating)} {r.overallRating} von 5
                         </div>
-                        <div style={{ fontSize: 13, color: "#888888" }}>Stand: {datum(r.updatedAt)}</div>
+                        <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)" }}>Stand: {datum(r.updatedAt)}</div>
                       </div>
                     </div>
 
@@ -98,14 +98,14 @@ export default async function AdminAppTestPage() {
                       const antwort = formatAntwort(antworten[frage.id]);
                       return (
                         <div key={frage.id} style={{ display: "grid", gap: 3 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "#6B6B6B", lineHeight: 1.45 }}>
+                          <span style={{ fontSize: "var(--t-klein)", fontWeight: 700, color: "var(--vfa-text-2)", lineHeight: 1.45 }}>
                             {frage.text}
                           </span>
                           <span
                             style={{
-                              fontSize: 14,
-                              lineHeight: 1.55,
-                              color: antwort.leer ? "#9AA0A6" : "#1F1F1F",
+                              fontSize: "var(--t-basis)",
+                              lineHeight: "var(--lh-weit)",
+                              color: antwort.leer ? "var(--vfa-text-3)" : "var(--vfa-text)",
                               fontStyle: antwort.leer ? "italic" : "normal",
                               // Freitexte so zeigen, wie sie eingetippt wurden —
                               // samt Zeilenumbrüchen.

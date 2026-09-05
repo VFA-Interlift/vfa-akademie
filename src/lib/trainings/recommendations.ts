@@ -245,7 +245,7 @@ export async function getTrainingRecommendations(
     const highest = [...doneOrBooked]
       .filter((p) => VDI_STAGES[p] === maxStage)
       .map((p) => COURSE_CATALOG[p]?.title ?? p)[0];
-    push(next, `Dein nächster Schritt nach „${shortTitle(highest ?? "deiner letzten Schulung")}"`);
+    push(next, `Dein nächster Schritt nach „${shortTitle(highest ?? "deiner letzten Schulung")}“`);
   }
   // maxStage === 4 (C erreicht): VDI-Reihe komplett – keine Empfehlung.
 

@@ -109,6 +109,10 @@ export async function DELETE(
   const session = await getServerSession(authOptions);
   if (!(await requireAdminId(session?.user?.email))) return deny(403, "FORBIDDEN");
 
+  // Unbekannte Schulung sauber als 404 melden statt als unbehandelte Ausnahme (05.09.2026).
+  const training = await prisma.training.findUnique({ where: { id }, select: { id: true } });
+  if (!training) return deny(404, "NOT_FOUND");
+
   await prisma.training.update({
     where: { id },
     data: { cancelledAt: null },

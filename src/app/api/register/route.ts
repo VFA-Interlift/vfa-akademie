@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import {
-  sendEmailVerificationEmail,
-  sendNewRegistrationNotificationEmail,
-} from "@/lib/email";
+import { sendEmailVerificationEmail } from "@/lib/email";
 import { absender, bremsePruefen } from "@/lib/bremse";
 import { passwortFehler } from "@/lib/passwort";
 
@@ -78,23 +75,8 @@ function bestaetigungsLink(token: string) {
 }
 
 export async function POST(req: Request) {
-  // Fünf Registrierungen je Absender in zehn Minuten. Sonst ließen sich Konten
-  // reihenweise anlegen und damit Bestätigungsmails verschicken.
-  const bremse = bremsePruefen(`register:${absender(req)}`, {
-    versuche: 5,
-    fensterSekunden: 600,
-    sperreSekunden: 900,
-  });
-
-  if (!bremse.erlaubt) {
-    return NextResponse.json(
-      { ok: false, error: "Zu viele Versuche. Bitte versuch es später noch einmal." },
-      { status: 429 }
-    );
-  }
-
   try {
-    const body = await req.json();
+    const body = (await req.json().catch(() => null)) ?? {};
 
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
@@ -145,6 +127,37 @@ export async function POST(req: Request) {
           error: "Das Geburtsdatum darf nicht in der Zukunft liegen.",
         },
         { status: 400 }
+      );
+    }
+
+    // Wie die Profilroute (api/profile): ein dreistelliges Jahr aus dem
+    // nativen Datumsfeld stünde sonst auf Zertifikaten (Befund f03-6).
+    if (birthDate.getUTCFullYear() < 1900) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Bitte ein gültiges Geburtsdatum angeben.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Die Bremse zählt erst hier, NACH der Eingabeprüfung — Tippfehler-Versuche
+    // zählten vorher mit (Befund f01-9, 05.09.2026). Zwei Zähler:
+    //  - je Absender 30 in zehn Minuten: Firmen hinter einem NAT und
+    //    Schulungsräume mit gemeinsamem WLAN teilen sich eine Adresse, mit
+    //    fünf war dort ab der sechsten Person Schluss;
+    //  - je Absender UND Adresse fünf: Sonst ließe sich ein fremdes Postfach
+    //    mit 30 Bestätigungsmails in zehn Minuten fluten.
+    const ip = absender(req);
+    const fenster = { fensterSekunden: 600, sperreSekunden: 900 };
+    const bremseNetz = bremsePruefen(`register:${ip}`, { versuche: 30, ...fenster });
+    const bremseAdresse = bremsePruefen(`register:${ip}:${email}`, { versuche: 5, ...fenster });
+
+    if (!bremseNetz.erlaubt || !bremseAdresse.erlaubt) {
+      return NextResponse.json(
+        { ok: false, error: "Zu viele Versuche. Bitte versuch es später noch einmal." },
+        { status: 429 }
       );
     }
 

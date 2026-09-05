@@ -47,8 +47,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         endDate: e.training.endDate?.toISOString() ?? null,
         creditsAward: e.training.creditsAward,
       },
-      hasCertificate: !!e.certificate,
-      certificateId: e.certificate?.id ?? null,
+      // Ein widerrufenes Zertifikat bleibt als Zeile am Enrollment hängen;
+      // für die Oberfläche gilt es als nicht vorhanden (Befund f12-2, 05.09.2026).
+      hasCertificate: !!e.certificate && e.certificate.status !== "REVOKED",
+      certificateId: e.certificate && e.certificate.status !== "REVOKED" ? e.certificate.id : null,
       certificateStatus: e.certificate?.status ?? null,
     })),
   });
@@ -74,10 +76,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const [user, training] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
-    prisma.training.findUnique({ where: { id: trainingId }, select: { id: true } }),
+    prisma.training.findUnique({ where: { id: trainingId }, select: { id: true, cancelledAt: true } }),
   ]);
   if (!user) return NextResponse.json({ ok: false, error: "USER_NOT_FOUND" }, { status: 404 });
   if (!training) return NextResponse.json({ ok: false, error: "TRAINING_NOT_FOUND" }, { status: 404 });
+  // Eine abgesagte Schulung erzeugt weder Erinnerungen noch Zertifikate —
+  // dort niemanden mehr eintragen (Befund f12-24, 05.09.2026).
+  if (training.cancelledAt) return NextResponse.json({ ok: false, error: "TRAINING_CANCELLED" }, { status: 409 });
 
   try {
     const enrollment = await prisma.enrollment.create({

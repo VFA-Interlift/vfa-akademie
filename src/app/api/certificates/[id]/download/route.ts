@@ -64,20 +64,23 @@ export async function GET(_req: Request, context: Ctx) {
     return fail("CERTIFICATE_NOT_DOWNLOADABLE", 400, { status: certificate.status });
   }
 
-  const documentData = await getCertificateDocumentData(id);
-
-  if (!documentData) return fail("CERTIFICATE_NOT_FOUND", 404);
-
-  const certificateCode =
-    documentData.certificate.code ||
-    documentData.certificate.training.code ||
-    documentData.data.code ||
-    "";
-
-  const templateConfig = getCertificateTemplateByCode(certificateCode);
-  const pdfTemplateFileName = templateConfig?.pdfTemplateFileName ?? null;
-
   try {
+    // Im try, damit ein Aussetzer beim Laden der Dokumentdaten als JSON
+    // (CERTIFICATE_RENDER_FAILED) zurückkommt statt als HTML-500-Seite
+    // (Befund f05-12, 05.09.2026).
+    const documentData = await getCertificateDocumentData(id);
+
+    if (!documentData) return fail("CERTIFICATE_NOT_FOUND", 404);
+
+    const certificateCode =
+      documentData.certificate.code ||
+      documentData.certificate.training.code ||
+      documentData.data.code ||
+      "";
+
+    const templateConfig = getCertificateTemplateByCode(certificateCode);
+    const pdfTemplateFileName = templateConfig?.pdfTemplateFileName ?? null;
+
     if (pdfTemplateFileName) {
       const pdfBytes = await renderCertificatePdf({
         templateFileName: pdfTemplateFileName,

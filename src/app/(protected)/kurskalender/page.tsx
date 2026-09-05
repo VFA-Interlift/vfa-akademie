@@ -3,35 +3,16 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
+import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import {
-  formatDate,
   formatDateRange,
-  formatInstructorName,
   formatVenueLines,
   getDisplayTrainingTitle,
   cleanTrainingTitle,
-  istAusgebucht,
 } from "@/lib/trainings/format";
-
-type CalendarTraining = {
-  id: string;
-  title: string;
-  code: string | null;
-  certificateKind: string | null;
-  certificateKindLabel: string;
-  date: string;
-  endDate: string | null;
-  location: string | null;
-  instructor: string | null;
-  description: string | null;
-  creditsAward: number;
-  category?: string | null;
-  preisVfaMitglied?: number | null;
-  preisVmaMitglied?: number | null;
-  preisNichtmitglied?: number | null;
-};
+import TrainingDialog, { type CalendarTraining } from "./TrainingDialog";
 
 type TrainingsResponse =
   | {
@@ -59,41 +40,6 @@ type WeekTrainingBar = {
   training: CalendarTraining;
   gridColumn: string;
 };
-
-const ANMELDUNG_URL = "https://www.vfa-interlift.de/schulungsanmeldung";
-const VDI_BOOKING_URL = "https://www.vfa-interlift.de/vdi-schulungen-anmeldung";
-const EFK_BOOKING_URL = "https://www.vfa-interlift.de/efk-schulungen-neu";
-const FOCUS_BOOKING_URL = "https://www.vfa-interlift.de/schwerpunkt-schulungen-neu";
-const PRAXIS_BOOKING_URL = "https://www.vfa-interlift.de/kopie-von-vdi-schulungen-neu";
-
-const VDI_CODES = ["A1", "A2", "B", "C"];
-const EFK_CODES = ["EFK1", "EFK2"];
-
-// Kompakte Praxisschulungen (Inbetriebnahme / Servicearbeiten / Troubleshooting)
-const PRAXIS_CODES = ["IN/SER/TR", "IN", "SER", "TR"];
-
-const FOCUS_CODES = [
-  "SCHALL",
-  "AZUBI",
-  "EINST",
-  "DGUV",
-  "FPFW",
-  "BETR",
-  "ARB",
-  "BRG",
-  "DOK",
-  "FRQ",
-  "GEF",
-  "MOD",
-  "MVO",
-  "NUR",
-  "PLG",
-  "SICH",
-  "SON",
-  "YLD",
-];
-
-const ALL_COURSE_CODES = [...VDI_CODES, ...EFK_CODES, ...PRAXIS_CODES, ...FOCUS_CODES];
 
 export default function KurskalenderPage() {
   const today = new Date();
@@ -154,7 +100,7 @@ export default function KurskalenderPage() {
 
   const weeks = useMemo(() => buildCalendarWeeks(monthDate), [monthDate]);
 
-  // Bereiche aus den geladenen Kursen ableiten — so taucht eine neue Kursart
+  // Bereiche aus den geladenen Schulungen ableiten — so taucht eine neue Art
   // automatisch als Filter auf, ohne dass hier eine Liste gepflegt werden muss.
   const bereiche = useMemo(() => {
     const set = new Set<string>();
@@ -185,24 +131,14 @@ export default function KurskalenderPage() {
 
   return (
     <main className="page-main">
-      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
         <PageHeader title="Kurskalender" showTitle={true} />
 
         {msg && (
           <AnimatedSection delayMs={60}>
-            <div
-              style={{
-                marginBottom: 18,
-                padding: "12px 14px",
-                border: "1px solid rgba(176,0,32,0.28)",
-                background: "rgba(176,0,32,0.08)",
-                color: "#B00020",
-                fontWeight: 800,
-                lineHeight: 1.5,
-              }}
-            >
+            <Meldung art="fehler" style={{ marginBottom: 18 }}>
               {msg}
-            </div>
+            </Meldung>
           </AnimatedSection>
         )}
 
@@ -219,10 +155,10 @@ export default function KurskalenderPage() {
                       padding: "7px 16px",
                       border: "none",
                       cursor: "pointer",
-                      fontWeight: 800,
-                      fontSize: 13,
+                      fontWeight: 700,
+                      fontSize: "var(--t-klein)",
                       background: ansicht === v ? "#007873" : "var(--vfa-karte)",
-                      color: ansicht === v ? "#FFFFFF" : "#007873",
+                      color: ansicht === v ? "#FFFFFF" : "var(--vfa-gruen-text)",
                     }}
                   >
                     {v === "liste" ? "Liste" : "Monat"}
@@ -241,11 +177,11 @@ export default function KurskalenderPage() {
                         padding: "6px 12px",
                         borderRadius: 999,
                         cursor: "pointer",
-                        fontSize: 12,
+                        fontSize: "var(--t-label)",
                         fontWeight: 700,
-                        border: bereich === b ? "1px solid #FFC100" : "1px solid #DDDDDD",
-                        background: bereich === b ? "#FFF6E0" : "var(--vfa-karte)",
-                        color: bereich === b ? "#1F1F1F" : "var(--vfa-text)",
+                        border: bereich === b ? "1px solid #FFC100" : "1px solid var(--vfa-linie)",
+                        background: bereich === b ? "rgba(255,193,0,0.12)" : "var(--vfa-karte)",
+                        color: "var(--vfa-text)",
                       }}
                     >
                       {b}
@@ -256,7 +192,9 @@ export default function KurskalenderPage() {
             </div>
           </AnimatedSection>
 
-          {ansicht === "liste" ? (
+          {/* Bei einem Ladefehler steht die Meldung schon oben; die Liste
+              zeigte darunter sonst noch „Keine kommenden Schulungen“. */}
+          {ansicht === "liste" && !msg ? (
             <AnimatedSection delayMs={120}>
               <ListenAnsicht
                 trainings={gefilterte}
@@ -289,12 +227,12 @@ export default function KurskalenderPage() {
                 <div
                   style={{
                     textAlign: "center",
-                    color: "#007873",
-                    fontSize: "clamp(18px, 4vw, 30px)",
-                    fontWeight: 500,
+                    color: "var(--vfa-gruen-text)",
+                    fontSize: "var(--t-titel)",
+                    fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.02em",
-                    lineHeight: 1.15,
+                    lineHeight: "var(--lh-eng)",
                   }}
                 >
                   {monthDate.toLocaleDateString("de-DE", {
@@ -318,8 +256,8 @@ export default function KurskalenderPage() {
           <AnimatedSection delayMs={160}>
             <AppCard>
               {loading ? (
-                <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>
-                  Kurskalender wird geladen...
+                <div style={{ color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>
+                  Kurskalender wird geladen …
                 </div>
               ) : (
                 <>
@@ -332,17 +270,7 @@ export default function KurskalenderPage() {
                     }}
                   >
                     {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
-                      <div
-                        key={day}
-                        style={{
-                          color: "#007873",
-                          fontWeight: 900,
-                          fontSize: 13,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          textAlign: "center",
-                        }}
-                      >
+                      <div key={day} className="etikett" style={{ textAlign: "center" }}>
                         {day}
                       </div>
                     ))}
@@ -391,8 +319,8 @@ export default function KurskalenderPage() {
                                   borderRadius: 999,
                                   display: "grid",
                                   placeItems: "center",
-                                  fontWeight: 900,
-                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  fontSize: "var(--t-klein)",
                                 }}
                               >
                                 {day.date.getDate()}
@@ -427,7 +355,11 @@ export default function KurskalenderPage() {
                                   borderRadius: 999,
                                   cursor: "pointer",
                                   textAlign: "left",
-                                  fontWeight: 900,
+                                  fontWeight: 700,
+                                  // 11 px bleiben (Kanon: Chips 11–12 px) — die
+                                  // Tageszellen sind am Handy nur ~45 px breit,
+                                  // mit 12 px blieben nur Auslassungspunkte
+                                  // (05.09.2026).
                                   fontSize: 11,
                                   lineHeight: 1.15,
                                   overflow: "hidden",
@@ -459,10 +391,10 @@ export default function KurskalenderPage() {
                                 position: "absolute",
                                 right: 8,
                                 top: 8,
-                                fontSize: 12,
-                                fontWeight: 900,
+                                fontSize: "var(--t-label)",
+                                fontWeight: 700,
                                 background: overflowWeek === week.key ? "#007873" : "var(--vfa-karte)",
-                                color: overflowWeek === week.key ? "#FFFFFF" : "#007873",
+                                color: overflowWeek === week.key ? "#FFFFFF" : "var(--vfa-gruen-text)",
                                 border: "1px solid #007873",
                                 borderRadius: 999,
                                 padding: "4px 8px",
@@ -506,7 +438,7 @@ export default function KurskalenderPage() {
         </div>
       </div>
 
-      {/* Overflow week list */}
+      {/* Wochenliste bei mehr als zwei Schulungen in einer Woche */}
       {overflowWeek && (() => {
         const week = weeks.find((w) => w.key === overflowWeek);
         if (!week) return null;
@@ -517,10 +449,10 @@ export default function KurskalenderPage() {
           <AnimatedSection delayMs={0}>
             <AppCard style={{ marginTop: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 12, flexWrap: "wrap" }}>
-                <div style={{ color: "#007873", fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <div className="etikett">
                   Alle Schulungen {start}–{end}
                 </div>
-                <button type="button" onClick={() => setOverflowWeek(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--vfa-text-3)", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+                <button type="button" onClick={() => setOverflowWeek(null)} aria-label="Wochenliste schließen" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--vfa-text-3)", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
               </div>
               <div style={{ display: "grid", gap: 8 }}>
                 {bars.map((bar) => (
@@ -531,15 +463,15 @@ export default function KurskalenderPage() {
                     style={{
                       display: "flex", gap: 12, alignItems: "center",
                       padding: "10px 14px", borderRadius: 10,
-                      background: "#FFC10015", border: "1px solid #FFC10040",
+                      background: "rgba(255,193,0,0.12)", border: "1px solid rgba(255,193,0,0.25)",
                       cursor: "pointer", textAlign: "left", width: "100%",
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, color: "var(--vfa-text)", fontSize: 14, lineHeight: 1.2 }}>{getDisplayTrainingTitle(bar.training)}</div>
-                      <div style={{ fontSize: 12, color: "var(--vfa-text-2)", marginTop: 2 }}>{formatDateRange(bar.training.date, bar.training.endDate)}</div>
+                      <div style={{ fontWeight: 700, color: "var(--vfa-text)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-eng)" }}>{getDisplayTrainingTitle(bar.training)}</div>
+                      <div style={{ fontSize: "var(--t-klein)", color: "var(--vfa-text-2)", marginTop: 2 }}>{formatDateRange(bar.training.date, bar.training.endDate)}</div>
                     </div>
-                    <div style={{ color: "#007873", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{bar.training.creditsAward} Cr.</div>
+                    <div style={{ color: "var(--vfa-gruen-text)", fontSize: "var(--t-klein)", fontWeight: 700, whiteSpace: "nowrap" }}>{bar.training.creditsAward} Cr.</div>
                   </button>
                 ))}
               </div>
@@ -558,221 +490,9 @@ export default function KurskalenderPage() {
   );
 }
 
-function TrainingDialog({
-  training,
-  onClose,
-}: {
-  training: CalendarTraining;
-  onClose: () => void;
-}) {
-  const displayTitle = getDisplayTrainingTitle(training);
-  const instructorName = formatInstructorName(training.instructor);
-  const addressLines = formatVenueLines(training.location, training.instructor);
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Schulungsdetails"
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.42)",
-        display: "grid",
-        placeItems: "center",
-        padding: 18,
-        animationName: "vfaDialogBackdropIn",
-        animationDuration: "180ms",
-        animationTimingFunction: "ease-out",
-        animationFillMode: "both",
-      }}
-    >
-      <div
-        onClick={(event) => event.stopPropagation()}
-        style={{
-          width: "100%",
-          maxWidth: 760,
-          maxHeight: "calc(100vh - 36px)",
-          overflow: "auto",
-          background: "var(--vfa-karte)",
-          border: "1px solid #FFC100",
-          boxShadow: "0 24px 70px rgba(0,0,0,0.28)",
-          padding: "clamp(14px, 4vw, 22px)",
-          animationName: "vfaDialogCardIn",
-          animationDuration: "280ms",
-          animationTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-          animationFillMode: "both",
-        }}
-      >
-        <button type="button" onClick={onClose} style={backButtonStyle}>
-          Zurück zum Kalender
-        </button>
-
-        <div style={{ marginTop: 18 }}>
-          <h2
-            style={{
-              margin: 0,
-              color: "#007873",
-              fontSize: "clamp(18px, 5vw, 30px)",
-              fontWeight: 650,
-              lineHeight: 1.18,
-              overflowWrap: "anywhere",
-            }}
-          >
-            {displayTitle}
-          </h2>
-
-          {training.code && cleanTrainingTitle(training.title) !== training.code && (
-            <p
-              style={{
-                marginTop: 8,
-                marginBottom: 0,
-                color: "var(--vfa-text)",
-                lineHeight: 1.5,
-              }}
-            >
-              {cleanTrainingTitle(training.title)}
-            </p>
-          )}
-        </div>
-
-        <div
-          style={{
-            marginTop: 20,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: 14,
-          }}
-        >
-          <Info label="Kürzel" value={training.code ?? "Nicht hinterlegt"} />
-
-          <Info
-            label="Zeitraum"
-            value={formatDateRange(training.date, training.endDate)}
-          />
-
-          <Info
-            label="Dozent"
-            value={instructorName}
-            muted={instructorName === "Noch nicht hinterlegt"}
-          />
-
-          <Info label="Abschluss" value={training.certificateKindLabel} />
-
-          <Info label="Credits" value={`${training.creditsAward} Credits`} />
-
-          <AddressInfo lines={addressLines} />
-        </div>
-
-        <PreisBlock training={training} />
-
-        {training.description && (
-          <div
-            style={{
-              marginTop: 18,
-              paddingTop: 16,
-              borderTop: "1px solid var(--vfa-linie)",
-            }}
-          >
-            <Info label="Weitere Informationen" value={training.description} />
-          </div>
-        )}
-
-        <div
-          style={{
-            marginTop: 20,
-            paddingTop: 18,
-            borderTop: "1px solid var(--vfa-linie)",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <div
-            style={{
-              color: "var(--vfa-text)",
-              fontSize: 14,
-              lineHeight: 1.5,
-            }}
-          >
-            Die Anmeldung läuft über die VFA-Website.
-          </div>
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a
-              href={getBookingUrl(training)}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ ...bookingButtonStyle, background: "var(--vfa-karte)", color: "#007873", border: "1px solid #007873" }}
-            >
-              Kursdetails
-            </a>
-
-            {istAusgebucht(training.title) ? (
-              <span
-                style={{
-                  ...bookingButtonStyle,
-                  background: "var(--vfa-karte-2)",
-                  color: "var(--vfa-text-3)",
-                  cursor: "default",
-                }}
-              >
-                Ausgebucht
-              </span>
-            ) : (
-              <a
-                href={getAnmeldungUrl(training)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={bookingButtonStyle}
-              >
-                Jetzt anmelden
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <style jsx>{`
-        @keyframes vfaDialogBackdropIn {
-          from {
-            opacity: 0;
-          }
-
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes vfaDialogCardIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px) scale(0.985);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          div {
-            animation: none !important;
-          }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 /**
- * Listenansicht der kommenden Kurse. Bei rund drei Terminen pro Monat ist ein
- * Monatsraster viel Fläche für wenig Inhalt — besonders auf dem Handy.
+ * Listenansicht der kommenden Schulungen. Bei rund drei Terminen pro Monat ist
+ * ein Monatsraster viel Fläche für wenig Inhalt — besonders auf dem Handy.
  */
 function ListenAnsicht({
   trainings,
@@ -793,7 +513,7 @@ function ListenAnsicht({
   if (loading) {
     return (
       <AppCard>
-        <div style={{ color: "var(--vfa-text)", lineHeight: 1.6 }}>Kurse werden geladen...</div>
+        <div style={{ color: "var(--vfa-text)", lineHeight: "var(--lh-weit)" }}>Schulungen werden geladen …</div>
       </AppCard>
     );
   }
@@ -801,8 +521,10 @@ function ListenAnsicht({
   if (kommende.length === 0) {
     return (
       <AppCard>
-        <div style={{ fontWeight: 800, color: "#007873" }}>Keine kommenden Kurse gefunden.</div>
-        <p style={{ margin: "6px 0 0", color: "var(--vfa-text-2)", fontSize: 14 }}>
+        <div style={{ fontWeight: 700, color: "var(--vfa-gruen-text)", fontSize: "var(--t-gross)" }}>
+          Keine kommenden Schulungen gefunden.
+        </div>
+        <p style={{ margin: "6px 0 0", color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
           Falls ein Bereichsfilter aktiv ist, hebe ihn auf.
         </p>
       </AppCard>
@@ -827,16 +549,7 @@ function ListenAnsicht({
         return (
           <div key={t.id}>
             {neuerMonat ? (
-              <div
-                style={{
-                  color: "#007873",
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  margin: "12px 0 6px",
-                }}
-              >
+              <div className="etikett" style={{ margin: "12px 0 6px" }}>
                 {monat}
               </div>
             ) : null}
@@ -861,16 +574,16 @@ function ListenAnsicht({
                 <div style={{ fontSize: 22, fontWeight: 800, color: "var(--vfa-text)", lineHeight: 1 }}>
                   {d.getDate()}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase" }}>
+                <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase" }}>
                   {d.toLocaleDateString("de-DE", { month: "short" })}
                 </div>
               </div>
 
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 750, color: "#007873", fontSize: 15, lineHeight: 1.25 }}>
+                <div style={{ fontWeight: 700, color: "var(--vfa-gruen-text)", fontSize: "var(--t-basis)", lineHeight: 1.25 }}>
                   {cleanTrainingTitle(t.title)}
                 </div>
-                <div style={{ color: "var(--vfa-text-3)", fontSize: 12, marginTop: 3 }}>
+                <div style={{ color: "var(--vfa-text-3)", fontSize: "var(--t-klein)", marginTop: 3 }}>
                   {formatDateRange(t.date, t.endDate)}
                   {t.code ? ` · ${t.code}` : ""}
                   {adresse.length > 0 ? ` · ${adresse[0]}` : ""}
@@ -878,10 +591,10 @@ function ListenAnsicht({
               </div>
 
               <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ color: "#007873", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>
+                <div style={{ color: "var(--vfa-gruen-text)", fontWeight: 800, fontSize: "var(--t-gross)", lineHeight: 1 }}>
                   {t.creditsAward}
                 </div>
-                <div style={{ fontSize: 10, color: "var(--vfa-text-3)", fontWeight: 800, textTransform: "uppercase" }}>
+                <div style={{ fontSize: "var(--t-label)", color: "var(--vfa-text-3)", fontWeight: 700, textTransform: "uppercase" }}>
                   Credits
                 </div>
               </div>
@@ -891,143 +604,6 @@ function ListenAnsicht({
       })}
     </div>
   );
-}
-
-function formatPreis(wert: number | null | undefined) {
-  if (wert === null || wert === undefined || Number.isNaN(Number(wert))) return null;
-  const n = Number(wert);
-  if (n <= 0) return null;
-  return `${n.toLocaleString("de-DE", { maximumFractionDigits: 0 })} €`;
-}
-
-/** Preisstufen der Website. Fehlen sie, bleibt der Block ganz weg. */
-function PreisBlock({ training }: { training: CalendarTraining }) {
-  const stufen = [
-    { label: "VFA-Mitglied", wert: formatPreis(training.preisVfaMitglied) },
-    { label: "VmA-Mitglied", wert: formatPreis(training.preisVmaMitglied) },
-    { label: "Nichtmitglied", wert: formatPreis(training.preisNichtmitglied) },
-  ].filter((s) => s.wert);
-
-  if (stufen.length === 0) return null;
-
-  return (
-    <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--vfa-linie)" }}>
-      <div
-        style={{
-          color: "var(--vfa-text-3)",
-          fontSize: 11,
-          fontWeight: 800,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          marginBottom: 8,
-        }}
-      >
-        Teilnahmegebühr
-      </div>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        {stufen.map((s) => (
-          <div
-            key={s.label}
-            style={{
-              padding: "8px 12px",
-              background: "var(--vfa-karte-2)",
-              borderRadius: 8,
-              minWidth: 110,
-            }}
-          >
-            <div style={{ fontSize: 16, fontWeight: 800, color: "var(--vfa-text)" }}>{s.wert}</div>
-            <div style={{ fontSize: 11, color: "var(--vfa-text-3)", fontWeight: 700 }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: 8, fontSize: 12, color: "var(--vfa-text-3)" }}>
-        Angaben ohne Gewähr — verbindliche Preise auf der VFA-Website.
-      </div>
-    </div>
-  );
-}
-
-/**
- * Direkter Sprung ins Anmeldeformular der Website mit vorausgewähltem Kurs.
- * Die Seite liest den Kurscode aus dem Parameter `kurs` und lädt den Termin
- * daraus — ohne ihn landet man auf „Kein Kurs ausgewählt".
- */
-function getAnmeldungUrl(training: CalendarTraining) {
-  const code = String(training.code ?? "").trim();
-  if (!code) return ANMELDUNG_URL;
-  return `${ANMELDUNG_URL}?kurs=${encodeURIComponent(code)}`;
-}
-
-function getBookingUrl(training: CalendarTraining) {
-  const courseKey = getCourseKey(training);
-  const titleNorm = normalizeCourseText(training.title ?? "");
-
-  // Praxisschulungen: am Titel-Keyword oder am Praxis-Code erkennbar.
-  if (PRAXIS_CODES.includes(courseKey) || titleNorm.includes("PRAXISSCHULUNG")) {
-    return PRAXIS_BOOKING_URL;
-  }
-
-  if (VDI_CODES.includes(courseKey)) {
-    return VDI_BOOKING_URL;
-  }
-
-  if (EFK_CODES.includes(courseKey)) {
-    return EFK_BOOKING_URL;
-  }
-
-  // EFK-Auffrischung ("EFK-ffT_Auffrischung_online-…"): der Code steht in keiner
-  // Codeliste, der Kurs landete darum faelschlich auf der Schwerpunkt-Seite.
-  // Die Auffrischungstermine stehen auf der Website im selben EFK-Block wie
-  // EFK1/EFK2, also dorthin (Sitemap gegengeprueft, 20.08.2026).
-  if (normalizeCourseText(training.code ?? "").startsWith("EFK")) {
-    return EFK_BOOKING_URL;
-  }
-
-  return FOCUS_BOOKING_URL;
-}
-
-function getCourseKey(training: CalendarTraining) {
-  const rawCode = normalizeCourseText(training.code ?? "");
-  const rawTitle = normalizeCourseText(training.title ?? "");
-
-  const codeMatch = findCourseCode(rawCode);
-  if (codeMatch) return codeMatch;
-
-  const titleMatch = findCourseCode(rawTitle);
-  if (titleMatch) return titleMatch;
-
-  return "";
-}
-
-function normalizeCourseText(value: string) {
-  return value
-    .trim()
-    .toUpperCase()
-    .replace(/Ä/g, "AE")
-    .replace(/Ö/g, "OE")
-    .replace(/Ü/g, "UE")
-    .replace(/ß/g, "SS");
-}
-
-function findCourseCode(value: string) {
-  if (!value) return "";
-
-  const compactValue = value.replace(/\s+/g, "");
-
-  const matchedCode = ALL_COURSE_CODES.find((code) => {
-    const compactCode = code.replace(/\s+/g, "").toUpperCase();
-
-    return (
-      compactValue === compactCode ||
-      compactValue.startsWith(`${compactCode}-`) ||
-      compactValue.startsWith(`${compactCode}_`) ||
-      compactValue.startsWith(`${compactCode}:`) ||
-      compactValue.startsWith(`${compactCode}.`) ||
-      compactValue.startsWith(`${compactCode}/`)
-    );
-  });
-
-  return matchedCode ?? "";
 }
 
 function buildCalendarWeeks(monthDate: Date): CalendarWeek[] {
@@ -1111,50 +687,6 @@ function formatTrainingBarLabel(training: CalendarTraining) {
   return getDisplayTrainingTitle(training);
 }
 
-function AddressInfo({ lines }: { lines: string[] }) {
-  return (
-    <div style={{ minWidth: 0 }}>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 850,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 3,
-        }}
-      >
-        Adresse
-      </div>
-
-      {lines.length === 0 ? (
-        <div
-          style={{
-            color: "var(--vfa-text-3)",
-            lineHeight: 1.45,
-            fontSize: 14,
-            fontStyle: "italic",
-          }}
-        >
-          Noch nicht hinterlegt
-        </div>
-      ) : (
-        <div
-          style={{
-            color: "var(--vfa-text)",
-            lineHeight: 1.45,
-            fontSize: 14,
-          }}
-        >
-          {lines.map((line) => (
-            <div key={line}>{line}</div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function diffDays(start: Date, end: Date) {
   const msPerDay = 24 * 60 * 60 * 1000;
 
@@ -1189,87 +721,18 @@ function isWeekend(date: Date) {
   return day === 0 || day === 6;
 }
 
-function Info({
-  label,
-  value,
-  muted = false,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-}) {
-  return (
-    <div style={{ minWidth: 0 }}>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 850,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 3,
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)",
-          lineHeight: 1.45,
-          fontSize: 14,
-          fontStyle: muted ? "italic" : "normal",
-          overflowWrap: "anywhere",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
+// Rand über dasselbe Token wie der Geisterknopf (AppButton ghost), damit die
+// Pfeile im Dunkelmodus keinen hellen Ring behalten.
 const arrowButtonStyle: CSSProperties = {
   width: 44,
   height: 44,
   borderRadius: 999,
-  border: "1px solid #C7C7C7",
+  border: "1px solid var(--vfa-grey)",
   background: "var(--vfa-karte)",
-  color: "#007873",
-  fontWeight: 900,
+  color: "var(--vfa-gruen-text)",
+  fontWeight: 700,
   fontSize: 22,
   cursor: "pointer",
   boxShadow: "0 6px 18px rgba(0,0,0,0.04)",
   transition: "background 180ms ease, border-color 180ms ease, transform 180ms ease",
-};
-
-const backButtonStyle: CSSProperties = {
-  minHeight: 38,
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "1px solid #007873",
-  background: "var(--vfa-karte)",
-  color: "#007873",
-  fontWeight: 850,
-  fontSize: 13,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  cursor: "pointer",
-};
-
-const bookingButtonStyle: CSSProperties = {
-  minHeight: 42,
-  padding: "10px 18px",
-  borderRadius: 999,
-  border: "1px solid #007873",
-  background: "#007873",
-  color: "#FFFFFF",
-  fontWeight: 900,
-  fontSize: 13,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  textDecoration: "none",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow: "0 8px 20px rgba(0,120,115,0.20)",
 };

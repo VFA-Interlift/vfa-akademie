@@ -2,6 +2,8 @@
 
 import { formatDate, formatDateRange } from "@/lib/trainings/format";
 import { bewerteFrische, FRISCHE_FARBE } from "@/lib/kompetenz/frische";
+import PageHeader from "@/components/ui/PageHeader";
+import AppButton from "@/components/ui/AppButton";
 
 type SerializableCertificate = {
   id: string;
@@ -72,11 +74,19 @@ function getCompetencyTitle(cert: SerializableCertificate) {
   return cleanTitle(cert.trainingTitle || cert.title);
 }
 
+// Kürzel vor dem ersten Trenner („B-2701", „B_2701", „B 2701" → „B") — dieselbe
+// Regel wie in badges/page.tsx, damit beide Seiten dieselben Module zählen
+// (05.09.2026). coursePrefixOf aus recommendations.ts geht hier nicht: die
+// Datei zieht Prisma in den Client-Bundle.
+function kuerzelVon(code: string) {
+  return code.split(/[-_ ]/)[0];
+}
+
 const VDI_MODULES: { level: string; matches: (code: string) => boolean }[] = [
-  { level: "A1", matches: (c) => c.startsWith("A1") },
-  { level: "A2", matches: (c) => c.startsWith("A2") },
-  { level: "B", matches: (c) => c.startsWith("B-") || c === "B" },
-  { level: "C", matches: (c) => c.startsWith("C-") || c === "C" },
+  { level: "A1", matches: (c) => kuerzelVon(c) === "A1" },
+  { level: "A2", matches: (c) => kuerzelVon(c) === "A2" },
+  { level: "B", matches: (c) => kuerzelVon(c) === "B" },
+  { level: "C", matches: (c) => kuerzelVon(c) === "C" },
 ];
 
 /**
@@ -115,16 +125,18 @@ function getAchievements(
     achievements.push(`${rank.label}-Status erreicht`);
   }
 
-  // Credit milestones
-  if (creditsTotal >= 3000) achievements.push("Über 3.000 Credits gesammelt");
-  else if (creditsTotal >= 1000) achievements.push("Über 1.000 Credits gesammelt");
+  // Credit milestones — „erreicht" statt „über": die Schwelle zählt schon bei
+  // genau 1.000 bzw. 3.000 (05.09.2026).
+  if (creditsTotal >= 3000) achievements.push("3.000 Credits erreicht");
+  else if (creditsTotal >= 1000) achievements.push("1.000 Credits erreicht");
 
-  // Loyalty
+  // Loyalty — „Dabei seit": das Datum ist die Kontoerstellung, keine
+  // Verbandsmitgliedschaft (05.09.2026).
   const since = new Date(memberSince);
   if (!Number.isNaN(since.getTime())) {
     const years = (Date.now() - since.getTime()) / (1000 * 60 * 60 * 24 * 365);
     if (years >= 1) {
-      achievements.push(`Mitglied seit ${since.getFullYear()}`);
+      achievements.push(`Dabei seit ${since.getFullYear()}`);
     }
   }
 
@@ -155,33 +167,21 @@ export default function KompetenzpassClient({
   return (
     <main className="page-main kompetenzpass-page">
       <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
-
-        {/* Action bar (hidden on print) */}
-        <div className="kp-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: "var(--t-titel)", fontWeight: 750, color: "var(--vfa-text)", letterSpacing: "-0.02em" }}>
-              Kompetenzpass
-            </h1>
-            <p style={{ margin: "4px 0 0", color: "var(--vfa-text-2)", fontSize: 14 }}>
+        {/* Petrol-Band wie auf jeder Seite plus Aktionsleiste in EINEM Kind: globals.css
+            gibt dem Container zwei Zeilen (auto 1fr), das Dokument muss das zweite Kind
+            bleiben. Beides ist im Druck ausgeblendet (05.09.2026). */}
+        <div className="kp-actions" style={{ display: "grid", gap: 16 }}>
+          <PageHeader title="Kompetenzpass" />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <p style={{ margin: 0, color: "var(--vfa-text-2)", fontSize: "var(--t-basis)", lineHeight: "var(--lh-weit)" }}>
               Dein persönlicher Qualifikationsnachweis – zum Drucken oder als PDF speichern.
             </p>
+            <AppButton onClick={() => window.print()}>↓ Als PDF / Drucken</AppButton>
           </div>
-          <button
-            type="button"
-            className="vfa-btn"
-            onClick={() => window.print()}
-            style={{
-              minHeight: 44, padding: "11px 20px", borderRadius: 999,
-              border: "1px solid #007873", background: "#007873", color: "#FFFFFF",
-              fontWeight: 900, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.06em",
-              cursor: "pointer", whiteSpace: "nowrap",
-            }}
-          >
-            ↓ Als PDF / Drucken
-          </button>
         </div>
 
-        {/* The pass document */}
+        {/* The pass document — bleibt bewusst hell mit festen Farben: ein
+            Dokument, das gedruckt wird, folgt nicht dem Dunkelmodus (20.08.2026). */}
         <div
           className="kp-document"
           style={{
@@ -211,7 +211,7 @@ export default function KompetenzpassClient({
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/mark-light.png" alt="" width={22} height={22} style={{ display: "block", flexShrink: 0 }} />
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.7 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.7 }}>
                   VFA-Akademie
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function KompetenzpassClient({
                 {displayName || "Mein Kompetenzpass"}
               </div>
               {(position || company) && (
-                <div style={{ fontSize: 14, opacity: 0.85, marginTop: 6, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 13, opacity: 0.85, marginTop: 6, lineHeight: 1.4 }}>
                   {[position, company].filter(Boolean).join(" · ")}
                 </div>
               )}
@@ -236,12 +236,12 @@ export default function KompetenzpassClient({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={rank.badge}
-                alt={`${rank.label} Badge`}
+                alt={`Rang: ${rank.label}`}
                 width={66}
                 height={66}
                 style={{ display: "block", filter: rank.key === "STARTER" ? "grayscale(1)" : "none", opacity: rank.key === "STARTER" ? 0.55 : 1 }}
               />
-              <span style={{ fontSize: 11, opacity: 0.85, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
+              <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
             </div>
           </div>
 
@@ -258,7 +258,7 @@ export default function KompetenzpassClient({
             <StatCell label="Credits gesamt" value={creditsTotal.toLocaleString("de-DE")} highlight />
             <StatCell label="Zertifikate" value={String(certificates.length)} />
             <StatCell label="Credits aus Zertifikaten" value={totalCertificateCredits.toLocaleString("de-DE")} />
-            <StatCell label="Mitglied seit" value={formatMonthYear(memberSince)} />
+            <StatCell label="Dabei seit" value={formatMonthYear(memberSince)} />
           </div>
 
           {/* Rank progress (hidden on print to keep it document-like) */}
@@ -284,7 +284,7 @@ export default function KompetenzpassClient({
           {/* Achievements / remarks */}
           {achievements.length > 0 && (
             <div style={{ padding: "20px 30px", borderBottom: "1px solid #F0F0F0" }}>
-              <h2 style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 900, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              <h2 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                 Auszeichnungen
               </h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -315,12 +315,12 @@ export default function KompetenzpassClient({
 
           {/* Competencies list */}
           <div className="kp-body" style={{ padding: "24px 30px 30px" }}>
-            <h2 style={{ margin: "0 0 16px", fontSize: 13, fontWeight: 900, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <h2 style={{ margin: "0 0 16px", fontSize: 12, fontWeight: 700, color: "#007873", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Absolvierte Kompetenzen
             </h2>
 
             {certificates.length === 0 ? (
-              <div style={{ color: "#888888", fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ color: "#888888", fontSize: 15, lineHeight: 1.55 }}>
                 Sobald deine erste Schulung abgeschlossen ist, erscheint sie hier als Kompetenz.
               </div>
             ) : (
@@ -368,10 +368,10 @@ export default function KompetenzpassClient({
                       })()}
                     </div>
                     <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <div style={{ fontWeight: 900, fontSize: 16, color: "#007873", lineHeight: 1 }}>
+                      <div style={{ fontWeight: 800, fontSize: 17, color: "#007873", lineHeight: 1 }}>
                         +{cert.credits.toLocaleString("de-DE")}
                       </div>
-                      <div style={{ fontSize: 10, color: "#AAAAAA", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
+                      <div style={{ fontSize: 12, color: "#AAAAAA", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
                         Credits
                       </div>
                     </div>
@@ -408,10 +408,11 @@ export default function KompetenzpassClient({
 function StatCell({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div style={{ background: "#FFFFFF", padding: "16px 18px" }}>
-      <div style={{ fontSize: highlight ? 26 : 22, fontWeight: 900, color: highlight ? "#007873" : "#1F1F1F", lineHeight: 1 }}>
+      {/* Hervorhebung nur über die Farbe, eine Größe für alle Kennzahlen (05.09.2026) */}
+      <div style={{ fontSize: 22, fontWeight: 800, color: highlight ? "#007873" : "#1F1F1F", lineHeight: 1 }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, fontWeight: 800, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 5 }}>
+      <div style={{ fontSize: 12, fontWeight: 800, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 5 }}>
         {label}
       </div>
     </div>

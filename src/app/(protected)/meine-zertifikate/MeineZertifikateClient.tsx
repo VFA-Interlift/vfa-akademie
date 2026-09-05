@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import AppCard from "@/components/ui/AppCard";
+import AppButton from "@/components/ui/AppButton";
+import AppSelect from "@/components/ui/AppSelect";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CertificateDownloadButton from "@/components/CertificateDownloadButton";
 import ZertifikatTeilen from "@/components/ZertifikatTeilen";
@@ -41,7 +42,8 @@ export default function MeineZertifikateClient({
 }: {
   certificates: SerializableCertificate[];
 }) {
-  const [selectedYear, setSelectedYear] = useState("alle");
+  // "" = alle Jahre (Platzhalter von AppSelect).
+  const [selectedYear, setSelectedYear] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const years = useMemo(() => {
@@ -53,7 +55,7 @@ export default function MeineZertifikateClient({
   }, [certificates]);
 
   const filteredCertificates = useMemo(() => {
-    if (selectedYear === "alle") {
+    if (selectedYear === "") {
       return certificates;
     }
 
@@ -66,7 +68,7 @@ export default function MeineZertifikateClient({
     return (
       <AnimatedSection>
         <AppCard>
-          <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "#007873" }}>
+          <div className="balance" style={{ fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)" }}>
             Aktuell sind noch keine Zertifikate vorhanden.
           </div>
         </AppCard>
@@ -99,7 +101,9 @@ export default function MeineZertifikateClient({
       </AnimatedSection>
 
       <AnimatedSection delayMs={80}>
-        <AppCard accent="yellow">
+        {/* Ohne gelben Rand: Der Filter ist nicht die eine wichtige Karte
+            der Seite (Launch-Runde 05.09.2026). */}
+        <AppCard>
           <div
             style={{
               display: "flex",
@@ -109,48 +113,20 @@ export default function MeineZertifikateClient({
               flexWrap: "wrap",
             }}
           >
-            <div
-              style={{
-                color: "#007873",
-                fontSize: 12,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              Jahresfilter
-            </div>
+            <div className="etikett">Jahresfilter</div>
 
-            <label style={{ display: "grid", gap: 6, minWidth: 180 }}>
-              <span
-                style={{
-                  color: "var(--vfa-text)",
-                  fontSize: 13,
-                  fontWeight: 850,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Jahr
-              </span>
-
-              <select
+            <div style={{ minWidth: 180, flex: "0 1 220px" }}>
+              <AppSelect
+                label="Jahr"
                 value={selectedYear}
-                onChange={(event) => {
-                  setSelectedYear(event.target.value);
+                onChange={(value) => {
+                  setSelectedYear(value);
                   setOpenId(null);
                 }}
-                style={selectStyle}
-              >
-                <option value="alle">Alle Jahre</option>
-
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </label>
+                options={years.map((year) => ({ value: year, label: year }))}
+                placeholder="Alle Jahre"
+              />
+            </div>
           </div>
         </AppCard>
       </AnimatedSection>
@@ -226,10 +202,10 @@ export default function MeineZertifikateClient({
                         <h2
                           style={{
                             margin: 0,
-                            color: "#007873",
+                            color: "var(--vfa-gruen-text)",
                             fontSize: "var(--t-gross)",
                             fontWeight: 700,
-                            lineHeight: 1.2,
+                            lineHeight: "var(--lh-eng)",
                             maxWidth: 520,
                             textWrap: "balance",
                           }}
@@ -265,11 +241,14 @@ export default function MeineZertifikateClient({
                           paddingTop: 2,
                         }}
                       >
+                        {/* Kennzahl-Größe aus der Staffel statt clamp bis 34px;
+                            Petrol bleibt, weil die Zahl hier der Akzent der
+                            Karte ist, kein Statistikkasten (05.09.2026). */}
                         <div
                           style={{
-                            color: "#007873",
+                            color: "var(--vfa-gruen-text)",
                             fontWeight: 800,
-                            fontSize: "clamp(22px, 5vw, 34px)",
+                            fontSize: "var(--t-zahl)",
                             lineHeight: 1,
                             textAlign: "right",
                           }}
@@ -280,8 +259,8 @@ export default function MeineZertifikateClient({
                         <div
                           style={{
                             color: "var(--vfa-text-2)",
-                            fontSize: 12,
-                            fontWeight: 850,
+                            fontSize: "var(--t-label)",
+                            fontWeight: 700,
                             letterSpacing: "0.06em",
                             textTransform: "uppercase",
                             textAlign: "right",
@@ -293,9 +272,9 @@ export default function MeineZertifikateClient({
                         <div
                           style={{
                             marginTop: 8,
-                            color: "#007873",
-                            fontSize: 24,
-                            fontWeight: 900,
+                            color: "var(--vfa-gruen-text)",
+                            fontSize: "var(--t-titel)",
+                            fontWeight: 800,
                             lineHeight: 1,
                             transition: "transform 180ms ease",
                             transform: isOpen
@@ -313,7 +292,7 @@ export default function MeineZertifikateClient({
                     <AnimatedSection delayMs={0}>
                       <div
                         style={{
-                          borderTop: "1px solid #E6E6E6",
+                          borderTop: "1px solid var(--vfa-linie)",
                           padding: "16px 20px 18px",
                           background: "var(--vfa-karte)",
                         }}
@@ -350,7 +329,7 @@ export default function MeineZertifikateClient({
                             style={{
                               marginTop: 16,
                               paddingTop: 16,
-                              borderTop: "1px solid #E6E6E6",
+                              borderTop: "1px solid var(--vfa-linie)",
                             }}
                           >
                             <Info label="Inhalte" value={cert.description} />
@@ -368,7 +347,7 @@ export default function MeineZertifikateClient({
                           {canDownload ? (
                             <CertificateDownloadButton
                               certificateId={cert.id}
-                              label="Dokument herunterladen"
+                              label="Zertifikat ansehen"
                             />
                           ) : (
                             <StatusBadge>Dokument wird vorbereitet</StatusBadge>
@@ -391,7 +370,7 @@ export default function MeineZertifikateClient({
                                 borderRadius: 999,
                                 background: "var(--vfa-karte-2)",
                                 color: "var(--vfa-text-3)",
-                                fontSize: 14,
+                                fontSize: "var(--t-klein)",
                                 fontWeight: 700,
                                 letterSpacing: "0.04em",
                               }}
@@ -399,28 +378,9 @@ export default function MeineZertifikateClient({
                               ★ Feedback abgegeben
                             </span>
                           ) : (
-                            <Link
-                              href={`/feedback/${cert.enrollmentId}`}
-                              className="vfa-btn"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 8,
-                                minHeight: 42,
-                                padding: "10px 22px",
-                                borderRadius: 999,
-                                background: "#FFC100",
-                                color: "#1F1F1F",
-                                border: "1px solid #FFC100",
-                                fontSize: 14,
-                                fontWeight: 800,
-                                letterSpacing: "0.05em",
-                                textTransform: "uppercase",
-                                textDecoration: "none",
-                              }}
-                            >
+                            <AppButton href={`/feedback/${cert.enrollmentId}`} variant="yellow">
                               ★ Feedback abgeben (+10)
-                            </Link>
+                            </AppButton>
                           )}
                         </div>
                       </div>
@@ -436,19 +396,6 @@ export default function MeineZertifikateClient({
   );
 }
 
-const selectStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "11px 14px",
-  borderRadius: 999,
-  border: "1px solid #C7C7C7",
-  background: "var(--vfa-karte)",
-  color: "var(--vfa-text)",
-  fontSize: 15,
-  fontWeight: 800,
-  outlineColor: "#007873",
-};
-
 function SummaryBox({ label, value }: { label: string; value: number }) {
   return (
     <div
@@ -459,29 +406,11 @@ function SummaryBox({ label, value }: { label: string; value: number }) {
         borderRadius: 12,
       }}
     >
-      <div
-        style={{
-          color: "#007873",
-          fontSize: 12,
-          fontWeight: 850,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 6,
-        }}
-      >
+      <div className="etikett" style={{ marginBottom: 6 }}>
         {label}
       </div>
 
-      <div
-        style={{
-          color: "var(--vfa-text)",
-          fontSize: 24,
-          fontWeight: 900,
-          lineHeight: 1.1,
-        }}
-      >
-        {value.toLocaleString("de-DE")}
-      </div>
+      <div className="kennzahl">{value.toLocaleString("de-DE")}</div>
     </div>
   );
 }
@@ -497,24 +426,15 @@ function Info({
 }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 850,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 3,
-        }}
-      >
+      <div className="etikett" style={{ marginBottom: 3 }}>
         {label}
       </div>
 
       <div
         style={{
           color: muted ? "var(--vfa-text-3)" : "var(--vfa-text)",
-          lineHeight: 1.45,
-          fontSize: 14,
+          lineHeight: "var(--lh-weit)",
+          fontSize: "var(--t-basis)",
           fontStyle: muted ? "italic" : "normal",
           overflowWrap: "anywhere",
         }}
@@ -528,16 +448,7 @@ function Info({
 function AddressInfo({ lines }: { lines: string[] }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 850,
-          color: "#007873",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 3,
-        }}
-      >
+      <div className="etikett" style={{ marginBottom: 3 }}>
         Adresse
       </div>
 
@@ -545,8 +456,8 @@ function AddressInfo({ lines }: { lines: string[] }) {
         <div
           style={{
             color: "var(--vfa-text-3)",
-            lineHeight: 1.45,
-            fontSize: 14,
+            lineHeight: "var(--lh-weit)",
+            fontSize: "var(--t-basis)",
             fontStyle: "italic",
           }}
         >
@@ -556,8 +467,8 @@ function AddressInfo({ lines }: { lines: string[] }) {
         <div
           style={{
             color: "var(--vfa-text)",
-            lineHeight: 1.45,
-            fontSize: 14,
+            lineHeight: "var(--lh-weit)",
+            fontSize: "var(--t-basis)",
           }}
         >
           {lines.map((line) => (

@@ -96,6 +96,17 @@ export async function PUT(req: Request) {
     return fail("LEADERBOARD_NAME_REQUIRED", 400);
   }
 
+  // Sitzung ohne Nutzer in der Datenbank (z. B. nach Konto-Löschung):
+  // update warf sonst P2025 und die Route antwortete mit 500 (05.09.2026).
+  const vorhanden = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (!vorhanden) {
+    return fail("USER_NOT_FOUND", 404);
+  }
+
   const updatedUser = await prisma.user.update({
     where: {
       email,

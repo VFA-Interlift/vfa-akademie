@@ -6,6 +6,10 @@ import { sendePushAnNutzer } from "@/lib/push";
 import { formatDateRange, formatVenueLines } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
+// Mails und Push laufen nacheinander je Empfänger. Bricht Vercel am
+// Standardlimit hart ab, läuft der catch unten nicht, die Tagesmarke bleibt
+// stehen und der Tag ist verloren (Befund 05.09.2026).
+export const maxDuration = 300;
 
 // Erinnerung X Tage vor Schulungsbeginn. Der Cron läuft täglich; jede Schulung
 // trifft das Tagesfenster genau einmal → keine doppelten Erinnerungen.
@@ -126,7 +130,11 @@ export async function GET(req: Request) {
           location: training.location,
         });
         sent += 1;
-      } catch {
+      } catch (fehler) {
+        // Die Tagesmarke steht, das Fenster wandert weiter: Für diesen
+        // Empfänger gibt es keinen zweiten Versuch. Dann muss der Fall
+        // wenigstens im Protokoll auffindbar sein (Befund 05.09.2026).
+        console.error("REMINDER_MAIL_FEHLER", user.email, fehler);
         failed += 1;
       }
     }

@@ -38,13 +38,17 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ ok: false }, { status: 401 });
 
   const daten = (await req.json().catch(() => null)) as {
-    endpoint?: string;
-    keys?: { p256dh?: string; auth?: string };
+    endpoint?: unknown;
+    keys?: { p256dh?: unknown; auth?: unknown };
   } | null;
 
-  const endpoint = daten?.endpoint;
-  const p256dh = daten?.keys?.p256dh;
-  const auth = daten?.keys?.auth;
+  // Typ und Länge prüfen: eine Zahl als Endpunkt warf vorher einen TypeError
+  // (500) statt 400 (Befund f05-5, 05.09.2026).
+  const text = (wert: unknown): string | null =>
+    typeof wert === "string" && wert.length > 0 && wert.length <= 2048 ? wert : null;
+  const endpoint = text(daten?.endpoint);
+  const p256dh = text(daten?.keys?.p256dh);
+  const auth = text(daten?.keys?.auth);
   if (!endpoint || !p256dh || !auth || !endpoint.startsWith("https://")) {
     return NextResponse.json({ ok: false, error: "UNGUELTIGES_ABO" }, { status: 400 });
   }
@@ -64,8 +68,8 @@ export async function DELETE(req: Request) {
   const userId = await eigeneNutzerId();
   if (!userId) return NextResponse.json({ ok: false }, { status: 401 });
 
-  const daten = (await req.json().catch(() => null)) as { endpoint?: string } | null;
-  if (!daten?.endpoint) {
+  const daten = (await req.json().catch(() => null)) as { endpoint?: unknown } | null;
+  if (typeof daten?.endpoint !== "string" || !daten.endpoint) {
     return NextResponse.json({ ok: false, error: "ENDPOINT_FEHLT" }, { status: 400 });
   }
 

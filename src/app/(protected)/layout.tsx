@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import AnmeldenWeiterleitung from "./AnmeldenWeiterleitung";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,10 @@ export default async function ProtectedLayout({
 }) {
   const session = await getServerSession(authOptions);
 
+  // Zur Anmeldung mit Rücksprungziel statt redirect("/login") ohne Ziel
+  // (Befund f02-1). Die Seite selbst wird dabei nicht gerendert.
   if (!session?.user?.email) {
-    redirect("/login");
+    return <AnmeldenWeiterleitung />;
   }
 
   return (

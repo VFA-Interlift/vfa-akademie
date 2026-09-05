@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { del } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -67,7 +68,9 @@ export async function GET() {
       _count: {
         select: {
           enrollments: true,
-          certificates: true,
+          // Nur gültige Zertifikate zählen, wie die Kachel auf der
+          // Admin-Startseite (Befund f12-8, 05.09.2026).
+          certificates: { where: { status: "ISSUED" } },
         },
       },
     },
@@ -140,11 +143,32 @@ export async function DELETE(req: Request) {
     return fail("USER_NOT_FOUND", 404);
   }
 
+  // Dateien VOR dem Löschen einsammeln (die DB-Zeilen reißt die Kaskade mit),
+  // die Blobs aber erst NACH dem erfolgreichen DB-Löschen entfernen — wie bei
+  // der Kontolöschung durch den Nutzer (api/me/delete). Vorher blieben
+  // Zertifikat-PDFs und Nachweise verwaist im Speicher (Befund f12-26, 05.09.2026).
+  const [dokumente, zertifikate] = await Promise.all([
+    prisma.userDocument.findMany({ where: { userId: user.id }, select: { fileUrl: true } }),
+    prisma.certificate.findMany({ where: { userId: user.id, pdfUrl: { not: null } }, select: { pdfUrl: true } }),
+  ]);
+  const dateien = [
+    ...dokumente.map((d) => d.fileUrl),
+    ...zertifikate.map((z) => z.pdfUrl).filter((u): u is string => !!u),
+  ];
+
   await prisma.user.delete({
     where: {
       id: user.id,
     },
   });
+
+  if (dateien.length > 0) {
+    try {
+      await del(dateien);
+    } catch (fehler) {
+      console.error("ADMIN_USER_DELETE_BLOB_ERROR", user.id, fehler);
+    }
+  }
 
   return NextResponse.json({
     ok: true,

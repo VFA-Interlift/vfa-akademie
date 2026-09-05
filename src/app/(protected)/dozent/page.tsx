@@ -85,9 +85,17 @@ export default async function DozentPage() {
         select: { id: true, code: true, _count: { select: { feedbacks: true } } },
       })
     : [];
-  const feedbackByCode = new Map(
-    dbTrainings.map((t) => [String(t.code ?? "").toUpperCase(), { trainingId: t.id, count: t._count.feedbacks }])
-  );
+  // Trägt derselbe Kurscode zwei DB-Trainings, bleibt das mit den Abgaben —
+  // sonst überschrieb der spätere Eintrag den früheren und der Zähler zeigte 0
+  // (Befund f12-14, 05.09.2026).
+  const feedbackByCode = new Map<string, { trainingId: string; count: number }>();
+  for (const t of dbTrainings) {
+    const key = String(t.code ?? "").toUpperCase();
+    const bisher = feedbackByCode.get(key);
+    if (!bisher || t._count.feedbacks > bisher.count) {
+      feedbackByCode.set(key, { trainingId: t.id, count: t._count.feedbacks });
+    }
+  }
 
   // Orga-/Bestätigungsmails je Kurscode (kommen per Resend-Inbound rein).
   const codesUpper = codes.map((c) => c.toUpperCase());
@@ -232,9 +240,9 @@ export default async function DozentPage() {
         {websiteError ? (
           <AnimatedSection delayMs={80}>
             <AppCard>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "#B00020", marginBottom: 8 }}>
-                Kurse konnten nicht geladen werden
-              </div>
+              <h2 style={{ margin: "0 0 8px", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-rot-text)", lineHeight: "var(--lh-eng)" }}>
+                Schulungen konnten nicht geladen werden
+              </h2>
               <p style={{ color: "var(--vfa-text-2)", lineHeight: 1.6, margin: 0 }}>
                 Die Website ist gerade nicht erreichbar. Bitte versuche es später erneut.
               </p>
@@ -243,13 +251,13 @@ export default async function DozentPage() {
         ) : kurse.length === 0 ? (
           <AnimatedSection delayMs={80}>
             <AppCard>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "#007873", marginBottom: 8 }}>
+              <h2 style={{ margin: "0 0 8px", fontSize: "var(--t-gross)", fontWeight: 700, color: "var(--vfa-gruen-text)", lineHeight: "var(--lh-eng)" }}>
                 Keine Schulungen gefunden
-              </div>
+              </h2>
               <p style={{ color: "var(--vfa-text-2)", lineHeight: 1.6, margin: 0 }}>
                 Es wurden keine Schulungen gefunden, bei denen dein Name als Dozent
                 oder Hospitant hinterlegt ist. Die Dozenten werden auf der Website (Felder
-                „Dozent 1–4" bzw. „Hospitation" der Schulung) gepflegt – Vor- und Nachname
+                „Dozent 1–4“ bzw. „Hospitation“ der Schulung) gepflegt – Vor- und Nachname
                 müssen mit deinem Profil übereinstimmen.
               </p>
             </AppCard>
