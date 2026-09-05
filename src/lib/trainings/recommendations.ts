@@ -35,10 +35,6 @@ export const COURSE_CATALOG: Record<string, { title: string; description: string
     title: "Aufzüge für Einsteiger – Welcome Azubis",
     description: "Einsteiger-Schulung speziell für Auszubildende.",
   },
-  EFK2: {
-    title: "Elektrofachkraft ffT im Aufzugbau – Teil 2",
-    description: "Zweiter Teil der EFK-Ausbildung für festgelegte Tätigkeiten im Aufzugbau.",
-  },
   PLG: {
     title: "Aufzugsplanung als Teil der Gebäudeplanung",
     description: "Schwerpunktschulung für Planer: Aufzugsplanung im Gebäudekontext.",
@@ -133,7 +129,6 @@ export function coursePrefixOf(code: string | null | undefined): string | null {
  *  - Noch gar keine Schulung gebucht/abgeschlossen → nur A1 und Azubi-Kurs.
  *  - Sonst genau die nächste Stufe der VDI-Reihe (A1 → A2 → B → C) nach dem
  *    höchsten gebuchten/abgeschlossenen Kurs.
- *  - Zusatz: EFK Teil 1 vorhanden, Teil 2 fehlt → EFK2 empfehlen.
  * Bereits gebuchte/abgeschlossene Kurse werden nie empfohlen.
  */
 export async function getTrainingRecommendations(
@@ -249,10 +244,11 @@ export async function getTrainingRecommendations(
   }
   // maxStage === 4 (C erreicht): VDI-Reihe komplett – keine Empfehlung.
 
-  // EFK-Reihe: Teil 1 vorhanden, Teil 2 fehlt.
-  if (doneOrBooked.has("EFK1") && !doneOrBooked.has("EFK2")) {
-    push("EFK2", "Vervollständige deine EFK-Ausbildung");
-  }
+  // KEINE EFK2-Empfehlung (05.09.2026): Die Website führt beide Teile der
+  // EFK-Ausbildung unter demselben Code EFK1-JJMM, ein Kurs mit dem Kürzel
+  // EFK2 steht dort nicht (Tobis Klarstellung vom 03.08.2026). Wer EFK1
+  // gebucht hat, hat beide Teile — die Empfehlung zeigte auf einen Kurs,
+  // den der Kalender nie enthält, und riet zu bereits Gebuchtem.
 
   return recommendations.slice(0, maxItems);
 }

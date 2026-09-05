@@ -199,7 +199,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
       };
       setSheets((s) => ({ ...s, [kurs.id]: [sheet, ...(s[kurs.id] ?? [])] }));
     } catch {
-      setError("Hochladen fehlgeschlagen – bitte erneut versuchen (Foto der Liste).");
+      setError("Hochladen fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setUploadingKursId(null);
     }
@@ -224,7 +224,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
       if (!res.ok || !data.ok) throw new Error();
       setSheets((s) => ({ ...s, [kursId]: (s[kursId] ?? []).filter((x) => x.id !== id) }));
     } catch {
-      setError("Löschen fehlgeschlagen – bitte erneut versuchen.");
+      setError("Löschen fehlgeschlagen. Bitte erneut versuchen.");
     }
   }
 
@@ -247,7 +247,7 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
       if (!res.ok || !data.ok) throw new Error(data.error || "SAVE_FAILED");
     } catch {
       setStatus((s) => ({ ...s, [participantId]: previous }));
-      setError("Speichern fehlgeschlagen – bitte erneut versuchen.");
+      setError("Speichern fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setSavingId(null);
     }

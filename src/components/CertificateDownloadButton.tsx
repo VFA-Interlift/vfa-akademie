@@ -100,7 +100,7 @@ export default function CertificateDownloadButton({
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <AppButton onClick={downloadDocument} disabled={loading}>
-        {loading ? "Dokument wird erstellt…" : label}
+        {loading ? "Dokument wird erstellt …" : label}
       </AppButton>
 
       {msg && <Meldung art={istFehler ? "fehler" : "erfolg"}>{msg}</Meldung>}
@@ -139,7 +139,7 @@ async function getDownloadErrorMessage(res: Response) {
 
   // Kein JSON (HTML-Fehlerseite, Zeitüberschreitung des Hosters): nicht den
   // rohen Seitentext zeigen (Befund f11-9, 05.09.2026).
-  return "Download fehlgeschlagen.";
+  return "Download fehlgeschlagen. Bitte erneut versuchen.";
 }
 
 function translateDownloadError(error: string) {
@@ -171,7 +171,7 @@ function translateDownloadError(error: string) {
     return "Das Zertifikat konnte nicht erstellt werden.";
   }
 
-  return "Download fehlgeschlagen.";
+  return "Download fehlgeschlagen. Bitte erneut versuchen.";
 }
 
 function getFileNameFromContentDisposition(value: string) {

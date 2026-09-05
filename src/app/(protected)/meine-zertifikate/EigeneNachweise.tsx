@@ -116,7 +116,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
       const res = await fetch("/api/documents", { method: "POST", body });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError(ERROR_TEXT[data.error] ?? "Hochladen fehlgeschlagen.");
+        setError(ERROR_TEXT[data.error] ?? "Hochladen fehlgeschlagen. Bitte erneut versuchen.");
         return;
       }
       setDocuments((prev) => [data.document, ...prev]);
@@ -205,7 +205,7 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
 
             <div>
               <AppButton type="submit" disabled={uploading}>
-                {uploading ? "Wird hochgeladen…" : "Nachweis hochladen"}
+                {uploading ? "Wird hochgeladen …" : "Nachweis hochladen"}
               </AppButton>
             </div>
           </form>

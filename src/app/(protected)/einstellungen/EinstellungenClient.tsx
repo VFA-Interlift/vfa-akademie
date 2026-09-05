@@ -126,13 +126,13 @@ function DatenschutzCard() {
           // Die Route sperrt nach fünf Fehlversuchen für 15 Minuten.
           ZU_VIELE_VERSUCHE: "Zu viele Versuche. Bitte in 15 Minuten erneut probieren.",
         };
-        setMsg(texte[data.error] ?? "Löschen fehlgeschlagen.");
+        setMsg(texte[data.error] ?? "Löschen fehlgeschlagen. Bitte erneut versuchen.");
         return;
       }
 
       await signOut({ callbackUrl: "/login" });
     } catch {
-      setMsg("Löschen fehlgeschlagen.");
+      setMsg("Löschen fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setLaeuft(false);
     }

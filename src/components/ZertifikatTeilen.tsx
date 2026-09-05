@@ -170,7 +170,7 @@ export default function ZertifikatTeilen({
   return (
     <AppButton variant="ghost" onClick={teilen} disabled={laeuft}>
       <span aria-hidden="true" style={{ lineHeight: 1 }}>↗</span>
-      {laeuft ? "Wird vorbereitet…" : "Teilen"}
+      {laeuft ? "Wird vorbereitet …" : "Teilen"}
     </AppButton>
   );
 }

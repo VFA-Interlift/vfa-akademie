@@ -66,7 +66,7 @@ export default function AppTestClient({
 
     const gesamt = answers[PFLICHT_FRAGE_ID];
     if (typeof gesamt !== "number" || gesamt < 1) {
-      setError("Bitte bewerte zumindest deine Zufriedenheit insgesamt — das ist die einzige Pflichtangabe.");
+      setError("Bitte bewerte mindestens deine allgemeine Zufriedenheit (Pflichtfeld).");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -80,7 +80,7 @@ export default function AppTestClient({
       });
 
       if (!res.ok) {
-        setError("Das hat nicht geklappt. Bitte versuche es gleich noch einmal.");
+        setError("Das hat nicht geklappt. Bitte versuch es gleich noch einmal.");
         // Die Fehlerkarte steht ueber den Fragekarten, der Knopf ganz unten —
         // ohne Scroll blieb die Meldung auf dem Handy unsichtbar und der Bogen
         // wirkte abgeschickt (Befund 20.08.2026).
@@ -91,7 +91,7 @@ export default function AppTestClient({
 
       setDone(true);
     } catch {
-      setError("Keine Verbindung. Bitte versuche es gleich noch einmal.");
+      setError("Keine Verbindung. Bitte prüfe dein Netz und versuch es erneut.");
       window.scrollTo({ top: 0, behavior: "smooth" });
       setSending(false);
     }
