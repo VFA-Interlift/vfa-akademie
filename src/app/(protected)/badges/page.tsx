@@ -13,7 +13,7 @@ export default async function BadgesPage() {
   if (!session?.user?.email) redirect("/login");
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email.toLowerCase() },
+    where: { email: session.user.email.trim().toLowerCase() },
     select: {
       creditsTotal: true,
       certificates: {

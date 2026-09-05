@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendTrainingReminderEmail } from "@/lib/email";
 import { sendePushAnNutzer } from "@/lib/push";
 import { formatDateRange, formatVenueLines } from "@/lib/trainings/format";
+import { cronGeprueft } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 // Mails und Push laufen nacheinander je Empfänger. Bricht Vercel am
@@ -17,31 +18,13 @@ const DAYS_BEFORE = 3;
 
 const ACTIVE_STATUSES = ["PENDING", "CONFIRMED", "ATTENDED", "COMPLETED"] as const;
 
-function fail(error: string, status = 400) {
-  return NextResponse.json({ ok: false, error }, { status });
-}
-
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   return String(error);
 }
 
-function isAuthorized(req: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return { ok: false as const, response: fail("CRON_SECRET_NOT_CONFIGURED", 500) };
-  }
-
-  if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
-    return { ok: false as const, response: fail("UNAUTHORIZED", 401) };
-  }
-
-  return { ok: true as const };
-}
-
 export async function GET(req: Request) {
-  const gate = isAuthorized(req);
+  const gate = cronGeprueft(req);
 
   if (!gate.ok) {
     return gate.response;

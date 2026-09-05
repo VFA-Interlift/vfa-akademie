@@ -2,34 +2,15 @@ import { NextResponse } from "next/server";
 import { zertifikateAusstellen } from "@/lib/certificates/ausstellen";
 import { formatCertificateKind } from "@/lib/certificates/templates";
 import { sendCertificateReadyEmail } from "@/lib/email";
+import { cronGeprueft } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 // Viele Teilnehmer heißt viele kleine Transaktionen plus eine Mail je Empfänger;
 // am Standardlimit bräche Vercel mitten im Lauf hart ab (Befund 05.09.2026).
 export const maxDuration = 300;
 
-function fail(error: string, status = 400) {
-  return NextResponse.json({ ok: false, error }, { status });
-}
-
-function isAuthorized(req: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return { ok: false as const, response: fail("CRON_SECRET_NOT_CONFIGURED", 500) };
-  }
-
-  const authHeader = req.headers.get("authorization");
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return { ok: false as const, response: fail("UNAUTHORIZED", 401) };
-  }
-
-  return { ok: true as const };
-}
-
 export async function GET(req: Request) {
-  const gate = isAuthorized(req);
+  const gate = cronGeprueft(req);
 
   if (!gate.ok) {
     return gate.response;

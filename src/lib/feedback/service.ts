@@ -9,6 +9,7 @@ import {
   getFeedbackForm,
   type FeedbackFormType,
   type FeedbackSection,
+  type FeedbackQuestion,
 } from "@/lib/feedback/forms";
 
 /** Status, ab dem eine abgeschlossene Schulung Feedback erlaubt. */
@@ -100,33 +101,53 @@ type SubmitResult =
   | { ok: true; creditsAwarded: number }
   | { ok: false; status: number; error: string };
 
-/** Validiert die Roh-Antworten gegen den Fragenkatalog und gibt bereinigte Werte zurück. */
+/** Prüft einen einzelnen Wert gegen seine Frage. null heißt „passt nicht". */
+function pruefeAntwort(q: FeedbackQuestion, value: unknown): FeedbackAnswers[string] | null {
+  if (q.type === "rating") {
+    // Ein abgewählter Stern ist „keine Wahl", nicht die Note 0.
+    if (value === 0) return null;
+    const num = Number(value);
+    return Number.isInteger(num) && num >= 1 && num <= 5 ? num : null;
+  }
+  if (q.type === "text") {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim().slice(0, FEEDBACK_TEXT_MAX);
+    return trimmed || null;
+  }
+  if (q.type === "single") {
+    return typeof value === "string" && q.options?.includes(value) ? value : null;
+  }
+  if (q.type === "multi") {
+    if (!Array.isArray(value)) return null;
+    const picked = value.filter(
+      (v): v is string => typeof v === "string" && Boolean(q.options?.includes(v))
+    );
+    return picked.length ? picked : null;
+  }
+  return null;
+}
+
+/**
+ * Validiert die Roh-Antworten gegen den Fragenkatalog und gibt bereinigte Werte
+ * zurück.
+ *
+ * Eine freiwillige Frage mit unpassendem Wert wird verworfen, nicht der ganze
+ * Bogen: Bis zum 05.09.2026 kostete eine einzige krumme Angabe alle dreißig
+ * Antworten und die Credits, und die Meldung sagte nicht einmal, welche Frage
+ * gemeint war. Der Testbogen der App macht es seit jeher so. Abgelehnt wird
+ * nur, was den Bogen wertlos macht: eine fehlende Gesamtbewertung.
+ */
 function validateAnswers(sections: FeedbackSection[], raw: unknown): FeedbackAnswers | null {
   if (!raw || typeof raw !== "object") return null;
   const input = raw as Record<string, unknown>;
-  const questions = flattenQuestions(sections);
   const cleaned: FeedbackAnswers = {};
 
-  for (const q of questions) {
+  for (const q of flattenQuestions(sections)) {
     const value = input[q.key];
     if (value === undefined || value === null || value === "") continue;
 
-    if (q.type === "rating") {
-      const num = Number(value);
-      if (!Number.isInteger(num) || num < 1 || num > 5) return null;
-      cleaned[q.key] = num;
-    } else if (q.type === "text") {
-      if (typeof value !== "string") return null;
-      const trimmed = value.trim().slice(0, FEEDBACK_TEXT_MAX);
-      if (trimmed) cleaned[q.key] = trimmed;
-    } else if (q.type === "single") {
-      if (typeof value !== "string" || !q.options?.includes(value)) return null;
-      cleaned[q.key] = value;
-    } else if (q.type === "multi") {
-      if (!Array.isArray(value)) return null;
-      const picked = value.filter((v): v is string => typeof v === "string" && Boolean(q.options?.includes(v)));
-      if (picked.length) cleaned[q.key] = picked;
-    }
+    const geprueft = pruefeAntwort(q, value);
+    if (geprueft !== null) cleaned[q.key] = geprueft;
   }
 
   // Pflichtfeld: Gesamtzufriedenheit

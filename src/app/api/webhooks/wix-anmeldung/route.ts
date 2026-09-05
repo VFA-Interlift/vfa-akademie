@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { geheimnisStimmt } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,9 @@ function fail(error: string, status = 400) {
 export async function POST(req: Request) {
   const secret = process.env.WIX_WEBHOOK_SECRET;
   if (!secret) return fail("WEBHOOK_SECRET_NOT_CONFIGURED", 500);
-  if (req.headers.get("x-webhook-secret") !== secret) return fail("UNAUTHORIZED", 401);
+  // Zeitkonstant vergleichen: aus den Laufzeiten eines "!=="-Vergleichs
+  // lässt sich ein Geheimnis Zeichen für Zeichen erraten (05.09.2026).
+  if (!geheimnisStimmt(secret, req.headers.get("x-webhook-secret"))) return fail("UNAUTHORIZED", 401);
 
   const body = (await req.json().catch(() => null)) as WixAnmeldungPayload | null;
   if (!body || typeof body !== "object") return fail("INVALID_JSON");

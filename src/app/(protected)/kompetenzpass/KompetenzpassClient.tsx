@@ -108,17 +108,22 @@ function getAchievements(
     codes.some((code) => m.matches(code))
   ).map((m) => m.level);
 
+  // Nur die vollständige Reihe ist eine Auszeichnung — wie auf der
+  // Badges-Seite. Einzelne Module stehen ohnehin unten unter „Absolvierte
+  // Kompetenzen"; als Auszeichnung gezählt widersprachen sie der Angabe
+  // „0 von 4 Auszeichnungen freigeschaltet" auf der Badges-Seite (05.09.2026).
   if (presentLevels.length === VDI_MODULES.length) {
     achievements.push("Alle VDI-Module (A1–C) absolviert");
-  } else if (presentLevels.length > 0) {
-    achievements.push(`VDI-Module absolviert: ${presentLevels.join(", ")}`);
   }
 
-  // Training count milestones — Stufen 5/10/20 synchron zu den Badges (BadgesClient).
+  // Schulungs-Meilensteine: dieselben Schwellen wie auf der Badges-Seite.
+  // Unter fünf Schulungen stand hier bis zum 05.09.2026 ein Trostpreis
+  // („3 Schulungen besucht"), während die Badges-Seite für denselben Stand
+  // „0 von 4 Auszeichnungen freigeschaltet" meldete — derselbe Nutzer hatte
+  // auf der einen Seite eine Auszeichnung und auf der anderen keine.
   if (count >= 20) achievements.push("20+ Schulungen besucht");
   else if (count >= 10) achievements.push("10+ Schulungen besucht");
   else if (count >= 5) achievements.push("5+ Schulungen besucht");
-  else if (count >= 1) achievements.push(`${count} Schulung${count > 1 ? "en" : ""} besucht`);
 
   // Rank (skip the entry rank to keep it meaningful)
   if (rank.key !== "BRONZE" && rank.key !== "STARTER") {

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   // Gleiche Zugriffsbremse wie beim Konto-Löschen: Ohne sie war das Feld
   // "aktuelles Passwort" ein Prüf-Orakel für eine gekaperte Sitzung
   // (Ultracode-Befund 13.08.2026).
-  const bremsSchluessel = `passwort-aendern:${session.user.email.toLowerCase()}`;
+  const bremsSchluessel = `passwort-aendern:${session.user.email.trim().toLowerCase()}`;
   const bremse = bremsePruefen(bremsSchluessel, {
     versuche: 5,
     fensterSekunden: 300,
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email.toLowerCase() },
+    where: { email: session.user.email.trim().toLowerCase() },
     select: { id: true, passwordHash: true, email: true, name: true },
   });
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cobraEndpointGet } from "@/lib/cobra/client";
 import { CobraError } from "@/lib/cobra/types";
 import { prisma } from "@/lib/prisma";
+import { cronGeprueft } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -33,17 +34,6 @@ type NormalizedCobraParticipant = {
   email: string | null;
   raw: CobraParticipantRaw;
 };
-
-function fail(error: string, status = 400, details?: unknown) {
-  return NextResponse.json(
-    {
-      ok: false,
-      error,
-      details,
-    },
-    { status }
-  );
-}
 
 function cleanString(value: unknown) {
   if (typeof value !== "string") {
@@ -133,30 +123,6 @@ function normalizeParticipant(
   };
 }
 
-function isAuthorized(req: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return {
-      ok: false as const,
-      response: fail("CRON_SECRET_NOT_CONFIGURED", 500),
-    };
-  }
-
-  const authHeader = req.headers.get("authorization");
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return {
-      ok: false as const,
-      response: fail("UNAUTHORIZED", 401),
-    };
-  }
-
-  return {
-    ok: true as const,
-  };
-}
-
 async function syncParticipant(participant: NormalizedCobraParticipant) {
   const training = participant.cobraTrainingId
     ? await prisma.training.findUnique({
@@ -218,7 +184,7 @@ async function syncParticipant(participant: NormalizedCobraParticipant) {
 }
 
 export async function GET(req: Request) {
-  const gate = isAuthorized(req);
+  const gate = cronGeprueft(req);
 
   if (!gate.ok) {
     return gate.response;

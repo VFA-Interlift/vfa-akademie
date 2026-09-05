@@ -45,7 +45,7 @@ export async function findAbsentEnrollmentIds(
       Boolean(p.trainingId && p.email && p.attendanceStatus)
   );
   const keyOf = (p: { trainingId: string; email: string }) =>
-    `${p.trainingId}|${p.email.toLowerCase()}`;
+    `${p.trainingId}|${p.email.trim().toLowerCase()}`;
 
   // Doppelte Website-Anmeldungen derselben Person können sich widersprechen:
   // eine Zeile ANWESEND, die Dublette NICHT_DA. Anwesend gewinnt — als abwesend
@@ -69,7 +69,7 @@ export async function findAbsentEnrollmentIds(
   return new Set(
     enrollments
       .filter((e) =>
-        absentKeys.has(`${e.trainingId}|${e.user.email.toLowerCase()}`)
+        absentKeys.has(`${e.trainingId}|${e.user.email.trim().toLowerCase()}`)
       )
       .map((e) => e.id)
   );

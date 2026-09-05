@@ -58,7 +58,8 @@ function rankConfigs(credits: number): BadgeConfig[] {
 function achievementConfigs(completedCount: number, vdiCompleted: string[]): BadgeConfig[] {
   const vdiDone = vdiCompleted.length;
 
-  // Schulungs-Meilensteine 5/10/20 synchron zum Kompetenzpass (getAchievements).
+  // Vier Auszeichnungen, dieselben Schwellen wie im Kompetenzpass
+  // (getAchievements dort): vollständige VDI-Reihe und 5/10/20 Schulungen.
   return [
     {
       key: "vdi-reihe",

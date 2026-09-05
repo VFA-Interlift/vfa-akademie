@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import AppCard from "@/components/ui/AppCard";
 import Kennzahl from "@/components/ui/Kennzahl";
 import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
@@ -10,15 +9,9 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 import { formatEnrollmentStatus } from "@/lib/trainings/format";
 import { fetchWixKurse, kursDozentenOf, kursLocationOf, parseKursBlocks, type WixKurs } from "@/lib/wix/kurse";
 import AdminSchulungenClient, { type AdminKurs } from "./AdminSchulungenClient";
+import { participantKurscode } from "@/lib/dozent/zuordnung";
 
 export const dynamic = "force-dynamic";
-
-function participantKurscode(raw: unknown): string {
-  if (raw && typeof raw === "object" && "kurscode" in raw) {
-    return String((raw as { kurscode?: unknown }).kurscode ?? "").trim().toUpperCase();
-  }
-  return "";
-}
 
 export default async function AdminSchulungenPage() {
   const session = await getServerSession(authOptions);
