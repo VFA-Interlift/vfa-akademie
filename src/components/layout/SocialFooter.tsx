@@ -26,7 +26,7 @@ export default function SocialFooter() {
         }}
       >
         <a
-          href="https://www.linkedin.com/company/vfa-interlift-e-v/?originalSubdomain=de"
+          href="https://www.linkedin.com/company/vfa-interlift-e-v/"
           target="_blank"
           rel="noreferrer"
           style={{

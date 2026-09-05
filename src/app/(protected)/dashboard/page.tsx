@@ -18,39 +18,21 @@ import TesterWelcome from "@/components/TesterWelcome";
 import { istTester } from "@/lib/app-test/tester";
 import { getOpenFeedbackCount } from "@/lib/feedback/service";
 import { formatDateRange } from "@/lib/trainings/format";
+import { RAENGE, OHNE_RANG, rangFuer, naechsterRang, rangFortschritt, type RangSchluessel } from "@/lib/credits/raenge";
 
 export const dynamic = "force-dynamic";
 
-type RankKey = "STARTER" | "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
-type RankInfo = {
-  key: RankKey;
-  label: string;
-  min: number;
-  max: number | null;
-  color: string;
-  softBackground: string;
-  softBorder: string;
-};
+/** Farbwerte je Rang — Schlüssel, Beschriftung und Schwellen kommen aus der
+    gemeinsamen Rangleiter (@/lib/credits/raenge). */
+type RangFarben = { color: string; softBackground: string; softBorder: string };
 
-// Bronze beginnt erst ab 100 Credits (= eine abgeschlossene Standardschulung).
-// Darunter hat man noch keinen Rang.
-const RANKS: RankInfo[] = [
-  { key: "BRONZE", label: "Bronze", min: 100, max: 499, color: "#A86C3D", softBackground: "rgba(168,108,61,0.10)", softBorder: "1px solid rgba(168,108,61,0.28)" },
-  { key: "SILBER", label: "Silber", min: 500, max: 1499, color: "#8E99A8", softBackground: "rgba(142,153,168,0.12)", softBorder: "1px solid rgba(142,153,168,0.32)" },
-  { key: "GOLD", label: "Gold", min: 1500, max: 3499, color: "#C79A16", softBackground: "rgba(199,154,22,0.12)", softBorder: "1px solid rgba(199,154,22,0.32)" },
-  // Farbe an den Kompetenzpass angeglichen (VFA-Grün) — derselbe Rang muss
-  // überall dieselbe Farbe haben, sonst leidet die Wiedererkennung.
-  { key: "EXPERTE", label: "VFA-Experte", min: 3500, max: null, color: "#007873", softBackground: "rgba(0,120,115,0.08)", softBorder: "1px solid rgba(0,120,115,0.20)" },
-];
-
-const STARTER_RANK: RankInfo = {
-  key: "STARTER",
-  label: "Kein Rang",
-  min: 0,
-  max: 99,
-  color: "#9AA0A6",
-  softBackground: "rgba(154,160,166,0.12)",
-  softBorder: "1px solid rgba(154,160,166,0.30)",
+const FARBEN: Record<RangSchluessel, RangFarben> = {
+  STARTER: { color: "#9AA0A6", softBackground: "rgba(154,160,166,0.12)", softBorder: "1px solid rgba(154,160,166,0.30)" },
+  BRONZE: { color: "#A86C3D", softBackground: "rgba(168,108,61,0.10)", softBorder: "1px solid rgba(168,108,61,0.28)" },
+  SILBER: { color: "#8E99A8", softBackground: "rgba(142,153,168,0.12)", softBorder: "1px solid rgba(142,153,168,0.32)" },
+  GOLD: { color: "#C79A16", softBackground: "rgba(199,154,22,0.12)", softBorder: "1px solid rgba(199,154,22,0.32)" },
+  // Petrol wie im Kompetenzpass — derselbe Rang muss überall gleich aussehen.
+  EXPERTE: { color: "#007873", softBackground: "rgba(0,120,115,0.08)", softBorder: "1px solid rgba(0,120,115,0.20)" },
 };
 
 export default async function DashboardPage() {
@@ -112,9 +94,9 @@ export default async function DashboardPage() {
   const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
 
   const displayName = getDisplayName(user);
-  const rank = getRankInfo(user.creditsTotal);
-  const progress = getRankProgress(user.creditsTotal);
-  const nextRank = getNextRankInfo(user.creditsTotal);
+  const rank = rangFuer(user.creditsTotal);
+  const progress = rangFortschritt(user.creditsTotal);
+  const nextRank = naechsterRang(user.creditsTotal);
 
   // Etagenanzeige: Anzeige über dem Schacht (EG bis 4). Die Kabinenposition
   // rechnet die Komponente selbst — exakt auf der Etage des Rangs.
@@ -176,7 +158,7 @@ export default async function DashboardPage() {
         userId={user.id}
         rangKey={rank.key}
         rangLabel={rank.label}
-        rangFarbe={rank.color}
+        rangFarbe={FARBEN[rank.key].color}
       />
 
       <div className="dash-inhalt">
@@ -252,7 +234,7 @@ export default async function DashboardPage() {
                 <AnimatedProgressCircle
                   percent={progress.percent}
                   credits={user.creditsTotal}
-                  color={rank.color}
+                  color={FARBEN[rank.key].color}
                 />
 
                 <CreditsZuwachs userId={user.id} credits={user.creditsTotal} />
@@ -266,23 +248,23 @@ export default async function DashboardPage() {
                 {/* Ränge als Etagen mit fahrender Kabine — das Erkennungszeichen
                     einer Aufzugs-App (Tobis Auswahl vom 13.08.2026). */}
                 <EtagenAnzeige
-                  etagen={[...RANKS].reverse().map((r) => ({
+                  etagen={[...RAENGE].reverse().map((r) => ({
                     key: r.key,
                     label: r.label,
                     bereich:
                       r.max === null
                         ? `ab ${r.min.toLocaleString("de-DE")}`
                         : `${r.min.toLocaleString("de-DE")}–${r.max.toLocaleString("de-DE")}`,
-                    farbe: r.color,
-                    weich: r.softBackground,
-                    rand: r.softBorder,
+                    farbe: FARBEN[r.key].color,
+                    weich: FARBEN[r.key].softBackground,
+                    rand: FARBEN[r.key].softBorder,
                   })).concat([{
-                    key: STARTER_RANK.key,
+                    key: OHNE_RANG.key,
                     label: "Start",
                     bereich: "0–99",
-                    farbe: STARTER_RANK.color,
-                    weich: STARTER_RANK.softBackground,
-                    rand: STARTER_RANK.softBorder,
+                    farbe: FARBEN.STARTER.color,
+                    weich: FARBEN.STARTER.softBackground,
+                    rand: FARBEN.STARTER.softBorder,
                   }])}
                   aktuellKey={rank.key}
                   etagenNummer={etagenNummer}
@@ -468,36 +450,6 @@ function getDisplayName(user: { firstName: string | null; lastName: string | nul
   if (combined) return combined;
   if (user.name?.trim()) return user.name.trim();
   return "";
-}
-
-function getRankInfo(credits: number) {
-  if (credits >= 3500) return RANKS[3];
-  if (credits >= 1500) return RANKS[2];
-  if (credits >= 500) return RANKS[1];
-  if (credits >= 100) return RANKS[0];
-  return STARTER_RANK;
-}
-
-function getNextRankInfo(credits: number) {
-  if (credits < 100) return RANKS[0];
-  if (credits < 500) return RANKS[1];
-  if (credits < 1500) return RANKS[2];
-  if (credits < 3500) return RANKS[3];
-  return null;
-}
-
-function getRankProgress(credits: number) {
-  const thresholds = [0, 100, 500, 1500, 3500];
-  for (let i = 0; i < thresholds.length - 1; i++) {
-    if (credits < thresholds[i + 1]) {
-      const range = thresholds[i + 1] - thresholds[i];
-      const val = credits - thresholds[i];
-      // Abrunden: 100 % zeigt der Ring erst, wenn der Rang wirklich erreicht
-      // ist — gerundet stand er sonst schon knapp davor auf 100 (20.08.2026).
-      return { percent: Math.floor((val / range) * 100), remainingToNext: thresholds[i + 1] - credits };
-    }
-  }
-  return { percent: 100, remainingToNext: 0 };
 }
 
 // Helle Chips auf der Petrol-Karte "Nächste Schulung".

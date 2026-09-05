@@ -4,6 +4,7 @@ import { formatDate, formatDateRange } from "@/lib/trainings/format";
 import { bewerteFrische, FRISCHE_FARBE } from "@/lib/kompetenz/frische";
 import PageHeader from "@/components/ui/PageHeader";
 import AppButton from "@/components/ui/AppButton";
+import { rangFuer, naechsterRang, rangFortschritt, type Rang, type RangSchluessel } from "@/lib/credits/raenge";
 
 type SerializableCertificate = {
   id: string;
@@ -19,51 +20,14 @@ type SerializableCertificate = {
   instructor: string | null;
 };
 
-type RankKey = "STARTER" | "BRONZE" | "SILBER" | "GOLD" | "EXPERTE";
-
-type RankInfo = {
-  key: RankKey;
-  label: string;
-  sublabel: string;
-  min: number;
-  max: number | null;
-  color: string;
-  badge: string;
+/** Aussehen je Rang im Dokument — Schwellen kommen aus der Rangleiter. */
+const DARSTELLUNG: Record<RangSchluessel, { sublabel: string; color: string; badge: string }> = {
+  STARTER: { sublabel: "Starter", color: "#9AA0A6", badge: "/badges/bronze-thumb.png" },
+  BRONZE: { sublabel: "Einsteiger", color: "#A86C3D", badge: "/badges/bronze-thumb.png" },
+  SILBER: { sublabel: "Fortgeschritten", color: "#8E99A8", badge: "/badges/silber-thumb.png" },
+  GOLD: { sublabel: "Erfahren", color: "#C79A16", badge: "/badges/gold-thumb.png" },
+  EXPERTE: { sublabel: "Elite", color: "#007873", badge: "/badges/vfa-experte-thumb.png" },
 };
-
-// Bronze beginnt erst ab 100 Credits (= eine abgeschlossene Standardschulung).
-const RANKS: RankInfo[] = [
-  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 100, max: 499, color: "#A86C3D", badge: "/badges/bronze-thumb.png" },
-  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, max: 1499, color: "#8E99A8", badge: "/badges/silber-thumb.png" },
-  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, max: 3499, color: "#C79A16", badge: "/badges/gold-thumb.png" },
-  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, max: null, color: "#007873", badge: "/badges/vfa-experte-thumb.png" },
-];
-
-const STARTER_RANK: RankInfo = {
-  key: "STARTER",
-  label: "Kein Rang",
-  sublabel: "Starter",
-  min: 0,
-  max: 99,
-  color: "#9AA0A6",
-  badge: "/badges/bronze-thumb.png",
-};
-
-function getRankInfo(credits: number): RankInfo {
-  if (credits >= 3500) return RANKS[3];
-  if (credits >= 1500) return RANKS[2];
-  if (credits >= 500) return RANKS[1];
-  if (credits >= 100) return RANKS[0];
-  return STARTER_RANK;
-}
-
-function getNextRank(credits: number): RankInfo | null {
-  if (credits < 100) return RANKS[0];
-  if (credits < 500) return RANKS[1];
-  if (credits < 1500) return RANKS[2];
-  if (credits < 3500) return RANKS[3];
-  return null;
-}
 
 function cleanTitle(value: string) {
   return value.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
@@ -96,7 +60,7 @@ const VDI_MODULES: { level: string; matches: (code: string) => boolean }[] = [
 function getAchievements(
   certificates: SerializableCertificate[],
   creditsTotal: number,
-  rank: RankInfo,
+  rank: Rang,
   memberSince: string
 ): string[] {
   const achievements: string[] = [];
@@ -163,8 +127,8 @@ export default function KompetenzpassClient({
   memberSince: string;
   certificates: SerializableCertificate[];
 }) {
-  const rank = getRankInfo(creditsTotal);
-  const nextRank = getNextRank(creditsTotal);
+  const rank = rangFuer(creditsTotal);
+  const nextRank = naechsterRang(creditsTotal);
   const remainingToNext = nextRank ? nextRank.min - creditsTotal : 0;
   const totalCertificateCredits = certificates.reduce((sum, c) => sum + c.credits, 0);
   const achievements = getAchievements(certificates, creditsTotal, rank, memberSince);
@@ -240,13 +204,13 @@ export default function KompetenzpassClient({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={rank.badge}
+                src={DARSTELLUNG[rank.key].badge}
                 alt={`Rang: ${rank.label}`}
                 width={66}
                 height={66}
                 style={{ display: "block", filter: rank.key === "STARTER" ? "grayscale(1)" : "none", opacity: rank.key === "STARTER" ? 0.55 : 1 }}
               />
-              <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{rank.sublabel}</span>
+              <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{DARSTELLUNG[rank.key].sublabel}</span>
             </div>
           </div>
 
@@ -277,8 +241,8 @@ export default function KompetenzpassClient({
                 <div
                   style={{
                     height: "100%",
-                    width: `${getProgressPercent(creditsTotal)}%`,
-                    background: rank.color,
+                    width: `${rangFortschritt(creditsTotal).percent}%`,
+                    background: DARSTELLUNG[rank.key].color,
                     borderRadius: 999,
                   }}
                 />
@@ -422,18 +386,6 @@ function StatCell({ label, value, highlight = false }: { label: string; value: s
       </div>
     </div>
   );
-}
-
-function getProgressPercent(credits: number) {
-  const thresholds = [0, 100, 500, 1500, 3500];
-  for (let i = 0; i < thresholds.length - 1; i++) {
-    if (credits < thresholds[i + 1]) {
-      const range = thresholds[i + 1] - thresholds[i];
-      const val = credits - thresholds[i];
-      return Math.round((val / range) * 100);
-    }
-  }
-  return 100;
 }
 
 function formatMonthYear(value: string) {

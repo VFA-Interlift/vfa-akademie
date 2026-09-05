@@ -3,6 +3,7 @@
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import Meldung from "@/components/ui/Meldung";
+import { RAENGE } from "@/lib/credits/raenge";
 
 // Petrol als Fläche (Chip „Aktuell", SVG-Siegel) — als Textfarbe gilt das
 // Token var(--vfa-gruen-text), damit der Dunkelmodus aufhellen kann.
@@ -30,27 +31,37 @@ type BadgeConfig = {
 
 // ---------- Ränge (credit-basiert) ----------
 
-const RANKS = [
-  { key: "BRONZE", label: "Bronze", sublabel: "Einsteiger", min: 100, color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0", file: "bronze" },
-  { key: "SILBER", label: "Silber", sublabel: "Fortgeschritten", min: 500, color: "#5A6472", accent: "#8E99A8", tint: "#F4F6F8", file: "silber" },
-  { key: "GOLD", label: "Gold", sublabel: "Experte", min: 1500, color: "#7C5A0A", accent: "#C79A16", tint: "#FFFBEE", file: "gold" },
-  { key: "EXPERTE", label: "VFA-Experte", sublabel: "Elite", min: 3500, color: "#0B4F4B", accent: VFA_GREEN, tint: "#EAF4F3", file: "vfa-experte" },
-];
+/** Siegel-Aussehen je Rang; Schlüssel, Beschriftung und Schwelle kommen aus
+    der gemeinsamen Rangleiter (@/lib/credits/raenge). */
+const SIEGEL: Record<string, { sublabel: string; color: string; accent: string; tint: string; file: string }> = {
+  BRONZE: { sublabel: "Einsteiger", color: "#7C4F2A", accent: "#C87941", tint: "#FDF6F0", file: "bronze" },
+  SILBER: { sublabel: "Fortgeschritten", color: "#5A6472", accent: "#8E99A8", tint: "#F4F6F8", file: "silber" },
+  // „Erfahren" statt „Experte": der höchste Rang heißt VFA-Experte, zwei
+  // Ränge mit demselben Beiwort verwirrten (05.09.2026).
+  GOLD: { sublabel: "Erfahren", color: "#7C5A0A", accent: "#C79A16", tint: "#FFFBEE", file: "gold" },
+  EXPERTE: { sublabel: "Elite", color: "#0B4F4B", accent: VFA_GREEN, tint: "#EAF4F3", file: "vfa-experte" },
+};
 
 function rankConfigs(credits: number): BadgeConfig[] {
-  return RANKS.map((rank) => ({
-    key: `rang-${rank.key.toLowerCase()}`,
-    title: rank.label,
-    sublabel: rank.sublabel,
-    footnote: credits >= rank.min ? `${credits.toLocaleString("de-DE")} Credits` : `ab ${rank.min.toLocaleString("de-DE")} Credits`,
-    earned: credits >= rank.min,
-    color: rank.color,
-    accent: rank.accent,
-    tint: rank.tint,
-    center: { type: "star" },
-    badgeImage: `/badges/${rank.file}.png`,
-    badgeThumb: `/badges/${rank.file}-thumb.png`,
-  }));
+  return RAENGE.map((rang) => {
+    const siegel = SIEGEL[rang.key];
+    return {
+      key: `rang-${rang.key.toLowerCase()}`,
+      title: rang.label,
+      sublabel: siegel.sublabel,
+      footnote:
+        credits >= rang.min
+          ? `${credits.toLocaleString("de-DE")} Credits`
+          : `ab ${rang.min.toLocaleString("de-DE")} Credits`,
+      earned: credits >= rang.min,
+      color: siegel.color,
+      accent: siegel.accent,
+      tint: siegel.tint,
+      center: { type: "star" },
+      badgeImage: `/badges/${siegel.file}.png`,
+      badgeThumb: `/badges/${siegel.file}-thumb.png`,
+    };
+  });
 }
 
 // ---------- Auszeichnungen (leistungsbasiert) ----------
