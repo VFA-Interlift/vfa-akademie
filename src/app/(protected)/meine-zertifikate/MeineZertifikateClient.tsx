@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import AppCard from "@/components/ui/AppCard";
+import Kennzahl from "@/components/ui/Kennzahl";
 import AppButton from "@/components/ui/AppButton";
 import AppSelect from "@/components/ui/AppSelect";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -95,8 +96,8 @@ export default function MeineZertifikateClient({
             gap: 10,
           }}
         >
-          <SummaryBox label="Zertifikate" value={issuedCount} />
-          <SummaryBox label="Erhaltene Credits" value={totalCredits} />
+          <Kennzahl label="Zertifikate" value={issuedCount} />
+          <Kennzahl label="Erhaltene Credits" value={totalCredits} />
         </div>
       </AnimatedSection>
 
@@ -392,25 +393,6 @@ export default function MeineZertifikateClient({
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-function SummaryBox({ label, value }: { label: string; value: number }) {
-  return (
-    <div
-      style={{
-        border: "1px solid var(--vfa-linie-2)",
-        background: "var(--vfa-karte)",
-        padding: "14px 16px",
-        borderRadius: 12,
-      }}
-    >
-      <div className="etikett" style={{ marginBottom: 6 }}>
-        {label}
-      </div>
-
-      <div className="kennzahl">{value.toLocaleString("de-DE")}</div>
     </div>
   );
 }

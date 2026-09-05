@@ -8,6 +8,7 @@ import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedProgressCircle from "@/components/ui/AnimatedProgressCircle";
+import Kennzahl from "@/components/ui/Kennzahl";
 import CreditsZuwachs from "@/components/CreditsZuwachs";
 import DashboardHero from "@/components/DashboardHero";
 import EtagenAnzeige from "@/components/EtagenAnzeige";
@@ -16,6 +17,7 @@ import type { Hinweis } from "@/components/HeroGlocke";
 import TesterWelcome from "@/components/TesterWelcome";
 import { istTester } from "@/lib/app-test/tester";
 import { getOpenFeedbackCount } from "@/lib/feedback/service";
+import { formatDateRange } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
 
@@ -205,7 +207,7 @@ export default async function DashboardPage() {
                 </div>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 2 }}>
                   <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
-                    📅 {formatDateRange(nextTraining.training.date, nextTraining.training.endDate)}
+                    📅 {formatDateRange(nextTraining.training.date.toISOString(), nextTraining.training.endDate?.toISOString() ?? null)}
                   </span>
                   {nextTraining.training.location && (
                     <span style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>
@@ -296,12 +298,12 @@ export default async function DashboardPage() {
                 <div className="etikett">Mein Überblick</div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <StatBox label="Meine bevorstehenden Schulungen" value={enrollmentCount} />
-                  <StatBox label="Zertifikate" value={certCount} />
-                  <StatBox label="Mein Rang" value={rank.label} />
+                  <Kennzahl label="Bevorstehende Schulungen" value={enrollmentCount} />
+                  <Kennzahl label="Zertifikate" value={certCount} />
+                  <Kennzahl label="Mein Rang" value={rank.label} />
                   {/* „Dabei seit“: der Wert ist die Kontoanlage in der App,
                       nicht die Verbandsmitgliedschaft (Launch-Runde 05.09.2026). */}
-                  <StatBox label="Dabei seit" value={new Date(user.createdAt).getFullYear()} />
+                  <Kennzahl label="Dabei seit" value={String(new Date(user.createdAt).getFullYear())} />
                 </div>
 
                 {enrollmentCount === 0 ? (
@@ -459,33 +461,6 @@ function RankingRow({
       </div>
     </div>
   );
-}
-
-function StatBox({ label, value, wide }: { label: string; value: string | number; wide?: boolean }) {
-  return (
-    <div
-      style={{
-        padding: "12px 14px",
-        borderRadius: 10,
-        border: "1px solid var(--vfa-linie-2)",
-        background: "var(--vfa-karte-2)",
-        gridColumn: wide ? "1 / -1" : undefined,
-      }}
-    >
-      <div className="etikett" style={{ marginBottom: 4 }}>
-        {label}
-      </div>
-      <div className="kennzahl">{value}</div>
-    </div>
-  );
-}
-
-function formatDateRange(start: Date | string, end: Date | null | string) {
-  const fmt = (d: Date | string) => new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const s = fmt(start);
-  const e = end ? fmt(end) : null;
-  if (!e || e === s) return s;
-  return `${s} – ${e}`;
 }
 
 function getDisplayName(user: { firstName: string | null; lastName: string | null; name: string | null; email: string }) {

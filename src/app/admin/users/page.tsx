@@ -8,7 +8,7 @@ import AppSelect from "@/components/ui/AppSelect";
 import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { formatEnrollmentStatus } from "@/lib/trainings/format";
+import { formatEnrollmentStatus, formatDate } from "@/lib/trainings/format";
 
 type AdminUser = {
   id: string;
@@ -1120,16 +1120,6 @@ function MiniInfo({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
 function formatLastLogin(value: string | null) {
   if (!value) return "Noch nie";
 
@@ -1148,5 +1138,5 @@ function formatLastLogin(value: string | null) {
   if (diffD === 1) return "Gestern";
   if (diffD < 7) return `vor ${diffD} Tagen`;
 
-  return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return formatDate(value);
 }

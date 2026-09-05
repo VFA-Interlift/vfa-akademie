@@ -7,7 +7,7 @@ import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { formatCertificateKind } from "@/lib/certificates/templates";
-import { formatInstructorName } from "@/lib/trainings/format";
+import { formatInstructorName, formatDate } from "@/lib/trainings/format";
 import type { CertificateKind } from "@prisma/client";
 
 type Training = {
@@ -133,8 +133,3 @@ export default function AdminTrainingsPage() {
   );
 }
 
-function formatDate(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-}

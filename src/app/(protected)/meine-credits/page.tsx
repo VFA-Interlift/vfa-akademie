@@ -5,6 +5,8 @@ import AppCard from "@/components/ui/AppCard";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import PageHeader from "@/components/ui/PageHeader";
+import { formatDate } from "@/lib/trainings/format";
+import Kennzahl from "@/components/ui/Kennzahl";
 import Meldung from "@/components/ui/Meldung";
 
 type CreditTx = {
@@ -52,9 +54,9 @@ export default function MeineCreditsPage() {
         <AnimatedSection delayMs={60}>
           {/* Drei Kästen in einer Reihe, auch am Handy (Launch-Runde 05.09.2026). */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 20 }}>
-            <SummaryBox label="Credits gesamt" value={total} animate />
-            <SummaryBox label="Buchungen" value={txs.length} />
-            <SummaryBox label="Gutschriften" value={txs.filter((t) => t.amount > 0).length} />
+            <Kennzahl label="Credits gesamt" value={<AnimatedNumber value={total} />} />
+            <Kennzahl label="Buchungen" value={txs.length} />
+            <Kennzahl label="Gutschriften" value={txs.filter((t) => t.amount > 0).length} />
           </div>
         </AnimatedSection>
 
@@ -71,7 +73,7 @@ export default function MeineCreditsPage() {
                 {txs.map((tx, i) => {
                   const isPos = tx.amount > 0;
                   const title = tx.trainingTitle || tx.certificateTitle || reasonLabel(tx.reason);
-                  const date = new Date(tx.createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+                  const date = formatDate(tx.createdAt);
                   return (
                     <div
                       key={tx.id}
@@ -109,14 +111,3 @@ export default function MeineCreditsPage() {
   );
 }
 
-/** Kennzahl-Kasten nach Kanon: Etikett oben, Zahl darunter (.etikett / .kennzahl). */
-function SummaryBox({ label, value, animate = false }: { label: string; value: number; animate?: boolean }) {
-  return (
-    <div style={{ padding: "14px 16px", background: "var(--vfa-karte)", border: "1px solid var(--vfa-linie-2)", borderRadius: 12, minWidth: 0 }}>
-      <div className="etikett">{label}</div>
-      <div className="kennzahl" style={{ marginTop: 4 }}>
-        {animate ? <AnimatedNumber value={value} /> : value.toLocaleString("de-DE")}
-      </div>
-    </div>
-  );
-}

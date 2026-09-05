@@ -4,6 +4,7 @@ import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
 import Meldung from "@/components/ui/Meldung";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Kennzahl from "@/components/ui/Kennzahl";
 import {
   cleanTrainingTitle,
   formatDateTime,
@@ -41,6 +42,11 @@ export function SectionLabel({ title, count }: { title: string; count: number })
   );
 }
 
+/**
+ * Kennzahl-Kasten der Cobra-Seite. Seit dem 05.09.2026 nur noch eine dünne
+ * Hülle um den gemeinsamen Baustein — die eigene Fassung wich in Polster,
+ * Radius und Rand von allen anderen Kästen der App ab.
+ */
 export function SummaryBox({
   label,
   value,
@@ -50,29 +56,12 @@ export function SummaryBox({
   value: string;
   tone?: "default" | "green" | "error";
 }) {
-  const border =
-    tone === "green"
-      ? "1px solid rgba(0,120,115,0.25)"
-      : tone === "error"
-        ? "1px solid rgba(176,0,32,0.25)"
-        : "1px solid var(--vfa-linie)";
-  const background =
-    tone === "green"
-      ? "rgba(0,120,115,0.06)"
-      : tone === "error"
-        ? "rgba(176,0,32,0.06)"
-        : "var(--vfa-karte-2)";
-  // Kennzahl in Textfarbe (Kanon); Erfolg und Fehler dürfen ihre Farbe behalten.
-  const color =
-    tone === "green" ? "var(--vfa-gruen-text)" : tone === "error" ? "var(--vfa-rot-text)" : undefined;
-
   return (
-    <div style={{ border, background, borderRadius: 12, padding: "14px 16px" }}>
-      <div className="etikett">{label}</div>
-      <div className="kennzahl" style={{ marginTop: 6, color }}>
-        {value}
-      </div>
-    </div>
+    <Kennzahl
+      label={label}
+      value={value}
+      ton={tone === "green" ? "gruen" : tone === "error" ? "rot" : "standard"}
+    />
   );
 }
 

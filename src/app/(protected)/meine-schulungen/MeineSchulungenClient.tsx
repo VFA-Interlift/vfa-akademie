@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import AppButton from "@/components/ui/AppButton";
 import AppCard from "@/components/ui/AppCard";
+import Kennzahl from "@/components/ui/Kennzahl";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatusBadge from "@/components/ui/StatusBadge";
 import PdfAnsichtLink from "@/components/PdfAnsichtLink";
@@ -94,8 +95,8 @@ export default function MeineSchulungenClient({
     <div style={{ display: "grid", gap: 16 }}>
       <AnimatedSection delayMs={0}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-          <SummaryBox label="Bevorstehende Schulungen" value={nichtAbgesagt.length} />
-          <SummaryBox label="Mögliche Credits" value={totalCredits} />
+          <Kennzahl label="Bevorstehende Schulungen" value={nichtAbgesagt.length} />
+          <Kennzahl label="Mögliche Credits" value={totalCredits} />
         </div>
       </AnimatedSection>
 
@@ -366,18 +367,6 @@ function RecommendationsSection({ recommendations }: { recommendations: Training
         ))}
       </div>
     </AnimatedSection>
-  );
-}
-
-// Dieselbe Kachelform wie die StatBox des Dashboards (Launch-Runde 05.09.2026).
-function SummaryBox({ label, value }: { label: string; value: number }) {
-  return (
-    <div style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--vfa-linie-2)", background: "var(--vfa-karte-2)" }}>
-      <div className="etikett" style={{ marginBottom: 4 }}>
-        {label}
-      </div>
-      <div className="kennzahl">{value.toLocaleString("de-DE")}</div>
-    </div>
   );
 }
 

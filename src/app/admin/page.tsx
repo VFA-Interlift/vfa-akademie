@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import AppCard from "@/components/ui/AppCard";
+import Kennzahl from "@/components/ui/Kennzahl";
 import PageHeader from "@/components/ui/PageHeader";
 import { fetchWixKurse } from "@/lib/wix/kurse";
 
@@ -52,12 +53,12 @@ export default async function AdminMenuPage() {
         {/* Stats row */}
         <AnimatedSection delayMs={60}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 28 }}>
-            <StatCard label="Nutzer" value={userCount} />
-            <StatCard label="Schulungen (Website)" value={trainingCount} />
-            <StatCard label="Website-Anmeldungen" value={websiteAnmeldungen} />
-            <StatCard label="App-Anmeldungen" value={enrollmentCount} />
-            <StatCard label="Zertifikate" value={certCount} />
-            <StatCard label="Feedback" value={feedbackCount} />
+            <Kennzahl label="Nutzer" value={userCount} />
+            <Kennzahl label="Schulungen (Website)" value={trainingCount} />
+            <Kennzahl label="Website-Anmeldungen" value={websiteAnmeldungen} />
+            <Kennzahl label="App-Anmeldungen" value={enrollmentCount} />
+            <Kennzahl label="Zertifikate" value={certCount} />
+            <Kennzahl label="Feedback" value={feedbackCount} />
           </div>
         </AnimatedSection>
 
@@ -170,16 +171,6 @@ export default async function AdminMenuPage() {
 }
 
 // Kennzahl nach Kanon: Etikett oben, Zahl darunter (.kennzahl), Karte AppCard
-// (Launch-Runde 05.09.2026).
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <AppCard style={{ padding: "14px 16px", boxShadow: "none" }}>
-      <div className="etikett" style={{ marginBottom: 4 }}>{label}</div>
-      <div className="kennzahl">{value.toLocaleString("de-DE")}</div>
-    </AppCard>
-  );
-}
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="etikett" style={{ marginBottom: 10 }}>

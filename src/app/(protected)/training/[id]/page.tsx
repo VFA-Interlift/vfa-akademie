@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatCertificateKind } from "@/lib/certificates/templates";
 import { cleanTrainingTitle, formatInstructorName } from "@/lib/trainings/format";
+import { formatDateRange } from "@/lib/trainings/format";
 
 export const dynamic = "force-dynamic";
 
@@ -62,11 +63,7 @@ export default async function TrainingPage({
     );
   }
 
-  const zeitraum =
-    training.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) +
-    (training.endDate
-      ? ` bis ${training.endDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`
-      : "");
+  const zeitraum = formatDateRange(training.date.toISOString(), training.endDate?.toISOString() ?? null);
 
   return (
     <main className="page-main">

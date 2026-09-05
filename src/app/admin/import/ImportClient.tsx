@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AppButton from "@/components/ui/AppButton";
+import Kennzahl from "@/components/ui/Kennzahl";
 import AppCard from "@/components/ui/AppCard";
 import Meldung from "@/components/ui/Meldung";
 
@@ -166,14 +167,14 @@ export default function ImportClient() {
           </h2>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 16 }}>
-            <Kennzahl label="Schulungen gelesen" wert={bericht.schulungen.gelesen} />
-            <Kennzahl label="davon mit Teilnehmern" wert={bericht.schulungen.mitTeilnehmern} />
-            <Kennzahl label="Schulungen neu" wert={bericht.schulungen.neu} />
-            <Kennzahl label="Schulungen aktualisiert" wert={bericht.schulungen.aktualisiert} />
-            <Kennzahl label="Teilnehmer neu" wert={bericht.teilnehmer.neu} />
-            <Kennzahl label="Teilnehmer aktualisiert" wert={bericht.teilnehmer.aktualisiert} />
-            <Kennzahl label="verschiedene Personen" wert={bericht.personen} />
-            <Kennzahl label="ohne E-Mail" wert={bericht.teilnehmer.ohneEmail} />
+            <Kennzahl label="Schulungen gelesen" value={bericht.schulungen.gelesen} />
+            <Kennzahl label="davon mit Teilnehmern" value={bericht.schulungen.mitTeilnehmern} />
+            <Kennzahl label="Schulungen neu" value={bericht.schulungen.neu} />
+            <Kennzahl label="Schulungen aktualisiert" value={bericht.schulungen.aktualisiert} />
+            <Kennzahl label="Teilnehmer neu" value={bericht.teilnehmer.neu} />
+            <Kennzahl label="Teilnehmer aktualisiert" value={bericht.teilnehmer.aktualisiert} />
+            <Kennzahl label="verschiedene Personen" value={bericht.personen} />
+            <Kennzahl label="ohne E-Mail" value={bericht.teilnehmer.ohneEmail} />
           </div>
 
           {Object.keys(bericht.teilnehmer.uebersprungenNachArt).length > 0 ? (
@@ -222,11 +223,3 @@ export default function ImportClient() {
   );
 }
 
-function Kennzahl({ label, wert }: { label: string; wert: number }) {
-  return (
-    <div style={{ padding: "10px 12px", background: "var(--vfa-karte-2)", borderRadius: 8 }}>
-      <div className="etikett">{label}</div>
-      <div className="kennzahl" style={{ marginTop: 4 }}>{wert}</div>
-    </div>
-  );
-}

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import AppCard from "@/components/ui/AppCard";
+import Kennzahl from "@/components/ui/Kennzahl";
 import Meldung from "@/components/ui/Meldung";
 import PageHeader from "@/components/ui/PageHeader";
 import AnimatedSection from "@/components/ui/AnimatedSection";
@@ -159,8 +160,8 @@ export default async function AdminSchulungenPage() {
         <div style={{ display: "grid", gap: 14 }}>
           <AnimatedSection delayMs={40}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-              <StatBox label="Schulungen (Website)" value={wixKurse.length} />
-              <StatBox label="Website-Anmeldungen" value={totalTeilnehmer} />
+              <Kennzahl label="Schulungen (Website)" value={wixKurse.length} />
+              <Kennzahl label="Website-Anmeldungen" value={totalTeilnehmer} />
             </div>
           </AnimatedSection>
 
@@ -177,11 +178,3 @@ export default async function AdminSchulungenPage() {
   );
 }
 
-function StatBox({ label, value }: { label: string; value: number }) {
-  return (
-    <AppCard style={{ padding: "14px 16px" }}>
-      <div className="etikett">{label}</div>
-      <div className="kennzahl" style={{ marginTop: 4 }}>{value.toLocaleString("de-DE")}</div>
-    </AppCard>
-  );
-}
