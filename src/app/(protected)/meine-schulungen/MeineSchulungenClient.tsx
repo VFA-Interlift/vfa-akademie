@@ -278,7 +278,6 @@ function VergangeneSection({ trainings }: { trainings: SerializableTraining[] })
                         <PdfAnsichtLink
                           url={`/api/certificates/${t.certificateId}/download`}
                           titel={titel}
-                          dateiname="nachweis.pdf"
                           style={{ color: "var(--vfa-gruen-text)", fontSize: "var(--t-klein)", fontWeight: 700, whiteSpace: "nowrap" }}
                         >
                           Nachweis ansehen

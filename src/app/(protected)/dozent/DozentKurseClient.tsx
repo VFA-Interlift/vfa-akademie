@@ -73,7 +73,7 @@ const TABS: { key: TabKey; label: string }[] = [
 
 const linkStyle: React.CSSProperties = { color: GRUEN_TEXT, fontWeight: 700, wordBreak: "break-all" };
 
-// PdfAnsichtLink ist ein eigener Knopf (öffnet das PDF in der App) und lässt
+// PdfAnsichtLink ist ein eigener Knopf (öffnet das PDF in der Leseansicht) und lässt
 // sich nicht in AppButton hüllen — deshalb bekommt er hier genau die Maße von
 // AppButton primary (05.09.2026).
 const pdfKnopfStyle: React.CSSProperties = {
@@ -488,7 +488,6 @@ export default function DozentKurseClient({ kurse }: { kurse: DozentKurs[] }) {
                 <PdfAnsichtLink
                   url={`/api/dozent/feedback/pdf?trainingId=${selected.feedback.trainingId}`}
                   titel="Feedback-Auswertung"
-                  dateiname="feedback-auswertung.pdf"
                   style={pdfKnopfStyle}
                 >
                   📄 Feedback-Auswertung ansehen

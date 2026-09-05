@@ -42,12 +42,6 @@ function fileKindLabel(type: string): string {
   return "Datei";
 }
 
-/** Dateiname für den Herunterladen-Knopf in der App-Ansicht. */
-function dateinameFuer(doc: SerializableDocument): string {
-  const endung = fileKindLabel(doc.fileType).toLowerCase();
-  return endung === "datei" ? doc.title : `${doc.title}.${endung}`;
-}
-
 export default function EigeneNachweise({ initialDocuments }: { initialDocuments: SerializableDocument[] }) {
   const [documents, setDocuments] = useState<SerializableDocument[]>(initialDocuments);
   const [title, setTitle] = useState("");
@@ -279,13 +273,12 @@ export default function EigeneNachweise({ initialDocuments }: { initialDocuments
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                    {/* In der App ansehen, mit X zurück (Tobis Vorgabe vom
-                        12.08.2026) — gilt auch für JPG und PNG, das iframe
-                        zeigt Bilder genauso. */}
+                    {/* Öffnet in der Leseansicht des Geräts (Tobis Ansage
+                        vom 05.09.2026) — gilt auch für JPG und PNG, die zeigt
+                        der Browser genauso an. */}
                     <PdfAnsichtLink
                       url={`/api/documents/${doc.id}/datei`}
                       titel={doc.title}
-                      dateiname={dateinameFuer(doc)}
                       knopf="ghost"
                     >
                       Ansehen

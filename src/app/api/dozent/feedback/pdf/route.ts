@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dateiKopfzeile } from "@/lib/dateikopf";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -76,7 +77,8 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="feedback-${safeName}.pdf"`,
+      // Leseansicht des Geräts statt Ordner „Downloads" (05.09.2026).
+      "Content-Disposition": dateiKopfzeile(`feedback-${safeName}.pdf`),
       // Personenbezogene Auswertung mit Freitexten — nicht zwischenspeichern,
       // wie bei den übrigen Dateirouten (Befund f05-13, 05.09.2026).
       "Cache-Control": "no-store",

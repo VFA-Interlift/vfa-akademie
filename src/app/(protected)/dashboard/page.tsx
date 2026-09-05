@@ -18,7 +18,7 @@ import TesterWelcome from "@/components/TesterWelcome";
 import { istTester } from "@/lib/app-test/tester";
 import { getOpenFeedbackCount } from "@/lib/feedback/service";
 import { formatDateRange } from "@/lib/trainings/format";
-import { RAENGE, OHNE_RANG, rangFuer, naechsterRang, rangFortschritt, type RangSchluessel } from "@/lib/credits/raenge";
+import { rangFuer, naechsterRang, rangFortschritt, type RangSchluessel } from "@/lib/credits/raenge";
 
 export const dynamic = "force-dynamic";
 

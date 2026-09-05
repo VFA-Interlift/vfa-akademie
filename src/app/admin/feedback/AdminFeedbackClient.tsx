@@ -40,7 +40,6 @@ type TrainingEval = {
 export default function AdminFeedbackClient({ trainings }: { trainings: TrainingEval[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("recent");
-  const [pdf, setPdf] = useState<{ url: string; title: string; filename: string } | null>(null);
 
   const sortedTrainings = useMemo(() => {
     const latest = (t: TrainingEval) =>
@@ -88,16 +87,11 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <AppButton
-              variant="primary"
-              onClick={() =>
-                setPdf({
-                  url: "/api/admin/feedback/export/pdf",
-                  title: "Alle Schulungen",
-                  filename: `feedback-gesamt-${todayStr()}.pdf`,
-                })
-              }
-            >
+            {/* Echter Link in die Leseansicht des Geräts statt eines
+                nachgebauten Betrachters (05.09.2026) — dieselbe Strecke wie
+                bei Zertifikaten und Nachweisen. Die Route liefert bereits
+                inline aus. */}
+            <AppButton variant="primary" href="/api/admin/feedback/export/pdf" external>
               Alles als PDF
             </AppButton>
             <AppButton variant="secondary" href="/api/admin/feedback/export" external>
@@ -156,13 +150,8 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
                     <AppButton
                       variant="primary"
-                      onClick={() =>
-                        setPdf({
-                          url: `/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`,
-                          title,
-                          filename: `feedback-${title.replace(/[^\w-]+/g, "_")}-${todayStr()}.pdf`,
-                        })
-                      }
+                      href={`/api/admin/feedback/export/pdf?trainingId=${training.trainingId}`}
+                      external
                     >
                       Diese Schulung als PDF
                     </AppButton>
@@ -187,110 +176,12 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
         );
       })}
 
-      {pdf && <PdfViewerModal pdf={pdf} onClose={() => setPdf(null)} />}
     </div>
   );
 }
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
-}
-
-/**
- * PDF-Ansicht als Vollbild-Overlay. Die dunkle Kopfleiste und der weiße
- * Grund des Dokuments bleiben bewusst fest (05.09.2026): Das ist die
- * Betrachter-Leiste über dem Dokument, kein Seiteninhalt — sie soll in beiden
- * Farbmodi gleich aussehen wie ein PDF-Viewer.
- */
-function PdfViewerModal({
-  pdf,
-  onClose,
-}: {
-  pdf: { url: string; title: string; filename: string };
-  onClose: () => void;
-}) {
-  const [downloading, setDownloading] = useState(false);
-
-  async function download() {
-    setDownloading(true);
-    try {
-      const res = await fetch(pdf.url);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = pdf.filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
-    } finally {
-      setDownloading(false);
-    }
-  }
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      style={{
-        position: "fixed",
-        inset: 0,
-        // 4100 statt 1000 (20.08.2026): Die Bottom-Nav liegt bei z-index 3000
-        // und stand sonst am Handy über dem Viewer; 4100 liegt wie beim
-        // PdfOverlay über allen Leisten und Sheets (3000/3500/4000).
-        zIndex: 4100,
-        background: "rgba(0,0,0,0.55)",
-        display: "flex",
-        flexDirection: "column",
-        // Unten bis über den iPhone-Home-Balken polstern, sonst endet das
-        // iframe unsichtbar dahinter.
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 14px",
-          paddingTop: "max(10px, env(safe-area-inset-top))",
-          background: "#1F1F1F",
-          color: "#FFFFFF",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0, fontSize: "var(--t-basis)", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {pdf.title}
-        </div>
-        <AppButton variant="primary" onClick={download} disabled={downloading}>
-          {downloading ? "…" : "Herunterladen"}
-        </AppButton>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Schließen"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 999,
-            border: "none",
-            background: "rgba(255,255,255,0.15)",
-            color: "#FFFFFF",
-            fontSize: "var(--t-titel)",
-            lineHeight: 1,
-            cursor: "pointer",
-          }}
-        >
-          ×
-        </button>
-      </div>
-      <iframe
-        src={pdf.url}
-        title={pdf.title}
-        style={{ flex: 1, width: "100%", border: "none", background: "#FFFFFF" }}
-      />
-    </div>
-  );
 }
 
 function QuestionStatRow({ stat }: { stat: AdminQuestionStat }) {

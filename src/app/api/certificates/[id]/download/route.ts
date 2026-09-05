@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { dateiKopfzeile, fehlerSeite } from "@/lib/dateikopf";
 import { getCertificateDocumentData } from "@/lib/certificates/document-data";
 import { renderCertificateDocx } from "@/lib/certificates/docx";
 import { renderCertificatePdf } from "@/lib/certificates/pdf";
@@ -13,12 +14,14 @@ type Ctx = {
   params: Promise<{ id: string }>;
 };
 
-function fail(error: string, status = 400, details?: unknown) {
-  return NextResponse.json({ ok: false, error, details }, { status });
-}
-
-function encodeFileName(fileName: string) {
-  return encodeURIComponent(fileName).replace(/['()]/g, escape);
+/**
+ * Die Route wird seit dem 05.09.2026 direkt aufgerufen — der Knopf ist ein
+ * echter Link, der einen eigenen Tab öffnet. Ein Fehler landet damit vor den
+ * Augen des Nutzers und braucht einen Satz, den man lesen kann; die früheren
+ * Fehlerschlüssel wertete nur die App selbst aus.
+ */
+function fail(text: string, status = 400) {
+  return fehlerSeite(text, status);
 }
 
 function getErrorMessage(error: unknown) {
@@ -30,13 +33,13 @@ export async function GET(_req: Request, context: Ctx) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return fail("UNAUTHENTICATED", 401);
+    return fail("Bitte melde dich an und ruf das Dokument noch einmal auf.", 401);
   }
 
   const { id } = await context.params;
 
   if (!id) {
-    return fail("MISSING_CERTIFICATE_ID", 400);
+    return fail("Zu diesem Aufruf fehlt die Kennung des Zertifikats.", 400);
   }
 
   const email = session.user.email.trim().toLowerCase();
@@ -46,31 +49,33 @@ export async function GET(_req: Request, context: Ctx) {
     select: { id: true, role: true },
   });
 
-  if (!me) return fail("USER_NOT_FOUND", 404);
+  if (!me) return fail("Zu deiner Anmeldung gibt es kein Konto mehr.", 404);
 
   const certificate = await prisma.certificate.findUnique({
     where: { id },
     select: { userId: true, status: true },
   });
 
-  if (!certificate) return fail("CERTIFICATE_NOT_FOUND", 404);
+  if (!certificate) return fail("Dieses Zertifikat gibt es nicht.", 404);
 
   const isOwner = certificate.userId === me.id;
   const isAdmin = me.role === "ADMIN";
 
-  if (!isOwner && !isAdmin) return fail("FORBIDDEN", 403);
+  if (!isOwner && !isAdmin) {
+    return fail("Du hast keine Berechtigung, dieses Zertifikat zu öffnen.", 403);
+  }
 
   if (certificate.status !== "ISSUED") {
-    return fail("CERTIFICATE_NOT_DOWNLOADABLE", 400, { status: certificate.status });
+    return fail("Dieses Zertifikat ist aktuell nicht freigegeben.", 400);
   }
 
   try {
-    // Im try, damit ein Aussetzer beim Laden der Dokumentdaten als JSON
-    // (CERTIFICATE_RENDER_FAILED) zurückkommt statt als HTML-500-Seite
-    // (Befund f05-12, 05.09.2026).
+    // Im try, damit ein Aussetzer beim Laden der Dokumentdaten als lesbare
+    // Seite zurückkommt statt als HTML-500 des Servers (Befund f05-12,
+    // 05.09.2026).
     const documentData = await getCertificateDocumentData(id);
 
-    if (!documentData) return fail("CERTIFICATE_NOT_FOUND", 404);
+    if (!documentData) return fail("Dieses Zertifikat gibt es nicht.", 404);
 
     const certificateCode =
       documentData.certificate.code ||
@@ -93,17 +98,15 @@ export async function GET(_req: Request, context: Ctx) {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename*=UTF-8''${encodeFileName(fileName)}`,
+          // Leseansicht des Geräts statt Ordner „Downloads".
+          "Content-Disposition": dateiKopfzeile(fileName),
           "Cache-Control": "no-store",
         },
       });
     }
 
     if (!documentData.templateFileName) {
-      return fail("CERTIFICATE_TEMPLATE_NOT_CONFIGURED", 400, {
-        code: documentData.certificate.code,
-        trainingCode: documentData.certificate.training.code,
-      });
+      return fail("Für diese Schulung ist noch keine Zertifikatsvorlage hinterlegt.", 400);
     }
 
     const buffer = await renderCertificateDocx({
@@ -117,18 +120,24 @@ export async function GET(_req: Request, context: Ctx) {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename*=UTF-8''${encodeFileName(fileName)}`,
+        // Word-Dokumente kann kein Browser anzeigen — die gehen weiter in den
+        // Download (Altbestand, für den es noch keine PDF-Vorlage gibt).
+        "Content-Disposition": dateiKopfzeile(fileName, false),
         "Cache-Control": "no-store",
       },
     });
   } catch (error: unknown) {
     const message = getErrorMessage(error);
 
-    if (message.startsWith("PDF_COORDS_NOT_CONFIGURED")) return fail("PDF_COORDS_NOT_CONFIGURED", 500, message);
-    if (message.startsWith("PDF_TEMPLATE_NOT_FOUND")) return fail("PDF_TEMPLATE_NOT_FOUND", 404, message);
-    if (message.startsWith("TEMPLATE_NOT_FOUND")) return fail("TEMPLATE_NOT_FOUND", 404, message);
-    if (message.startsWith("PDF_TEMPLATE_HAS_NO_PAGES")) return fail("PDF_TEMPLATE_HAS_NO_PAGES", 500, message);
+    if (
+      message.startsWith("PDF_COORDS_NOT_CONFIGURED") ||
+      message.startsWith("PDF_TEMPLATE_NOT_FOUND") ||
+      message.startsWith("PDF_TEMPLATE_HAS_NO_PAGES") ||
+      message.startsWith("TEMPLATE_NOT_FOUND")
+    ) {
+      return fail("Die Vorlage zu diesem Zertifikat fehlt oder passt nicht. Bitte melde dich bei der Akademie.", 500);
+    }
 
-    return fail("CERTIFICATE_RENDER_FAILED", 500, message);
+    return fail("Das Zertifikat ließ sich gerade nicht erzeugen. Bitte versuch es später noch einmal.", 500);
   }
 }
