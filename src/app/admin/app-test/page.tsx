@@ -27,8 +27,6 @@ export default async function AdminAppTestPage() {
     <main className="page-main">
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
         <PageHeader
-          backHref="/admin"
-          backLabel="Adminbereich"
           title="Testrunde: Rückmeldungen"
           showTitle={true}
         />

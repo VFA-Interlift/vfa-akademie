@@ -71,7 +71,7 @@ export default function AdminTrainingsPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Schulungen in der App-Datenbank" />
+        <PageHeader title="Schulungen in der App-Datenbank" />
         {/* PageHeader zeigt keine Beschreibung — der Satz steht deshalb als Absatz unter dem Band. */}
         <p style={{ margin: "0 0 20px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)", lineHeight: "var(--lh-weit)" }}>
           Alle Schulungen in der App-Datenbank. Neue kommen täglich automatisch von der Website;

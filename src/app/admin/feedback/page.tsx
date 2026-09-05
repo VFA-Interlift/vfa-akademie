@@ -18,7 +18,7 @@ export default async function AdminFeedbackPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Feedback-Auswertung" showTitle={true} />
+        <PageHeader title="Feedback-Auswertung" showTitle={true} />
         <AdminFeedbackClient trainings={data} />
       </div>
     </main>

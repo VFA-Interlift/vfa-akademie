@@ -2,18 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import BackButton from "@/components/BackButton";
 
 type PageHeaderProps = {
   title: string;
   description?: string;
-  backLabel?: string;
-  showBackButton?: boolean;
   showTitle?: boolean;
-  /** Fester Rückweg (z. B. "/admin") — erscheint weiß IM Band über dem Titel.
-      Vorher lag der Link der Admin-Unterseiten unsichtbar UNTER dem Band
-      (Ultracode-Befund 13.08.2026). */
-  backHref?: string;
 };
 
 /**
@@ -33,11 +26,6 @@ type PageHeaderProps = {
  */
 export default function PageHeader({
   title,
-  backHref,
-  backLabel = "Zurück",
-  // Untere Menüleiste (BottomNav) + Browser-Zurück decken die Navigation ab,
-  // daher standardmäßig kein redundanter Zurück-Button mehr oben.
-  showBackButton = false,
   showTitle = true,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   description: _description,
@@ -97,26 +85,6 @@ export default function PageHeader({
 
       <div ref={inhaltRef} style={{ position: "relative" }}>
         {/* Link statt <a>: ein natives <a> lud die ganze App neu (05.09.2026). */}
-        {backHref && (
-          <Link
-            href={backHref}
-            style={{
-              display: "inline-block",
-              marginBottom: 10,
-              color: "rgba(255,255,255,0.85)",
-              fontSize: "var(--t-klein)",
-              fontWeight: 700,
-              textDecoration: "none",
-            }}
-          >
-            ← {backLabel}
-          </Link>
-        )}
-        {showBackButton && (
-          <div style={{ marginBottom: 14 }}>
-            <BackButton label={backLabel} />
-          </div>
-        )}
         {showTitle && (
           <h1
             style={{

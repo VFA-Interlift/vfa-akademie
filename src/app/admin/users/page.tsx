@@ -538,7 +538,7 @@ export default function AdminUsersPage() {
   return (
     <main className="page-main">
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <PageHeader backHref="/admin" backLabel="Adminbereich" title="Nutzer verwalten" />
+        <PageHeader title="Nutzer verwalten" />
         {/* PageHeader zeigt description nicht an — der Satz steht deshalb hier. */}
         <p style={{ margin: "0 0 20px", fontSize: "var(--t-basis)", color: "var(--vfa-text-2)" }}>
           Profile prüfen, Credits bearbeiten, Rollen vergeben und Nutzer löschen.
