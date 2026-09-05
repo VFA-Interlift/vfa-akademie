@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dateiKopfzeile } from "@/lib/dateikopf";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -95,7 +96,7 @@ export async function GET() {
   return new NextResponse(inhalt, {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="vfa-akademie-meine-daten.json"`,
+      "Content-Disposition": dateiKopfzeile("vfa-akademie-meine-daten.json", false),
       "Cache-Control": "no-store",
     },
   });

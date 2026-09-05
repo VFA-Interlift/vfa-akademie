@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildTrainingIcs, icsFileName } from "@/lib/trainings/ics";
+import { dateiKopfzeile } from "@/lib/dateikopf";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,6 @@ type Ctx = {
 
 function fail(error: string, status = 400) {
   return NextResponse.json({ ok: false, error }, { status });
-}
-
-function encodeFileName(fileName: string) {
-  return encodeURIComponent(fileName).replace(/['()]/g, escape);
 }
 
 export async function GET(_req: Request, context: Ctx) {
@@ -73,7 +70,8 @@ export async function GET(_req: Request, context: Ctx) {
     status: 200,
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": `attachment; filename*=UTF-8''${encodeFileName(fileName)}`,
+      // Kalenderdatei: gehoert in die Kalender-App, nicht in den Browser.
+      "Content-Disposition": dateiKopfzeile(fileName, false),
       "Cache-Control": "no-store",
     },
   });

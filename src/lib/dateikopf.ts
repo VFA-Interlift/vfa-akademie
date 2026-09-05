@@ -21,12 +21,26 @@ export function dateiKopfzeile(dateiname: string, ansehen = true): string {
   return `${art}; filename*=UTF-8''${encodeURIComponent(dateiname).replace(/['()]/g, escape)}`;
 }
 
+/** Maskiert Text, der in die Fehlerseite gesetzt wird. */
+function maskiert(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 /**
  * Eine lesbare Fehlerseite statt einer nackten JSON-Zeile.
  *
  * Nötig, seit die Dateirouten in einem eigenen Tab aufgehen: Dort landet der
  * Nutzer bei einem Fehler direkt auf der Antwort der Route und sähe sonst
  * `{"ok":false,"error":"..."}`.
+ *
+ * Der Text wird maskiert. Heute übergibt jede Route eine feste Zeichenkette,
+ * aber die Funktion steht allen offen — der nächste Aufrufer mit einem
+ * Dateinamen oder einer Fehlermeldung darin brächte sonst ein Loch mit
+ * (Gegenprüfung 05.09.2026).
  */
 export function fehlerSeite(text: string, status: number): Response {
   const seite = `<!doctype html>
@@ -48,7 +62,7 @@ export function fehlerSeite(text: string, status: number): Response {
 <body>
   <div class="kasten">
     <h1>Dokument nicht verfügbar</h1>
-    <p>${text}</p>
+    <p>${maskiert(text)}</p>
   </div>
 </body>
 </html>`;

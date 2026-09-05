@@ -1,6 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { get } from "@vercel/blob";
+import { dateiKopfzeile, fehlerSeite } from "@/lib/dateikopf";
 
 /**
  * Liefert eine Datei aus dem Blob-Speicher aus, nachdem die aufrufende Route die
@@ -28,10 +29,7 @@ export async function dateiAusBlob({
     headers.set("Content-Type", contentType || "application/octet-stream");
     headers.set("Cache-Control", "private, no-store");
     if (dateiname) {
-      headers.set(
-        "Content-Disposition",
-        `inline; filename*=UTF-8''${encodeURIComponent(dateiname)}`
-      );
+      headers.set("Content-Disposition", dateiKopfzeile(dateiname));
     }
     return headers;
   };
@@ -62,5 +60,7 @@ export async function dateiAusBlob({
     }
   }
 
-  return NextResponse.json({ ok: false, error: "DATEI_NICHT_GEFUNDEN" }, { status: 404 });
+  // Lesbare Seite statt JSON: Diese Dateien gehen in einem eigenen Tab auf
+  // (05.09.2026).
+  return fehlerSeite("Diese Datei liegt nicht mehr im Speicher.", 404);
 }

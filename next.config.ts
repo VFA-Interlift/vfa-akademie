@@ -13,9 +13,9 @@ import type { NextConfig } from "next";
  */
 const SICHERHEITS_HEADER = [
   { key: "X-Content-Type-Options", value: "nosniff" },
-  // SAMEORIGIN statt DENY: Die Feedback-Auswertung im Adminbereich zeigt das
-  // erzeugte PDF in einem eigenen iframe. DENY verbietet auch die Einbettung in
-  // die eigene Seite, die Vorschau bliebe leer.
+  // SAMEORIGIN statt DENY: Seit dem 05.09.2026 bettet die App selbst nichts
+  // mehr ein (PDFs gehen in die Leseansicht des Geräts). SAMEORIGIN bleibt
+  // trotzdem stehen, weil es nichts kostet und DENY ohne Not strenger wäre.
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
@@ -31,10 +31,10 @@ const SICHERHEITS_HEADER = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
-      // PdfOverlay zeigt Zertifikate und Feedback-PDFs als iframe mit einer
-      // blob:-Adresse (PdfAnsichtLink, CertificateDownloadButton). 'self' aus
-      // default-src deckt blob: nicht ab, Chrome ließe das iframe leer (05.09.2026).
-      "frame-src 'self' blob:",
+      // Die App bettet nichts mehr ein: Zertifikate und Feedback-PDFs gehen
+      // seit dem 05.09.2026 in die Leseansicht des Geräts statt in ein iframe
+      // mit blob:-Adresse. Damit kann die Regel ganz zumachen.
+      "frame-src 'none'",
       "font-src 'self' data:",
       "connect-src 'self' https://*.public.blob.vercel-storage.com",
       "frame-ancestors 'self'",

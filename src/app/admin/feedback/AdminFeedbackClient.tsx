@@ -180,10 +180,6 @@ export default function AdminFeedbackClient({ trainings }: { trainings: Training
   );
 }
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function QuestionStatRow({ stat }: { stat: AdminQuestionStat }) {
   return (
     <div style={{ paddingBottom: 10, borderBottom: "1px solid var(--vfa-linie-2)" }}>

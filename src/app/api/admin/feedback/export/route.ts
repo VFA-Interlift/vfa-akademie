@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dateiKopfzeile } from "@/lib/dateikopf";
 import { getServerSession } from "next-auth";
 import ExcelJS from "exceljs";
 import { authOptions } from "@/lib/auth";
@@ -105,7 +106,8 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      // Tabelle: kein Browser zeigt sie an, also weiter in den Download.
+      "Content-Disposition": dateiKopfzeile(filename, false),
     },
   });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dateiKopfzeile, fehlerSeite } from "@/lib/dateikopf";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +22,9 @@ async function requireAdmin() {
 
 export async function GET(req: Request) {
   if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
+    // Lesbare Seite statt JSON: Die Ausgabe geht in einem eigenen Tab auf
+    // (05.09.2026).
+    return fehlerSeite("Diese Auswertung ist der Verwaltung vorbehalten.", 403);
   }
 
   const trainingId = new URL(req.url).searchParams.get("trainingId") ?? undefined;
@@ -37,7 +40,7 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": dateiKopfzeile(filename),
     },
   });
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dateiKopfzeile } from "@/lib/dateikopf";
+import { dateiKopfzeile, fehlerSeite } from "@/lib/dateikopf";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -18,24 +18,26 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.trim().toLowerCase();
-  if (!email) return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
+  // Lesbare Seiten statt JSON: Der Knopf öffnet die Route in einem eigenen
+  // Tab, ein Fehler steht dort ungefiltert vor dem Dozenten (05.09.2026).
+  if (!email) return fehlerSeite("Bitte melde dich an und ruf die Auswertung noch einmal auf.", 401);
 
   const me = await prisma.user.findUnique({
     where: { email },
     select: { isInstructor: true, role: true, firstName: true, lastName: true, name: true },
   });
   if (!me?.isInstructor && me?.role !== "ADMIN") {
-    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    return fehlerSeite("Diese Auswertung ist nur für Dozentinnen und Dozenten zugänglich.", 403);
   }
 
   const trainingId = new URL(req.url).searchParams.get("trainingId");
-  if (!trainingId) return NextResponse.json({ ok: false, error: "MISSING_TRAINING" }, { status: 400 });
+  if (!trainingId) return fehlerSeite("Zu diesem Aufruf fehlt die Schulung.", 400);
 
   const training = await prisma.training.findUnique({
     where: { id: trainingId },
     select: { code: true, title: true, instructor: true },
   });
-  if (!training) return NextResponse.json({ ok: false, error: "TRAINING_NOT_FOUND" }, { status: 404 });
+  if (!training) return fehlerSeite("Diese Schulung gibt es nicht.", 404);
 
   // Nur der eigene Dozent (oder Admin) darf die Auswertung laden. Grundlage ist
   // die Dozentenzuordnung der Website, nicht das Freitextfeld `instructor` der
@@ -49,11 +51,11 @@ export async function GET(req: Request) {
     try {
       meineKurscodes = await getInstructorKurscodes(me);
     } catch {
-      return NextResponse.json({ ok: false, error: "WEBSITE_UNAVAILABLE" }, { status: 503 });
+      return fehlerSeite("Die Website antwortet gerade nicht, deshalb lässt sich deine Zuordnung zur Schulung nicht prüfen. Bitte versuch es später noch einmal.", 503);
     }
 
     if (!code || !meineKurscodes.has(code)) {
-      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+      return fehlerSeite("Du bist bei dieser Schulung nicht als Dozent hinterlegt.", 403);
     }
   }
 
@@ -64,12 +66,12 @@ export async function GET(req: Request) {
   try {
     const evaluation = await getAdminFeedbackEvaluation(trainingId);
     if (evaluation.length === 0) {
-      return NextResponse.json({ ok: false, error: "NO_FEEDBACK" }, { status: 404 });
+      return fehlerSeite("Zu dieser Schulung liegt noch keine Rückmeldung vor.", 404);
     }
     pdf = await renderFeedbackReportPdf(evaluation);
   } catch (fehler) {
     console.error("DOZENT_FEEDBACK_PDF_ERROR", trainingId, fehler);
-    return NextResponse.json({ ok: false, error: "FEEDBACK_PDF_FAILED" }, { status: 500 });
+    return fehlerSeite("Die Auswertung ließ sich gerade nicht erzeugen. Bitte versuch es später noch einmal.", 500);
   }
   const safeName = (training.code?.trim() || training.title).replace(/[^\w-]+/g, "_");
 
